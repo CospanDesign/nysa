@@ -22,10 +22,11 @@
 # Imports
 import wx
 import wx.lib.agw.aui as aui
-from nysa_status import NysaStatus
-from nysa_status import StatusLevel
-from nysa_navigator import NysaNavigator
-from nysa_main_notebook import NysaNotebook
+from main_status import MainStatus
+from main_status import StatusLevel
+from main_navigator import MainNavigator
+from main_notebook import MainNotebook
+from main_toolbar import MainToolBarManager
 
 #Classes
 
@@ -42,11 +43,11 @@ class NysaMain(wx.Frame):
     self._mgr.SetManagedWindow(self)
 
     #Main View
-    self.notebook = NysaNotebook(self)
+    self.notebook = MainNotebook(self)
     #Status Output Window
-    self.output = NysaStatus(self, "Nysa Started")
+    self.output = MainStatus(self, "Nysa Started")
     #Workspace/Project Navigator
-    self.nav    = NysaNavigator(self)
+    self.nav    = MainNavigator(self)
 
     #Add the main Notebook View
     self._mgr.AddPane(self.output, wx.BOTTOM, "Output")
@@ -55,6 +56,7 @@ class NysaMain(wx.Frame):
 
     #Add the Menubar
     self.CreateMenu()
+    self.CreateTB()
     self._mgr.Update()
 
 
@@ -110,7 +112,12 @@ class NysaMain(wx.Frame):
     menubar.Append(options_menu, "Options")
     self.SetMenuBar(menubar)
 
-  def getOutput(self):
+  def CreateTB(self):
+    tb = self.CreateToolBar()
+    self.tbm = MainToolBarManager(tb, self)
+    self.tbm.set_default_tools()
+
+  def get_output(self):
     return self.output
 
 
