@@ -57,6 +57,7 @@ class NysaMain(wx.Frame):
     #Add the Menubar
     self.CreateMenu()
     self.CreateTB()
+    self.CreateSB()
     self._mgr.Update()
 
 
@@ -116,6 +117,12 @@ class NysaMain(wx.Frame):
     tb = self.CreateToolBar()
     self.tbm = MainToolBarManager(tb, self)
     self.tbm.set_default_tools()
+
+  def CreateSB(self):
+    self.sb = self.CreateStatusBar()
+    '''
+    self.sb.SetStatusText("Testing status")
+    '''
 
   def get_output(self):
     return self.output
