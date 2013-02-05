@@ -2,9 +2,9 @@
 
 import wx
 import wx.lib.agw.aui as aui
-from main.nysa_status import NysaStatus
-from main.nysa_status import StatusLevel
-from main.nysa_navigator import NysaNavigator
+from main.main_status import MainStatus
+from main.main_status import StatusLevel
+from main.main_navigator import MainNavigator
 from main.nysa_main import NysaMain
 
 class Nysa (wx.App):
