@@ -1,5 +1,11 @@
 *.py[cod]
 
+# VIM temporary files
+*~
+*.swp
+*.swo
+
+
 # C extensions
 *.so
 
