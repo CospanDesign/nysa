@@ -9,6 +9,7 @@ class MainNavigator(wx.Panel):
                         id = wx.ID_ANY,
                         pos = wx.DefaultPosition,
                         size = (250, -1))
+    self.SetName("main_navigator")
 
     self.workspace_choices = []
 

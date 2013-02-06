@@ -21,6 +21,7 @@
 
 import wx
 import wx.lib.agw.aui as aui
+import wx.lib.agw.flatnotebook as fnb
 
 #Classes
 class TabPanelOne(wx.Panel):
@@ -40,13 +41,33 @@ class MainNotebook( aui.AuiNotebook ) :
         SetFocusedPage
     """
     def __init__( self, parent ) :
-        """  """
-        aui.AuiNotebook.__init__( self, parent=parent )
-        self.default_style = aui.AUI_NB_DEFAULT_STYLE | aui.AUI_NB_TAB_EXTERNAL_MOVE | wx.NO_BORDER
-        self.SetWindowStyleFlag( self.default_style )
+      """  """
+      aui.AuiNotebook.__init__( self, parent=parent )
+      #self.default_style = aui.AUI_NB_DEFAULT_STYLE | aui.AUI_NB_TAB_EXTERNAL_MOVE | wx.NO_BORDER | aui.AUI_NB_SMART_TABS | aui.AUI_NB_TAB_FLOAT
+      self.default_style =  aui.AUI_NB_DEFAULT_STYLE | \
+                            aui.AUI_NB_TAB_EXTERNAL_MOVE | \
+                            aui.AUI_NB_SMART_TABS | \
+                            aui.AUI_NB_TAB_FLOAT  | \
+                            aui.AUI_NB_SUB_NOTEBOOK | \
+                            aui.AUI_NB_DRAW_DND_TAB 
 
-    def AddPage (self, text):
-      page = TabPanelOne(self)
+      self.SetName ("main_notebook")
+
+
+      self.SetWindowStyleFlag( self.default_style )
+      #mirror = ~(fnb.FNB_VC71 | fnb.FNB_VC8 | fnb.FNB_FANCY_TABS | fnb.FNB_FF2)
+      #self.SetWindowStyleFlag( style )
+      self.parent = parent
+      self.output = parent.get_output()
+      self.set_theme()
+
+    def set_theme(self):
+      self.SetArtProvider(aui.AuiDefaultTabArt())
+
+    def AddPage (self, page = None, text = ""):
+      if page is None:
+        page = TabPanelOne(self)
+
       aui.AuiNotebook.AddPage( self, page, text )
 
 

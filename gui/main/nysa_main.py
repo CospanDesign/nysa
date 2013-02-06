@@ -22,6 +22,8 @@
 # Imports
 import wx
 import wx.lib.agw.aui as aui
+import wx.lib.agw.persist.persistencemanager as PM
+
 from main_status import MainStatus
 from main_status import StatusLevel
 from main_navigator import MainNavigator
@@ -42,10 +44,11 @@ class NysaMain(wx.Frame):
     self._mgr = aui.AuiManager()
     self._mgr.SetManagedWindow(self)
 
-    #Main View
-    self.notebook = MainNotebook(self)
     #Status Output Window
     self.output = MainStatus(self, "Nysa Started")
+
+    #Main View
+    self.notebook = MainNotebook(self)
     #Workspace/Project Navigator
     self.nav    = MainNavigator(self)
 
@@ -58,16 +61,23 @@ class NysaMain(wx.Frame):
     self.CreateMenu()
     self.CreateTB()
     self.CreateSB()
+
+    #PM.PersistenceManager.RegisterAndRestore(self.notebook)
+    self.SetName("nysa_main")
+    #self._pm = PM.PersistenceManager.Get()
+    #_configFile = os.path.join(os.getcwd(), self.GetName())
+    #self.output.Verbose(self, "Config File: %s" %self._pm.GetPersistenceDirectory())
+    #self._pm.RegisterAndRestore(self)
+
     self._mgr.Update()
+
+
 
 
   def AddPage(self, name):
     self.notebook.AddPage(name)
     self.output.Verbose(self, "Add Page \'%s\'" % name)
     self._mgr.Update()
-
-  def OnExit(self, name):
-    self.Close()
 
   def OnDisableTab(self, event):
     """Disables the current tab"""
@@ -126,6 +136,11 @@ class NysaMain(wx.Frame):
 
   def get_output(self):
     return self.output
+
+  def OnExit(self, name):
+    #PM.PersistanceManager.SaveAndUnregister()
+    #self._pm.SaveAndUnregister(self)
+    self.Close()
 
 
 #Functions

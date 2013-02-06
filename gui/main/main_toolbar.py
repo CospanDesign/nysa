@@ -10,6 +10,7 @@ class MainToolBarManager ():
     self.tb = toolbar
     self.tb.SetWindowStyle(TBFLAGS)
     self.output = parent.get_output()
+    self.tb.SetName("main_toolbar")
 
 
   def on_go_home(self, event):

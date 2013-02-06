@@ -21,6 +21,7 @@ class MainStatus(wx.TextCtrl) :
                                         wx.Size(200, 150),
                                         wx.NO_BORDER | wx.TE_MULTILINE)
     self.level = StatusLevel.VERBOSE
+    self.SetName("main_status")
 
 
   def Verbose (self, c, text):
