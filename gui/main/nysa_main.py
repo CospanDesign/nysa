@@ -20,6 +20,9 @@
 #SOFTWARE.
 
 # Imports
+import os
+import sys
+
 import wx
 import wx.lib.agw.aui as aui
 import wx.lib.agw.persist.persistencemanager as PM
@@ -44,6 +47,12 @@ class NysaMain(wx.Frame):
     self._mgr = aui.AuiManager()
     self._mgr.SetManagedWindow(self)
 
+    self.SetName("nysa_main")
+
+    module_dir = os.path.dirname(self.__module__)
+    icon_file = os.path.join(module_dir, "images", "cospandesign.ico")
+    self.SetIcon(wx.Icon(icon_file, wx.BITMAP_TYPE_ICO))
+
     #Status Output Window
     self.output = MainStatus(self, "Nysa Started")
 
@@ -64,6 +73,7 @@ class NysaMain(wx.Frame):
 
     #PM.PersistenceManager.RegisterAndRestore(self.notebook)
     self.SetName("nysa_main")
+    self.output.Verbose (self, "cwd: %s" % os.getcwd())
     #self._pm = PM.PersistenceManager.Get()
     #_configFile = os.path.join(os.getcwd(), self.GetName())
     #self.output.Verbose(self, "Config File: %s" %self._pm.GetPersistenceDirectory())
