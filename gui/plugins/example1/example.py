@@ -26,28 +26,25 @@ import json
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, os.pardir, os.pardir))
 
 from .. import plugin
-import cbuilder_main_view as cmv
-from nysa.gui.main import main_status
-from nysa.gui.main.main_status import StatusLevel
+import example_view
 
+class PluginExample1(plugin.Plugin):
 
-class CBuilder (plugin.Plugin):
   name  = ""
   description = ""
   dbg = False
 
-  def __init__(self, dbg=False):
+  def __init__(self, output = None, dbg=False):
     self.dbg = dbg
-    plugin.Plugin.__init__(self, dbg = dbg)
-    self.output.Debug (self, "cbuilder started")
+    plugin.Plugin.__init__(self, output = output, dbg = dbg)
+    self.output.Debug (self, "Hello from example")
 
   def setup_main_view(self, panel):
     self.output.Debug (self, "Setup main view")
-    cbmv = cmv.CbuilderMainView()
-    cbmv.setup_view(panel)
 
-  def read_config_file(self, config_file_name="config.json"):
-    return plugin.Plugin.read_config_file(self, config_file_name = config_file_name)
+  def example_function(self, obj = None):
+    self.output.Info(self, "In example function")
 
-  def new_project(self, obj = None):
-    self.output.Info(self, "In new project function")
+
+
+
