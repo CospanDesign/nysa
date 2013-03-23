@@ -22,7 +22,7 @@ class MainNavigator(wx.Panel):
                                         validator = wx.DefaultValidator,
                                         name = wx.ComboBoxNameStr)
 
-    self.output = parent.get_output()
+    self.output = parent.getOutput()
     self.output.Verbose(self, "Starting Navigator")
     #Add the Tree to the bottom
 
