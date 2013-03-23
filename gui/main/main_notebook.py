@@ -49,7 +49,7 @@ class MainNotebook( aui.AuiNotebook ) :
                             aui.AUI_NB_SMART_TABS | \
                             aui.AUI_NB_TAB_FLOAT  | \
                             aui.AUI_NB_SUB_NOTEBOOK | \
-                            aui.AUI_NB_DRAW_DND_TAB 
+                            aui.AUI_NB_DRAW_DND_TAB
 
       self.SetName ("main_notebook")
 
@@ -58,7 +58,7 @@ class MainNotebook( aui.AuiNotebook ) :
       #mirror = ~(fnb.FNB_VC71 | fnb.FNB_VC8 | fnb.FNB_FANCY_TABS | fnb.FNB_FF2)
       #self.SetWindowStyleFlag( style )
       self.parent = parent
-      self.output = parent.get_output()
+      self.output = parent.getOutput()
       self.set_theme()
 
     def set_theme(self):
@@ -67,7 +67,8 @@ class MainNotebook( aui.AuiNotebook ) :
     def AddPage (self, page = None, text = ""):
       if page is None:
         page = TabPanelOne(self)
-
-      aui.AuiNotebook.AddPage( self, page, text )
+      #self.AddPage(page, text, False)
+      #call the super class
+      aui.AuiNotebook.AddPage(self, page ,text, False )
 
 
