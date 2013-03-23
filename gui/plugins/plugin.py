@@ -20,22 +20,57 @@
 #SOFTWARE.
 
 import json
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir, os.pardir))
+
+from nysa.gui.main import main_status
+from nysa.gui.main.main_status import StatusLevel
 
 class Plugin():
 
-  config_file_name = "config.json"
   name = ""
   description = ""
   path  = ""
-  def __init__(self):
-    print "Hello from plugin"
-    pass
+  dbg = False
+  output=None
+
+  def __init__(self, output=None, dbg=False):
+    self.dbg = dbg
+    if output is None:
+      self.output = main_status.Dummy(dbg)
+      if self.dbg:
+        self.output.SetLevel(StatusLevel.VERBOSE)
+      else:
+        self.output.SetLevel(StatusLevel.INFO)
+    else:
+      self.output = output
+
 
   def setup(self):
-    pass
+    self.output.Error (self, "Function not found")
 
   def load_main_view(self):
-    pass
+    self.output.Error (self, "Function not found")
 
-  def read_config_file(self):
-    pass
+  def read_config_file(self, config_file_name="config.json"):
+    #note: config_file_name is set to 'config.json' by default but this can be changed
+    self.output.Debug (self, str("Reading configuration file: %s" % config_file_name))
+    xbuf = ""
+    full_path = ""
+    full_path = os.path.join(self.path , config_file_name)
+    self.output.Debug(self, ("full path %s" % full_path))
+    config_dict = {}
+    try:
+      filein = open(full_path)
+      self.output.Debug (self, "Opened the config file")
+      #xbuf = filein.read()
+      config_dict = json.load(filein)
+    except IOError as err:
+      self.output.Error (self, str("File Not Found! %s " % str(err)))
+
+    self.name = config_dict["name"]
+    self.description = config_dict["description"]
+    return config_dict
+
