@@ -34,7 +34,7 @@ class MainStatus(wx.TextCtrl) :
 
   def Info (self, c, text):
     if self.CheckLevel(StatusLevel.INFO):
-      self.AppendText ("(Info) %s: %\n" % (c.__class__.__name__, text))
+      self.AppendText ("(Info) %s: %s\n" % (c.__class__.__name__, text))
 
   def Warning (self, c, text):
     if self.CheckLevel(StatusLevel.WARNING):
@@ -90,4 +90,69 @@ class MainStatus(wx.TextCtrl) :
         return True
 
     return False
- 
+
+class Dummy ():
+
+  level = StatusLevel.FATAL
+  def __init__(self, level=StatusLevel.FATAL):
+    self.level = level
+
+  def CheckLevel(self, requestLevel):
+    if requestLevel is StatusLevel.FATAL:
+      return True
+    elif requestLevel is StatusLevel.VERBOSE:
+      if  self.level is StatusLevel.VERBOSE:
+        return True
+    elif requestLevel is StatusLevel.DEBUG:
+      if  self.level is StatusLevel.VERBOSE or  \
+          self.level is StatusLevel.DEBUG:
+        return True
+    elif requestLevel is StatusLevel.INFO:
+      if self.level is StatusLevel.VERBOSE or  \
+          self.level is StatusLevel.DEBUG or    \
+          self.level is StatusLevel.INFO:
+        return True
+    elif requestLevel is StatusLevel.WARNING:
+      if self.level == StatusLevel.VERBOSE or  \
+          self.level == StatusLevel.DEBUG or    \
+          self.level == StatusLevel.INFO  or    \
+          self.level == StatusLevel.WARNING:
+        return True
+    elif requestLevel is StatusLevel.ERROR:
+      if self.level == StatusLevel.VERBOSE or  \
+          self.level == StatusLevel.DEBUG or    \
+          self.level == StatusLevel.INFO  or    \
+          self.level == StatusLevel.WARNING or  \
+          self.level == StatusLevel.ERROR:
+        return True
+
+  def SetLevel(self, level):
+    self.level = level
+
+  def GetLevel(self):
+    return self.level
+
+  def Verbose (self, c, text):
+    if self.CheckLevel(StatusLevel.VERBOSE):
+      print "(Verbose) %s: %s" % (c.__class__.__name__, text)
+
+  def Debug (self, c, text):
+    if self.CheckLevel(StatusLevel.DEBUG):
+      print "(Debug) %s: %s" % (c.__class__.__name__, text)
+
+  def Info (self, c, text):
+    if self.CheckLevel(StatusLevel.INFO):
+      print "(Info) %s: %s" % (c.__class__.__name__, text)
+
+  def Warning (self, c, text):
+    if self.CheckLevel(StatusLevel.WARNING):
+      print "(Warning) %s: %s" % (c.__class__.__name__, text)
+
+  def Error (self, c, text):
+    if self.CheckLevel(StatusLevel.ERROR):
+      print "(Error) %s: %s" % (c.__class__.__name__, text)
+
+  def Fatal (self, c, text):
+    if self.CheckLevel(StatusLevel.FATAL):
+      print "(Fatal) %s: %s" % (c.__class__.__name__, text)
+
