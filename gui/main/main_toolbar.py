@@ -9,7 +9,7 @@ class MainToolBarManager ():
                 wx.TB_FLAT )
     self.tb = toolbar
     self.tb.SetWindowStyle(TBFLAGS)
-    self.output = parent.get_output()
+    self.output = parent.getOutput()
     self.tb.SetName("main_toolbar")
 
 
