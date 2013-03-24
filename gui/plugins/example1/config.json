@@ -1,0 +1,20 @@
+{
+  "name":"Example1",
+  "description":"Example Plugin",
+  "enable":true,
+
+  "persistent": {
+    "menu_item":{
+    "Example Menu Item":{
+      "location":"example",
+      "function":"example_function",
+      "return":"none",
+      "accellerator":""
+    }
+    },
+    "toolbar_item":{
+    },
+    "wizard":{
+    }
+  }
+}
