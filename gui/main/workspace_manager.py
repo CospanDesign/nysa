@@ -27,17 +27,15 @@ import main_status
 from main_status import StatusLevel
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
-from nysa.gui.plugins import plugin_manager
 
 class WorkspaceManager ():
   output=None
   dbg = False
-  pm  = None
 
   def __init__(self, output=None, dbg=False):
     self.dbg = dbg
     self.output = None
-    self.pm = None
+    self.pgl = None
     if output is None:
       self.output = main_status.Dummy()
       if self.dbg:
@@ -61,28 +59,6 @@ class WorkspaceManager ():
     self.cfg.WriteBool(key, value)
     '''
     self.output.Debug(self, "Started")
-    self.load_plugins()
-
-  def load_plugins (self):
-    self.pm = plugin_manager.PluginManager()
-    if self.pm.get_num_plugins() > 0:
-      self.output.Debug (self, "Found Plugins:")
-      for key in self.pm.get_plugin_names():
-        self.output.Debug (self, str("\t%s" % key))
-
-
-  def add_plugin_gui_components(self):
-    #add the persistent components of the plugins
-    #The plugin manager will give us a list of GUI components
-
-    #add menu items
-    #add toolbar items
-    #add wizard
-      #i suppose you don't really need to add this but it needs to be available :q
-
-
-
-    pass
 
   def save_workspace  (self):
     pass
