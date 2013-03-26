@@ -47,6 +47,8 @@ class Plugin():
     else:
       self.output = output
 
+  def set_output(self, output):
+    self.output = output
 
   def setup(self):
     self.output.Error (self, "Function not found")
