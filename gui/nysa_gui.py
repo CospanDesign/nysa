@@ -10,15 +10,17 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 import wx
 import wx.lib.agw.aui as aui
 from main.main_status import MainStatus
-from main.main_status import StatusLevel
 from main.main_navigator import MainNavigator
 from main.workspace_manager import WorkspaceManager
 from main.nysa_main import NysaMain
+from plugins import plugin_manager
 
 class NysaGui (wx.App):
   '''Nysa App Class'''
   _wm = None
+  _pm = None
   output = None
+  main = None
 
   def __init__(self):
     wx.App.__init__(self)
@@ -26,16 +28,53 @@ class NysaGui (wx.App):
   def OnInit(self):
     self.SetAppName("Nysa")
     self.main = NysaMain()
-    #load the workspace manager
+    self._pm = None
+
     self.output = self.getOutput()
+
+    #Load the plugin manager
+    #self.load_plugins()
+
+    #load the workspace manager
     self._wm = WorkspaceManager(self.main.getOutput())
+    self._pm = plugin_manager.PluginManager(self.main.getOutput())
+
+    self.setup_persistant_gui_components()
+    #mbm = self.main.get_menu_bar_manager()
+    #self._pm.get_
+
     self.main.Show()
-    self.loadPlugins()
     return True
 
+  def setup_persistant_gui_components(self):
+    mi_dict = self._pm.get_persistent_gui_menu_items()
+    for mi in mi_dict.keys():
+      ip = mi_dict[mi]["location"] + "." + mi
+      handler = mi_dict[mi]["function"]
 
-  def loadPlugins(self):
-    self.output.Verbose (self, "Loading Plugins...")
+      desc = ""
+      if "description" in mi_dict[mi].keys():
+        desc = mi_dict[mi]["description"]
+      accel = None
+      if "accellerator" in mi_dict[mi].keys():
+        if len(mi_dict[mi]["accellerator"]) > 0:
+          accel = mi_dict[mi]["accellerator"]
+
+      self.main.add_menu_item(ip, desc, accel, handler)
+
+    tb_dict = self._pm.get_persistent_gui_toolbar_items()
+    for tbi in tb_dict.keys():
+      img = tb_dict[tbi]["image"]
+      tts = None
+      ttl = None
+      hdl = tb_dict[tbi]["function"]
+      if "tooltip_short" in tb_dict[tbi].keys():
+        tts = tb_dict[tbi]["tooltip_short"]
+
+      if "tooltip_long" in tb_dict[tbi].keys():
+        ttl = tb_dict[tbi]["tooltip_long"]
+
+      self.main.add_toolbar_item(name = tbi, image_path = img, tooltip_short=tts, tooltip_long=ttl, handler=hdl)
 
   def getOutput(self):
     return self.main.getOutput()

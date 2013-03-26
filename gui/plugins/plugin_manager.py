@@ -26,11 +26,11 @@ import plugin
 import json
 
 #print "directory: %s" % str(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir))
-
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir))
 
 from nysa.gui.main import main_status
 from nysa.gui.main.main_status import StatusLevel
+from nysa.gui.plugins import plugin
 
 class PluginManager ():
   output = None
@@ -47,10 +47,12 @@ class PluginManager ():
     else:
       self.output = output
 
+    self.output.Debug(self, "Started")
+
     self.load_plugin_dict()
     for key in self.get_plugin_names():
       self.load_plugin_configuration(key)
-      self.map_persistent_functions(key)
+      self.map_config_functions(key)
 
   def get_plugin_names(self):
     #plugin names are the keys
@@ -85,6 +87,8 @@ class PluginManager ():
                     self.plugin_dict[d]["directory"] = dpath
                     #get an instance of the class
                     self.plugin_dict[d]["plugin"] = attr()
+                    self.plugin_dict[d]["plugin"].set_output(self.output)
+
     return self.plugin_dict
 
   def load_plugin_configuration(self, plugin_name, config_file_name="config.json"):
@@ -102,8 +106,36 @@ class PluginManager ():
 
     self.plugin_dict[plugin_name]["configuration"] = config_dict
 
-  def map_persistent_functions(self, plugin_name):
-    self.output.Debug(self, "in map_persistent_functions")
+  def get_persistent_gui_menu_items(self):
+    #go through the dictionary and pick out the persistent menu items
+    p_mi_dict = {}
+    for plugin in self.plugin_dict.keys():
+      self.output.Debug(self, str("Working on %s" % plugin))
+      for mi in self.plugin_dict[plugin]["configuration"]["persistent"]["menu_item"].keys():
+        p_mi_dict[mi] = self.plugin_dict[plugin]["configuration"]["persistent"]["menu_item"][mi]
+        self.output.Debug(self, str("\tAdding: %s to the dictionary" % mi))
+    return p_mi_dict
+
+
+  def get_persistent_gui_toolbar_items(self):
+    #go through the dictionary and pick out the persistent toolbar items
+    p_tb_dict = {}
+    for plugin in self.plugin_dict.keys():
+      self.output.Info(self, str("Working on %s" % plugin))
+      for tb in self.plugin_dict[plugin]["configuration"]["persistent"]["toolbar_item"].keys():
+        p_tb_dict[tb] = self.plugin_dict[plugin]["configuration"]["persistent"]["toolbar_item"][tb]
+        image = p_tb_dict[tb]["image"]
+        path = self.plugin_dict[plugin]["directory"]
+        image = os.path.join(path, "images", image)
+        self.output.Info(self, str("\tChanging the path of the image to: %s" % image))
+        self.output.Info(self, str("\tAdding: %s to the dictionary" % tb))
+        p_tb_dict[tb]["image"] = image
+    return p_tb_dict
+
+
+
+  def map_config_functions(self, plugin_name):
+    self.output.Debug(self, "in map_config_functions")
     pd = {}
     cd = self.plugin_dict[plugin_name]["configuration"]
     self.output.Debug(self, str("Configuration Dictionary for %s: %s" % (str(plugin_name), str(cd))))
@@ -139,9 +171,6 @@ class PluginManager ():
                 pd[gui_type][gui_comp][item] = func
                 #pd[gui_type][gui_comp][item]()
 
-            
-    
-    
 
   def get_plugin_path(self, plugin_name):
     return self.plugin_dict[plugin_name]["module_path"]

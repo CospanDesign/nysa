@@ -32,9 +32,11 @@ from main_status import StatusLevel
 from main_navigator import MainNavigator
 from main_notebook import MainNotebook
 from main_toolbar import MainToolBarManager
+from main_menu    import MainMenuBarManager
+
+sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 
 #Classes
-
 class AUIManager (aui.AuiManager):
   def __init__(self, managed_window):
     aui.AuiManager.__init__(self)
@@ -42,7 +44,10 @@ class AUIManager (aui.AuiManager):
 
 class NysaMain(wx.Frame):
   #Top Level Window of Nysa
-  _mgr = None
+  _mgr  = None
+  _mbm  = None
+  _pgl  = None
+
   def __init__(self):
     wx.Frame.__init__(self, None, wx.ID_ANY, "Nysa", size = (600, 400))
     self._mgr = aui.AuiManager()
@@ -69,7 +74,17 @@ class NysaMain(wx.Frame):
     self._mgr.AddPane(self.notebook, aui.AuiPaneInfo().Name("notebook_content").CenterPane().PaneBorder(False))
 
     #Add the Menubar
-    self.CreateMenu()
+
+    self._mbm = MainMenuBarManager(self, self.output)
+    self.SetDefaultMenuItems()
+
+    #Test out adding and removing items from the main_menubar
+    #self._mbm.add_item(item_path = "test.test1.test2", handler=None)
+    #self._mbm.remove_item(item_path = "test.test1.test2")
+
+    #self._mbm.add_item(item_path = "test.test1.test2", handler=None)
+    #self._mbm.remove_item(item_path = "test.test1")
+
     self.CreateTB()
     self.CreateSB()
 
@@ -87,6 +102,19 @@ class NysaMain(wx.Frame):
 
     self._mgr.Update()
 
+  def SetDefaultMenuItems(self):
+    self._mbm.add_item(item_path = "File.&Exit\tAlt+F4", description = "Exit Program", handler=self.OnExit)
+    self._mbm.add_item(item_path= "Options.Disable Current Tab", handler=self.OnDisableTab)
+    self._mbm.add_item(item_path= "Options.Enable Current Tab", handler=self.OnEnableTab)
+    self._mbm.add_item(item_path= "Options.Add Page", handler=self.OnCreatePage)
+    self._mbm.add_item(item_path= "Options.Add a test workspace", handler=self.OnCreateWorkspace)
+
+  def add_menu_item(self, item_path, description, accellerator, handler):
+    self._mbm.add_item(item_path = item_path, description = description, accellerator = accellerator, handler = handler)
+
+  def add_toolbar_item(self, name, image_path, tooltip_short=None, tooltip_long=None, handler=None):
+    '''Adds a toolbar item to the main view'''
+    self.tbm.add_tool(name, image_path, tooltip_short, tooltip_long, handler, user_data=None)
 
   def AddPage(self, name):
     self.notebook.AddPage(None, name)
@@ -116,27 +144,6 @@ class NysaMain(wx.Frame):
   def OnCreateWorkspace(self, event):
     self.nav.addWorkspace("test")
 
-  def CreateMenu(self):
-    def doBind(item, handler):
-      """Create Menu Bindings"""
-      self.Bind(wx.EVT_MENU, handler, item)
-
-    menubar = wx.MenuBar()
-    file_menu = wx.Menu()
-    doBind(file_menu.Append(wx.ID_ANY, "&Exit\tAlt+F4", "Exit Program"), self.OnExit)
-
-
-    options_menu  = wx.Menu()
-    doBind(options_menu.Append(wx.ID_ANY, "Disable Current Tab"), self.OnDisableTab)
-    doBind(options_menu.Append(wx.ID_ANY, "Enable Current Tab"), self.OnEnableTab)
-    doBind(options_menu.Append(wx.ID_ANY, "Add Page"), self.OnCreatePage)
-    doBind(options_menu.Append(wx.ID_ANY, "Add a test workspace"), self.OnCreateWorkspace)
-
-    #add the Menus to the Menu bar
-    menubar.Append(file_menu, "File")
-    menubar.Append(options_menu, "Options")
-    self.SetMenuBar(menubar)
-
   def CreateTB(self):
     tb = self.CreateToolBar()
     self.tbm = MainToolBarManager(tb, self)
@@ -147,6 +154,9 @@ class NysaMain(wx.Frame):
     '''
     self.sb.SetStatusText("Testing status")
     '''
+
+  def get_menu_bar_manager(self):
+    return self._mbm
 
   def getOutput(self):
     return self.output

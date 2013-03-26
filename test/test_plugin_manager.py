@@ -37,8 +37,17 @@ class PluginManagerTest (unittest.TestCase):
     if dbg: print "Got class: %s" % str(ep)
     ep.read_config_file()
 
-  def test_map_persistent_functions(self):
+  def test_map_config_functions(self):
     p = pm.PluginManager(dbg=False)
+
+  def test_get_persistent_gui_menu_items(self):
+    p = pm.PluginManager(dbg=False)
+    p.get_persistent_gui_menu_items()
+
+  def test_get_persistent_gui_toolbar_items(self):
+    p = pm.PluginManager(dbg=False)
+    p.get_persistent_gui_toolbar_items()
+
 
 if __name__ == "__main__":
   unittest.main()
