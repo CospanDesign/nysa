@@ -5,14 +5,19 @@
 
   "persistent": {
     "menu_item":{
-    "Example Menu Item":{
-      "location":"example",
-      "function":"example_function",
-      "return":"none",
-      "accellerator":""
-    }
+      "Example Menu Item":{
+        "location":"example",
+        "function":"example_function",
+        "accellerator":""
+      }
     },
     "toolbar_item":{
+      "Example Toolbar Item":{
+        "image":"example_tb_image.png",
+        "tooltip_short":"Short tool tip",
+        "tooltip_long":"Long tool tip",
+        "function":"example_tb_function"
+      }
     },
     "wizard":{
     }
