@@ -53,13 +53,13 @@ class MainToolBarManager ():
     '''
     self.tb.ClearTools()
 
-  def add_tool(self, name, image, tooltip_short=None, tooltip_long=None, handler=None, user_data=None):
+  def add_tool(self, name, image_path, tooltip_short=None, tooltip_long=None, handler=None, user_data=None):
     '''
     Add a tool to the current toolbar
 
     Args:
       name: name of the tool (used to identify the tool when the event is pressed)
-      image: image (Bitmap) example: wx.ArtProvider.GetBitmap(wx.ART_GO_HOME)
+      image: image path (Bitmap) example: wx.ArtProvider.GetBitmap(wx.ART_GO_HOME)
       tooltip: test to display when the user hovers over the button
       handler: function to call when the user presses the button
       user_data: data to return when an event is called
@@ -71,13 +71,15 @@ class MainToolBarManager ():
     Raises:
       XXX: Raises something when handler is None  (or at least it should)
     '''
+    image = wx.Image(image_path, wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+
     self.tb.Bind(wx.EVT_TOOL,
                 handler,
                 self.tb.AddLabelTool( id=wx.ID_ANY,
                                       label=name,
                                       bitmap=image,
-                                      longHelp=tooltip,
-                                      clientData=user_data), )
+                                      longHelp=tooltip_long,
+                                      clientData=user_data) )
 
     self.tb.Realize()
 
