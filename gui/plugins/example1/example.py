@@ -45,6 +45,6 @@ class PluginExample1(plugin.Plugin):
   def example_function(self, obj = None):
     self.output.Info(self, "In example function")
 
-
-
+  def example_tb_function(self, obj = None):
+    self.output.Info(self, "In example tb function")
 
