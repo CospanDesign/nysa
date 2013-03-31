@@ -48,6 +48,9 @@ class PluginManagerTest (unittest.TestCase):
     p = pm.PluginManager(dbg=False)
     p.get_persistent_gui_toolbar_items()
 
+  def test_get_plugin_projects(self):
+    p = pm.PluginManager()
+    proj_dict = {}
 
 if __name__ == "__main__":
   unittest.main()
