@@ -1,0 +1,102 @@
+{
+  "name":"Example Project 1",
+  "description":"Example Project to exercise the Porject feature",
+
+  "types":{
+    "source":{
+      "description":"Source Files",
+      "file_types":["txt"]
+    },
+    "header":{
+      "description":"Header Files",
+      "file_types":["txt"]
+    }
+  },
+
+  "gui":{
+    "menu_items":{
+      "Example Project":{
+        "location":"example",
+        "function":"example_project_function",
+        "accellerator":""
+      }
+    },
+    "toolbar_item":{
+      "Example Project Toolbar Item":{
+        "image":"example_project_tb_item.png",
+        "tooltip_short":"Short Project tool tip",
+        "tooltip_long":"Long Project tool tip",
+        "function":"example_project_tb_funtion"
+      }
+    }
+  },
+
+  "new_project_wizard":{
+    "title":"Example Project Wizard",
+    "image":"example_project_wizard_image.png",
+    "description":"Example wizard to load an example project",
+    "pages":{
+      "start":{
+        "image":"first_page_image.png",
+        "title":"First Page",
+        "description":"First page description",
+        "items":[
+            {
+              "title":"First Item Title",
+              "image":"first_item_image.png",
+              "description":"Textbox Example",
+              "tag":"text_box",
+              "gui":"text_box"
+            }
+          ]
+      },
+      "second":{
+        "image":"second_page_image.png",
+        "title":"Second Page",
+        "description":"Second page description",
+        "items":[
+          {
+            "title":"First Item",
+            "description":"Checkbox set (OR)",
+            "tag":"checkbox",
+            "gui":"checkbox_set",
+            "list":[
+              "Item 1",
+              "Item 2",
+              "Item 3",
+              "Item 4"
+            ]
+          },
+          {
+            "title":"Second Item",
+            "description":"radio button (XOR)",
+            "tag":"radiobutton",
+            "gui":"radiobutton_set",
+            "list":[
+              "this",
+              "that"
+            ]
+          },
+          {
+            "title":"Thrid Item",
+            "description":"static combbox",
+            "tag":"static_combobox",
+            "gui":"combobox",
+            "list":[
+              "Combo 1",
+              "Combo 2",
+              "Daze"
+            ]
+          },
+          {
+            "title":"Fourth Item",
+            "description":"function combobox",
+            "tag":"function_combobox",
+            "gui":"combobox",
+            "list":"wizard_combox_function"
+          }
+        ]
+      }
+    }
+  }
+}
