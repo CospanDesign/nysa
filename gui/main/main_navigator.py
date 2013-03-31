@@ -35,9 +35,10 @@ class MainNavigator(wx.Panel):
 
   def createNavigationTree(self):
     self.nav = gizmos.TreeListCtrl(self, size= (200, -1), style=wx.TR_HIDE_ROOT)
-    self.nav.SetSizeHints(200, -1, -1, -1)
+    self.nav.SetSizeHints(300, -1, -1, -1)
     self.nav.AddColumn("Project")
     self.nav.SetMainColumn(0)
+    self.nav.AddColumn("Type")
     self.nav.AddColumn("File")
     self.nav.AddRoot("Root")
     self.nav.Expand(self.nav.GetRootItem())
