@@ -124,7 +124,7 @@ class MainMenuBarManager():
     return True
 
 
-  def add_item (self, item_path, description = "", accellerator = None, handler = None):
+  def add_item (self, item_path, description = "", accellerator = None, handler = None, data=None):
     '''
     Adds an item using the 'path' that the user specifies with item_path
 
@@ -134,7 +134,7 @@ class MainMenuBarManager():
       handler: function to callback when the user selects an item
 
     Return:
-      Nothing
+      ID of the menu item
 
     Raises:
       XXX: Someting... but what??
@@ -190,4 +190,6 @@ class MainMenuBarManager():
 
     curr_menu.AppendItem(mi)
     self.parent.Bind(wx.EVT_MENU, handler, mi)
+
+    return mi.GetId()
 
