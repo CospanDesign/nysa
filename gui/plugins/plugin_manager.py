@@ -31,6 +31,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os
 from nysa.gui.main import main_status
 from nysa.gui.main.main_status import StatusLevel
 from nysa.gui.plugins import plugin
+from nysa.gui.plugins import plugin_project
 
 class PluginManager ():
   output = None
@@ -53,6 +54,7 @@ class PluginManager ():
     for key in self.get_plugin_names():
       self.load_plugin_configuration(key)
       self.map_config_functions(key)
+      self.load_plugin_projects(key)
 
   def get_plugin_names(self):
     #plugin names are the keys
@@ -60,6 +62,63 @@ class PluginManager ():
 
   def get_num_plugins(self):
     return len(self.plugin_dict.keys())
+
+  def load_plugin_projects(self, plugin_name):
+    proj_dict = {}
+    if "projects" in self.plugin_dict[plugin_name]["configuration"].keys():
+      proj_dict = self.plugin_dict[plugin_name]["configuration"]["projects"]
+      for pp in self.plugin_dict[plugin_name]["configuration"]["projects"].keys():
+        proj_dict[pp]["directory"] = os.path.join(self.plugin_dict[plugin_name]["directory"], pp)
+        #self.output.Info(self, str("project directory %s" % proj_dict[pp]["directory"]))
+        proj_dict[pp]["module_path"] = "nysa.gui.plugins.%s.%s" % (plugin_name, pp)
+        #self.output.Info(self, str("project module path %s" % proj_dict[pp]["module_path"]))
+        proj_dir = proj_dict[pp]["directory"]
+        #load all the data from the project configuration file
+        config_dict = {}
+        #XXX: The configuration file shouldn't be permanently written here
+        config_path = os.path.join(proj_dir, "config.json")
+        try:
+          filein = open(config_path)
+          self.output.Info(self, "Opened the config file")
+          config_dict = json.load(filein)
+        except IOError as err:
+          self.output.Error(self, str("File Not Found! %s " % str(err)))
+
+        proj_dict[pp]["configuration"] = config_dict
+
+        if os.path.isdir(proj_dir):
+          for (path, dirs, files) in os.walk(proj_dir):
+            for f in files:
+              dpath = os.path.abspath(path)
+              if os.path.exists (dpath + os.sep + "__init__.py") and f.endswith("py"):
+                m = f.partition(".")[0]
+                #self.output.Info(self, str("Found module: %s" % m))
+                res = __import__(proj_dict[pp]["module_path"] + "." + m, fromlist=['*'])
+                #self.output.Info(self, str("Found module: %s" % res))
+                for name in dir(res):
+                  #self.output.Info(self, str("Attribute: %s" % name))
+                  attr = getattr(res, name)
+                  if inspect.isclass(attr) and issubclass(attr, plugin_project.PluginProject):
+                    proj_dict[pp]["class"] = attr
+                    attr.config_dict = config_dict
+                    #self.output.Info(self, str("Found class: %s" % attr))
+
+
+
+  def get_project_reference(self, plugin_name):
+    #return the plugin names from
+    if "projects" in self.plugin_dict[plugin_name]["configuration"].keys():
+      self.output.Info(self, "projects %s" % self.plugin_dict[plugin_name]["configuration"]["projects"].keys())
+      return self.plugin_dict[plugin_name]["configuration"]["projects"].keys()
+    return {}
+
+  def get_project_name(self, plugin_name, project_reference):
+    name = self.plugin_dict[plugin_name]["configuration"]["projects"][project_reference]["configuration"]["name"]
+    self.output.Info(self, str("Getting project name for %s.%s, name: %s" % (plugin_name, project_reference, name)))
+    return name
+
+  def get_project_class(self, plugin_name, project_reference):
+    return self.plugin_dict[plugin_name]["configuration"]["projects"][project_reference]["class"]
 
   def load_plugin_dict(self):
     self.plugin_dict = {}
@@ -121,14 +180,14 @@ class PluginManager ():
     #go through the dictionary and pick out the persistent toolbar items
     p_tb_dict = {}
     for plugin in self.plugin_dict.keys():
-      self.output.Info(self, str("Working on %s" % plugin))
+      self.output.Debug(self, str("Working on %s" % plugin))
       for tb in self.plugin_dict[plugin]["configuration"]["persistent"]["toolbar_item"].keys():
         p_tb_dict[tb] = self.plugin_dict[plugin]["configuration"]["persistent"]["toolbar_item"][tb]
         image = p_tb_dict[tb]["image"]
         path = self.plugin_dict[plugin]["directory"]
         image = os.path.join(path, "images", image)
-        self.output.Info(self, str("\tChanging the path of the image to: %s" % image))
-        self.output.Info(self, str("\tAdding: %s to the dictionary" % tb))
+        self.output.Debug(self, str("\tChanging the path of the image to: %s" % image))
+        self.output.Debug(self, str("\tAdding: %s to the dictionary" % tb))
         p_tb_dict[tb]["image"] = image
     return p_tb_dict
 

@@ -56,6 +56,9 @@ class Plugin():
   def load_main_view(self):
     self.output.Error (self, "Function not found")
 
+  def get_project_dictionary(self):
+    self.output.Debug (self, "Getting project dictionary")
+
   def read_config_file(self, config_file_name="config.json"):
     #note: config_file_name is set to 'config.json' by default but this can be changed
     self.output.Debug (self, str("Reading configuration file: %s" % config_file_name))

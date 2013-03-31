@@ -18,8 +18,12 @@
         "tooltip_long":"Long tool tip",
         "function":"example_tb_function"
       }
-    },
-    "wizard":{
+    }
+  },
+
+  "projects":{
+    "example_project1":{
+      "enable":true
     }
   }
 }

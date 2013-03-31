@@ -6,7 +6,7 @@
   "persistent":{
     "menu_item":{
       "Cbuilder Project":{
-        "location":"Workspace.New Project",
+        "location":"Cbuilder.Thing",
         "function":"new_project",
         "return":"none",
         "accellerator":""

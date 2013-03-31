@@ -47,6 +47,7 @@ class NysaMain(wx.Frame):
   _mgr  = None
   _mbm  = None
   _pgl  = None
+  _nav  = None
 
   def __init__(self):
     wx.Frame.__init__(self, None, wx.ID_ANY, "Nysa", size = (600, 400))
@@ -66,11 +67,11 @@ class NysaMain(wx.Frame):
     #Main View
     self.notebook = MainNotebook(self)
     #Workspace/Project Navigator
-    self.nav    = MainNavigator(self)
+    self._nav    = MainNavigator(self)
 
     #Add the main Notebook View
     self._mgr.AddPane(self.output, wx.BOTTOM, "Output")
-    self._mgr.AddPane(self.nav, wx.LEFT, "Navigator")
+    self._mgr.AddPane(self._nav, wx.LEFT, "Navigator")
     self._mgr.AddPane(self.notebook, aui.AuiPaneInfo().Name("notebook_content").CenterPane().PaneBorder(False))
 
     #Add the Menubar
@@ -109,8 +110,8 @@ class NysaMain(wx.Frame):
     self._mbm.add_item(item_path= "Options.Add Page", handler=self.OnCreatePage)
     self._mbm.add_item(item_path= "Options.Add a test workspace", handler=self.OnCreateWorkspace)
 
-  def add_menu_item(self, item_path, description, accellerator, handler):
-    self._mbm.add_item(item_path = item_path, description = description, accellerator = accellerator, handler = handler)
+  def add_menu_item(self, item_path, description, accellerator, handler, data=None):
+    return self._mbm.add_item(item_path = item_path, description = description, accellerator = accellerator, handler = handler, data=data)
 
   def add_toolbar_item(self, name, image_path, tooltip_short=None, tooltip_long=None, handler=None):
     '''Adds a toolbar item to the main view'''
@@ -142,7 +143,7 @@ class NysaMain(wx.Frame):
     self.AddPage(name)
 
   def OnCreateWorkspace(self, event):
-    self.nav.addWorkspace("test")
+    self._nav.addWorkspace("test")
 
   def CreateTB(self):
     tb = self.CreateToolBar()
