@@ -79,12 +79,15 @@ class PluginManager ():
         config_path = os.path.join(proj_dir, "config.json")
         try:
           filein = open(config_path)
-          self.output.Info(self, "Opened the config file")
+          self.output.Debug(self, "Opened the config file")
           config_dict = json.load(filein)
         except IOError as err:
           self.output.Error(self, str("File Not Found! %s " % str(err)))
 
         proj_dict[pp]["configuration"] = config_dict
+
+        #remap all the images with the full path
+        self.map_image_full_path(config_dict, proj_dir)
 
         if os.path.isdir(proj_dir):
           for (path, dirs, files) in os.walk(proj_dir):
@@ -100,9 +103,34 @@ class PluginManager ():
                   attr = getattr(res, name)
                   if inspect.isclass(attr) and issubclass(attr, plugin_project.PluginProject):
                     proj_dict[pp]["class"] = attr
-                    attr.config_dict = config_dict
+                    attr.class_config_dict = config_dict
+                    attr.path = proj_dir
                     #self.output.Info(self, str("Found class: %s" % attr))
 
+  def map_image_full_path(self, config_level, pp_path):
+    if type(config_level) == list:
+      for x in xrange (len(config_level)):
+        if type(config_level[x]) == dict:
+          self.map_image_full_path(config_level[x], pp_path)
+        return
+
+    elif type(config_level) == dict:  
+      if len(config_level.keys()) == 0:
+        return
+
+      for key in config_level.keys():
+        if type(config_level[key]) == str or type(config_level[key]) == unicode:
+          if "image" == key:
+            temp = config_level[key]
+            config_level[key] = os.path.join(pp_path, "images", config_level[key])
+            self.output.Debug(self, str("Rempaing %s to %s" % (temp, config_level[key])))
+
+        elif type(config_level[key]) == list:
+          self.map_image_full_path(config_level[key], pp_path)
+
+        elif type(config_level[key]) == dict:
+          self.map_image_full_path(config_level[key], pp_path)
+    return
 
 
   def get_project_reference(self, plugin_name):
@@ -164,6 +192,8 @@ class PluginManager ():
       self.output.Error(self, str("File Not Found! %s " % str(err)))
 
     self.plugin_dict[plugin_name]["configuration"] = config_dict
+
+
 
   def get_persistent_gui_menu_items(self):
     #go through the dictionary and pick out the persistent menu items

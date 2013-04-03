@@ -46,7 +46,8 @@
               "image":"first_item_image.png",
               "description":"Textbox Example",
               "tag":"text_box",
-              "gui":"text_box"
+              "gui":"text_box",
+              "default":"default value"
             }
           ]
       },
@@ -86,14 +87,24 @@
               "Combo 1",
               "Combo 2",
               "Daze"
-            ]
+            ],
+            "default":"Combo 1"
           },
           {
             "title":"Fourth Item",
             "description":"function combobox",
             "tag":"function_combobox",
             "gui":"combobox",
-            "list":"wizard_combox_function"
+            "list":"wizard_combobox_function"
+          },
+          {
+            "title":"Fifth Item",
+            "description":"numeric spinner",
+            "tag":"fifth spinner",
+            "gui":"spinner",
+            "max":10,
+            "min":0,
+            "default":3
           }
         ]
       }

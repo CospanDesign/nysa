@@ -43,6 +43,7 @@ class PluginExample1(plugin_project.PluginProject):
     self.output.Info(self, str ("config dictionary: %s" % str(self.config_dict)))
 
   def wizard_combobox_function(self):
+    self.output.Info(self, "YOU MADE IT!")
     l = ["eggs", "cheese", "5", "milk"]
     return l
 

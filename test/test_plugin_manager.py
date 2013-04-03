@@ -50,7 +50,8 @@ class PluginManagerTest (unittest.TestCase):
 
   def test_get_plugin_projects(self):
     p = pm.PluginManager()
-    proj_dict = {}
+    p.load_plugin_projects("example1")
+
 
 if __name__ == "__main__":
   unittest.main()
