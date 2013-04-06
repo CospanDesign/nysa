@@ -100,7 +100,7 @@
           {
             "title":"Fifth Item",
             "description":"numeric spinner",
-            "tag":"fifth spinner",
+            "tag":"spinner",
             "gui":"spinner",
             "max":10,
             "min":0,

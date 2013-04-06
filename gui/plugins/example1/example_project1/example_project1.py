@@ -31,7 +31,7 @@ from nysa.gui.main.main_status import StatusLevel
 from nysa.gui.plugins import plugin_project
 
 
-class PluginExample1(plugin_project.PluginProject):
+class PluginProjectExample1(plugin_project.PluginProject):
 
   def __init__(self, output=None, name = None, dbg=False):
     self.dbg = dbg
@@ -46,6 +46,10 @@ class PluginExample1(plugin_project.PluginProject):
     self.output.Info(self, "YOU MADE IT!")
     l = ["eggs", "cheese", "5", "milk"]
     return l
+
+  def is_new_project_wizard(self):
+    return True
+
 
 
 if __name__ == "__main__":

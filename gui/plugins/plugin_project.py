@@ -38,6 +38,7 @@ class PluginProject():
   output=None
   config_dict = {}
   class_config_dict = {}
+  new_project_wiz_en = False
 
 
   def __init__(self, output=None, name = None, dbg=False):
@@ -79,8 +80,14 @@ class PluginProject():
   def new_project(self):
     self.output.Info(self, "Setting up a new project")
 
+  def is_new_project_wizard(self):
+    return False
+
+  def get_new_project_wizard(self):
+    return self.config_dict["new_project_wizard"]
+
   def _map_functions(self, config_level):
-    
+
     if type(config_level) == list:
       for x in xrange (len(config_level)):
         if type(config_level[x]) == dict:
@@ -97,7 +104,7 @@ class PluginProject():
           if type(config_level[key]) == str or type(config_level[key]) == unicode:
 
             func_name = config_level[key]
-           
+
             #self.output.Info(self, "Directory of class: %s" % str(dir(self)))
             for attr in dir(self):
               #self.output.Info(self, str("Check if %s == %s" % (func_name, str(attr))))
