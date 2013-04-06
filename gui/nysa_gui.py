@@ -36,7 +36,7 @@ class NysaGui (wx.App):
     self._pm = plugin_manager.PluginManager(self.main.getOutput())
 
     #load the workspace manager
-    self._wm = WorkspaceManager(self.main, self._pm, self.main.getOutput())
+    self._wm = WorkspaceManager(self, self.main, self._pm, self.main.getOutput())
 
     #load the consistent GUI components from the plugins
     self.setup_persistant_gui_components()

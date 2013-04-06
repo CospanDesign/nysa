@@ -24,6 +24,7 @@ import inspect
 import os
 import sys
 import main_status
+from wizard_interpreter import WizardInterpreter
 from main_status import StatusLevel
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
@@ -40,10 +41,11 @@ class WorkspaceManager ():
   id_map = {}
 
 
-  def __init__(self, view=None, pm=None, output=None,  dbg=False):
+  def __init__(self, parent, view=None, pm=None, output=None,  dbg=False):
     self.dbg = dbg
     self.output = None
     self.pgl = None
+    self.parent = parent
     self._pm = pm
     self.view=view
 
@@ -99,13 +101,13 @@ class WorkspaceManager ():
         self.project_types[pp]
         self.output.Info(self, "ID %d maps to %s" % (mid, pp))
         self.id_map[mid] = (p, pp)
-        
+
 
   def new_project(self, evt):
+    project = None
     self.output.Info(self, str("User selected a project to open: ID = %d"% evt.GetId()))
     plugin_name, project_reference = self.id_map[evt.GetId()]
     self.output.Info(self, str("Plugin:Project: %s:%s" % (plugin_name, project_reference)))
-
 
     #call the custom 'new project' settings from plugin_project
     clazz = self._pm.get_project_class(plugin_name, project_reference)
@@ -119,6 +121,20 @@ class WorkspaceManager ():
 
     #self.output.Info(self, str("Keys of the project types of %s are %s" % (project_reference, self.project_types[project_reference].keys())))
     self.projects[temp_name] = clazz(output = self.output, name = name)
+    project = self.projects[temp_name]
+    wd = {}
+    npw_dict = {}
+
+    self.output.Debug(self, "Checking for wizard")
+    if project.is_new_project_wizard():
+      self.output.Debug(self, "Starting new project wizard")
+      wd = project.get_new_project_wizard()
+      wi = WizardInterpreter(wd, self.output, project, dbg=False)
+      wi.run()
+      npw_dict = wi.get_response()
+      wi.Destroy()
+
+
 
     self.projects[temp_name].new_project()
 
