@@ -66,6 +66,7 @@ class MainStatus(wx.ListCtrl, listmix.ListCtrlAutoWidthMixin):
   def status_output(self, level, c, text, fg = None, bg = None):
     item = self.InsertStringItem(self.index, "%d" % self.index)
     self.SetStringItem(self.index, 1, level)
+    self.EnsureVisible(self.GetItemCount() - 1)
 
     if fg is not None:
       self.SetItemTextColour(item, fg)
