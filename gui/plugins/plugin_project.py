@@ -33,11 +33,13 @@ class PluginProject():
 
   name = ""
   description = ""
+  image = ""
   path  = ""
   dbg = False
   output=None
   config_dict = {}
   class_config_dict = {}
+  npdict = {}
   new_project_wiz_en = False
 
 
@@ -65,6 +67,15 @@ class PluginProject():
   def set_name(self, name):
     self.name = name
 
+  def get_name(self):
+    return self.name
+
+  def get_image(self):
+    return self.class_config_dict["image"]
+
+  def get_doc_types(self):
+    return self.class_config_dict["doc_types"].keys()
+
   def load_project(self):
     pass
 
@@ -77,7 +88,8 @@ class PluginProject():
   def load_project(self):
     pass
 
-  def new_project(self):
+  def new_project(self, new_project_dict = None):
+    self.npdict = new_project_dict
     self.output.Info(self, "Setting up a new project")
 
   def is_new_project_wizard(self):

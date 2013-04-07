@@ -106,13 +106,6 @@ class PluginManager ():
                     attr.class_config_dict = config_dict
                     attr.path = proj_dir
                     #self.output.Info(self, str("Found class: %s" % attr))
-  '''
-  def get_project_dict(self, plugin_name, project_name):
-    return self.plugin_dict[plugin_name]["configuration"]["projects"][project_name]
-
-  def get_new_project_wizard(self, plugin_name, project_name):
-    return self.plugin_dict[plugin_name]["configuration"]["projects"][project_name]["new_project_wizard"]
-  '''
 
   def map_image_full_path(self, config_level, pp_path):
     if type(config_level) == list:

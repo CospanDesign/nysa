@@ -105,7 +105,7 @@ class WorkspaceManager ():
 
   def new_project(self, evt):
     project = None
-    self.output.Info(self, str("User selected a project to open: ID = %d"% evt.GetId()))
+    #self.output.Info(self, str("User selected a project to open: ID = %d"% evt.GetId()))
     plugin_name, project_reference = self.id_map[evt.GetId()]
     self.output.Info(self, str("Plugin:Project: %s:%s" % (plugin_name, project_reference)))
 
@@ -119,7 +119,6 @@ class WorkspaceManager ():
       val + 1
       temp_name = name + str(val)
 
-    #self.output.Info(self, str("Keys of the project types of %s are %s" % (project_reference, self.project_types[project_reference].keys())))
     self.projects[temp_name] = clazz(output = self.output, name = name)
     project = self.projects[temp_name]
     wd = {}
@@ -134,9 +133,10 @@ class WorkspaceManager ():
       npw_dict = wi.get_response()
       wi.Destroy()
 
+    self.projects[temp_name].new_project(npw_dict)
+    self.parent.add_project(project, project.get_name(), project.get_doc_types(), project.get_image())
 
-
-    self.projects[temp_name].new_project()
+    self.parent.add_project_document(project, "source", "example_doc.txt")
 
     self.update_workspace()
 

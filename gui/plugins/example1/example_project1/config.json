@@ -1,8 +1,9 @@
 {
   "name":"Example Project 1",
   "description":"Example Project to exercise the Porject feature",
+  "image":"project_image.png",
 
-  "types":{
+  "doc_types":{
     "source":{
       "description":"Source Files",
       "file_types":["txt"]
@@ -45,9 +46,9 @@
               "title":"First Item Title",
               "image":"first_item_image.png",
               "description":"Textbox Example",
-              "tag":"text_box",
+              "tag":"name",
               "gui":"text_box",
-              "default":"default value"
+              "default":"example project"
             }
           ]
       },

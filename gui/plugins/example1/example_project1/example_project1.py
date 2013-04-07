@@ -38,7 +38,9 @@ class PluginProjectExample1(plugin_project.PluginProject):
     plugin_project.PluginProject.__init__(self, output, name, dbg)
     self.output.Debug(self, "Hello from Example Project")
 
-  def new_project(self):
+  def new_project(self, new_project_dict = None):
+    self.npdict = new_project_dict
+    self.name = self.npdict["First Page"]["name"]
     self.output.Info(self, "Set up example project")
     self.output.Info(self, str ("config dictionary: %s" % str(self.config_dict)))
 

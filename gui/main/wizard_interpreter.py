@@ -365,6 +365,7 @@ class WizardInterpreter(wx.wizard.Wizard):
   response_dict = {}
 
   def __init__(self, wizard_dict = None, output = None, project = None, dbg = False):
+    pages = []
     if output is None:
       self.output = main_status.Dummy()
       if dbg:

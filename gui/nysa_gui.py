@@ -77,6 +77,14 @@ class NysaGui (wx.App):
   def getOutput(self):
     return self.main.getOutput()
 
+  def add_project(self, project, project_name, doc_types, image):
+    self.main.add_project(project, project_name, doc_types, image)
+
+  def add_project_document(self, project, doc_type, doc_name):
+    self.main.add_project_document(project, doc_type, doc_name)
+
+
+
 if __name__ == "__main__":
   #print "start"
   app = NysaGui()
