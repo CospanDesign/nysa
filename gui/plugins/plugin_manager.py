@@ -227,7 +227,7 @@ class PluginManager ():
     self.output.Debug(self, "in map_config_functions")
     pd = {}
     cd = self.plugin_dict[plugin_name]["configuration"]
-    self.output.Debug(self, str("Configuration Dictionary for %s: %s" % (str(plugin_name), str(cd))))
+    #self.output.Debug(self, str("Configuration Dictionary for %s: %s" % (str(plugin_name), str(cd))))
     #p_type  = None
     #look for the persistent key
     for key in cd.keys():
