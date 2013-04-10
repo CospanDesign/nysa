@@ -365,7 +365,7 @@ class WizardInterpreter(wx.wizard.Wizard):
   response_dict = {}
 
   def __init__(self, wizard_dict = None, output = None, project = None, dbg = False):
-    pages = []
+    self.pages = []
     if output is None:
       self.output = main_status.Dummy()
       if dbg:
@@ -400,12 +400,12 @@ class WizardInterpreter(wx.wizard.Wizard):
 
     for page in pages_dict.keys():
       pd = pages_dict[page]
-      self.output.Info(self, str("Added: %s" % page))
       self.add_page(pd)
+      self.output.Debug(self, str("Added: %s" % page))
 
   def add_page (self, page_dict):
     wp  = WizardPage(parent = self, page_dict = page_dict, output = self.output)
-    if self.pages:
+    if len(self.pages) > 0:
       prev_page = self.pages[-1]
       wp.SetPrev(prev_page)
       prev_page.SetNext(wp)
