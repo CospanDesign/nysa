@@ -154,5 +154,4 @@ if __name__ == "__main__":
   wm = WorkspaceManager()
   os.chdir("../../..")
   print "dir: %s" % str(os.getcwd())
-  from nysa.gui.main.workspace_manager import workspace_manager as wm
 

@@ -29,14 +29,31 @@ from nysa.gui.main import main_status
 from nysa.gui.main.main_status import StatusLevel
 
 class PluginDocument():
-  def __init__(self, output=None, dbg=False):
+  config_dict = {}
+  output = None
+  name = ""
+
+  def __init__(self, name, output=None, dbg=False):
     self.dbg = dbg
+    self.name = name
+    self.config_dict = {}
     if output is None:
       self.output = main_status.Dummy(dbg)
       if self.dbg:
         self.output.SetLevel(StatusLevel.VERBOSE)
       else:
         self.output.SetLevel(StatusLevel.INFO)
+    else:
+      self.output = output
+
+  def get_name(self):
+    return self.name
+
+  def set_config_dict(self, cd):
+    config_dict = cd
+
+  def get_config_dict(self):
+    return config_dict
 
   def set_output(self, output):
     self.output = output

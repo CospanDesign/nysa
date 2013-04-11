@@ -8,9 +8,9 @@ from nysa.gui.plugins import plugin_document
 
 class TextDocument(plugin_document.PluginDocument):
 
-  def __init__(self, output=None, dbg=False):
+  def __init__(self, name, output=None, dbg=False):
     self.dbg = dbg
-    plugin_document.PluginDocument.__init__(self, output, dbg)
+    plugin_document.PluginDocument.__init__(self, name, output, dbg)
     self.output.Debug(self, "Hello from text document plugin")
 
   def setup(self):

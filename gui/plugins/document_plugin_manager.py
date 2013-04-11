@@ -24,6 +24,7 @@ import sys
 import inspect
 import plugin_document
 import json
+import copy
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, os.pardir))
 
@@ -52,7 +53,7 @@ class DocumentPluginManager():
     for key in self.get_plugin_names():
       self.output.Debug(self, "Getting Plugin Configurations")
       self.load_plugin_configuration(key)
-      self.map_config_functions(key)
+      #self.map_config_functions(key)
 
   def get_plugin_names(self):
     #plugin names are the keys
@@ -90,8 +91,8 @@ class DocumentPluginManager():
                 self.plugin_dict[d]["class"] = attr
                 self.plugin_dict[d]["directory"] = dpath
                 #get an instance of the class
-                self.plugin_dict[d]["plugin"] = attr()
-                self.plugin_dict[d]["plugin"].set_output(self.output)
+                #self.plugin_dict[d]["plugin"] = attr()
+                #self.plugin_dict[d]["plugin"].set_output(self.output)
 
       return self.plugin_dict
 
@@ -111,39 +112,48 @@ class DocumentPluginManager():
 
     self.plugin_dict[plugin_name]["configuration"] = config_dict
 
-  def map_config_functions(self, plugin_name):
+  def map_config_functions(self, plugin_name, instance):
+    """Maps configuration data to the plugin instance"""
+    #instance = self.plugin_dict[plugin_name]["plugin"]
     self.output.Debug(self, "in map_config_functions")
     pd = {}
-    cd = self.plugin_dict[plugin_name]["configuration"]
+    #need a deep copy so that we can map functions for the individual docuemnt instance
+    cd = copy.deepcopy(self.plugin_dict[plugin_name]["configuration"])
     self.output.Debug(self, str("Configuration Dictionary for %s: %s" % (str(plugin_name), str(cd))))
     for key in cd.keys():
       if key == "functions":
         pd = cd[key]
-    
+
     if pd is None:
       self.output.Debug(self, str("%s contains no funtions" % plugin_name))
-      return None
 
-    attr = dir(self.plugin_dict[plugin_name]["plugin"])
-    self.output.Debug(self, str("Attributes %s" % str(attr)))
+    else:
+      #there are some things to map
+      attr = instance
+      self.output.Debug(self, str("Attributes %s" % str(attr)))
 
-    #go through the configuration file functions and replace functions strins with functions
-    for gui_type in pd.keys():
-      self.output.Debug(self, "\tGUI Type: %s" % gui_type)
-      for gui_comp in pd[gui_type].keys():
-        self.output.Debug(self, "\t\tGUI Componets: %s" % gui_comp)
-        for item in pd[gui_type][gui_comp].keys():
-          if item == "function":
-            func_name = pd[gui_type][gui_comp][item]
-            self.output.Debug(self, "\t\t\tFunction: %s" % func_name)
+      #go through the configuration file functions and replace functions strins with functions
+      for gui_type in pd.keys():
+        self.output.Debug(self, "\tGUI Type: %s" % gui_type)
+        for gui_comp in pd[gui_type].keys():
+          self.output.Debug(self, "\t\tGUI Componets: %s" % gui_comp)
+          for item in pd[gui_type][gui_comp].keys():
+            if item == "function":
+              func_name = pd[gui_type][gui_comp][item]
+              self.output.Debug(self, "\t\t\tFunction: %s" % func_name)
 
-            for a in attr:
-              if func_name == str(a):
-                func = getattr(self.plugin_dict[plugin_name]["plugin"], a)
-                self.output.Debug(self, str("\t\t\tFound the attribute that matches: %s" % str(func)))
-                #replace the name of the function with the ACTUAL FUNCTION!
-                pd[gui_type][gui_comp][item] = func
-                #pd[gui_type][gui_comp][item]()
+              for a in attr:
+                if func_name == str(a):
+                  func = getattr(instance, a)
+                  self.output.Debug(self, str("\t\t\tFound the attribute that matches: %s" % str(func)))
+                  #replace the name of the function with the ACTUAL FUNCTION!
+                  pd[gui_type][gui_comp][item] = func
+                  #pd[gui_type][gui_comp][item]()
 
+    instance.set_config_dict(cd)
 
-    
+  def new_document(self, plugin_name, name):
+    dp = self.plugin_dict[plugin_name]["class"](name = name, output = self.output)
+    self.map_config_functions(plugin_name, dp)
+    return dp
+
