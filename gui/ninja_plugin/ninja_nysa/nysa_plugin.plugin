@@ -1,0 +1,7 @@
+{
+  "url": "http://www.cospandesign.com", 
+  "version": "0.1", 
+  "class": "NysaPlugin", 
+  "module": "nysa_plugin", 
+  "authors": "Dave McCoy"
+}
