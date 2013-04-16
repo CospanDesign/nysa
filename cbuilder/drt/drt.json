@@ -1,0 +1,75 @@
+{
+  "version":5,
+  "devices":{
+    "Nothing":{
+      "description": "Unknown Device",
+      "ID":"0x0000"
+    },
+    "GPIO":{
+      "description": "General Purpose Input Output",
+      "ID":"0x0001"
+    },
+    "LED":{
+      "description": "Light Emitting Diode",
+      "ID":"0x0002"
+    },
+    "Buttons":{
+      "description": "Buttons",
+      "ID":"0x0003"
+    },
+    "UART":{
+      "description": "Universal Asynchronous Receiver and Transmitter",
+      "ID":"0x0004"
+    },
+    "I2C":{
+      "description": "Inter-IC Communication",
+      "ID":"0x0005"
+    },
+    "SPI":{
+      "description": "Serial Peripheral Interface",
+      "ID":"0x0006"
+    },
+    "I2S":{
+      "description": "Generic Inter IC Sound",
+      "ID":"0x0007"
+    },
+    "Logic Analyzer":{
+      "description": "Logic Analyzer",
+      "ID":"0x0010"
+    },
+    "Memory":{
+      "description": "Generic Memory Device",
+      "ID":"0x0011"
+    },
+    "Console":{
+      "description": "Generic Output Console",
+      "ID":"0x0012"
+    },
+    "FSMC":{
+      "description": "Flexible Static Memory Controller",
+      "ID":"0x0013"
+    },
+    "Frame Buffer":{
+      "description": "Generic Frame Buffer",
+      "ID":"0x0014"
+    },
+    "Camera":{
+      "description":"Camera",
+      "ID":"0x0015"
+    },
+    "Experiment":{
+      "description":"Experiment",
+      "ID":"0x0016"
+    }
+  },
+  "flags":{
+    "Standard Device": {
+      "description": "Identification number corresponds to a the default devices E.G. 1 == GPIO",
+      "bit":0
+    },
+    "Memory Device": {
+      "description": "Slave is located on the memory bus",
+      "bit":16
+    }
+  }
+}
