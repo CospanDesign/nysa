@@ -24,6 +24,7 @@ SOFTWARE.
 
 /* Log
   4/16/2011:
+    -implemented style i_: input, o_: output, r_: register, w_: wire
     -moved the entire port declaration within the module declaration
     -changed Parameters to localparams so the address cannot be inadvertently
       changed with a parameter statement outside the module
@@ -31,7 +32,7 @@ SOFTWARE.
   10/29/2011:
     -added 'else' statement for reset
   10/23/2011:
-    -fixed the wbs_ack_i to wbs_ack_o
+    -fixed the wbs_ack_i to wbs_ack
     -added the default entires for read and write to illustrate different
       communication
     -added license
@@ -66,15 +67,15 @@ module USER_SLAVE (
   //Add signals to control your device here
 
   //Wishbone Bus Signals
-  input               wbs_we_i,
-  input               wbs_cyc_i,
-  input       [3:0]   wbs_sel_i,
-  input       [31:0]  wbs_dat_i,
-  input               wbs_stb_i,
-  output  reg         wbs_ack_o,
-  output  reg [31:0]  wbs_dat_o,
-  input       [31:0]  wbs_adr_i,
-  output              wbs_int_o
+  input               i_wbs_we,
+  input               i_wbs_cyc,
+  input       [3:0]   i_wbs_sel,
+  input       [31:0]  i_wbs_dat,
+  input               i_wbs_stb,
+  output  reg         o_wbs_ack,
+  output  reg [31:0]  o_wbs_dat,
+  input       [31:0]  i_wbs_adr,
+  output              o_wbs_int
 );
 
 
@@ -92,29 +93,29 @@ localparam     ADDR_2  = 32'h00000002;
 
 always @ (posedge clk) begin
   if (rst) begin
-    wbs_dat_o <= 32'h0;
-    wbs_ack_o <= 0;
-    wbs_int_o <= 0;
+    o_wbs_dat <= 32'h0;
+    o_wbs_ack <= 0;
+    o_wbs_int <= 0;
   end
 
   else begin
     //when the master acks our ack, then put our ack down
-    if (wbs_ack_o & ~ wbs_stb_i)begin
-      wbs_ack_o <= 0;
+    if (o_wbs_ack && ~i_wbs_stb)begin
+      o_wbs_ack <= 0;
     end
 
-    if (wbs_stb_i & wbs_cyc_i) begin
+    if (i_wbs_stb && i_wbs_cyc) begin
       //master is requesting somethign
-      if (wbs_we_i) begin
+      if (i_wbs_we) begin
         //write request
-        case (wbs_adr_i)
+        case (i_wbs_adr)
           ADDR_0: begin
             //writing something to address 0
             //do something
 
             //NOTE THE FOLLOWING LINE IS AN EXAMPLE
             //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-            $display("user wrote %h", wbs_dat_i);
+            $display("user wrote %h", i_wbs_dat);
           end
           ADDR_1: begin
             //writing something to address 1
@@ -122,7 +123,7 @@ always @ (posedge clk) begin
 
             //NOTE THE FOLLOWING LINE IS AN EXAMPLE
             //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-            $display("user wrote %h", wbs_dat_i);
+            $display("user wrote %h", i_wbs_dat);
           end
           ADDR_2: begin
             //writing something to address 3
@@ -130,7 +131,7 @@ always @ (posedge clk) begin
 
             //NOTE THE FOLLOWING LINE IS AN EXAMPLE
             //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-            $display("user wrote %h", wbs_dat_i);
+            $display("user wrote %h", i_wbs_dat);
           end
           //add as many ADDR_X you need here
           default: begin
@@ -140,34 +141,34 @@ always @ (posedge clk) begin
 
       else begin
         //read request
-        case (wbs_adr_i)
+        case (i_wbs_adr)
           ADDR_0: begin
             //reading something from address 0
             //NOTE THE FOLLOWING LINE IS AN EXAMPLE
             //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
             $display("user read %h", ADDR_0);
-            wbs_dat_o <= ADDR_0;
+            o_wbs_dat <= ADDR_0;
           end
           ADDR_1: begin
             //reading something from address 1
             //NOTE THE FOLLOWING LINE IS AN EXAMPLE
             //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
             $display("user read %h", ADDR_1);
-            wbs_dat_o <= ADDR_1;
+            o_wbs_dat <= ADDR_1;
           end
           ADDR_2: begin
             //reading soething from address 2
             //NOTE THE FOLLOWING LINE IS AN EXAMPLE
             //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
             $display("user read %h", ADDR_2);
-            wbs_dat_o <= ADDR_2;
+            o_wbs_dat <= ADDR_2;
           end
           //add as many ADDR_X you need here
           default: begin
           end
         endcase
       end
-      wbs_ack_o <= 1;
+      o_wbs_ack <= 1;
     end
   end
 end

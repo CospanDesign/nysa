@@ -24,10 +24,11 @@ SOFTWARE.
 
 /*
   06/24/2012
-    -added the ih_reset port to indicate that the input handler is resetting
+    -added the i_ih_rst port to indicate that the input handler is resetting
     the incomming data state machine
   02/02/2012
-    -changed the read state machine to use local_data_count instead of out_data_count
+    -changed the read state machine to use local_data_count instead of
+      o_data_count
   11/12/2011
     -added support for burst read and writes
     -added support for nacks when the slave doesn't respond in time
@@ -46,117 +47,76 @@ SOFTWARE.
   10/23/2011
     -commented out the debug message "GOT AN ACK!!", we're passed this
   10/26/2011
-    -removed the stream commands, future versions will use flags instead of separate commands
+    -removed the stream commands, future versions will use flags instead of
+      separate commands
 */
 `include "mg_defines.v"
 
 module wishbone_master (
-  clk,
-  rst,
+
+  input               clk,
+  input               rst,
 
   //indicate to the input that we are ready
-  master_ready,
+  output reg          o_master_ready,
 
   //input handler interface
-  in_ready,
-  ih_reset,
-  in_command,
-  in_address,
-  in_data,
-  in_data_count,
+  input               i_ih_rst,
+
+  input               i_ready,
+  input       [31:0]  i_command,
+  input       [31:0]  i_address,
+  input       [31:0]  i_data,
+  input       [27:0]  i_data_count,
 
   //output handler interface
-  out_ready,
-  out_en,
-  out_status,
-  out_address,
-  out_data,
-  out_data_count,
-
-  //stimulus input
-  //debug output
-  debug_out,
-
-  //wishbone signals
-  wb_adr_o,
-  wb_dat_o,
-  wb_dat_i,
-  wb_stb_o,
-  wb_cyc_o,
-  wb_we_o,
-  wb_msk_o,
-  wb_sel_o,
-  wb_ack_i,
-  wb_int_i,
-
-  //wishbone memory signals
-  mem_adr_o,
-  mem_dat_o,
-  mem_dat_i,
-  mem_stb_o,
-  mem_cyc_o,
-  mem_we_o,
-  mem_msk_o,
-  mem_sel_o,
-  mem_ack_i,
-  mem_int_i
-  );
-
-  input               clk;
-  input               rst;
-
-  output reg          master_ready;
-  input               in_ready;
-  input               ih_reset;
-  input       [31:0]  in_command;
-  input       [31:0]  in_address;
-  input       [31:0]  in_data;
-  input       [27:0]  in_data_count;
-
-  input               out_ready;
-  output reg          out_en      = 0;
-  output reg  [31:0]  out_status    = 32'h0;
-  output reg  [31:0]  out_address   = 32'h0;
-  output reg  [31:0]  out_data    = 32'h0;
-  output wire [27:0]  out_data_count;
+  input               o_ready,
+  output reg          o_en        = 0,
+  output reg  [31:0]  o_status    = 32'h0,
+  output reg  [31:0]  o_address   = 32'h0,
+  output reg  [31:0]  o_data      = 32'h0,
+  output wire [27:0]  o_data_count,
 
   //debug output
-  output reg  [31:0]  debug_out;
-  
-  //wishbone
-  output reg  [31:0]  wb_adr_o;
-  output reg  [31:0]  wb_dat_o;
-  input       [31:0]  wb_dat_i;
-  output reg          wb_stb_o;
-  output reg          wb_cyc_o;
-  output reg          wb_we_o;
-  output reg          wb_msk_o;
-  output reg  [3:0]   wb_sel_o;
-  input               wb_ack_i;
-  input               wb_int_i;
+  output reg  [31:0]  o_debug,
+
+  //wishbone peripheral bus
+  output reg  [31:0]  o_per_adr,
+  output reg  [31:0]  o_per_dat,
+  input       [31:0]  i_per_dat,
+  output reg          o_per_stb,
+  output reg          o_per_cyc,
+  output reg          o_per_we,
+  output reg          o_per_msk,
+  output reg  [3:0]   o_per_sel,
+  input               i_per_ack,
+  input               i_per_int,
 
   //wishbone memory bus
-  output reg  [31:0]  mem_adr_o;
-  output reg  [31:0]  mem_dat_o;
-  input       [31:0]  mem_dat_i;
-  output reg          mem_stb_o;
-  output reg          mem_cyc_o;
-  output reg          mem_we_o;
-  output reg          mem_msk_o;
-  output reg  [3:0]   mem_sel_o;
-  input               mem_ack_i;
-  input               mem_int_i;
+  output reg          o_mem_we,
+  output reg  [31:0]  o_mem_adr,
+  output reg  [31:0]  o_mem_dat,
+  input       [31:0]  i_mem_dat,
+  output reg          o_mem_stb,
+  output reg          o_mem_cyc,
+  output reg          o_mem_msk,
+  output reg  [3:0]   o_mem_sel,
+  input               i_mem_ack,
+  input               i_mem_int
 
-
+  );
+  //debug output
+  
+ 
   //parameters
-  parameter       IDLE                  = 32'h00000000;
-  parameter       WRITE                 = 32'h00000001;
-  parameter       READ                  = 32'h00000002;
-  parameter       DUMP_CORE             = 32'h00000003;
+  localparam       IDLE                  = 32'h00000000;
+  localparam       WRITE                 = 32'h00000001;
+  localparam       READ                  = 32'h00000002;
+  localparam       DUMP_CORE             = 32'h00000003;
 
-  parameter       S_PING_RESP           = 32'h0000C594;
+  localparam       S_PING_RESP           = 32'h0000C594;
 
-  parameter       DUMP_COUNT            = 14;
+  localparam       DUMP_COUNT            = 14;
 
 
   // registers
@@ -190,13 +150,13 @@ module wishbone_master (
   reg [31:0]          dump_lcommand     = 0;
   reg [31:0]          dump_laddress     = 0;
   reg [31:0]          dump_ldata_count  = 0;
-  reg [31:0]          dump_wb_state     = 0;
-  reg [31:0]          dump_wb_p_addr    = 0;
-  reg [31:0]          dump_wb_p_dat_in  = 0;
-  reg [31:0]          dump_wb_p_dat_out = 0;
-  reg [31:0]          dump_wb_m_addr    = 0;
-  reg [31:0]          dump_wb_m_dat_in  = 0;
-  reg [31:0]          dump_wb_m_dat_out = 0;
+  reg [31:0]          dump_per_state     = 0;
+  reg [31:0]          dump_per_p_addr    = 0;
+  reg [31:0]          dump_per_p_dat_in  = 0;
+  reg [31:0]          dump_per_p_dat_out = 0;
+  reg [31:0]          dump_per_m_addr    = 0;
+  reg [31:0]          dump_per_m_dat_in  = 0;
+  reg [31:0]          dump_per_m_dat_out = 0;
 
   reg                 prev_reset        = 0;
 
@@ -209,9 +169,9 @@ module wishbone_master (
   wire                pos_edge_reset;
 
   // assigns
-  assign              out_data_count    = ((state == READ) || (state == DUMP_CORE)) ? local_data_count : 0;
-  assign              command_flags     = in_command[31:16];
-  assign              real_command      = in_command[15:0];
+  assign              o_data_count    = ((state == READ) || (state == DUMP_CORE)) ? local_data_count : 0;
+  assign              command_flags     = i_command[31:16];
+  assign              real_command      = i_command[15:0];
 
   assign              enable_nack       = master_flags[0];
 
@@ -219,47 +179,47 @@ module wishbone_master (
 
 
 initial begin
-    //$monitor("%t, int: %h, ih_ready: %h, ack: %h, stb: %h, cyc: %h", $time, wb_int_i, in_ready, wb_ack_i, wb_stb_o, wb_cyc_o);
-    //$monitor("%t, cyc: %h, stb: %h, ack: %h, in_ready: %h, out_en: %h, master_ready: %h", $time, wb_cyc_o, wb_stb_o, wb_ack_i, in_ready, out_en, master_ready);
+    //$monitor("%t, int: %h, ih_ready: %h, ack: %h, stb: %h, cyc: %h", $time, i_per_int, i_ready, i_per_ack, o_per_stb_o, o_per_cyc_o);
+    //$monitor("%t, cyc: %h, stb: %h, ack: %h, i_ready: %h, o_en: %h, o_master_ready: %h", $time, o_per_cyc_o, o_per_stb_o, i_per_ack, i_ready, o_en, o_master_ready);
 end
 
 
 //blocks
 always @ (posedge clk) begin
     
-  out_en              <= 0;
+  o_en              <= 0;
 
 //master ready should be used as a flow control, for now its being reset every
 //clock cycle, but in the future this should be used to regulate data comming in so that the master can send data to the slaves without overflowing any buffers
-  //master_ready  <= 1;
+  //o_master_ready  <= 1;
   if (pos_edge_reset) begin
     dump_state        <=  state;
-    dump_status       <=  {26'h0, ih_reset, out_ready, out_en, in_ready, master_ready, mem_bus_select};
+    dump_status       <=  {26'h0, i_ih_rst, o_ready, o_en, i_ready, o_master_ready, mem_bus_select};
     dump_flags        <=  master_flags;
     dump_nack_count   <=  nack_count;
     dump_lcommand     <=  {command_flags, real_command};
-    dump_laddress     <=  in_address;
+    dump_laddress     <=  i_address;
     dump_ldata_count  <=  local_data_count;
-    dump_wb_state     <=  {11'h0, wb_cyc_o, wb_stb_o, wb_we_o, wb_ack_i, wb_int_i,  12'h0, mem_cyc_o, mem_stb_o, mem_we_o, mem_ack_i};
-    dump_wb_p_addr    <=  wb_adr_o;
-    dump_wb_p_dat_in  <=  wb_dat_i;
-    dump_wb_p_dat_out <=  wb_dat_o;
-    dump_wb_m_addr    <=  mem_adr_o;
-    dump_wb_m_dat_in  <=  mem_dat_i;
-    dump_wb_m_dat_out <=  mem_dat_o;
+    dump_per_state     <=  {11'h0, o_per_cyc_o, o_per_stb_o, o_per_we_o, i_per_ack, i_per_int,  12'h0, o_mem_cyc, o_mem_stb, o_mem_we, i_mem_ack};
+    dump_per_p_addr    <=  o_per_adr_o;
+    dump_per_p_dat_in  <=  i_per_dat;
+    dump_per_p_dat_out <=  o_per_dat_o;
+    dump_per_m_addr    <=  o_mem_adr;
+    dump_per_m_dat_in  <=  i_mem_dat;
+    dump_per_m_dat_out <=  o_mem_dat;
 
 
 
   end
 
-  if (rst || ih_reset) begin
+  if (rst || i_ih_rst) begin
 
 
 
-    out_status        <= 32'h0;
-    out_address       <= 32'h0;
-    out_data          <= 32'h0;
-    //out_data_count  <= 28'h0;
+    o_status        <= 32'h0;
+    o_address       <= 32'h0;
+    o_data          <= 32'h0;
+    //o_data_count  <= 28'h0;
     local_address     <= 32'h0;
     local_data        <= 32'h0;
     local_data_count  <= 27'h0;
@@ -271,29 +231,29 @@ always @ (posedge clk) begin
 
     wait_for_slave    <= 0;
 
-    debug_out         <= 32'h00000000;
+    o_debug         <= 32'h00000000;
 
     //wishbone reset
-    wb_adr_o          <= 32'h0;
-    wb_dat_o          <= 32'h0;
-    wb_stb_o          <= 0;
-    wb_cyc_o          <= 0;
-    wb_we_o           <= 0;
-    wb_msk_o          <= 0;
+    o_per_we           <= 0;
+    o_per_adr          <= 32'h0;
+    o_per_dat          <= 32'h0;
+    o_per_stb          <= 0;
+    o_per_cyc          <= 0;
+    o_per_msk          <= 0;
 
     //select is always on
-    wb_sel_o          <= 4'hF;
+    o_per_sel_o          <= 4'hF;
 
     //wishbone memory reset
-    mem_adr_o         <= 32'h0;
-    mem_dat_o         <= 32'h0;
-    mem_stb_o         <= 0;
-    mem_cyc_o         <= 0;
-    mem_we_o          <= 0;
-    mem_msk_o         <= 0;
+    o_mem_we          <= 0;
+    o_mem_adr         <= 32'h0;
+    o_mem_dat         <= 32'h0;
+    o_mem_stb         <= 0;
+    o_mem_cyc         <= 0;
+    o_mem_msk         <= 0;
 
     //select is always on
-    mem_sel_o         <= 4'hF;
+    o_mem_sel         <= 4'hF;
 
     //interrupts
     interrupt_mask    <= 32'h00000000;
@@ -308,14 +268,14 @@ always @ (posedge clk) begin
     //check for timeout conditions
     if (nack_count == 0) begin
       if (state != IDLE && enable_nack) begin
-        debug_out[4]  <= ~debug_out[4];
+        o_debug[4]  <= ~o_debug[4];
         $display ("WBM: Timed out");
         //timeout occured, send a nack and go back to IDLE
         state         <= IDLE;
-        out_status    <= `NACK_TIMEOUT;
-        out_address   <= 32'h00000000;
-        out_data      <= 32'h00000000;
-        out_en        <= 1;
+        o_status    <= `NACK_TIMEOUT;
+        o_address   <= 32'h00000000;
+        o_data      <= 32'h00000000;
+        o_en        <= 1;
       end
     end
     else begin
@@ -326,56 +286,56 @@ always @ (posedge clk) begin
     case (state)
       READ: begin
         if (mem_bus_select) begin
-          if (mem_ack_i) begin
+          if (i_mem_ack) begin
             //put the strobe down to say we got that double word
-            mem_stb_o <= 0;
+            o_mem_stb_o <= 0;
           end
-          else if (~mem_stb_o && out_ready) begin
+          else if (~o_mem_stb_o && o_ready) begin
             $display("WBM: local_data_count = %h", local_data_count);
-            out_data    <= mem_dat_i;
-            out_en      <= 1; 
+            o_data    <= i_mem_dat;
+            o_en      <= 1; 
             if (local_data_count > 1) begin
-              debug_out[9]  <=  ~debug_out[9];
+              o_debug[9]  <=  ~o_debug[9];
               //finished the next double word
               nack_count    <= nack_timeout;
               local_data_count  <= local_data_count -1;
-              mem_adr_o   <= mem_adr_o + 4;
-              mem_stb_o   <= 1;
+              o_mem_adr_o   <= o_mem_adr_o + 4;
+              o_mem_stb_o   <= 1;
               //initiate an output transfer
             end
             else begin
               //finished all the reads de-assert the cycle
-              debug_out[10]  <=  ~debug_out[10];
-              mem_cyc_o   <=  0;
+              o_debug[10]  <=  ~o_debug[10];
+              o_mem_cyc_o   <=  0;
               state       <=  IDLE;
             end
           end
         end
         else begin
           //Peripheral BUS
-          if (wb_ack_i) begin
-            wb_stb_o    <= 0;
+          if (i_per_ack) begin
+            o_per_stb_o    <= 0;
           end
-          else if (~wb_stb_o && out_ready) begin
+          else if (~o_per_stb_o && o_ready) begin
             $display("WBM: local_data_count = %h", local_data_count);
            //put the data in the otput
-           out_data    <= wb_dat_i;
+           o_data    <= i_per_dat;
            //tell the io_handler to send data
-           out_en    <= 1; 
+           o_en    <= 1; 
 
             if (local_data_count > 1) begin
-              debug_out[8]  <=  ~debug_out[8];
+              o_debug[8]  <=  ~o_debug[8];
 //the nack count might need to be reset outside of these conditionals becuase
 //at this point we are waiting on the io handler
               nack_count    <= nack_timeout;
               local_data_count  <= local_data_count - 1;
-              wb_adr_o    <= wb_adr_o + 1;
-              wb_stb_o    <= 1;
+              o_per_adr_o    <= o_per_adr_o + 1;
+              o_per_stb_o    <= 1;
             end
             else begin
               //finished all the reads, put de-assert the cycle
-              debug_out[7]  <= ~debug_out[7];
-              wb_cyc_o    <= 0;
+              o_debug[7]  <= ~o_debug[7];
+              o_per_cyc_o    <= 0;
               state       <= IDLE;
             end
           end
@@ -383,103 +343,103 @@ always @ (posedge clk) begin
       end
       WRITE: begin
         if (mem_bus_select) begin
-          if (mem_ack_i) begin
-            mem_stb_o    <= 0;
+          if (i_mem_ack) begin
+            o_mem_stb_o    <= 0;
             if (local_data_count <= 1) begin
               //finished all writes 
-              $display ("WBM: in_data_count == 0");
-              debug_out[12] <=  ~debug_out[12];
-              mem_cyc_o <= 0;
+              $display ("WBM: i_data_count == 0");
+              o_debug[12] <=  ~o_debug[12];
+              o_mem_cyc_o <= 0;
               state   <= IDLE;
-              out_en    <= 1;
-              mem_we_o  <= 0;
+              o_en    <= 1;
+              o_mem_we_o  <= 0;
             end
             //tell the IO handler were ready for the next one
-            master_ready  <=  1;
+            o_master_ready  <=  1;
           end
-          else if ((local_data_count > 1) && in_ready && (mem_stb_o == 0)) begin
+          else if ((local_data_count > 1) && i_ready && (o_mem_stb_o == 0)) begin
             local_data_count  <= local_data_count - 1;
             $display ("WBM: (burst mode) writing another double word");
-            master_ready  <=  0;
-            mem_stb_o   <= 1;
-            mem_adr_o   <= mem_adr_o + 4;
-            mem_dat_o   <= in_data;
+            o_master_ready  <=  0;
+            o_mem_stb_o   <= 1;
+            o_mem_adr_o   <= o_mem_adr_o + 4;
+            o_mem_dat_o   <= i_data;
             nack_count    <= nack_timeout;
-            debug_out[13] <=  ~debug_out[13];
+            o_debug[13] <=  ~o_debug[13];
           end
         end //end working with mem_bus
         else begin //peripheral bus
-          if (wb_ack_i) begin
-            wb_stb_o              <= 0;
+          if (i_per_ack) begin
+            o_per_stb_o              <= 0;
             if (local_data_count  <= 1) begin
-              $display ("WBM: in_data_count == 0");
-              wb_cyc_o            <= 0;
+              $display ("WBM: i_data_count == 0");
+              o_per_cyc_o            <= 0;
               state               <= IDLE;
-              out_en              <= 1;
-              wb_we_o             <= 0;
+              o_en              <= 1;
+              o_per_we_o             <= 0;
             end
             //tell the IO handler were ready for the next one
-            master_ready  <= 1;
+            o_master_ready  <= 1;
           end
-          else if ((local_data_count > 1) && in_ready && (wb_stb_o == 0)) begin 
+          else if ((local_data_count > 1) && i_ready && (o_per_stb_o == 0)) begin 
             local_data_count <= local_data_count - 1;
-            debug_out[5]  <= ~debug_out[5];
+            o_debug[5]  <= ~o_debug[5];
             $display ("WBM: (burst mode) writing another double word");
-            master_ready  <=  0;
-            wb_stb_o    <= 1;
-            wb_adr_o    <= wb_adr_o + 1;
-            wb_dat_o    <= in_data;
+            o_master_ready  <=  0;
+            o_per_stb_o    <= 1;
+            o_per_adr_o    <= o_per_adr_o + 1;
+            o_per_dat_o    <= i_data;
             nack_count    <= nack_timeout;
           end
         end
       end
       DUMP_CORE: begin
-        if (out_ready && !out_en) begin
+        if (o_ready && !o_en) begin
           case (dump_count)
             0:  begin
-              out_data          <=  dump_state;
+              o_data          <=  dump_state;
             end
             1:  begin
-              out_data          <=  dump_status;
+              o_data          <=  dump_status;
             end
             2:  begin
-              out_data          <=  dump_flags;
+              o_data          <=  dump_flags;
             end
             3:  begin
-              out_data          <=  dump_nack_count;
+              o_data          <=  dump_nack_count;
             end
             4:  begin
-              out_data          <=  dump_lcommand;
+              o_data          <=  dump_lcommand;
             end
             5:  begin
-              out_data          <=  dump_laddress;
+              o_data          <=  dump_laddress;
             end
             6:  begin
-              out_data          <=  dump_ldata_count;
+              o_data          <=  dump_ldata_count;
             end
             7:  begin
-              out_data          <=  dump_wb_state;
+              o_data          <=  dump_per_state;
             end
             8:  begin
-              out_data          <=  dump_wb_p_addr;
+              o_data          <=  dump_per_p_addr;
             end
             9:  begin
-              out_data          <=  dump_wb_p_dat_in;
+              o_data          <=  dump_per_p_dat_in;
             end
             10: begin
-              out_data          <=  dump_wb_p_dat_out;
+              o_data          <=  dump_per_p_dat_out;
             end
             11: begin
-              out_data          <=  dump_wb_m_addr;
+              o_data          <=  dump_per_m_addr;
             end
             12: begin
-              out_data          <=  dump_wb_m_dat_in;
+              o_data          <=  dump_per_m_dat_in;
             end
             13: begin
-              out_data          <=  dump_wb_m_dat_out;
+              o_data          <=  dump_per_m_dat_out;
             end
             default: begin
-              out_data            <=  32'hFFFFFFFF;
+              o_data            <=  32'hFFFFFFFF;
             end
           endcase
           if (local_data_count > 0) begin
@@ -488,114 +448,114 @@ always @ (posedge clk) begin
            else begin
             state                 <=  IDLE;
            end
-           out_status              <=  ~in_command;
-           out_address             <=  0;
-           out_en                  <=  1; 
+           o_status              <=  ~i_command;
+           o_address             <=  0;
+           o_en                  <=  1; 
            dump_count              <=  dump_count + 1;
         end
       end
       IDLE: begin
         //handle input
-        master_ready            <= 1;
+        o_master_ready            <= 1;
         mem_bus_select          <= 0;
-        if (in_ready) begin
-          debug_out[6]          <= ~debug_out[6];
+        if (i_ready) begin
+          o_debug[6]          <= ~o_debug[6];
           mem_bus_select        <= 0;
           nack_count            <= nack_timeout;
 
-          local_address         <= in_address;
-          local_data            <= in_data;
-          //out_data_count  <= 0;
+          local_address         <= i_address;
+          local_data            <= i_data;
+          //o_data_count  <= 0;
 
           case (real_command)
 
             `COMMAND_PING: begin
               $display ("WBM: ping");
-              debug_out[0]    <= ~debug_out[0];
-              out_status      <= ~in_command;
-              out_address     <= 32'h00000000;
-              out_data        <= S_PING_RESP;
-              out_en          <= 1;
+              o_debug[0]    <= ~o_debug[0];
+              o_status      <= ~i_command;
+              o_address     <= 32'h00000000;
+              o_data        <= S_PING_RESP;
+              o_en          <= 1;
               state           <= IDLE;
             end
             `COMMAND_WRITE: begin
-              out_status      <= ~in_command;
-              debug_out[1]    <= ~debug_out[1];
-              local_data_count    <=  in_data_count;
+              o_status      <= ~i_command;
+              o_debug[1]    <= ~o_debug[1];
+              local_data_count    <=  i_data_count;
               if (command_flags & `FLAG_MEM_BUS) begin
                 mem_bus_select  <= 1; 
-                mem_adr_o     <= in_address;
-                mem_stb_o     <= 1;
-                mem_cyc_o     <= 1;
-                mem_we_o      <= 1;
-                mem_dat_o     <= in_data;
+                o_mem_adr_o     <= i_address;
+                o_mem_stb_o     <= 1;
+                o_mem_cyc_o     <= 1;
+                o_mem_we_o      <= 1;
+                o_mem_dat_o     <= i_data;
               end
               else begin
                 mem_bus_select  <= 0;
-                wb_adr_o      <= in_address;
-                wb_stb_o      <= 1;
-                wb_cyc_o      <= 1;
-                wb_we_o       <= 1;
-                wb_dat_o      <= in_data;
+                o_per_adr_o      <= i_address;
+                o_per_stb_o      <= 1;
+                o_per_cyc_o      <= 1;
+                o_per_we_o       <= 1;
+                o_per_dat_o      <= i_data;
               end 
-              out_address     <= in_address;
-              out_data        <= in_data;
-              master_ready    <= 0;
+              o_address     <= i_address;
+              o_data        <= i_data;
+              o_master_ready    <= 0;
               state           <= WRITE;
             end
             `COMMAND_READ:  begin
-              local_data_count  <=  in_data_count;
-              debug_out[2]    <= ~debug_out[2];
+              local_data_count  <=  i_data_count;
+              o_debug[2]    <= ~o_debug[2];
               if (command_flags & `FLAG_MEM_BUS) begin
                 mem_bus_select  <= 1; 
-                mem_adr_o     <= in_address;
-                mem_stb_o     <= 1;
-                mem_cyc_o     <= 1;
-                mem_we_o      <= 0;
-                out_status    <= ~in_command;
+                o_mem_adr_o     <= i_address;
+                o_mem_stb_o     <= 1;
+                o_mem_cyc_o     <= 1;
+                o_mem_we_o      <= 0;
+                o_status    <= ~i_command;
               end
               else begin
-                mem_bus_select  <= 0;
-                wb_adr_o      <= in_address;
-                wb_stb_o      <= 1;
-                wb_cyc_o      <= 1;
-                wb_we_o       <= 0;
-                out_status    <= ~in_command;
+                mem_bus_select <= 0;
+                o_per_adr_o    <= i_address;
+                o_per_stb_o    <= 1;
+                o_per_cyc_o    <= 1;
+                o_per_we_o     <= 0;
+                o_status       <= ~i_command;
               end
-              master_ready    <= 0;
-              out_address     <= in_address;
+              o_master_ready    <= 0;
+              o_address     <= i_address;
               state           <= READ;
             end 
             `COMMAND_MASTER_ADDR: begin
-              out_address     <=  in_address;
-              out_status      <= ~in_command;
-              case (in_address)
+              o_address     <=  i_address;
+              o_status      <= ~i_command;
+              case (i_address)
                 `MADDR_WR_FLAGS: begin
-                  master_flags  <= in_data;
+                  master_flags  <= i_data;
                 end
                 `MADDR_RD_FLAGS: begin
-                  out_data      <= master_flags;
+                  o_data      <= master_flags;
                 end
                 `MADDR_WR_INT_EN: begin
-                  interrupt_mask  <= in_data;
-                  out_data      <=  in_data;
-                  $display("WBM: setting interrupt enable to: %h", in_data); 
+                  interrupt_mask  <= i_data;
+                  o_data      <=  i_data;
+                  $display("WBM: setting interrupt enable to: %h", i_data); 
                 end
                 `MADDR_RD_INT_EN: begin
-                  out_data      <= interrupt_mask;
+                  o_data      <= interrupt_mask;
                 end
                 `MADDR_NACK_TO_WR: begin
-                  nack_timeout  <= in_data;
+                  nack_timeout  <= i_data;
                 end
                 `MADDR_NACK_TO_RD: begin
-                  out_data      <= nack_timeout;
+                  o_data      <= nack_timeout;
                 end
                 default: begin
                   //unrecognized command
-                  out_status      <=  32'h00000000;
+                  o_status      <=  32'h00000000;
                end
               endcase
-              out_en          <=  1;
+              o_en          <=  1;
               state           <=  IDLE;
             end
             `COMMAND_CORE_DUMP: begin
@@ -608,25 +568,25 @@ always @ (posedge clk) begin
           endcase
         end
         //not handling an input, if there is an interrupt send it to the user
-        else if (wb_ack_i == 0 & wb_stb_o == 0 & wb_cyc_o == 0) begin
-          //hack for getting the in_data_count before the io_handler decrements it
-            //local_data_count  <= in_data_count;
+        else if (i_per_ack == 0 & o_per_stb_o == 0 & o_per_cyc_o == 0) begin
+          //hack for getting the i_data_count before the io_handler decrements it
+            //local_data_count  <= i_data_count;
             //work around to add a delay
-            wb_adr_o              <= local_address;
+            o_per_adr_o              <= local_address;
             //handle input
             local_address         <= 32'hFFFFFFFF;        
           //check if there is an interrupt
-          //if the wb_int_i goes positive then send a nortifiction to the user
-          if ((~prev_int) & wb_int_i) begin 
-            debug_out[11]          <= ~debug_out[11];
+          //if the i_per_int goes positive then send a nortifiction to the user
+          if ((~prev_int) & i_per_int) begin 
+            o_debug[11]          <= ~o_debug[11];
             $display("WBM: found an interrupt!");
-            out_status            <= `PERIPH_INTERRUPT; 
+            o_status            <= `PERIPH_INTERRUPT; 
             //only supporting interrupts on slave 0 - 31
-            out_address           <= 32'h00000000;
-            out_data              <= wb_dat_i;
-            out_en                <= 1;
+            o_address           <= 32'h00000000;
+            o_data              <= i_per_dat;
+            o_en                <= 1;
           end
-          prev_int  <= wb_int_i;
+          prev_int  <= i_per_int;
         end
       end
       default: begin

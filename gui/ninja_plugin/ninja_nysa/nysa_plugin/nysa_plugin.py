@@ -2,7 +2,7 @@
 import os
 
 from ninja_ide.core import plugin
-from ninja_ide.tools import json_manager
+#from ninja_ide.tools import json_manager
 #from ninja_ide.core import plugin_interfaces
 from .project.cbuilder import project_cbuilder
 from .misc import nysa_status
@@ -58,26 +58,23 @@ class NysaPlugin(plugin.Plugin):
         project_cbuilder.ProjectCbuilder(self.status, self.locator))
 
     def open_verilog(self, filename):
-        f_path = os.path.join("home", "cospan", "Projects", "olympus", "cbuilder", "rtl", "generic", "afifo.v")
-        loc = os.path.dirname(__file__)
-        vpath = os.path.join(loc, "syntax", "verilog.json")
-        vdict = json_manager.parse(vpath)
+        f_path = os.path.join("home", "cospan", "Projects", "olympus",
+          "cbuilder", "rtl", "generic", "afifo.v")
+        #loc = os.path.dirname(__file__)
+        #vpath = os.path.join(loc, "syntax", "verilog.json")
+        #vdict = json_manager.parse(vpath)
 
         #self.editor_s.add_editor(filename, syntax=vdict)
         self.status.Info(self, "afifo.v path: %s" % f_path)
-        self.editor_s.add_editor(f_path)
-        #self.status.Info(self, "Attempt to open a verilog file")
-        #e = self.editor_s.get_editor()
-        #txt = e.get_text()
-        #self.status.Debug(self, "editor Text: %s" % txt)
 
     def register_syntax(self):
         loc = os.path.dirname(__file__)
         vpath = os.path.join(loc, "syntax", "verilog.json")
-        vdict = json_manager.parse(vpath)
+        #vdict = json_manager.parse(vpath)
         #self.editor_s.register_syntax(lang="v", syntax=vdict)
         #self.editor_s.get_editor().register_syntax(lang="v", syntax=vdict)
         #print "Editor: %s" % str(dir(self.editor_s.get_editor()))
+        self.status.Info(self, "vpath: %s" % vpath)
 
     def test_editor(self):
         #This doesn't belong here but when I work on ibuilder then I need to
@@ -85,4 +82,3 @@ class NysaPlugin(plugin.Plugin):
         tab_manager = self.editor_s.get_tab_manager()
         fpgaDesigner = FPGADesigner(actions=None, parent=tab_manager)
         tab_manager.add_tab(fpgaDesigner, self.tr("FPGA Designer"))
-
