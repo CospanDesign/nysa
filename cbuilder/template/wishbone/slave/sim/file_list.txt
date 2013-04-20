@@ -1,5 +1,0 @@
-CBUILDER_DIR/sim/interconnect/example_2port_interconnect/wishbone_interconnect.v
-CBUILDER_DIR/rtl/wishbone/slave/device_rom_table/device_rom_table.v
-CBUILDER_DIR/rtl/wishbone/master/wishbone_master.v
-../USER_SLAVE.v
-tb_wishbone_master.v

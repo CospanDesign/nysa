@@ -47,20 +47,20 @@ SOFTWARE.
   META DATA
 
   identification of your device 0 - 65536
-  DRT_ID: 0
+  DRT_ID:${DRT_ID}
 
   flags (read drt.txt in the slave/device_rom_table directory 1 means
   a standard device
-  DRT_FLAGS:1
+  DRT_FLAGS:${DRT_FLAGS}
 
   number of registers this should be equal to the nubmer of ADDR_???
   parameters
-  DRT_SIZE:3
+  DRT_SIZE:${DRT_SIZE}
 
 */
 
 
-module USER_SLAVE (
+module ${NAME} (
   input               clk,
   input               rst,
 
