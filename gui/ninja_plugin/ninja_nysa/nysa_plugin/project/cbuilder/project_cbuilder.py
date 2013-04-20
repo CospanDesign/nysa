@@ -47,7 +47,7 @@ class ProjectCbuilder(plugin_interfaces.IProjectTypeHandler):
           os.pardir, os.pardir, os.pardir, os.pardir, os.pardir, os.pardir, 
           "cbuilder", "templates", "axi", "host_interface"))
 
-        self.output.Debug(self, "Dir: %s" % wspath)
+        self.output.Debug(self, "Dir: %s" % self.wspath)
 
     def get_context_menus(self):
         return (Menu(self.locator, self.output), )
@@ -82,7 +82,7 @@ class ProjectCbuilder(plugin_interfaces.IProjectTypeHandler):
         self.output.Info(self, "Creating directory: %s" % self.path)
         file_manager.create_folder(self.path, add_init_file=False)
         #Create the Ninja interface
-        json_manager.create_ninja_project(path, name, project)
+        json_manager.create_ninja_project(self.path, name, project)
 
         page = wizard.page(ids[1])
         #plugin_dict = self.create_descriptor(page, self.path)
