@@ -1,15 +1,21 @@
 # -*- coding: UTF-8 -*-
 import os
+import sys
 
 from ninja_ide.core import plugin
 #from ninja_ide.tools import json_manager
 #from ninja_ide.core import plugin_interfaces
 from .project.cbuilder import project_cbuilder
 from .misc import nysa_status
+from .preferences import preferences
+import StringIO
 
 #This is here only for testing
 from .editor.fpga_designer.fpga_designer import FPGADesigner
 
+
+LOG_FORMAT = "%(asctime)s %(name)s:%(levelname)-8s %(message)s"
+TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 class NysaPlugin(plugin.Plugin):
 
@@ -28,6 +34,18 @@ class NysaPlugin(plugin.Plugin):
         self.load_status()
         self.status.Info(self, "Started Nysa Plugin")
         self.load_cbuilder_project()
+
+        #print ("Logger: %s" % str(dir(self.logger)))
+        #self.logger.addHandler()
+        #self.shandler = StringIO.StringIO()
+        #self.logger.StreamHandler(sys.stdout)
+
+        #self.logger.add_handler(self.shandler, 
+        #self.logger.add_handler(sys.stdout,
+        #    'w', 
+        #    LOG_FORMAT, 
+        #    TIME_FORMAT, 
+        #    stream=True)
         #self.register_syntax()
         #self.editor_s.fileOpened.connect(self.open_verilog)
         #self.test_editor()
@@ -39,7 +57,7 @@ class NysaPlugin(plugin.Plugin):
 
     def get_preferences_widget(self):
         # Return a widget for customize your plugin
-        pass
+        return preferences.NysaPreferences(self.locator, self.status)
 
     def load_status(self):
         self.logger.info("Load Nysa Status")
