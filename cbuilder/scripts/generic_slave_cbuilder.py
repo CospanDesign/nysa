@@ -26,7 +26,7 @@ class CBuilderSlave(GenericCBuilder):
   def process_slave_template(self):
     template = None
     stp = os.path.join(self.get_template_dir(), "USER_SLAVE.v")
-    slave_file = os.path.join(self.get_project_dir(), self.pdict["name"])
+    slave_file = os.path.join(self.get_project_dir(), self.pdict["name"] + ".v")
     #Open template slave file
     f = open(stp)
     template = Template(f.read())

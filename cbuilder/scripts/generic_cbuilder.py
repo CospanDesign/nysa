@@ -58,9 +58,10 @@ class GenericCBuilder(object):
   def get_project_dir(self):
     #base, type, subtype, name
     project_dir = os.path.join( self.pdict["base"],
-                                self.pdict["type"],
-                                self.pdict["subtype"],
-                                self.pdict["name"])
+                                #self.pdict["type"],
+                                #self.pdict["subtype"],
+                                self.pdict["name"],
+                                "rtl")
     return project_dir
 
   def get_template_dir(self):
