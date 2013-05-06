@@ -2,7 +2,9 @@
 
 #import re
 
+import inspect
 from PyQt4.QtGui import QWizardPage
+from PyQt4.QtGui import QWidget
 from PyQt4.QtGui import QGridLayout
 from PyQt4.QtGui import QLabel
 from PyQt4.QtGui import QLineEdit
@@ -42,18 +44,35 @@ class PagePluginProperties(QWizardPage):
         #grid.addWidget(QLabel('Axi'), 2, 1)
         grid.addWidget(self.axi_radio, 2, 1)
 
-        grid.addWidget(QLabel('Author(s):'), 3, 0)
+        #Create a panel that will handle peripheral/memory
+        #I can't add this to the main view because radio buttons are tied to
+        #eacho ther through parent class and I'lve aready got a couple of radio
+        #buttons
+        grid.addWidget(QLabel("Peripheral or Memory slave"), 3, 0)
+
+        mpr_panel = QWidget(self)
+        pm_grid = QGridLayout(mpr_panel)
+        self.peripheral_radio = QRadioButton("Peripheral")
+        self.peripheral_radio.setChecked(True)
+        self.memory_radio = QRadioButton("Memory")
+        pm_grid.addWidget(self.peripheral_radio, 0, 0)
+        pm_grid.addWidget(self.memory_radio, 0, 1)
+
+        #add this group to the page
+        grid.addWidget(mpr_panel, 3, 1)
+
+        grid.addWidget(QLabel('Author(s):'), 5, 0)
         self.txtAuthors = QLineEdit()
-        grid.addWidget(self.txtAuthors, 3, 1)
+        grid.addWidget(self.txtAuthors, 5, 1)
         self.registerField('txtAuthors*', self.txtAuthors)
 
         #grid.addWidget(QLabel('Url:'), 4, 0)
         #self.txtUrl = QLineEdit()
         #grid.addWidget(self.txtUrl, 4, 1)
 
-        grid.addWidget(QLabel('Version:'), 5, 0)
+        grid.addWidget(QLabel('Version:'), 6, 0)
         self.txtVersion = QLineEdit("0.1")
-        grid.addWidget(self.txtVersion, 5, 1)
+        grid.addWidget(self.txtVersion, 6, 1)
         self.func = None
 
         #Add a second page that is specific to either Axi or wishbone
@@ -67,11 +86,13 @@ class PagePluginProperties(QWizardPage):
         self.func = func
 
     def validatePage(self):
+
         if self.axi_radio.isChecked():
             self.func(SLAVE_TYPE.AXI)
         else:
             self.func(SLAVE_TYPE.WISHBONE)
 
+        self.output.Debug(self, "Validate first page")
         """
         pat_core_name = re.compile("^[a-z_]+$")
         pat_class_name = re.compile(r"([a-zA-Z_]+[0-9]*)+$")
