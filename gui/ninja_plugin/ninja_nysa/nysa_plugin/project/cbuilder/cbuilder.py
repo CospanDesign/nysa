@@ -44,7 +44,7 @@ class CBuilder ():
         prev_dir = os.getcwd()
         #self.output.Debug(self, "Current dir: %s" % str(prev_dir))
         os.chdir(core_path)
-        self.builder.run_application(fileName = '', pythonPath='scons')
+        self.builder.run_application(fileName = 'build', pythonPath='scons')
         os.chdir(prev_dir)
 
 
