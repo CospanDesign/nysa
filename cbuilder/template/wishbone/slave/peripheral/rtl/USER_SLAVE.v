@@ -1,4 +1,4 @@
-//USER_SLAVE.v
+//${NAME}.v
 /*
 Distributed under the MIT license.
 Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
@@ -23,6 +23,8 @@ SOFTWARE.
 */
 
 /* Log
+  5/08/2013:
+    -Added a test for ack on the read section so that there is no double reads
   4/16/2011:
     -implemented style i_: input, o_: output, r_: register, w_: wire
     -moved the entire port declaration within the module declaration
@@ -75,7 +77,10 @@ module ${NAME} (
   output  reg         o_wbs_ack,
   output  reg [31:0]  o_wbs_dat,
   input       [31:0]  i_wbs_adr,
-  output              o_wbs_int
+
+  //This interrupt can be controlled from this module or a submodule
+  output  reg         o_wbs_int
+  //output              o_wbs_int
 );
 
 
@@ -115,7 +120,7 @@ always @ (posedge clk) begin
 
             //NOTE THE FOLLOWING LINE IS AN EXAMPLE
             //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-            $display("user wrote %h", i_wbs_dat);
+            $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
           end
           ADDR_1: begin
             //writing something to address 1
@@ -123,7 +128,7 @@ always @ (posedge clk) begin
 
             //NOTE THE FOLLOWING LINE IS AN EXAMPLE
             //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-            $display("user wrote %h", i_wbs_dat);
+            $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
           end
           ADDR_2: begin
             //writing something to address 3
@@ -131,7 +136,7 @@ always @ (posedge clk) begin
 
             //NOTE THE FOLLOWING LINE IS AN EXAMPLE
             //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-            $display("user wrote %h", i_wbs_dat);
+            $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
           end
           //add as many ADDR_X you need here
           default: begin
@@ -140,33 +145,35 @@ always @ (posedge clk) begin
       end
 
       else begin
-        //read request
-        case (i_wbs_adr)
-          ADDR_0: begin
-            //reading something from address 0
-            //NOTE THE FOLLOWING LINE IS AN EXAMPLE
-            //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-            $display("user read %h", ADDR_0);
-            o_wbs_dat <= ADDR_0;
-          end
-          ADDR_1: begin
-            //reading something from address 1
-            //NOTE THE FOLLOWING LINE IS AN EXAMPLE
-            //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-            $display("user read %h", ADDR_1);
-            o_wbs_dat <= ADDR_1;
-          end
-          ADDR_2: begin
-            //reading soething from address 2
-            //NOTE THE FOLLOWING LINE IS AN EXAMPLE
-            //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-            $display("user read %h", ADDR_2);
-            o_wbs_dat <= ADDR_2;
-          end
-          //add as many ADDR_X you need here
-          default: begin
-          end
-        endcase
+        if (!o_wbs_ack) begin //Fix double reads
+          //read request
+          case (i_wbs_adr)
+            ADDR_0: begin
+              //reading something from address 0
+              //NOTE THE FOLLOWING LINE IS AN EXAMPLE
+              //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
+              $display("user read %h", ADDR_0);
+              o_wbs_dat <= ADDR_0;
+            end
+            ADDR_1: begin
+              //reading something from address 1
+              //NOTE THE FOLLOWING LINE IS AN EXAMPLE
+              //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
+              $display("user read %h", ADDR_1);
+              o_wbs_dat <= ADDR_1;
+            end
+            ADDR_2: begin
+              //reading soething from address 2
+              //NOTE THE FOLLOWING LINE IS AN EXAMPLE
+              //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
+              $display("user read %h", ADDR_2);
+              o_wbs_dat <= ADDR_2;
+            end
+            //add as many ADDR_X you need here
+            default: begin
+            end
+          endcase
+        end
       end
       o_wbs_ack <= 1;
     end

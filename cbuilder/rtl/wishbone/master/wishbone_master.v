@@ -23,6 +23,8 @@ SOFTWARE.
 */
 
 /*
+  05/06/2013
+    -Changed mg_defines to cbuilder_defines
   06/24/2012
     -added the i_ih_rst port to indicate that the input handler is resetting
     the incomming data state machine
@@ -50,7 +52,7 @@ SOFTWARE.
     -removed the stream commands, future versions will use flags instead of
       separate commands
 */
-`include "mg_defines.v"
+`include "cbuilder_defines.v"
 
 module wishbone_master (
 
@@ -70,7 +72,7 @@ module wishbone_master (
   input       [27:0]  i_data_count,
 
   //output handler interface
-  input               o_ready,
+  input               i_out_ready,
   output reg          o_en        = 0,
   output reg  [31:0]  o_status    = 32'h0,
   output reg  [31:0]  o_address   = 32'h0,
@@ -179,8 +181,12 @@ module wishbone_master (
 
 
 initial begin
-    //$monitor("%t, int: %h, ih_ready: %h, ack: %h, stb: %h, cyc: %h", $time, i_per_int, i_ready, i_per_ack, o_per_stb_o, o_per_cyc_o);
-    //$monitor("%t, cyc: %h, stb: %h, ack: %h, i_ready: %h, o_en: %h, o_master_ready: %h", $time, o_per_cyc_o, o_per_stb_o, i_per_ack, i_ready, o_en, o_master_ready);
+//$monitor("%t, int: %h, ih_ready: %h, ack: %h, stb: %h, cyc: %h", $time, i_per_int, i_ready, i_per_ack, o_per_stb_o, o_per_cyc_o);
+//$monitor( "%t, cyc: %h, stb: %h, ack: %h, i_ready: %h, o_en: %h, o_master_ready: %h", 
+//          $time, o_per_cyc, o_per_stb, i_per_ack, i_ready, o_en, o_master_ready);
+
+//$monitor( "%t, addr: %h, data: %h", $time, o_per_adr, o_per_dat); 
+
 end
 
 
@@ -194,16 +200,16 @@ always @ (posedge clk) begin
   //o_master_ready  <= 1;
   if (pos_edge_reset) begin
     dump_state        <=  state;
-    dump_status       <=  {26'h0, i_ih_rst, o_ready, o_en, i_ready, o_master_ready, mem_bus_select};
+    dump_status       <=  {26'h0, i_ih_rst, i_out_ready, o_en, i_ready, o_master_ready, mem_bus_select};
     dump_flags        <=  master_flags;
     dump_nack_count   <=  nack_count;
     dump_lcommand     <=  {command_flags, real_command};
     dump_laddress     <=  i_address;
     dump_ldata_count  <=  local_data_count;
-    dump_per_state     <=  {11'h0, o_per_cyc_o, o_per_stb_o, o_per_we_o, i_per_ack, i_per_int,  12'h0, o_mem_cyc, o_mem_stb, o_mem_we, i_mem_ack};
-    dump_per_p_addr    <=  o_per_adr_o;
+    dump_per_state     <=  {11'h0, o_per_cyc, o_per_stb, o_per_we, i_per_ack, i_per_int,  12'h0, o_mem_cyc, o_mem_stb, o_mem_we, i_mem_ack};
+    dump_per_p_addr    <=  o_per_adr;
     dump_per_p_dat_in  <=  i_per_dat;
-    dump_per_p_dat_out <=  o_per_dat_o;
+    dump_per_p_dat_out <=  o_per_dat;
     dump_per_m_addr    <=  o_mem_adr;
     dump_per_m_dat_in  <=  i_mem_dat;
     dump_per_m_dat_out <=  o_mem_dat;
@@ -242,7 +248,7 @@ always @ (posedge clk) begin
     o_per_msk          <= 0;
 
     //select is always on
-    o_per_sel_o          <= 4'hF;
+    o_per_sel          <= 4'hF;
 
     //wishbone memory reset
     o_mem_we          <= 0;
@@ -288,9 +294,9 @@ always @ (posedge clk) begin
         if (mem_bus_select) begin
           if (i_mem_ack) begin
             //put the strobe down to say we got that double word
-            o_mem_stb_o <= 0;
+            o_mem_stb <= 0;
           end
-          else if (~o_mem_stb_o && o_ready) begin
+          else if (~o_mem_stb && i_out_ready) begin
             $display("WBM: local_data_count = %h", local_data_count);
             o_data    <= i_mem_dat;
             o_en      <= 1; 
@@ -299,14 +305,14 @@ always @ (posedge clk) begin
               //finished the next double word
               nack_count    <= nack_timeout;
               local_data_count  <= local_data_count -1;
-              o_mem_adr_o   <= o_mem_adr_o + 4;
-              o_mem_stb_o   <= 1;
+              o_mem_adr   <= o_mem_adr + 4;
+              o_mem_stb   <= 1;
               //initiate an output transfer
             end
             else begin
               //finished all the reads de-assert the cycle
               o_debug[10]  <=  ~o_debug[10];
-              o_mem_cyc_o   <=  0;
+              o_mem_cyc   <=  0;
               state       <=  IDLE;
             end
           end
@@ -314,9 +320,9 @@ always @ (posedge clk) begin
         else begin
           //Peripheral BUS
           if (i_per_ack) begin
-            o_per_stb_o    <= 0;
+            o_per_stb    <= 0;
           end
-          else if (~o_per_stb_o && o_ready) begin
+          else if (~o_per_stb && i_out_ready) begin
             $display("WBM: local_data_count = %h", local_data_count);
            //put the data in the otput
            o_data    <= i_per_dat;
@@ -329,13 +335,13 @@ always @ (posedge clk) begin
 //at this point we are waiting on the io handler
               nack_count    <= nack_timeout;
               local_data_count  <= local_data_count - 1;
-              o_per_adr_o    <= o_per_adr_o + 1;
-              o_per_stb_o    <= 1;
+              o_per_adr    <= o_per_adr + 1;
+              o_per_stb    <= 1;
             end
             else begin
               //finished all the reads, put de-assert the cycle
               o_debug[7]  <= ~o_debug[7];
-              o_per_cyc_o    <= 0;
+              o_per_cyc    <= 0;
               state       <= IDLE;
             end
           end
@@ -344,57 +350,57 @@ always @ (posedge clk) begin
       WRITE: begin
         if (mem_bus_select) begin
           if (i_mem_ack) begin
-            o_mem_stb_o    <= 0;
+            o_mem_stb    <= 0;
             if (local_data_count <= 1) begin
               //finished all writes 
               $display ("WBM: i_data_count == 0");
               o_debug[12] <=  ~o_debug[12];
-              o_mem_cyc_o <= 0;
+              o_mem_cyc <= 0;
               state   <= IDLE;
               o_en    <= 1;
-              o_mem_we_o  <= 0;
+              o_mem_we  <= 0;
             end
             //tell the IO handler were ready for the next one
             o_master_ready  <=  1;
           end
-          else if ((local_data_count > 1) && i_ready && (o_mem_stb_o == 0)) begin
+          else if ((local_data_count > 1) && i_ready && (o_mem_stb == 0)) begin
             local_data_count  <= local_data_count - 1;
             $display ("WBM: (burst mode) writing another double word");
             o_master_ready  <=  0;
-            o_mem_stb_o   <= 1;
-            o_mem_adr_o   <= o_mem_adr_o + 4;
-            o_mem_dat_o   <= i_data;
+            o_mem_stb   <= 1;
+            o_mem_adr   <= o_mem_adr + 4;
+            o_mem_dat   <= i_data;
             nack_count    <= nack_timeout;
             o_debug[13] <=  ~o_debug[13];
           end
         end //end working with mem_bus
         else begin //peripheral bus
           if (i_per_ack) begin
-            o_per_stb_o              <= 0;
+            o_per_stb              <= 0;
             if (local_data_count  <= 1) begin
               $display ("WBM: i_data_count == 0");
-              o_per_cyc_o            <= 0;
+              o_per_cyc            <= 0;
               state               <= IDLE;
               o_en              <= 1;
-              o_per_we_o             <= 0;
+              o_per_we             <= 0;
             end
             //tell the IO handler were ready for the next one
             o_master_ready  <= 1;
           end
-          else if ((local_data_count > 1) && i_ready && (o_per_stb_o == 0)) begin 
+          else if ((local_data_count > 1) && i_ready && (o_per_stb == 0)) begin 
             local_data_count <= local_data_count - 1;
             o_debug[5]  <= ~o_debug[5];
             $display ("WBM: (burst mode) writing another double word");
             o_master_ready  <=  0;
-            o_per_stb_o    <= 1;
-            o_per_adr_o    <= o_per_adr_o + 1;
-            o_per_dat_o    <= i_data;
+            o_per_stb    <= 1;
+            o_per_adr    <= o_per_adr + 1;
+            o_per_dat    <= i_data;
             nack_count    <= nack_timeout;
           end
         end
       end
       DUMP_CORE: begin
-        if (o_ready && !o_en) begin
+        if (i_out_ready && !o_en) begin
           case (dump_count)
             0:  begin
               o_data          <=  dump_state;
@@ -484,19 +490,19 @@ always @ (posedge clk) begin
               local_data_count    <=  i_data_count;
               if (command_flags & `FLAG_MEM_BUS) begin
                 mem_bus_select  <= 1; 
-                o_mem_adr_o     <= i_address;
-                o_mem_stb_o     <= 1;
-                o_mem_cyc_o     <= 1;
-                o_mem_we_o      <= 1;
-                o_mem_dat_o     <= i_data;
+                o_mem_adr     <= i_address;
+                o_mem_stb     <= 1;
+                o_mem_cyc     <= 1;
+                o_mem_we      <= 1;
+                o_mem_dat     <= i_data;
               end
               else begin
                 mem_bus_select  <= 0;
-                o_per_adr_o      <= i_address;
-                o_per_stb_o      <= 1;
-                o_per_cyc_o      <= 1;
-                o_per_we_o       <= 1;
-                o_per_dat_o      <= i_data;
+                o_per_adr      <= i_address;
+                o_per_stb      <= 1;
+                o_per_cyc      <= 1;
+                o_per_we       <= 1;
+                o_per_dat      <= i_data;
               end 
               o_address     <= i_address;
               o_data        <= i_data;
@@ -508,18 +514,18 @@ always @ (posedge clk) begin
               o_debug[2]    <= ~o_debug[2];
               if (command_flags & `FLAG_MEM_BUS) begin
                 mem_bus_select  <= 1; 
-                o_mem_adr_o     <= i_address;
-                o_mem_stb_o     <= 1;
-                o_mem_cyc_o     <= 1;
-                o_mem_we_o      <= 0;
+                o_mem_adr     <= i_address;
+                o_mem_stb     <= 1;
+                o_mem_cyc     <= 1;
+                o_mem_we      <= 0;
                 o_status    <= ~i_command;
               end
               else begin
                 mem_bus_select <= 0;
-                o_per_adr_o    <= i_address;
-                o_per_stb_o    <= 1;
-                o_per_cyc_o    <= 1;
-                o_per_we_o     <= 0;
+                o_per_adr    <= i_address;
+                o_per_stb    <= 1;
+                o_per_cyc    <= 1;
+                o_per_we     <= 0;
                 o_status       <= ~i_command;
               end
               o_master_ready    <= 0;
@@ -568,11 +574,11 @@ always @ (posedge clk) begin
           endcase
         end
         //not handling an input, if there is an interrupt send it to the user
-        else if (i_per_ack == 0 & o_per_stb_o == 0 & o_per_cyc_o == 0) begin
+        else if (i_per_ack == 0 & o_per_stb == 0 & o_per_cyc == 0) begin
           //hack for getting the i_data_count before the io_handler decrements it
             //local_data_count  <= i_data_count;
             //work around to add a delay
-            o_per_adr_o              <= local_address;
+            o_per_adr              <= local_address;
             //handle input
             local_address         <= 32'hFFFFFFFF;        
           //check if there is an interrupt

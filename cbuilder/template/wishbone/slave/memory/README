@@ -10,15 +10,13 @@ Files:
   used to exercise the code, it behaves as both a stimulus and and
   input/output interface to the wihbone master
 
-4.Makefile: MAIN CONTROL point
-	-'make': compiles generated slave files
-	-'make sim': runs a simulation based on the "master_input_test_data.txt"
-	-'make wave': opens up GTK wave and runs the "wave_script.tcl" in order to
-    load the signals, feel free to mofiy this file in order to view your own
-    signals
+4. SConstruct: MAIN CONTROL point
+	-'scons': compiles generated slave files
+	-'scons sim': runs a simulation based on the "master_input_test_data.txt"
+	-'scons wave': opens up GTK wave and loads the current simulation
 	-'make clean': clean everythin up
 
-5. file_list.txt: a list of files that are fed into the Makefile to generate
+5. command_file.txt: a list of files that are fed into the Makefile to generate
   the simulation, some of the files will be the same used in an actual project
   (example: wishbone_main.v)
 

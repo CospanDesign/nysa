@@ -25,8 +25,18 @@ class CBuilderSlave(GenericCBuilder):
 
   def process_slave_template(self):
     template = None
-    stp = os.path.join(self.get_template_dir(), "USER_SLAVE.v")
-    slave_file = os.path.join(self.get_project_dir(), self.pdict["name"] + ".v")
+    stp = os.path.join(self.get_template_dir(), "rtl", "USER_SLAVE.v")
+    #create RTL directory
+    dir_path = os.path.join(self.get_project_dir(), "rtl")
+    #print "Making dir: %s" % dir_path
+    
+    try:
+      os.mkdir(dir_path)
+    except OSError, err:
+      print "Directory already exists"
+    
+    slave_file = os.path.join(self.get_project_dir(), "rtl", self.pdict["name"] + ".v")
+
     #Open template slave file
     f = open(stp)
     template = Template(f.read())
@@ -40,6 +50,7 @@ class CBuilderSlave(GenericCBuilder):
       DRT_SIZE=self.pdict["drt_size"],
       NAME=self.pdict["name"]
     )
+    #print "Creating output dir"
 
     #Create output file
     f = open(slave_file, "w")
@@ -70,9 +81,13 @@ class CBuilderSlave(GenericCBuilder):
           dest_path = os.path.join(self.get_project_dir(), d)
         else:
           dest_path = os.path.join(self.get_project_dir(), base_dir, d)
-        print "Creating directory: %s" % dest_path
+        #print "Creating directory: %s" % dest_path
 
-        os.makedirs(dest_path)
+        try:
+          os.makedirs(dest_path)
+        except OSError, err:
+          pass
+
         if base_dir is not None:
           d = os.path.join(base_dir, d)
         self.copy_slave_files(d)
@@ -80,15 +95,7 @@ class CBuilderSlave(GenericCBuilder):
     #Put all the files in the correct place
     for node in node_list:
       if os.path.isfile(node):
-        #filename = os.path.split(filepath)[-1]
         filename = os.path.basename(node)
-        if filename == "USER_SLAVE.v":
-          #We already modified this file
-          print "Do not copy over USER_SLAVE.v"
-          continue
-
-
-        #print "File to copy: %s" % filename
 
         dest_path = ""
         if base_dir is None:
@@ -97,7 +104,44 @@ class CBuilderSlave(GenericCBuilder):
           #print "Copy to sub dir: %s" % base_dir
           dest_path = os.path.join(self.get_project_dir(), base_dir, filename)
 
-        print "Destintion File Path: %s" % dest_path
+        if filename == "USER_SLAVE.v":
+          #We already modified this file
+          #print "Do not copy over USER_SLAVE.v"
+          continue
+
+        if filename == "command_file.txt":
+          #Need to change the name of the core
+          #Open template slave file
+          f = open(node)
+          template = Template(f.read())
+          f.close()
+          #Apply Substitution
+          buf = template.safe_substitute(
+            NAME=self.pdict["name"]
+          )
+          f = open(dest_path, "w")
+          f.write(buf)
+          f.close()
+          continue
+
+        if filename == "tb_wishbone_master.v":
+          print "Processing tb_wishbone_master"
+          f = open(node)
+          template = Template(f.read())
+          f.close()
+          #Apply Substitution
+          buf = template.safe_substitute(
+            NAME=self.pdict["name"]
+          )
+          #print buf
+          f = open(dest_path, "w")
+          f.write(buf)
+          f.close()
+          continue
+
+
+
+        #print "Destintion File Path: %s" % dest_path
         shutil.copy(node, dest_path)
 
         if filename == "file_list.txt":

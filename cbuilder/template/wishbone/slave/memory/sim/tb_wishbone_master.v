@@ -44,8 +44,8 @@ SOFTWARE.
 `timescale 1 ns/1 ps
 
 `define TIMEOUT_COUNT 40
-`define INPUT_FILE "master_input_test_data.txt"
-`define OUTPUT_FILE "master_output_test_data.txt"
+`define INPUT_FILE "sim/master_input_test_data.txt"
+`define OUTPUT_FILE "sim/master_output_test_data.txt"
 
 
 `define CLK_HALF_PERIOD 1
@@ -83,33 +83,33 @@ wire              w_wbm_cyc;
 wire              w_wbm_stb;
 wire [3:0]        w_wbm_sel;
 wire [31:0]       w_wbm_adr;
-wire [31:0]       w_wbm_dat;
-wire [31:0]       w_wbm_dat;
+wire [31:0]       w_wbm_dat_o;
+wire [31:0]       w_wbm_dat_i;
 wire              w_wbm_ack;
 wire              w_wbm_int;
 
 
 
 //Wishbone Slave 0 (DRT) signals
-wire              wbs0_we_o;
-wire              wbs0_cyc_o;
-wire  [31:0]      wbs0_dat_o;
-wire              wbs0_stb_o;
-wire  [3:0]       wbs0_sel_o;
-wire              wbs0_ack_i;
-wire  [31:0]      wbs0_dat_i;
-wire  [31:0]      wbs0_adr_o;
-wire              wbs0_int_i;
+wire              w_wbs0_we;
+wire              w_wbs0_cyc;
+wire  [31:0]      w_wbs0_dat_o;
+wire              w_wbs0_stb;
+wire  [3:0]       w_wbs0_sel;
+wire              w_wbs0_ack;
+wire  [31:0]      w_wbs0_dat_i;
+wire  [31:0]      w_wbs0_adr;
+wire              w_wbs0_int;
 
 
 //wishbone slave 1 (Unit Under Test) signals
 wire              w_wbs1_we;
 wire              w_wbs1_cyc;
-wire  [31:0]      w_wbs1_dat;
 wire              w_wbs1_stb;
 wire  [3:0]       w_wbs1_sel;
 wire              w_wbs1_ack;
-wire  [31:0]      w_wbs1_dat;
+wire  [31:0]      w_wbs1_dat_i;
+wire  [31:0]      w_wbs1_dat_o;
 wire  [31:0]      w_wbs1_adr;
 wire              w_wbs1_int;
 
@@ -149,7 +149,7 @@ wishbone_master wm (
   .clk            (clk              ),
   .rst            (rst              ),
 
-  .i_ih_reset     (r_ih_reset       ),
+  .i_ih_rst       (r_ih_reset       ),
   .i_ready        (r_in_ready       ),
   .i_command      (r_in_command     ),
   .i_address      (r_in_address     ),
@@ -163,66 +163,65 @@ wishbone_master wm (
   .o_data_count   (w_out_data_count ),
   .o_master_ready (w_master_ready   ),
 
-  .o_wb_we        (w_wbm_we         ),
-  .o_wb_adr       (w_wbm_adr        ),
-  .o_wb_dat       (w_wbm_dat        ),
-  .i_wb_dat       (w_wbm_dat        ),
-  .o_wb_stb       (w_wbm_stb        ),
-  .o_wb_cyc       (w_wbm_cyc        ),
-  .o_wb_msk       (w_wbm_msk        ),
-  .o_wb_sel       (w_wbm_sel        ),
-  .i_wb_ack       (w_wbm_ack        ),
-  .i_wb_int       (w_wbm_int        )
+  .o_per_we        (w_wbm_we        ),
+  .o_per_adr       (w_wbm_adr       ),
+  .o_per_dat       (w_wbm_dat_i     ),
+  .i_per_dat       (w_wbm_dat_o     ),
+  .o_per_stb       (w_wbm_stb       ),
+  .o_per_cyc       (w_wbm_cyc       ),
+  .o_per_msk       (w_wbm_msk       ),
+  .o_per_sel       (w_wbm_sel       ),
+  .i_per_ack       (w_wbm_ack       ),
+  .i_per_int       (w_wbm_int       )
 );
 
 //slave 1
-USER_SLAVE s1 (
+${NAME} s1 (
 
-  .clk        (clk        ),
-  .rst        (rst        ),
-              
-  .i_wbs_we   (w_wbs1_we  ),
-  .i_wbs_cyc  (w_wbs1_cyc ),
-  .i_wbs_dat  (w_wbs1_dat ),
-  .i_wbs_stb  (w_wbs1_stb ),
-  .o_wbs_ack  (w_wbs1_ack ),
-  .o_wbs_dat  (w_wbs1_dat ),
-  .i_wbs_adr  (w_wbs1_adr ),
-  .o_wbs_int  (w_wbs1_int )
+  .clk        (clk                  ),
+  .rst        (rst                  ),
+                                    
+  .i_wbs_we   (w_wbs1_we            ),
+  .i_wbs_cyc  (w_wbs1_cyc           ),
+  .i_wbs_dat  (w_wbs1_dat_i         ),
+  .i_wbs_stb  (w_wbs1_stb           ),
+  .o_wbs_ack  (w_wbs1_ack           ),
+  .o_wbs_dat  (w_wbs1_dat_o         ),
+  .i_wbs_adr  (w_wbs1_adr           ),
+  .o_wbs_int  (w_wbs1_int           )
 );
 
 wishbone_interconnect wi (
-  .clk      (clk         ),
-  .rst      (rst         ),
-
-  .i_m_we   (w_wbm_we    ),
-  .i_m_cyc  (w_wbm_cyc   ),
-  .i_m_stb  (w_wbm_stb   ),
-  .o_m_ack  (w_wbm_ack   ),
-  .i_m_dat  (w_wbm_dat   ),
-  .o_m_dat  (w_wbm_dat   ),
-  .i_m_adr  (w_wbm_adr   ),
-  .o_m_int  (w_wbm_int   ),
-
-  .o_s0_we  (o_wbs0_we   ),
-  .o_s0_cyc (o_wbs0_cyc  ),
-  .o_s0_stb (o_wbs0_stb  ),
-  .i_s0_ack (i_wbs0_ack  ),
-  .o_s0_dat (o_wbs0_dat  ),
-  .i_s0_dat (i_wbs0_dat  ),
-  .o_s0_adr (o_wbs0_adr  ),
-  .i_s0_int (i_wbs0_int  ),
-
-  .o_s1_we  (w_wbs1_we   ),
-  .o_s1_cyc (w_wbs1_cyc  ),
-  .o_s1_stb (w_wbs1_stb  ),
-  .i_s1_ack (w_wbs1_ack  ),
-  .o_s1_dat (w_wbs1_dat  ),
-  .i_s1_dat (w_wbs1_dat  ),
-  .o_s1_adr (w_wbs1_adr  ),
-  .i_s1_int (w_wbs1_int  )
+  .clk        (clk                  ),
+  .rst        (rst                  ),
+                                    
+  .i_m_we     (w_wbm_we             ),
+  .i_m_cyc    (w_wbm_cyc            ),
+  .i_m_stb    (w_wbm_stb            ),
+  .o_m_ack    (w_wbm_ack            ),
+  .i_m_dat    (w_wbm_dat_i          ),
+  .o_m_dat    (w_wbm_dat_o          ),
+  .i_m_adr    (w_wbm_adr            ),
+  .o_m_int    (w_wbm_int            ),
+                                    
+  .o_s0_we    (w_wbs0_we            ),
+  .o_s0_cyc   (w_wbs0_cyc           ),
+  .o_s0_stb   (w_wbs0_stb           ),
+  .i_s0_ack   (w_wbs0_ack           ),
+  .o_s0_dat   (w_wbs0_dat_i         ),
+  .i_s0_dat   (w_wbs0_dat_o         ),
+  .o_s0_adr   (w_wbs0_adr           ),
+  .i_s0_int   (w_wbs0_int           ),
+                                    
+  .o_s1_we    (w_wbs1_we            ),
+  .o_s1_cyc   (w_wbs1_cyc           ),
+  .o_s1_stb   (w_wbs1_stb           ),
+  .i_s1_ack   (w_wbs1_ack           ),
+  .o_s1_dat   (w_wbs1_dat_i         ),
+  .i_s1_dat   (w_wbs1_dat_o         ),
+  .o_s1_adr   (w_wbs1_adr           ),
+  .i_s1_int   (w_wbs1_int           )
 );
-
 
 
 
@@ -259,7 +258,7 @@ initial begin
   r_out_ready                   <= 0;
   //clear wishbone signals
   `SLEEP_CLK(10);
-  rst                         <= 0;
+  rst                           <= 0;
   r_out_ready                   <= 1;
 
   if (fd_in == 0) begin
@@ -269,13 +268,36 @@ initial begin
     //while there is still data to be read from the file
     while (!$feof(fd_in)) begin
       //read in a command
-      read_count              = $fscanf (fd_in, "%h:%h:%h:%h\n", r_in_data_count, r_in_command, r_in_address, r_in_data);
+      read_count = $fscanf (fd_in, "%h:%h:%h:%h\n", 
+                                  r_in_data_count, 
+                                  r_in_command, 
+                                  r_in_address, 
+                                  r_in_data);
 
+      //Handle Frindge commands/comments
       if (read_count != 4) begin
-        ch = $fgetc(fd_in);
-        if (read_count == 1) begin
-          $display ("Sleep for %h Clock cycles" % r_in_data_count);
+        if (read_count == 0) begin
+          ch = $fgetc(fd_in);
+          if (ch == "\#") begin
+            //$display ("Eat a comment");
+            //Eat the line
+            while (ch != "\n") begin
+              ch = $fgetc(fd_in);
+            end
+            $display ("");
+          end
+          else begin
+            $display ("Error unrecognized line: %h" % ch);
+            //Eat the line
+            while (ch != "\n") begin
+              ch = $fgetc(fd_in);
+            end
+          end
+        end
+        else if (read_count == 1) begin
+          $display ("Sleep for %h Clock cycles", r_in_data_count);
           `SLEEP_CLK(r_in_data_count);
+          $display ("");
         end
         else begin
           $display ("Error: read_count = %h != 4", read_count);
@@ -293,7 +315,7 @@ initial begin
         `SLEEP_CLK(1);
         while (~command_finished) begin
           request_more_data_ack         <= 0;
-
+      
           if ((r_in_command & 32'h0000FFFF) == 1) begin
             if (request_more_data && ~request_more_data_ack) begin
               read_count      = $fscanf(fd_in, "%h\n", r_in_data);
@@ -301,7 +323,7 @@ initial begin
               request_more_data_ack     <= 1;
             end
           end
-
+      
           //so time porgresses wait a tick
           `SLEEP_CLK(1);
           //this doesn't need to be here, but there is a weird behavior in iverilog
@@ -326,19 +348,25 @@ end
 //    $monitor("%t, state: %h", $time, state);
 //end
 
+//initial begin
+//    $monitor("%t, data: %h, state: %h, execute command: %h", $time, w_wbm_dat_o, state, execute_command);
+//end
+
+
+
 always @ (posedge clk) begin
   if (rst) begin
     state                     <= IDLE;
     request_more_data         <= 0;
     timeout_count             <= 0;
     prev_int                  <= 0;
-    r_ih_reset                  <= 0;
-    data_write_count          <=  0;
+    r_ih_reset                <= 0;
+    data_write_count          <= 0;
   end
   else begin
-    r_ih_reset                  <= 0;
-    r_in_ready                  <= 0;
-    r_out_ready                 <= 1;
+    r_ih_reset                <= 0;
+    r_in_ready                <= 0;
+    r_out_ready               <= 1;
     command_finished          <= 0;
 
     //Countdown the NACK timeout
