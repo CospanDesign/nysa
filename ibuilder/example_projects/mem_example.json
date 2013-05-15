@@ -1,0 +1,61 @@
+{
+	"BASE_DIR":"~/projects/sycamore_projects",
+	"board":"xilinx-s3esk",
+	"PROJECT_NAME":"example_project",
+	"TEMPLATE":"wishbone_template.json",
+	"INTERFACE":{
+		"filename":"uart_io_handler.v",
+		"bind":{
+			"phy_uart_in":{
+				"port":"RX",
+				"direction":"input"
+			},
+			"phy_uart_out":{
+				"port":"TX",
+				"direction":"output"
+			}
+		}
+	},
+	"SLAVES":{
+		"gpio1":{
+			"filename":"wb_gpio.v",
+			"bind":{
+				"gpio_out[7:0]":{
+					"port":"led[7:0]",
+					"direction":"output"
+				},
+				"gpio_in[3:0]":{
+					"port":"switch[3:0]",
+					"direction":"input"
+				},
+				"gpio_in[4]":{
+					"port":"btn_north",
+					"direction":"input"
+				},
+				"gpio_in[5]":{
+					"port":"btn_south",
+					"direction":"input"
+				},
+				"gpio_in[6]":{
+					"port":"btn_east",
+					"direction":"input"
+				},
+				"gpio_in[7]":{
+					"port":"btn_west",
+					"direction":"input"
+				}
+			}
+		}
+	},
+
+	"MEMORY":{
+		"mem1":{
+			"filename":"wb_bram.v"
+		}
+	},
+	"bind": {
+	},
+	"constraint_files":[
+	]
+
+}

@@ -1,0 +1,38 @@
+{
+	"BASE_DIR":"~/projects/sycamore_projects",
+	"board":"xilinx-s3esk",
+	"PROJECT_NAME":"example_project",
+	"TEMPLATE":"wishbone_template.json",
+	"INTERFACE":{
+		"filename":"uart_io_handler.v",
+		"bind": {
+			"phy_uart_in":{
+				"port":"RX",
+				"direction":"input"
+			},
+			"phy_uart_out":{
+				"port":"TX",
+				"direction":"output"
+			}
+		}
+	},
+	"SLAVES":{
+		"gpio1":{
+			"filename":"wb_gpio.v",
+			"bind":{
+				"gpio_out[7:0]":{
+					"port":"led[7:0]",
+					"direction":"output"
+				},
+				"gpio_in[3:0]":{
+					"port":"switch[3:0]",
+					"direction":"input"
+				}
+			}
+		}
+	},
+	"bind":{
+	},
+	"constraint_files":[
+	]
+}

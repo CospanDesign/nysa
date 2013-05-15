@@ -1,0 +1,72 @@
+{
+	"BASE_DIR":"~/projects/sycamore_projects",
+	"board":"xilinx-s3esk",
+	"PROJECT_NAME":"example_project",
+	"TEMPLATE":"wishbone_template.json",
+	"INTERFACE":{
+		"filename":"uart_io_handler.v",
+		"bind": {
+			"phy_uart_in":{
+				"port":"RX",
+				"direction":"input"
+			},
+			"phy_uart_out":{
+				"port":"TX",
+				"direction":"output"
+			}
+		}
+	},
+	"SLAVES":{
+		"mem1":{
+			"filename":"wb_sdram.v",
+			"bind": {
+				"sdram_clk":{
+					"port":"sdr_clk",
+					"direction":"output"
+				},
+				"sdram_cke":{
+					"port":"sdr_cke",
+					"direction":"output"
+				},
+				"sdram_cs_n":{
+					"port":"sdr_cs_n",
+					"direction":"output"
+				},
+				"sdram_ras_n":{
+					"port":"sdr_ras_n",
+					"direction":"output"
+				},
+				"sdram_cas_n":{
+					"port":"sdr_cas_n",
+					"direction":"output"
+				},
+				"sdram_we_n":{
+					"port":"sdr_we_n",
+					"direction":"output"
+				},
+				"sdram_bank[1:0]":{
+					"port":"sdr_ba[1:0]",
+					"direction":"output"
+				},
+				"sdram_addr[11:0]":{
+					"port":"sdr_a[11:0]",
+					"direction":"output"
+				},
+				"sdram_data[15:0]":{
+					"port":"sdr_dq[15:0]",
+					"direction":"inout"
+				},
+				"sdram_data_mask[1:0]":{
+					"port":"sdr_dm[1:0]",
+					"direction":"output"
+				}
+			}
+		}
+	},
+
+	"bind":{
+	},
+	"constraint_files":[
+	]
+
+}

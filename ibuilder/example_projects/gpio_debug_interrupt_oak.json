@@ -1,0 +1,35 @@
+{
+	"BASE_DIR":"~/projects/sycamore_projects",
+	"board":"oak",
+	"PROJECT_NAME":"example_project",
+	"TEMPLATE":"wishbone_template.json",
+	"INTERFACE":{
+		"filename":"uart_io_handler.v",
+		"bind":{
+			"phy_uart_in":{
+				"port":"gpio_rx",
+				"direction":"input"
+			},
+			"phy_uart_out":{
+				"port":"gpio_tx",
+				"direction":"output"
+			}
+		}
+	},
+	"SLAVES":{
+		"gpio1":{
+			"filename":"wb_gpio.v",
+			"bind":{
+				"gpio_out[0]":{
+					"port":"led",
+					"direction":"output"
+				}
+			}
+		}
+	},
+	"bind":{
+	},
+	"constraint_files":[
+	]
+
+}
