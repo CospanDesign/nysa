@@ -12,6 +12,7 @@ from ninja_ide.gui import actions
 #from ninja_ide.core import plugin_interfaces
 from .project.cbuilder import project
 from .project.cbuilder.cbuilder import CBuilder
+from .project.ibuilder import project as ibuilder_project
 from .misc import nysa_status
 from .preferences import preferences
 from .toolbar import toolbar
@@ -43,6 +44,7 @@ class NysaPlugin(plugin.Plugin):
         self.output.Info(self, "Started Nysa Plugin")
         self.cbuilder = CBuilder(self.output, self.locator)
         self.load_cbuilder_project()
+        self.load_ibuilder_project()
         self.tb = toolbar.nysaToolbar(self.toolbar_s, self.output)
         self.tb.create_test_icon(self.toolbar_test)
         self.tb.create_wave_icon(self.cbuilder.waveforms)
@@ -104,6 +106,11 @@ class NysaPlugin(plugin.Plugin):
         self.output.Info(self, "Loading cbuilder project")
         self.explorer_s.set_project_type_handler(project.PROJECT_TYPE,
         project.ProjectCbuilder(self.output, self.locator))
+
+    def load_ibuilder_project(self):
+        self.output.Info(self, "Loading ibuilder project")
+        self.explorer_s.set_project_type_handler(ibuilder_project.PROJECT_TYPE,
+        ibuilder_project.ProjectIbuilder(self.output, self.locator))
 
     def open_verilog(self, filename):
         f_path = os.path.join("home", "cospan", "Projects", "olympus",
