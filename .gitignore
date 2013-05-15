@@ -5,6 +5,9 @@
 *.swp
 *.swo
 
+#Simulation Things
+*.sim
+*.vcd
 
 # C extensions
 *.so
