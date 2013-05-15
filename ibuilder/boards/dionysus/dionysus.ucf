@@ -1,5 +1,5 @@
 NET "clk"     LOC = P51 | IOSTANDARD = LVCMOS33 ;
-NET "clk" PERIOD = 10 HIGH 50%;   # 100 MHZ
+NET "clk" PERIOD = 20 HIGH 50%;   # 200 MHZ
 NET "clk_IBUFG"               TNM="SYS_CLK";
 
 
