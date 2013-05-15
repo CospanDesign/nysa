@@ -11,6 +11,6 @@ ${NYSA}/cbuilder/verilog/wishbone/master/wishbone_master.v
 #The generic directory contains a lot of non-platform specific verilog code
 #${NYSA}/cbuilder/verilog/generic/<some name here>.v
 
-rtl/${NAME}.v
+rtl/wb_console.v
 sim/tb_wishbone_master.v
 

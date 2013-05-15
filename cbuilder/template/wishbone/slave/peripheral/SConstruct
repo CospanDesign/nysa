@@ -67,6 +67,6 @@ env.sim('design.vcd', 'design.sim')
 
 Default('design.sim')
 
-Clean('design.sim', 'design.vcd')
+Clean('design.sim', ['design.vcd', 'temp.txt')
 
 
