@@ -11,11 +11,11 @@ from ibuilder.lib import utils
 from ibuilder.lib import arbitor
 
 class Test (unittest.TestCase):
-  """Unit test for sapproject"""
+  """Unit test for arbitor"""
 
   def setUp(self):
     base = os.path.join( os.path.dirname(__file__),
-                              "..")
+                         os.pardir)
     self.nysa_base = os.path.abspath(base)
     self.dbg = False
 

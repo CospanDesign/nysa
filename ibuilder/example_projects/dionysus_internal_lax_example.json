@@ -6,39 +6,39 @@
 	"INTERFACE":{
 		"filename":"ft_master_interface.v",
 		"bind":{
-			"ftdi_clk":{
+			"i_ftdi_clk":{
 				"port":"ftdi_clk",
 				"direction":"input"
 			},
-			"ftdi_data[7:0]":{
+			"io_ftdi_data[7:0]":{
 				"port":"d[7:0]",
 				"direction":"inout"
 			},
-			"ftdi_txe_n":{
+			"i_ftdi_txe_n":{
 				"port":"txe_n",
 				"direction":"input"
 			},
-			"ftdi_wr_n":{
+			"o_ftdi_wr_n":{
 				"port":"wr_n",
 				"direction":"output"
 			},
-			"ftdi_rde_n":{
+			"i_ftdi_rde_n":{
 				"port":"rxe_n",
 				"direction":"input"
 			},
-			"ftdi_rd_n":{
+			"o_ftdi_rd_n":{
 				"port":"rd_n",
 				"direction":"output"
 			},
-			"ftdi_oe_n":{
+			"o_ftdi_oe_n":{
 				"port":"oe_n",
 				"direction":"output"
 			},
-			"ftdi_siwu":{
+			"o_ftdi_siwu":{
 				"port":"siwua",
 				"direction":"output"
 			},
-			"ftdi_suspend_n":{
+			"i_ftdi_suspend_n":{
 				"port":"suspend_n",
 				"direction":"input"
 			}
@@ -61,11 +61,11 @@
     "lax1":{
       "filename":"wb_logic_analyzer.v",
       "bind":{
-        "la_uart_tx":{
+        "o_la_uart_tx":{
           "port":"s0",
           "direction":"output"
         },
-        "la_uart_rx":{
+        "i_la_uart_rx":{
           "port":"s1",
           "direction":"input"
         }
@@ -77,47 +77,47 @@
 			"filename":"wb_sdram.v",
 			"bind":{
 	
-				"sdram_clk":{
+				"o_sdram_clk":{
 					"port":"sdram_clk",
 					"direction":"output"
 				},
-				"sdram_cke":{
+				"o_sdram_cke":{
 					"port":"cke",
 					"direction":"output"
 				},
-				"sdram_cs_n":{
+				"o_sdram_cs_n":{
 					"port":"cs_n",
 					"direction":"output"
 				},
-				"sdram_ras":{
+				"o_sdram_ras":{
 					"port":"ras",
 					"direction":"output"
 				},
-				"sdram_cas":{
+				"o_sdram_cas":{
 					"port":"cas",
 					"direction":"output"
 				},
-				"sdram_we":{
+				"o_sdram_we":{
 					"port":"we",
 					"direction":"output"
 				},
-				"sdram_bank[1:0]":{
+				"o_sdram_bank[1:0]":{
 					"port":"ba[1:0]",
 					"direction":"output"
 				},
-				"sdram_addr[11:0]":{
+				"o_sdram_addr[11:0]":{
 					"port":"a[11:0]",
 					"direction":"output"
 				},
-				"sdram_data[15:0]":{
+				"io_sdram_data[15:0]":{
 					"port":"dq[15:0]",
 					"direction":"inout"
 				},
-				"sdram_data_mask[1]":{
+				"o_sdram_data_mask[1]":{
 					"port":"dqmh",
 					"direction":"output"
 				},
-				"sdram_data_mask[0]":{
+				"o_sdram_data_mask[0]":{
 					"port":"dqml",
 					"direction":"output"
 				}

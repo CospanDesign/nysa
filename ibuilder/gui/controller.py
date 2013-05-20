@@ -223,74 +223,74 @@ class Controller():
         return True
     return False
 
-  def add_arbitrator_by_name(self, host_name, arbitrator_name, slave_name):
+  def add_arbitor_by_name(self, host_name, arbitor_name, slave_name):
     tags = self.gm.get_parameters(host_name)
-    if arbitrator_name not in tags["arbitrator_masters"]:
+    if arbitor_name not in tags["arbitor_masters"]:
       return False
 
     self.gm.connect_nodes (host_name, slave_name)
-    self.gm.set_edge_name(host_name, slave_name, arbitrator_name)
+    self.gm.set_edge_name(host_name, slave_name, arbitor_name)
     return True
 
-  def add_arbitrator(self, host_type, host_index,
-                     arbitrator_name, slave_type, slave_index):
-    """Adds an arbitrator and attaches it between the host and the slave."""
+  def add_arbitor(self, host_type, host_index,
+                     arbitor_name, slave_type, slave_index):
+    """Adds an arbitor and attaches it between the host and the slave."""
     h_name = self.gm.get_slave_name_at(host_index, host_type)
 #    tags = self.gm.get_parameters(h_name)
 #    print "h_name: " + h_name
-#    if arbitrator_name not in tags["arbitrator_masters"]:
+#    if arbitor_name not in tags["arbitor_masters"]:
 #      return False
 
     s_name = self.gm.get_slave_name_at(slave_index, slave_type)
 #    self.gm.connect_nodes (h_name, s_name)
-#    self.gm.set_edge_name(h_name, s_name, arbitrator_name)
+#    self.gm.set_edge_name(h_name, s_name, arbitor_name)
 #    return True
-    return self.add_arbitrator_by_name(h_name, arbitrator_name, s_name)
+    return self.add_arbitor_by_name(h_name, arbitor_name, s_name)
 
-  def get_connected_arbitrator_slave(self, host_name, arbitrator_name):
+  def get_connected_arbitor_slave(self, host_name, arbitor_name):
     tags = self.gm.get_parameters(host_name)
-    if arbitrator_name not in tags["arbitrator_masters"]:
-      SlaveError("This slave has no arbitrator masters")
+    if arbitor_name not in tags["arbitor_masters"]:
+      SlaveError("This slave has no arbitor masters")
 
     slaves = self.gm.get_connected_slaves(host_name)
     for arb_name in slaves.keys():
       slave = slaves[arb_name]
       edge_name = self.gm.get_edge_name(host_name, slave)
-      if edge_name == arbitrator_name:
+      if edge_name == arbitor_name:
         return slave
     return None
 
-  def get_connected_arbitrator_name(self, host_type, host_index,
+  def get_connected_arbitor_name(self, host_type, host_index,
                                     slave_type, slave_index):
     h_name = self.gm.get_slave_name_at(host_index, host_type)
     tags = self.gm.get_parameters(h_name)
-    if arbitrator_name not in tags["arbitrator_masters"]:
+    if arbitor_name not in tags["arbitor_masters"]:
       return ""
     s_name = self.gm.get_slave_name_at(slave_index, slave_type)
     return self.get_edge_name(h_name, s_name)
 
-  def remove_arbitrator_by_arb_master(self, host_name, arb_name):
-    slave_name = self.get_connected_arbitrator_slave(  host_name, arb_name)
-    self.remove_arbitrator_by_name(host_name, slave_name)
+  def remove_arbitor_by_arb_master(self, host_name, arb_name):
+    slave_name = self.get_connected_arbitor_slave(  host_name, arb_name)
+    self.remove_arbitor_by_name(host_name, slave_name)
 
-  def remove_arbitrator_by_name(self, host_name, slave_name):
+  def remove_arbitor_by_name(self, host_name, slave_name):
     self.gm.disconnect_nodes(host_name, slave_name)
 
-  def remove_arbitrator(self, host_type, host_index, slave_type, slave_index):
-    """Finds and removes the arbitrator from the host."""
+  def remove_arbitor(self, host_type, host_index, slave_type, slave_index):
+    """Finds and removes the arbitor from the host."""
     h_name = gm.get_slave_name_at(host_index, host_type)
     s_name = gm.get_slave_name_at(slave_index, slave_type)
-    remove_arbitrator_by_name(h_name, s_name)
+    remove_arbitor_by_name(h_name, s_name)
 
-  def is_active_arbitrator_host(self, host_type, host_index):
+  def is_active_arbitor_host(self, host_type, host_index):
     h_name = self.gm.get_slave_name_at(host_index, host_type)
     tags = self.gm.get_parameters(h_name)
     h_node = self.gm.get_node(h_name)
 #    print "node: " + str(h_node)
 #    print "parameters: " + str(tags)
 
-    if h_name not in tags["arbitrator_masters"]:
-      if len(tags["arbitrator_masters"]) == 0:
+    if h_name not in tags["arbitor_masters"]:
+      if len(tags["arbitor_masters"]) == 0:
         return False
 
     if not self.gm.is_slave_connected_to_slave(h_name):
@@ -302,8 +302,8 @@ class Controller():
     node = self.gm.get_node(slave_name)
     return node.name
 
-  def get_arbitrator_dict(self, host_type, host_index):
-    if not self.is_active_arbitrator_host(host_type, host_index):
+  def get_arbitor_dict(self, host_type, host_index):
+    if not self.is_active_arbitor_host(host_type, host_index):
       return {}
 
     h_name = self.gm.get_slave_name_at(host_index, host_type)
