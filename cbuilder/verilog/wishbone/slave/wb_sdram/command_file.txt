@@ -1,0 +1,33 @@
+#Add other command line options here
++libext+.v
++incdir+${NYSA}/cbuilder/verilog
+
+sim/mt48lc4m16.v
+sim/unisims/STARTUP_FPGACORE.v
+sim/unisims/BUFG.v
+sim/unisims/ODDR2.v
+sim/unisims/PLL_BASE.v
+sim/unisims/PLL_ADV.v
+
+rtl/sdram_include.v
+
+${NYSA}/cbuilder/verilog/generic/ppfifo.v
+${NYSA}/cbuilder/verilog/generic/afifo.v
+${NYSA}/cbuilder/verilog/generic/graycounter.v
+
+#Use the NYSA keyword to point to the NYSA base directory
+${NYSA}/cbuilder/verilog/sim/wishbone/interconnect/example_2port_interconnect/wishbone_interconnect.v
+${NYSA}/cbuilder/verilog/sim/wishbone/interconnect/example_1port_mem_interconnect/wishbone_mem_interconnect.v
+#${NYSA}/cbuilder/verilog/wishbone/slave/device_rom_table/device_rom_table.v
+${NYSA}/cbuilder/verilog/wishbone/master/wishbone_master.v
+
+#The generic directory contains a lot of non-platform specific verilog code
+#${NYSA}/cbuilder/verilog/generic/<some name here>.v
+
+rtl/wb_sdram.v
+rtl/sdram.v
+rtl/sdram_read.v
+rtl/sdram_clkgen.v
+
+sim/tb_wishbone_master.v
+
