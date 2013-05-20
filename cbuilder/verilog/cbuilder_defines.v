@@ -1,4 +1,4 @@
-//mg_defines.v
+//cbuilder_defines.v
 /*
 Distributed under the MIT licesnse.
 Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
@@ -51,8 +51,8 @@ SOFTWARE.
 
 // defines for the miracle grow project
 
-`ifndef __MG_DEFINES__
-`define __MG_DEFINES__
+`ifndef __CBUILDER_DEFINES__
+`define __CBUILDER_DEFINES__
 
 `define COMMAND_PING        32'h00000000
 `define COMMAND_WRITE       32'h00000001
@@ -145,4 +145,4 @@ SOFTWARE.
 `define AXI_POWER_LOW       1'b0
 `define AXI_POWER_NORMAL    1'b1
 
-`endif //__MG_DEFINES__
+`endif //__CBUILDER_DEFINES__
