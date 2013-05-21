@@ -1,0 +1,32 @@
+#Command Format:
+#[Data Count]:[Flags,Command]:[Periph Device, Address]:[Data(ignored for reads)]
+
+#Ping
+00000000:00000000:12345678:FEDCBA98
+
+#Write 10 values into memory
+0000000A:00010001:00000000:00000000
+80000000
+00000001
+80000001
+00000002
+80000002
+00000003
+80000003
+00000004
+80000004
+
+#Write 0x000 into Address 0x04 (Control) [Disable, Reset]
+00000001:00000001:01000004:00000000
+
+#Write 0x040 into Address 0x05 (Mem 0 Size)
+00000001:00000001:01000005:00000040
+
+#Write 0x040 into Address 0x06 (Mem 0 Base)
+00000001:00000001:01000006:00000040
+
+#Write 0x040 into Address 0x07 (Mem 1 Size)
+00000001:00000001:01000007:00000040
+
+#Write 0x003 into Address 0x00 (Control) [Enble, Enable Interrupts]
+00000001:00000001:01000000:00000003

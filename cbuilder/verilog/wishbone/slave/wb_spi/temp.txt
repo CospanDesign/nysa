@@ -1,0 +1,22 @@
+#Add other command line options here
++libext+.v
++incdir+rtl+sim
++incdir+/home/cospan/Projects/nysa/cbuilder/verilog
+
+#Use the NYSA keyword to point to the NYSA base directory
+
+#/home/cospan/Projects/nysa/cbuilder/verilog/wishbone/slave/device_rom_table/device_rom_table.v
+
+/home/cospan/Projects/nysa/cbuilder/verilog/sim/wishbone/interconnect/example_2port_interconnect/wishbone_interconnect.v
+/home/cospan/Projects/nysa/cbuilder/verilog/wishbone/master/wishbone_master.v
+
+#The generic directory contains a lot of non-platform specific verilog code
+#/home/cospan/Projects/nysa/cbuilder/verilog/generic/<some name here>.v
+
+rtl/spi_defines.v
+rtl/spi_clgen.v
+rtl/spi_shift.v
+rtl/timescale.v
+rtl/wb_spi.v
+sim/tb_wishbone_master.v
+

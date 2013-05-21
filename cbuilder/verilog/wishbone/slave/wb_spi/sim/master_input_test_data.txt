@@ -1,0 +1,28 @@
+#Command Format:
+#[Data Count]:[Flags,Command]:[Periph Device, Address]:[Data(ignored for reads)]
+
+#Ping
+00000000:00000000:12345678:FEDCBA98
+
+# Set Address 0 (Control) to 0x02010
+00000001:00000001:01000000:00002010
+# Set Address 3 (Slave Select) to 1
+00000001:00000001:01000003:00000001
+
+# Read Address 1 (Clock Rate)
+00000001:00000002:01000001:00000000
+
+# Set Address 2 (Divider) to 1
+00000001:00000001:01000002:00000019
+
+# Set Address 8 (Transmit Data 0) to BA
+00000001:00000001:01000008:000000BA
+
+# Set Address 9 (Transmit Data 1) to 0x12345678
+00000001:00000001:01000009:12345678
+
+# Set Address 0 (Control) to 0x02110
+00000001:00000001:01000000:00002110
+
+# Read 3 peices of data starting at Address 0
+00000003:00000002:01000000:00000000
