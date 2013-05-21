@@ -57,7 +57,7 @@ def execute_test(arg):
       pt.debug()
     else:
       if debug: print "Test: %s" % arg
-      test = "test_%s.py" % arg 
+      test = "test_%s.py" % arg
       tl = unittest.TestLoader()
       pt = tl.discover(os.path.dirname(__file__), pattern = test)
       if pt.countTestCases() != 0:
@@ -67,7 +67,7 @@ def execute_test(arg):
   elif isinstance(arg, list):
     testfiles = []
     if debug: print "Test a list of test: %s" % str(arg)
-      
+
 
 
 if __name__ == "__main__":
