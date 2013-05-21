@@ -7,7 +7,7 @@
 		"filename":"ft_master_interface.v",
 		"bind":{
 			"i_ftdi_clk":{
-				"port":"ftdi_clk",
+				"port":"i_ftdi_clk",
 				"direction":"input"
 			},
 			"io_ftdi_data[7:0]":{

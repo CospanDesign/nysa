@@ -6,11 +6,11 @@
 	"INTERFACE":{
 		"filename":"uart_io_handler.v",
 		"bind":{
-			"phy_uart_in":{
+			"i_phy_uart_in":{
 				"port":"RX",
 				"direction":"input"
 			},
-			"phy_uart_out":{
+			"o_phy_uart_out":{
 				"port":"TX",
 				"direction":"output"
 			}

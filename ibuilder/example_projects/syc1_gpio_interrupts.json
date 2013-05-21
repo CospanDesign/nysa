@@ -6,39 +6,39 @@
 	"INTERFACE":{
 		"filename":"ft_host_interface.v",
 		"bind":{
-			"ftdi_clk":{
-				"port":"ftdi_clk",
+			"i_ftdi_clk":{
+				"port":"i_ftdi_clk",
 				"direction":"input"
 			},
-			"ftdi_data[7:0]":{
+			"io_ftdi_data[7:0]":{
 				"port":"d[7:0]",
 				"direction":"inout"
 			},
-			"ftdi_txe_n":{
+			"i_ftdi_txe_n":{
 				"port":"txe_n",
 				"direction":"input"
 			},
-			"ftdi_wr_n":{
+			"o_ftdi_wr_n":{
 				"port":"wr_n",
 				"direction":"output"
 			},
-			"ftdi_rde_n":{
+			"i_ftdi_rde_n":{
 				"port":"rxe_n",
 				"direction":"input"
 			},
-			"ftdi_rd_n":{
+			"o_ftdi_rd_n":{
 				"port":"rd_n",
 				"direction":"output"
 			},
-			"ftdi_oe_n":{
+			"o_ftdi_oe_n":{
 				"port":"oe_n",
 				"direction":"output"
 			},
-			"ftdi_siwu":{
+			"o_ftdi_siwu":{
 				"port":"siwua",
 				"direction":"output"
 			},
-			"ftdi_suspend_n":{
+			"o_ftdi_suspend_n":{
 				"port":"suspend_n",
 				"direction":"input"
 			}
