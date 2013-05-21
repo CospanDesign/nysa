@@ -26,7 +26,7 @@ class Controller():
     self.filename = ""
 
     # Add some variable functions for dependency injection.
-    self.get_board_config = saputils.get_board_config
+    self.get_board_config = utils.get_board_config
     self.get_unique_name = get_unique_name
 
 
@@ -67,11 +67,11 @@ class Controller():
       self.gm.add_node("Host Interface", NodeType.HOST_INTERFACE)
 
     # Check if the host interface is valid.
-    file_name = saputils.find_module_filename(host_interface_name)
-    file_name = saputils.find_rtl_file_location(file_name)
+    file_name = utils.find_module_filename(host_interface_name)
+    file_name = utils.find_rtl_file_location(file_name)
 
     # If the host interface is valid then get all the tags ...
-    parameters = saputils.get_module_tags(filename = file_name,
+    parameters = utils.get_module_tags(filename = file_name,
                                           bus = self.get_bus_type())
     # ... and set them up.
     self.gm.set_parameters(hi_name, parameters)
@@ -350,7 +350,7 @@ class Controller():
     if filename is not None:
 #      print "filename: " + filename
       if len(filename) > 0:
-        parameters = saputils.get_module_tags(filename, self.bus_type)
+        parameters = utils.get_module_tags(filename, self.bus_type)
         self.gm.set_parameters(uname, parameters)
 
         # Check if there are already some parameter declarations within the
@@ -402,8 +402,8 @@ class Controller():
 
     # moving to the other bus, need to sever connections.
     self.remove_slave(from_slave_type, from_slave_index)
-    filename = saputils.find_module_filename(tags["module"])
-    filename = saputils.find_rtl_file_location(filename)
+    filename = utils.find_module_filename(tags["module"])
+    filename = utils.find_rtl_file_location(filename)
     self.add_slave(slave_name, filename, to_slave_type, to_slave_index)
 
   def generate_project(self):
