@@ -7,8 +7,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, "lib"))
 
 #Inner package modules
+from ibuilder.lib import ibuilder
+
 from ibuilder_error import ModuleNotFound
 from ibuilder_error import SlaveError
+
+from gui_error import GraphControllerError
 
 import graph_manager as gm
 
@@ -28,14 +32,417 @@ class Controller():
     # Add some variable functions for dependency injection.
     self.get_board_config = utils.get_board_config
     self.get_unique_name = get_unique_name
+    #self.board_dict = {}
 
 
+  def load_config_file(self, filename, debug=False):
+    """Loads a sycamore configuration file into memory.  Raises an IOError if
+    the file cannot be found."""
+    # Open up the specified JSON project config file and copy it into the buffer
+    # (may raise an IOError).
+    filein = open(filename)
+    json_string = filein.read()
+    filein.close()
+
+    self.project_tags = json.loads(json_string)
+    self.filename = filename
+    self.build_tool = {}
+    self.board_dict = self.get_board_config(self.project_tags["board"])
+    # XXX Doing anything?
+#    self.get_project_constraint_files()
+    return True
+
+
+
+  def set_config_file_location(self, filename):
+    self.filename = filename
+
+  def initialize_graph(self, debug=False):
+    """Initializes the graph and project tags."""
+
+    if debug: print "Initialize graph"
+    # Clear any previous data.
+    self.gm.clear_graph()
+
+    # Set the bus type.
+    if self.project_tags["TEMPLATE"] == "wishbone_template.json":
+      self.set_bus_type("wishbone")
+    elif self.project_tags["TEMPLATE"] == "axi_template.json":
+      self.set_bus_type("axi")
+    else:
+      raise GraphControllerError("Template is not specified")
+
+
+    # Add the nodes that are always present.
+    self.gm.add_node("Host Interface", NodeType.HOST_INTERFACE)
+    self.gm.add_node("Master", NodeType.MASTER)
+    self.gm.add_node("Memory", NodeType.MEMORY_INTERCONNECT)
+    self.gm.add_node("Peripherals", NodeType.PERIPHERAL_INTERCONNECT)
+    self.add_slave("DRT", None, SlaveType.PERIPHERAL, slave_index = 0)
+
+    # Get all the unique names for accessing nodes.
+    hi_name   = self.get_unique_name("Host Interface", NodeType.HOST_INTERFACE)
+    m_name    = self.get_unique_name("Master", NodeType.MASTER)
+    mi_name   = self.get_unique_name("Memory", NodeType.MEMORY_INTERCONNECT)
+    pi_name   = self.get_unique_name("Peripherals", NodeType.PERIPHERAL_INTERCONNECT)
+    drt_name  = self.get_unique_name("DRT",
+                                    NodeType.SLAVE,
+                                    SlaveType.PERIPHERAL,
+                                    slave_index = 0)
+
+    # Attach all the appropriate nodes.
+    self.gm.connect_nodes(hi_name, m_name)
+    self.gm.connect_nodes(m_name, mi_name)
+    self.gm.connect_nodes(m_name, pi_name)
+    self.gm.connect_nodes(pi_name, drt_name)
+
+    # Get module data for the DRT.
+    try:
+      filename = utils.find_rtl_file_location("device_rom_table.v")
+    except ModuleNotFound as ex:
+      if debug:
+        print "Invalid Module Name: %s" % (host_interface_name)
+      raise GraphControllerError("DRT module was not found")
+
+    parameters = utils.get_module_tags(  filename = filename, bus=self.get_bus_type())
+    self.gm.set_parameters(drt_name, parameters)
+
+    # Attempt to load data from the tags.
+    sp_count = self.gm.get_number_of_peripheral_slaves()
+    if debug:
+      print "loading %d peripheral slaves" % sp_count
+
+    if "SLAVES" in self.project_tags:
+      for slave_name in self.project_tags["SLAVES"].keys():
+        if debug: print "loading slave: %s" % slave_name
+
+        filename = self.project_tags["SLAVES"][slave_name]["filename"]
+        if "device_rom_table" in filename:
+          filename = None
+
+        if filename is not None:
+          filename = utils.find_rtl_file_location(filename)
+
+        uname = self.add_slave(  slave_name,
+                    filename,
+                    SlaveType.PERIPHERAL)
+
+        # Add the bindings from the config file.
+        skeys = self.project_tags["SLAVES"][slave_name].keys()
+#        print "adding bindings"
+#        if "bind" not in skeys:
+#          self.project_tags["SLAVES"][slave_name]["bind"] = {}
+
+        if "bind" in skeys:
+#          print "found binding"
+          bindings = {}
+          bindings = self.project_tags["SLAVES"][slave_name]["bind"]
+          self.gm.set_config_bindings(uname, bindings)
+        else:
+          self.project_tags["SLAVES"][slave_name]["bind"] = {}
+
+    # Load all the memory slaves.
+    sm_count = self.gm.get_number_of_memory_slaves()
+    if debug:
+      print "loading %d memory slaves" % sm_count
+
+    if "MEMORY" in self.project_tags:
+      for slave_name in self.project_tags["MEMORY"].keys():
+
+        filename = self.project_tags["MEMORY"][slave_name]["filename"]
+        filename = utils.find_rtl_file_location(filename)
+        uname =  self.add_slave(  slave_name,
+                    filename,
+                    SlaveType.MEMORY,
+                    slave_index = -1)
+
+        # Add the bindings from the config file.
+        mkeys = self.project_tags["MEMORY"][slave_name].keys()
+        if "bind" in mkeys:
+          bindings = self.project_tags["MEMORY"][slave_name]["bind"]
+          self.gm.set_config_bindings(uname, bindings)
+        else:
+          self.project_tags["MEMORY"][slave_name]["bind"] = {}
+
+    # Check if there is a host interface defined.
+    if "INTERFACE" in self.project_tags:
+      filename = utils.find_rtl_file_location(self.project_tags["INTERFACE"]["filename"])
+      if debug: print "Loading interface: %s" % filename
+      parameters = utils.get_module_tags(  filename = filename, bus=self.get_bus_type())
+      self.set_host_interface(parameters["module"])
+      if "bind" in self.project_tags["INTERFACE"].keys():
+        self.gm.set_config_bindings(hi_name,
+              self.project_tags["INTERFACE"]["bind"])
+      else:
+        self.project_tags["INTERFACE"]["bind"] = {}
+
+      self.gm.set_parameters(hi_name, parameters)
+
+    if "SLAVES" in self.project_tags:
+      for host_name in self.project_tags["SLAVES"].keys():
+        if "BUS" in self.project_tags["SLAVES"][host_name].keys():
+          for arb_name in self.project_tags["SLAVES"][host_name]["BUS"].keys():
+            #there is an arbitor here
+            slave_name = self.project_tags["SLAVES"][host_name]["BUS"][arb_name]
+            if debug:
+              print "arbitor: %s attaches to %s through bus: %s" % (host_name, slave_name, arb_name)
+
+            h_name = ""
+            h_index = -1
+            h_type = SlaveType.PERIPHERAL
+            s_name = ""
+            s_index = -1
+            s_type = SlaveType.PERIPHERAL
+
+            # Now to attach the arbitor.
+            p_count = self.get_number_of_slaves(SlaveType.PERIPHERAL)
+            m_count = self.get_number_of_slaves(SlaveType.MEMORY)
+
+            # Find the host and slave nodes.
+            for i in range (0, p_count):
+              self.gm.get_slave_name_at(SlaveType.PERIPHERAL, i)
+              sn = self.gm.get_slave_name_at(SlaveType.PERIPHERAL, i)
+              slave = self.gm.get_node(sn)
+
+              if slave.name == host_name:
+                h_name = slave.unique_name
+                h_index = i
+                h_type = SlaveType.PERIPHERAL
+
+              if slave.name == slave_name:
+                s_name = slave.unique_name
+                s_index = i
+                s_type = SlaveType.PERIPHERAL
+
+            for i in range (0, m_count):
+              self.gm.get_slave_name_at(SlaveType.MEMORY, i)
+              sn = self.gm.get_slave_name_at(SlaveType.MEMORY, i)
+              slave = self.gm.get_node(sn)
+
+              if slave.name == host_name:
+                h_name = slave.unique_name
+                h_index = i
+                h_type = SlaveType.MEMORY
+
+              if slave.name == slave_name:
+                s_name = slave.unique_name
+                s_index = i
+                s_type = SlaveType.MEMORY
+
+            # Now I have all the materialst to attach the arbitor.
+            self.add_arbitor(h_type, h_index, arb_name, s_type, s_index)
+
+    if debug: print "Finish Initialize graph"
+
+
+  def get_number_of_slaves(self, slave_type):
+    if slave_type is None:
+      raise SlaveError("slave type was not specified")
+
+    if slave_type == SlaveType.PERIPHERAL:
+      return self.get_number_of_peripheral_slaves()
+
+    return self.get_number_of_memory_slaves()
+
+  def get_number_of_memory_slaves(self):
+    return self.gm.get_number_of_memory_slaves()
+
+  def get_number_of_peripheral_slaves(self):
+    return self.gm.get_number_of_peripheral_slaves()
+
+  def save_config_file(self, filename):
+    """Saves a module stored in memory to a file."""
+
+    # If there are no slaves on the memory interconnect then don't generate
+    # the structure in the JSON file for it.
+
+    json_string = json.dumps(self.project_tags, sort_keys = True, indent = 4)
+    try:
+      file_out = open(filename, 'w')
+      file_out.write(json_string)
+      file_out.close()
+    except IOError as err:
+      print "File Error: " + str(err)
+      raise GraphControllerError("Unable to write config file: %s" % filename)
+
+
+  def apply_slave_tags_to_project(self, debug = False):
+    """Apply the slave tags to the project tags."""
+    # Get all the slaves.
+    p_count = self.get_number_of_slaves(SlaveType.PERIPHERAL)
+    m_count = self.get_number_of_slaves(SlaveType.MEMORY)
+#    bind_dict = self.get_master_bind_dict()
+
+    for i in range(0, p_count):
+      sc_slave = self.gm.get_slave_at(i, SlaveType.PERIPHERAL)
+      uname = sc_slave.unique_name
+      name = sc_slave.name
+      if debug: print "name: " + str(name)
+      if name == "DRT":
+        continue
+      if name not in self.project_tags["SLAVES"].keys():
+        self.project_tags["SLAVES"][name] = {}
+
+      pt_slave = self.project_tags["SLAVES"][name]
+      if "bind" not in pt_slave.keys():
+        pt_slave["bind"] = {}
+
+      # Overwrite the current arbitor dictionary.
+      if "BUS" in pt_slave.keys():
+        pt_slave["BUS"] = {}
+
+      if "arbitor_masters" in sc_slave.parameters.keys():
+        ams = sc_slave.parameters["arbitor_masters"]
+        if len(ams) > 0:
+          # Add the BUS keyword to the arbitor master.
+          pt_slave["BUS"] = {}
+          # Add all the items from the sc version.
+          for a in ams:
+            if debug:
+              print "arbitor name: %s" % a
+            arb_slave = self.get_connected_arbitor_slave(uname, a)
+
+            arb_name = self.gm.get_node(arb_slave).name
+            if arb_slave is not None:
+              pt_slave["BUS"][a] = arb_name
+#          pt_slave["BUS"]
+
+      # Clear the current bindings in the project tags.
+      pt_slave["bind"] = {}
+
+      bindings = self.gm.get_node_bindings(uname)
+#      bind = sc_slave.bindings
+#      print "bind id: " + str(id(bindings))
+      if debug:
+        print "bind contents: " + str(bindings)
+      for p in bindings.keys():
+        pt_slave["bind"][p] = {}
+        pt_slave["bind"][p]["port"] = bindings[p]["pin"]
+        pt_slave["bind"][p]["direction"] = bindings[p]["direction"]
+
+      # Add filenames.
+      module = sc_slave.parameters["module"]
+      filename = utils.find_module_filename(module)
+      pt_slave["filename"] = filename
+
+
+    # Memory BUS
+    for i in range(0, m_count):
+      sc_slave = self.gm.get_slave_at(i, SlaveType.MEMORY)
+      uname = sc_slave.unique_name
+      name = sc_slave.name
+      if debug: print "name: " + str(name)
+      if name not in self.project_tags["MEMORY"].keys():
+        self.project_tags["MEMORY"][name] = {}
+
+      pt_slave = self.project_tags["MEMORY"][name]
+      if "bind" not in pt_slave.keys():
+        pt_slave["bind"] = {}
+
+      # Overwrite the current arbitor dictionary.
+      if "BUS" in pt_slave.keys():
+        pt_slave["BUS"] = {}
+
+      if "arbitor_masters" in sc_slave.parameters.keys():
+        ams = sc_slave.parameters["arbitor_masters"]
+        if len(ams) > 0:
+          # Add the BUS keyword to the arbitor master.
+          pt_slave["BUS"] = {}
+          # Add all the items from the sc version.
+          for a in ams:
+            if debug:
+              print "arbitor name: %s" % a
+            arb_slave = self.get_connected_arbitor_slave(uname, a)
+
+            arb_name = self.gm.get_node(arb_slave).name
+            if arb_slave is not None:
+              pt_slave["BUS"][a] = arb_name
+#          pt_slave["BUS"]
+
+      # Clear the current bindings in the project tags.
+      pt_slave["bind"] = {}
+
+      bindings = self.gm.get_node_bindings(uname)
+#      print "bind id: " + str(id(bindings))
+      if debug:
+        print "bind contents: " + str(bindings)
+      for p in bindings.keys():
+        pt_slave["bind"][p] = {}
+        pt_slave["bind"][p]["port"] = bindings[p]["pin"]
+        pt_slave["bind"][p]["direction"] = bindings[p]["direction"]
+
+
+
+  def set_project_location(self, location):
+    """Sets the location of the project to output."""
+    self.project_tags["BASE_DIR"] = location
+
+  def get_project_location(self):
+    return self.project_tags["BASE_DIR"]
+
+  def set_project_name(self, name):
+    """Sets the name of the output project."""
+    self.project_tags["PROJECT_NAME"] = name
+
+  def get_project_name(self):
+    return self.project_tags["PROJECT_NAME"]
+
+#  def set_vendor_tools(self, vendor_tool):
+#    """
+#    sets the vendor build tool, currently only
+#    Xilinx is supported
+#    """
+#    self.project_tags["BUILD_TOOL"] = vendor_tool
+
+  def get_vendor_tools(self):
+#    board_dict = utils.get_board_config(self.project_tags["board"])
+#    return board_dict["build_tool"]
+    return self.board_dict["build_tool"]
+
+  def set_board_name(self, board_name):
+    """Sets the name of the board to use."""
+    if "board" not in self.project_tags.keys():
+      self.project_tags["board"] = ""
+
+    self.project_tags["board"] = board_name
+    self.board_dict = utils.get_board_config(board_name)
+
+  def get_board_name(self):
+    if "board" in self.project_tags.keys():
+      return self.project_tags["board"]
+    return "undefined"
+
+  def get_constraint_filenames(self):
+    board_name = self.project_tags["board"]
+    pt = self.project_tags
+    cfiles = utils.get_constraint_filenames(board_name)
+    for cf in pt["constraint_files"]:
+      cfiles.append(cf)
+    return cfiles
+
+  def add_project_constraint_file(self, constraint_file):
+    pt = self.project_tags
+    cfiles = pt["constraint_files"]
+    if constraint_file not in cfiles:
+      cfiles.append(constraint_file)
+
+  def remove_project_constraint_file(self, constraint_file):
+    pt = self.project_tags
+    cfiles = pt["constraint_files"]
+    if constraint_file in cfiles:
+      cfiles.remove(constraint_file)
+
+  def set_project_constraint_files(self, constraint_files):
+    self.project_tags["constraint_files"] = constraint_files
+
+  def get_fpga_part_number(self):
+    return self.board_dict["fpga_part_number"]
 
   def new_design(self):
     self.gm = GraphManager()
     self.bus_type = "wishbone"
     self.tags = {}
-    self.file_name = ""
+    self.filename = ""
     self.project_tags = {}
     self.project_tags["PROJECT_NAME"] = "project"
     self.project_tags["BASE_DIR"] = "~/user_projects"
@@ -61,20 +468,26 @@ class Controller():
     module name (or cannot be found for whatever reason), throws a
     ModuleNotFound exception."""
     hi_name = self.get_unique_name("Host Interface", NodeType.HOST_INTERFACE)
+    if debug: print "hi_name: %s" % hi_name
 
     node_names = self.gm.get_node_names()
     if hi_name not in node_names:
       self.gm.add_node("Host Interface", NodeType.HOST_INTERFACE)
 
     # Check if the host interface is valid.
-    file_name = utils.find_module_filename(host_interface_name)
-    file_name = utils.find_rtl_file_location(file_name)
+    filename = utils.find_module_filename(host_interface_name)
+
+    #XXX: Should this be the full file name??
+    self.project_tags["INTERFACE"]["filename"] = filename
+    filename = utils.find_rtl_file_location(filename)
+
+    #print "hi project tags: %s" % str(self.project_tags["INTERFACE"])
 
     # If the host interface is valid then get all the tags ...
-    parameters = utils.get_module_tags(filename = file_name,
+    parameters = utils.get_module_tags(filename = filename,
                                           bus = self.get_bus_type())
     # ... and set them up.
-    self.gm.set_parameters(hi_name, parameters)
+    self.gm.set_parameters(hi_name, parameters, debug=debug)
     return True
 
   def get_master_bind_dict(self):
@@ -115,6 +528,9 @@ class Controller():
         bind_dict[key] = mb[key]
 
     return bind_dict
+
+  def get_node_ports(self, node_name):
+    return self.gm.get_node(node_name).parameters["ports"]
 
   def set_binding(self, node_name, port_name, pin_name):
     """Add a binding between the port and the pin."""
@@ -205,19 +621,32 @@ class Controller():
     self.gm.unbind_port(node_name, port_name)
 #    del bind_dict[port_name]
 
+  def unbind_all(self, debug = False):
+    if debug: print "unbind all"
+    mbd = self.get_master_bind_dict()
+    if debug: print "Master Bind Dict: %s" % str(mbd)
+    node_names = self.gm.get_node_names()
+    for nn in node_names:
+      nb = self.gm.get_node_bindings(nn)
+      for b in nb.keys():
+        if debug: print "Unbindig %s" % b
+        self.unbind_port(nn, b)
+
+
   def get_host_interface_name(self):
     hi_name = self.get_unique_name("Host Interface", NodeType.HOST_INTERFACE)
     hi = self.gm.get_node(hi_name)
     return hi.parameters["module"]
 
   def get_slave_name(self, slave_type, slave_index):
-    s_name = self.gm.get_slave_name_at(slave_index, slave_type)
+    s_name = self.gm.get_slave_name_at(slave_type, slave_index)
     slave = self.gm.get_node(s_name)
     return slave.name
 
-  def is_arb_master_connected(self, slave_name, arb_host):
+  def is_arb_master_connected(self, slave_name, arb_host, debug=False):
     slaves = self.gm.get_connected_slaves(slave_name)
     for key in slaves.keys():
+      #print "key: %s" % key
       edge_name = self.gm.get_edge_name(slave_name, slaves[key])
       if (arb_host == edge_name):
         return True
@@ -226,26 +655,25 @@ class Controller():
   def add_arbitor_by_name(self, host_name, arbitor_name, slave_name):
     tags = self.gm.get_parameters(host_name)
     if arbitor_name not in tags["arbitor_masters"]:
-      return False
+      raise GraphControllerError("%s is not an arbitor of %s" % (arbitor_name, host_name))
 
     self.gm.connect_nodes (host_name, slave_name)
     self.gm.set_edge_name(host_name, slave_name, arbitor_name)
-    return True
 
   def add_arbitor(self, host_type, host_index,
                      arbitor_name, slave_type, slave_index):
     """Adds an arbitor and attaches it between the host and the slave."""
-    h_name = self.gm.get_slave_name_at(host_index, host_type)
+    h_name = self.gm.get_slave_name_at(host_type, host_index)
 #    tags = self.gm.get_parameters(h_name)
 #    print "h_name: " + h_name
 #    if arbitor_name not in tags["arbitor_masters"]:
 #      return False
 
-    s_name = self.gm.get_slave_name_at(slave_index, slave_type)
+    s_name = self.gm.get_slave_name_at(slave_type, slave_index)
 #    self.gm.connect_nodes (h_name, s_name)
 #    self.gm.set_edge_name(h_name, s_name, arbitor_name)
 #    return True
-    return self.add_arbitor_by_name(h_name, arbitor_name, s_name)
+    self.add_arbitor_by_name(h_name, arbitor_name, s_name)
 
   def get_connected_arbitor_slave(self, host_name, arbitor_name):
     tags = self.gm.get_parameters(host_name)
@@ -262,12 +690,24 @@ class Controller():
 
   def get_connected_arbitor_name(self, host_type, host_index,
                                     slave_type, slave_index):
-    h_name = self.gm.get_slave_name_at(host_index, host_type)
+    h_name = self.gm.get_slave_name_at(host_type, host_index)
+    s_name = self.gm.get_slave_name_at(slave_type, slave_index)
+
+    
+    #slaves = self.gm.get_connected_slaves(h_name)
+
+    #if len(slaves.keys()):
+    #  raise GraphControllerError("host: %s is not connected to anything" % h_name)
+
     tags = self.gm.get_parameters(h_name)
-    if arbitor_name not in tags["arbitor_masters"]:
-      return ""
-    s_name = self.gm.get_slave_name_at(slave_index, slave_type)
-    return self.get_edge_name(h_name, s_name)
+    #print tags["arbitor_masters"]
+
+    for arb_name in tags["arbitor_masters"]:
+      slave_name = self.get_connected_arbitor_slave(h_name, arb_name)
+      if slave_name == s_name:
+        return arb_name
+
+    raise GraphControllerError("host: %s is not connected to %s" % (h_name, s_name))
 
   def remove_arbitor_by_arb_master(self, host_name, arb_name):
     slave_name = self.get_connected_arbitor_slave(  host_name, arb_name)
@@ -278,12 +718,12 @@ class Controller():
 
   def remove_arbitor(self, host_type, host_index, slave_type, slave_index):
     """Finds and removes the arbitor from the host."""
-    h_name = gm.get_slave_name_at(host_index, host_type)
-    s_name = gm.get_slave_name_at(slave_index, slave_type)
-    remove_arbitor_by_name(h_name, s_name)
+    h_name = self.gm.get_slave_name_at(host_type, host_index)
+    s_name = self.gm.get_slave_name_at(slave_type, slave_index)
+    self.remove_arbitor_by_name(h_name, s_name)
 
   def is_active_arbitor_host(self, host_type, host_index):
-    h_name = self.gm.get_slave_name_at(host_index, host_type)
+    h_name = self.gm.get_slave_name_at(host_type, host_index)
     tags = self.gm.get_parameters(h_name)
     h_node = self.gm.get_node(h_name)
 #    print "node: " + str(h_node)
@@ -306,7 +746,7 @@ class Controller():
     if not self.is_active_arbitor_host(host_type, host_index):
       return {}
 
-    h_name = self.gm.get_slave_name_at(host_index, host_type)
+    h_name = self.gm.get_slave_name_at(host_type, host_index)
     return self.gm.get_connected_slaves(h_name)
 
   def rename_slave(self, slave_type, index, new_name):
@@ -378,11 +818,12 @@ class Controller():
     self.gm.remove_slave(slave_index, slave_type)
     return
 
-  def move_slave(self, slave_name = None,
-                 from_slave_type = SlaveType.PERIPHERAL,
-                 from_slave_index = 0,
-                 to_slave_type = SlaveType.PERIPHERAL,
-                 to_slave_index = 0):
+  def move_slave( self,
+                  slave_name = None,
+                  from_slave_type = SlaveType.PERIPHERAL,
+                  from_slave_index = 0,
+                  to_slave_type = SlaveType.PERIPHERAL,
+                  to_slave_index = 0):
     """Move slave from one place to another, the slave can be moved from one
     bus to another and the index position can be moved."""
     if to_slave_type == SlaveType.PERIPHERAL and to_slave_index == 0:
@@ -395,7 +836,7 @@ class Controller():
       self.gm.move_slave(from_slave_index, to_slave_index, from_slave_type)
       return
 
-    sname = self.gm.get_slave_name_at(from_slave_index, from_slave_type)
+    sname = self.gm.get_slave_name_at(from_slave_type, from_slave_index)
 
     node = self.gm.get_node(sname)
     tags = self.gm.get_parameters(sname)
@@ -409,10 +850,7 @@ class Controller():
   def generate_project(self):
     """Generates the output project that can be used to create a bit image."""
     self.save_config_file(self.filename)
-    try:
-      saplib.generate_project(self.filename)
-    except IOError as err:
-      print "File Error: " + str(err)
+    ibuilder.generate_project(self.filename)
 
   def get_graph_manager(self):
     '''Returns the graph manager.'''
