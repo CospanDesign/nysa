@@ -2,8 +2,8 @@ import os
 import string
 from string import Template
 
-def generate_wb_interconnect(num_slaves = 1, add_drt = True):
-  print "Generating wishbone slave interconnect"
+def generate_wb_interconnect(num_slaves = 1, add_drt = True, debug=False):
+  if debug: print "Generating wishbone slave interconnect"
 
   buf = ""
 
