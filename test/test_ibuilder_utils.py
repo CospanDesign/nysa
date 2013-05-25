@@ -292,7 +292,7 @@ class Test (unittest.TestCase):
     slave_list = utils.get_slave_list(debug = self.dbg)
 
   def test_find_module_filename(self):
-    module_name = "uart"
+    module_name = "wb_spi"
     result = utils.find_module_filename(module_name, debug = self.dbg)
     self.assertEqual(len(result) > 0, True)
 
