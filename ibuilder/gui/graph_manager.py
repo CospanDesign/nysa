@@ -8,12 +8,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, 'lib'))
 
 from ibuilder_error import SlaveError
 
-class NodeError(Exception):
-  def __init__(self, value):
-    self.value = value
-  def __str__(self):
-    return repr(self.value)
-
 def enum(*sequential, **named):
   enums = dict(zip(sequential, range(len(sequential))), **named)
   return type('Enum', (), enums)
@@ -117,11 +111,11 @@ class GraphManager:
       for index in range (slave_index, count - 1):
         self.move_slave(index, index + 1, slave_type)
 
-    slave_name = self.get_slave_name_at(count - 1, slave_type)
+    slave_name = self.get_slave_name_at(slave_type, count - 1)
     self.graph.remove_node(slave_name)
 
   def rename_slave(self, slave_type, slave_index, new_name):
-    current_name = self.get_slave_name_at(slave_index, slave_type)
+    current_name = self.get_slave_name_at(slave_type, slave_index)
     node = self.get_node(current_name)
 
     unique_name = get_unique_name(new_name, NodeType.SLAVE, slave_type, slave_index)
@@ -142,20 +136,20 @@ class GraphManager:
     mcount = self.get_number_of_slaves(SlaveType.MEMORY)
 
     for i in xrange(pcount):
-      name = self.get_slave_name_at(i, SlaveType.PERIPHERAL)
+      name = self.get_slave_name_at(SlaveType.PERIPHERAL, i)
       node = self.get_node(name)
       node.slave_index = i
 
     for i in xrange(mcount):
-      name = self.get_slave_name_at(i, SlaveType.MEMORY)
+      name = self.get_slave_name_at(SlaveType.MEMORY, i)
       node = self.get_node(name)
       node.slave_index = i
 
   def get_slave_at(self, index, slave_type, debug = False):
-    name = self.get_slave_name_at(index, slave_type, debug)
+    name = self.get_slave_name_at(slave_type, index, debug)
     return self.get_node(name)
 
-  def get_slave_name_at(self, index, slave_type, debug = False):
+  def get_slave_name_at(self, slave_type, index, debug = False):
     if slave_type is None:
       raise SlaveError("Peripheral or Memory must be specified")
 
@@ -419,15 +413,17 @@ class GraphManager:
       graph_dict[name] = item
     return graph_dict
 
-  def get_node(self, name):
+  def get_node(self, name, debug = False):
     """Gets a node by the unique name."""
     g = self.get_nodes_dict()
+    if debug: print "%s: node dict: %s" % (__file__, str(self.get_nodes_dict()))
     if g is type(None):
       raise  NodeError("Node with unique name: %s does not exists"% (name))
     return g[name]
 
   def connect_nodes(self, node1, node2):
     """Connects two nodes together."""
+    #print "Connecting: %s - %s" % (node1, node2)
     self.graph.add_edge(node1, node2)
     self.graph[node1][node2]["name"]=""
 
@@ -500,6 +496,7 @@ class GraphManager:
 
   def set_parameters(self, name, parameters, debug = False):
     """Sets all the parameters from the core."""
+    if debug: print "\t\tMODUE NAME (START): %s" % parameters["module"]
     g = self.get_nodes_dict()
     g[name].parameters = parameters
 
@@ -508,8 +505,10 @@ class GraphManager:
     pdict_out = dict()
     direction_names = ["input", "output", "inout"]
 
+
     if debug:
-      print "parameters: " + str(pdict)
+      print "%s node dict: %s\n" % (__file__, str(g[name].parameters))
+      print "\t%s parameters: %s" % (__file__, str(pdict))
     for d in direction_names:
       for n in pdict[d].keys():
         pdict_out[n] = {}
@@ -523,6 +522,7 @@ class GraphManager:
 
     g[name].parameters["ports"] = {}
     g[name].parameters["ports"] = pdict_out
+    if debug: "\t\tMODULE NAME: %s" % parameters["module"]
 
   def get_parameters(self, name):
     g = self.get_nodes_dict()
