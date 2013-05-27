@@ -26,6 +26,7 @@ import sys
 import os
 import argparse
 import zipfile
+import shutil
 
 base = os.path.join( os.path.dirname(__file__),
                      os.pardir)
@@ -79,12 +80,21 @@ def remove_output_project(root = None, debug = False):
 
   for root, dirs, files in os.walk(root):
     for d in dirs:
-      remove_output_project(os.path.join(root, d, debug = debug)
-      os.removedirs(d)
+      ex_d = os.path.join(root, d)
+      remove_output_project(ex_d, debug = debug)
+      if os.path.exists(ex_d):
+        os.removedirs(ex_d)
+
 
     for f in files:
-      if debug: print "Removing %s" % f
-      of.remove(os.path.join(root, f)
+      if debug: print "Removing %s" % os.path.join(root, f)
+      os.remove(os.path.join(root, f))
+
+  try:
+    os.removedirs(root)
+  except:
+    pass
+
 
 if __name__ == "__main__":
 
@@ -115,7 +125,24 @@ if __name__ == "__main__":
   if debug: print "Generated project %s" % args.config[0]
 
   if args.compress:
-    if debug: print "Compress using tar/zip format"
+    output_dir = ibuilder.get_output_dir(args.config[0], dbg=debug)
+    name = os.path.split(output_dir)[1]
+    out_loc = os.path.split(output_dir)[0]
+
+    if debug: print "Current dir: %s" % os.getcwd()
+    if debug: print "Output Location: %s" % out_loc
+    if debug: print "archive name: %s" % name
+
+    archive_loc = os.path.join(out_loc, name)
+
+
+    if debug: print "Compress using gztar format"
+    name = shutil.make_archive( base_name = archive_loc,
+                                format = 'gztar',
+                                root_dir = out_loc,
+                                base_dir = name,
+                                )
+    remove_output_project(output_dir, debug=debug)
 
   if args.zip:
     if debug: print "Compress using zip format"
@@ -134,4 +161,5 @@ if __name__ == "__main__":
       if debug: print "+ %s" % f
       zf.write(f, os.path.join(name, os.path.relpath(f, output_dir)))
 
+    remove_output_project(output_dir, debug=debug)
     zf.close()
