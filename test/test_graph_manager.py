@@ -67,7 +67,7 @@ class Test (unittest.TestCase):
       print "renaming slave"
     self.sgm.add_node ("name1", gm.NodeType.SLAVE, gm.SlaveType.PERIPHERAL, 0)
     self.sgm.rename_slave(gm.SlaveType.PERIPHERAL, 0, "name2")
-    name = self.sgm.get_slave_name_at(0, gm.SlaveType.PERIPHERAL)
+    name = self.sgm.get_slave_name_at(gm.SlaveType.PERIPHERAL, 0)
     node = self.sgm.get_node(name)
     name = node.name
     self.assertEqual(name, "name2")
@@ -131,7 +131,7 @@ class Test (unittest.TestCase):
     count = self.sgm.get_number_of_slaves(gm.SlaveType.PERIPHERAL)
 
     for i in xrange(count):
-      slave_name = self.sgm.get_slave_name_at(i, gm.SlaveType.PERIPHERAL)
+      slave_name = self.sgm.get_slave_name_at(gm.SlaveType.PERIPHERAL, i)
       node = self.sgm.get_node(slave_name)
       self.assertEqual(i, node.slave_index)
 
@@ -164,7 +164,7 @@ class Test (unittest.TestCase):
     count = self.sgm.get_number_of_slaves(gm.SlaveType.MEMORY)
 
     for i in range (0, count):
-      slave_name = self.sgm.get_slave_name_at(i, gm.SlaveType.MEMORY)
+      slave_name = self.sgm.get_slave_name_at(gm.SlaveType.MEMORY, i)
       node = self.sgm.get_node(slave_name)
       self.assertEqual(i, node.slave_index)
 
@@ -487,7 +487,7 @@ class Test (unittest.TestCase):
                                    gm.NodeType.SLAVE,
                                    gm.SlaveType.PERIPHERAL,
                                    slave_index = 1)
-    found_name = self.sgm.get_slave_name_at(1, gm.SlaveType.PERIPHERAL)
+    found_name = self.sgm.get_slave_name_at(gm.SlaveType.PERIPHERAL, 1)
     node = self.sgm.get_slave_at(1, gm.SlaveType.PERIPHERAL)
 
     self.assertEqual(test_name, node.unique_name)
@@ -510,7 +510,7 @@ class Test (unittest.TestCase):
                                    gm.NodeType.SLAVE,
                                    gm.SlaveType.PERIPHERAL,
                                    slave_index = 1)
-    found_name = self.sgm.get_slave_name_at(1, gm.SlaveType.PERIPHERAL)
+    found_name = self.sgm.get_slave_name_at(gm.SlaveType.PERIPHERAL, 1)
 
 
     self.assertEqual(test_name, found_name)
