@@ -1,5 +1,6 @@
 #Project: Nysa
-##NOTE: Nysa is a remake of Nysa, Nysa is depreciated and will be removed soon
+##NOTE: Nysa is a remake of Olympus, Olympus is depreciated and will be removed 
+##soon
 
 ##Goal: Simplifiy both generation of HDL and interactions with FPGAs.
 
