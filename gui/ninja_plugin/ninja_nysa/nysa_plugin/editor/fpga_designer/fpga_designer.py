@@ -17,6 +17,9 @@ from ninja_ide.gui.main_panel import itab_item
 #from ninja_ide.tools import introspection
 #from ninja_ide.core import file_manager
 
+from graph_utils import Box
+
+
 
 
 class FPGADesigner(QWidget, itab_item.ITabItem):
@@ -59,8 +62,9 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
     '''
 
 
-
-
+  def create_box(self, core_dict = {}):
+    mYPadding = 10
+    mXPadding = 10
 
   def set_output(self, output):
     self.output = output
@@ -71,7 +75,6 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
 
     if factor > 0.05 and factor < 15:
       self.graphicView.scale(scaleFactor, scaleFactor)
-
 
 
   def keyPressEvent(self, event):
