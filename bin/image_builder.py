@@ -145,21 +145,22 @@ if __name__ == "__main__":
     remove_output_project(output_dir, debug=debug)
 
   if args.zip:
-    if debug: print "Compress using zip format"
     output_dir = ibuilder.get_output_dir(args.config[0], dbg=debug)
     name = os.path.split(output_dir)[1]
     out_loc = os.path.split(output_dir)[0]
 
     if debug: print "Current dir: %s" % os.getcwd()
     if debug: print "Output Location: %s" % out_loc
-    if debug: print "zip name: %s" % name
+    if debug: print "archive name: %s" % name
 
-    files = create_directory_structure(output_dir)
-    zf = zipfile.ZipFile(output_dir + ".zip", mode="w")
+    archive_loc = os.path.join(out_loc, name)
 
-    for f in files:
-      if debug: print "+ %s" % f
-      zf.write(f, os.path.join(name, os.path.relpath(f, output_dir)))
 
+    if debug: print "Compress using zip format"
+    name = shutil.make_archive( base_name = archive_loc,
+                                format = 'zip',
+                                root_dir = out_loc,
+                                base_dir = name,
+                                )
     remove_output_project(output_dir, debug=debug)
-    zf.close()
+
