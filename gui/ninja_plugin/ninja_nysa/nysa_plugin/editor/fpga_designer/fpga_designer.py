@@ -17,7 +17,7 @@ from ninja_ide.gui.main_panel import itab_item
 #from ninja_ide.tools import introspection
 #from ninja_ide.core import file_manager
 
-from graph_utils import Box
+#from graph_utils import Box
 
 
 
