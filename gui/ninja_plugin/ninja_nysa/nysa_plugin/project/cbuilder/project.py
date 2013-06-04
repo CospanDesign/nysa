@@ -22,7 +22,6 @@ from .wizard import PagePluginProperties
 from .wizard import SLAVE_TYPE
 from .wizard import CoreCustomize
 
-from .toolbar import cbuilderToolbar
 
 PROJECT_TYPE = "Verilog Core Builder"
 
