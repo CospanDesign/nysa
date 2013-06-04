@@ -5,7 +5,7 @@ from PyQt4.QtGui import QIcon
 from PyQt4.QtGui import QAction
 
 
-class nysaToolbar():
+class Toolbar():
 
     def __init__(self, toolbar, output):
         self.toolbar = toolbar

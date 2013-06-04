@@ -1,8 +1,6 @@
 # -*- coding: UTF-8 -*-
 import os
 
-
-from PyQt4.QtCore import QObject
 from PyQt4.QtCore import SIGNAL
 
 
@@ -45,7 +43,7 @@ class NysaPlugin(plugin.Plugin):
         self.cbuilder = CBuilder(self.output, self.locator)
         self.load_cbuilder_project()
         self.load_ibuilder_project()
-        self.tb = toolbar.nysaToolbar(self.toolbar_s, self.output)
+        self.tb = toolbar.Toolbar(self.toolbar_s, self.output)
         self.tb.create_test_icon(self.toolbar_test)
         self.tb.create_wave_icon(self.cbuilder.waveforms)
         self.tb.create_sim_icon(self.cbuilder.simulate)
@@ -80,8 +78,6 @@ class NysaPlugin(plugin.Plugin):
         #Run the application without the main file!
         #mc = self.misc_s._misc
         #print "misc container: %s" % str(dir(mc))
-
-
 
     def finish(self):
         # Shutdown your plugin
