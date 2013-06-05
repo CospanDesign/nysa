@@ -403,6 +403,7 @@ def get_module_tags(filename="", bus="", keywords = [], debug=False):
       parameter_name = substring.partition("=")[0].strip()
       parameter_value = substring.partition("=")[2].strip()
       parameter_value = parameter_value.partition(";")[0].strip()
+      parameter_value = parameter_value.strip(',')
       if debug:
         print "parameter name: " + parameter_name
         print "parameter value: " + parameter_value
