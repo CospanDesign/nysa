@@ -1,25 +1,54 @@
 # -*- coding: utf-8 *-*
 
-from PyQt4.QtCore import Qt
-from PyQt4.QtCore import QRectF
-#from PyQt4.QtGui import QGraphicsItem
-#from PyQt4.QtGui import QRadialGradient
-#from PyQt4.QtGui import QGraphicsTextItem
-#from PyQt4.QtGui import QStyle
-#from PyQt4.QtGui import QColor
-#from PyQt4.QtGui import QPen
-from PyQt4.QtGui import QWidget
-from PyQt4.QtGui import QGraphicsView
-from PyQt4.QtGui import QGraphicsScene
-from PyQt4.QtGui import QVBoxLayout
+import os
+import sys
+import json
+
+from PyQt4.Qt import *
+from PyQt4.QtCore import *
+from PyQt4 import QtCore
+from PyQt4.QtGui import *
 
 from ninja_ide.gui.main_panel import itab_item
-#from ninja_ide.tools import introspection
-#from ninja_ide.core import file_manager
 
 #from graph_utils import Box
 
+from box import Box
+from box_list import BoxList
+from graphics_view import GraphicsView
 
+PERIPHERAL_COLOR = "blue"
+MEMORY_COLOR = "purple"
+
+NO_SLAVE_SEL = "No Slave Selected"
+
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              "ibuilder",
+                              "lib"))
+
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              "cbuilder",
+                              "drt"))
+
+
+
+import utils
+
+#print "utils.get_nysa_base: %s" % utils.get_nysa_base()
+
+import drt
 
 
 class FPGADesigner(QWidget, itab_item.ITabItem):
@@ -28,62 +57,134 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
   def __init__(self, actions, parent=None):
     QWidget.__init__(self, parent)
     itab_item.ITabItem.__init__(self)
+
     self.actions = actions
-    self.graphicView = QGraphicsView(self)
+    self.view = GraphicsView(self)
     self.scene = QGraphicsScene()
-    self.graphicView.setScene(self.scene)
-    self.graphicView.setViewportUpdateMode(
-      QGraphicsView.BoundingRectViewportUpdate)
+    self.view.setScene(self.scene)
+    self.view.set_add_box(self.addBox)
+    self.prevPoint = QPoint()
 
-    vLayout = QVBoxLayout(self)
-    self.setLayout(vLayout)
-    vLayout.addWidget(self.graphicView)
-    self.scene.setItemIndexMethod(QGraphicsScene.NoIndex)
-    self.scene.setSceneRect(-200, -200, 400, 400)
-    self.graphicView.setMinimumSize(400, 400)
-    #actualProject = self.actions.ide.explorer.get_actual_project()
+    self.main_splitter = QSplitter(Qt.Horizontal)
+    self.main_splitter.addWidget(self.view)
+    self.main_splitter.setStretchFactor(0, 1)
+    #self.setCenterWidget(self.main_splitter)
+    layout = QHBoxLayout()
+    layout.addWidget(self.main_splitter)
+    self.setLayout(layout)
 
-    #XXX: Here is where I get my modules
+    #Need to windows for both the peripheral and memory slaves
+    self.slave_splitter = QSplitter(Qt.Vertical)
+    self.main_splitter.addWidget(self.slave_splitter)
+    self.slave_splitter.setStretchFactor(0, 1)
 
-    #arrClasses = self.actions._locator.get_classes_from_project(
-    #  actualProject)
+    self.peripheral_list = BoxList(parent = None, color = PERIPHERAL_COLOR)
+    self.memory_list = BoxList(parent = None, color = MEMORY_COLOR)
 
-    #FIXME:dirty need to fix
-    self.mX = -400
-    self.mY = -320
-    self.hightestY = self.mY
-    '''
-    filesList = []
-    for elem in arrClasses:
-      #loking for paths
-      filesList.append(elem[2])
-    for path in set(filesList):
-      self.create_class(path)
-    '''
+    self.slave_splitter.addWidget(self.peripheral_list)
+    self.slave_splitter.addWidget(self.memory_list)
+
+    #Add Parameter windows
+    pt = self.create_parameter_table()
+    self.slave_splitter.addWidget(pt)
+
+    #My variables
+    self.bus = "wishbone"
+
+  def create_parameter_table(self):
+    pt = QWidget(self)
+    self.sel_slave_name = QLabel(NO_SLAVE_SEL)
+    layout = QVBoxLayout()
+    layout.addWidget(self.sel_slave_name)
+    self.param_table = QTableWidget()
+    self.param_table.setColumnCount(2)
+    self.param_table.setRowCount(1)
+    self.param_table.setHorizontalHeaderLabels(["Name", "Value"])
+    layout.addWidget(self.param_table)
+    pt.setLayout(layout)
+
+    self.user_dirs = []
+
+    return pt
+
+  def add_user_dir(self, user_dir):
+    self.user_dirs.append(user_dir)
+
+  def populate_param_table(self, module_tags):
+    print "Populating Parameter Table"
+    print "Module tags: %s" % str(module_tags)
+    self.sel_slave_name.setText(module_tags["module"])
+    if "parameters" in module_tags:
+      pcnt = len(module_tags["parameters"])
+      keys = module_tags["parameters"].keys()
+      self.param_table.setRowCount(pcnt)
+      for i in range(len(keys)):
+        name = keys[i]
+        value = module_tags["parameters"][name]
+        self.param_table.setCellWidget(i, 0, QLabel(keys[i]))
+        self.param_table.setCellWidget(i, 1, QLabel(value))
+      
+  def clear_param_table(self):
+    self.sel_slave_name.setText(NO_SLAVE_SEL)
+    self.param_table.clear()
+    self.param_table.setRowCount(0)
+
+  def addBox(self, name, color = "black"):
+    fn = utils.find_module_filename(name, self.user_dirs)
+    fn = utils.find_rtl_file_location(fn, self.user_dirs)
+    mt = utils.get_module_tags(fn) 
+
+    Box(  position = self.position(),
+          scene = self.scene,
+          name = name, 
+          select_func = self.populate_param_table,
+          deselect_func = self.clear_param_table,
+          color = color,
+          user_data = mt)
+ 
+  def position(self):
+    point = self.mapFromGlobal(QCursor.pos())
+    if not self.view.geometry().contains(point):
+      coord = random.randint(10, 10)
+      point = QPoint(coord, coord)
+    else:
+      if point == self.prevPoint:
+        point += QPoint(self.addOffset, self.addOffset)
+        self.addOffset += 5
+      else:
+        self.addOffset = 5
+        self.prevPoint = point
+    return self.view.mapToScene(point)
 
 
-  def create_box(self, core_dict = {}):
-    mYPadding = 10
-    mXPadding = 10
+  def initialize_peripheral_list(self, d = {}):
+    self.peripheral_list.add_items(d)
+
+  def initialize_memory_list(self, d = {}):
+    self.memory_list.add_items(d)
 
   def set_output(self, output):
     self.output = output
 
-  def scale_view(self, scaleFactor):
-    factor = self.graphicView.transform().scale(
-      scaleFactor, scaleFactor).mapRect(QRectF(0, 0, 1, 1)).width()
+  def set_bus_type(bus = "wishbone"):
+    self.bus = bus
 
-    if factor > 0.05 and factor < 15:
-      self.graphicView.scale(scaleFactor, scaleFactor)
+  def initialize_slave_lists(self, user_paths = []):
+    slave_list = utils.get_slave_list( bus = self.bus, 
+                                        user_cbuilder_paths = user_paths)
+    peripheral_dict = {}
+    memory_dict = {}
 
+    for slave in slave_list:
+      tags = utils.get_module_tags(filename = slave, keywords=["DRT_FLAGS"], bus = self.bus)
+      #print "Tags: %s" % str(tags)
+      flag = int(tags["keywords"]["DRT_FLAGS"])
+      if drt.is_memory_core(flag):
+        memory_dict[tags["module"]] = tags
+      else:
+        peripheral_dict[tags["module"]] = tags
 
-  def keyPressEvent(self, event):
-    taskList = {
-      Qt.Key_Plus: lambda: self.scaleView(1.2),
-      Qt.Key_Minus: lambda: self.scaleView(1 / 1.2)}
-    if(event.key() in taskList):
-      taskList[event.key()]()
-    else:
-      QWidget.keyPressEvent(self, event)
+    self.initialize_peripheral_list(peripheral_dict)
+    self.initialize_memory_list(memory_dict)
 
 

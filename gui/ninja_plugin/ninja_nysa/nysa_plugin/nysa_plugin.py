@@ -63,7 +63,7 @@ class NysaPlugin(plugin.Plugin):
         #    stream=True)
         #self.register_syntax()
         #self.editor_s.fileOpened.connect(self.open_verilog)
-        #self.test_editor()
+        self.test_editor()
         #self.open_verilog("afifo.v")
 
         self._action = actions.Actions()
@@ -133,6 +133,7 @@ class NysaPlugin(plugin.Plugin):
         tab_manager = self.editor_s.get_tab_manager()
         fpgaDesigner = FPGADesigner(actions=None, parent=tab_manager)
         tab_manager.add_tab(fpgaDesigner, self.tr("FPGA Designer"))
+        fpgaDesigner.initialize_slave_lists()
 
     def toolbar_test(self):
         self.logger.info("Toolbar test triggered")
