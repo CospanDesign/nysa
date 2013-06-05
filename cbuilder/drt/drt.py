@@ -433,6 +433,12 @@ def get_device_flag_names(flags_string):
             flag_names.append("0x%8X: %s" % (test_value, key))
     return flag_names
 
+def is_memory_core(flags):
+    """Reads in a numeric value (Found in the DRT_FLAGS value in the core
+    and returns True if the flags for memory is set"""
+    if ((flags & 0x00010000) > 0):
+        return True
+    return False
 
 if __name__ == "__main__":
     """test all functions"""
