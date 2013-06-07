@@ -1,6 +1,6 @@
 # -*- coding: utf-8 *-*
 
-
+import inspect
 
 #from PyQt4 import QtGui
 from PyQt4.QtCore import *
@@ -21,6 +21,7 @@ class NysaStatus(QWidget):
     QWidget.__init__(self)
     self.level = StatusLevel.VERBOSE
     self.init_ui()
+
     self.Verbose(self, "Hello World!")
 
   def init_ui(self):
@@ -84,7 +85,9 @@ class NysaStatus(QWidget):
     pos = self.mdl.rowCount()
     #print "Position: %d" % pos
     self.mdl.insertRows(pos, 1)
-    self.mdl.set_line_data([str(pos), level, c.__class__.__name__, text, fg, bg])
+    f = str(inspect.stack()[2][3])
+    d = "%s:%s" % (c.__class__.__name__, f)
+    self.mdl.set_line_data([str(pos), level, d, text, fg, bg])
 
   def SetLevel(self, level):
     self.level = level

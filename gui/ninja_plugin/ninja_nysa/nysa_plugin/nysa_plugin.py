@@ -77,17 +77,9 @@ class NysaPlugin(plugin.Plugin):
         self.connect(self._action, SIGNAL("fileExecuted(QString)"),
             self.cbuilder.build_core)
 
-        #*** This is where you get the misc_container
-        #Run the application without the main file!
-        #mc = self.misc_s._misc
-        #print "misc container: %s" % str(dir(mc))
-
     def view_status(self):
         self.misc_s._misc.gain_focus()
         self.misc_s._misc._item_changed(self.status_index)
-        self.output.Debug(self, "View ME!")
-        self.output.update()
-        self.output.repaint()
 
     def finish(self):
         # Shutdown your plugin
