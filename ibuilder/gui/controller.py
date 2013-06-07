@@ -7,7 +7,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, "lib"))
 
 #Inner package modules
-from ibuilder.lib import ibuilder
+import ibuilder
 
 from ibuilder_error import ModuleNotFound
 from ibuilder_error import SlaveError
