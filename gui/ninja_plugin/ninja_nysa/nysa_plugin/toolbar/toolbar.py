@@ -50,3 +50,12 @@ class Toolbar():
         self.actions.append(action)
 
       
+    def create_status_icon(self, function):
+        self.output.Debug(self, "Creating status focus icon")
+        tipath = os.path.join(self.images, "test.png")
+        action = QAction(QIcon(tipath), 'Status', self.toolbar)
+        action.setShortcut('Ctrl+T')
+        action.triggered.connect(function)
+        self.actions.append(action)
+
+

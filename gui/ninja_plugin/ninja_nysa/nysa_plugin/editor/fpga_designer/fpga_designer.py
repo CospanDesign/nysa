@@ -39,12 +39,24 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
                               os.pardir,
                               os.pardir,
                               os.pardir,
+                              "ibuilder",
+                              "gui"))
+
+
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
                               "cbuilder",
                               "drt"))
 
 
 
 import utils
+import controller as model_controller
 
 #print "utils.get_nysa_base: %s" % utils.get_nysa_base()
 
@@ -54,7 +66,7 @@ import drt
 class FPGADesigner(QWidget, itab_item.ITabItem):
   output = None
 
-  def __init__(self, actions, parent=None):
+  def __init__(self, actions, parent=None, output=None):
     QWidget.__init__(self, parent)
     itab_item.ITabItem.__init__(self)
 
@@ -90,6 +102,14 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
 
     #My variables
     self.bus = "wishbone"
+    self.mc = model_controller.Controller()
+
+    self.output = output
+    #self.output.Debug(self, "Hello")
+
+  #def set_config_file(self, config_file):
+    #self.mc.load_config_file(config_file)
+    #self.mc.initialize_graph(self)
 
   def create_parameter_table(self):
     pt = QWidget(self)
@@ -111,8 +131,8 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
     self.user_dirs.append(user_dir)
 
   def populate_param_table(self, module_tags):
-    print "Populating Parameter Table"
-    print "Module tags: %s" % str(module_tags)
+    #print "Populating Parameter Table"
+    #print "Module tags: %s" % str(module_tags)
     self.sel_slave_name.setText(module_tags["module"])
     if "parameters" in module_tags:
       pcnt = len(module_tags["parameters"])
@@ -156,6 +176,9 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         self.prevPoint = point
     return self.view.mapToScene(point)
 
+  def mousePressEvent(self, event):
+    QWidget.mousePressEvent(self, event)
+    
 
   def initialize_peripheral_list(self, d = {}):
     self.peripheral_list.add_items(d)

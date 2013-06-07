@@ -2,6 +2,8 @@
 import os
 
 from PyQt4.QtCore import SIGNAL
+from PyQt4.QtGui import QAction
+from PyQt4.QtGui import QIcon
 
 
 from ninja_ide.core import plugin
@@ -44,7 +46,8 @@ class NysaPlugin(plugin.Plugin):
         self.load_cbuilder_project()
         self.load_ibuilder_project()
         self.tb = toolbar.Toolbar(self.toolbar_s, self.output)
-        self.tb.create_test_icon(self.toolbar_test)
+        #self.tb.create_test_icon(self.toolbar_test)
+        self.tb.create_status_icon(self.view_status)
         self.tb.create_wave_icon(self.cbuilder.waveforms)
         self.tb.create_sim_icon(self.cbuilder.simulate)
 
@@ -79,6 +82,13 @@ class NysaPlugin(plugin.Plugin):
         #mc = self.misc_s._misc
         #print "misc container: %s" % str(dir(mc))
 
+    def view_status(self):
+        self.misc_s._misc.gain_focus()
+        self.misc_s._misc._item_changed(self.status_index)
+        self.output.Debug(self, "View ME!")
+        self.output.update()
+        self.output.repaint()
+
     def finish(self):
         # Shutdown your plugin
         self.logger.info("Shutdown Nysa Plugin")
@@ -88,6 +98,7 @@ class NysaPlugin(plugin.Plugin):
         return preferences.NysaPreferences(self.locator, self.output)
 
     def load_status(self):
+        self.status_index = self.misc_s._misc.stack.count()
         self.logger.info("Load Nysa Status")
         self.output = nysa_status.NysaStatus()
         status_icon_path = os.path.join(os.path.dirname(__file__),
@@ -97,6 +108,7 @@ class NysaPlugin(plugin.Plugin):
         self.misc_s.add_widget(self.output,
                                status_icon_path,
                                "Displays events at runtime")
+
 
     def load_cbuilder_project(self):
         self.output.Info(self, "Loading cbuilder project")
@@ -131,7 +143,7 @@ class NysaPlugin(plugin.Plugin):
         #This doesn't belong here but when I work on ibuilder then I need to
         #implement this
         tab_manager = self.editor_s.get_tab_manager()
-        fpgaDesigner = FPGADesigner(actions=None, parent=tab_manager)
+        fpgaDesigner = FPGADesigner(actions=None, parent=tab_manager, output=self.output)
         tab_manager.add_tab(fpgaDesigner, self.tr("FPGA Designer"))
         fpgaDesigner.initialize_slave_lists()
 
