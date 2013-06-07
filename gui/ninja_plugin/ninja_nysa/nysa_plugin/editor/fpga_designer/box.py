@@ -55,6 +55,13 @@ class Box (QGraphicsItem):
                 user_data = None):
 
     super(Box, self).__init__()
+    #Box Properties
+    self.box_name = name
+    self.color = QColor(color)
+    self.user_data = user_data
+    self.select_func = select_func
+    self.deselect_func = deselect_func
+
     self.setFlags(QGraphicsItem.ItemIsSelectable    |
                   QGraphicsItem.ItemIsMovable       |
                   QGraphicsItem.ItemIsFocusable)
@@ -67,13 +74,6 @@ class Box (QGraphicsItem):
     scene.addItem(self)
     self.setSelected(True)
     self.setFocus()
-
-    #Box Properties
-    self.box_name = name
-    self.color = QColor(color)
-    self.user_data = user_data
-    self.select_func = select_func
-    self.deselect_func = deselect_func
 
     #Tooltip
     self.setToolTip(
@@ -102,35 +102,40 @@ class Box (QGraphicsItem):
   def demo_function(self):
     print "Demo function!"
 
-  def focusInEvent(self, event):
-    print "Focus In Event"
-    if self.select_func is not None:
+  def itemChange(self, a, b):
+    if self.isSelected():
       self.select_func(self.user_data)
-    QGraphicsItem.focusInEvent(self, event)
-
-  def focusOutEvent(self, event):
-    print "Focus Out Event"
-    if self.deselect_func is not None:
+    else:
       self.deselect_func()
-    QGraphicsItem.focusOutEvent(self, event)
+    return QGraphicsItem.itemChange(self, a, b)
+
 
   #Paint
   def paint(self, painter, option, widget):
+
+    highlight_width = 8
+
     pen = QPen(self.style)
     pen.setColor(Qt.black)
     pen.setWidth(1)
     if option.state & QStyle.State_Selected:
       #Selected
-      pen.setColor(QColor("orange"))
-      pen.setWidth(8)
+      pen.setColor(QColor("black"))
+      pen.setWidth(highlight_width)
 
     painter.setPen(pen)
     painter.drawRect(self.rect)
     painter.fillRect(self.rect, QColor(self.color))
     painter.setFont(self.text_font)
+
+    #draw text
     pen.setColor(Qt.black)
     painter.setPen(pen)
-    painter.drawText(0, 0, 100, 100, 0x24, self.box_name)
+    r = self.rect
+
+    #qfm = QFontMetrics(self.text_font)
+    #size = qfm.boundingRect(r, Qt.AlignCenter, self.box_name)
+    painter.drawText(r, Qt.AlignCenter, self.box_name)
 
 
   def boundingRect(self):

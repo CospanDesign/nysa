@@ -88,4 +88,47 @@ class GraphicsView(QGraphicsView):
     else:
       event.ignore()
 
+  def keyPressEvent(self, event):
+    print "Key press event"
+    task_list = {
+    Qt.Key_Plus:  lambda: self._scale_view(1.2),
+    Qt.Key_Minus: lambda: self._scale_view(1 / 1.2),
+    Qt.Key_Equal: lambda: self._scale_normal()
+    #TODO: Add more key interfaces here
+    }
+    if event.key() in task_list:
+      task_list[event.key()]()
 
+    else:
+      #Pass the key event to the system
+      QWidget.keyPressEvent(self, event)
+
+  def _scale_view(self, scale_factor):
+    """Scale the view"""
+    if self.debug: print "Canvas: Scale view by: %f" % scale_factor
+
+    #check if the scale factor is alright
+    factor = self.transform().scale(scale_factor, scale_factor).mapRect(QRectF(0, 0, 1, 1)).width()
+
+    if factor > self.scale_min and factor < self.scale_max:
+      #Scale factor is within limits
+      self.scale(scale_factor, scale_factor)
+    elif factor < self.scale_min:
+      if self.debug: print "Canvas: Scale too small: %f" % factor
+    elif factor > self.scale_max:
+      if self.debug: print "Canvas: Scale too large: %f" % factor
+
+  def _scale_normal(self):
+    scale_factor = 1.0
+    factor = self.transform().scale(scale_factor, scale_factor).mapRect(QRectF(0, 0, 1, 1)).width()
+    scale_factor = 1.0 / factor
+    if self.debug: print "Canvas: Set scale back to 1.0"
+    self.scale(scale_factor, scale_factor)
+
+  def _scale_fit(self):
+    if self.debug: print "Canvas: Set scale to fit all items"
+    self.fitInView(self.scene)
+
+
+
+ 

@@ -18,6 +18,7 @@ from ninja_ide.tools import json_manager
 from .menu import Menu
 
 from .wizard import PageBoardSelection 
+
 PROJECT_TYPE = "FPGA Image Builder"
 
 
@@ -49,7 +50,9 @@ class ProjectIbuilder (plugin_interfaces.IProjectTypeHandler, QObject):
 
     def get_pages(self):
         pages = []
+        self.output.Debug(self, "Getting first page")
         bs = PageBoardSelection(self.locator, self.output)
+        self.output.Debug(self, "Got board select page")
         pages.append(bs)
         return pages
 
@@ -63,3 +66,4 @@ class ProjectIbuilder (plugin_interfaces.IProjectTypeHandler, QObject):
                 self.tr("The project couldn\'t be created"))
             return
         wizard._load_project(self.path)
+

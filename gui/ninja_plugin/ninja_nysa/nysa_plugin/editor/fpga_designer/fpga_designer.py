@@ -105,11 +105,12 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
     self.mc = model_controller.Controller()
 
     self.output = output
-    #self.output.Debug(self, "Hello")
+    self.output.Debug(self, "Initialized")
 
-  #def set_config_file(self, config_file):
-    #self.mc.load_config_file(config_file)
-    #self.mc.initialize_graph(self)
+  def set_config_file(self, config_file):
+    self.output.Debug(self, "set the configuration file")
+    self.mc.load_config_file(config_file)
+    self.mc.initialize_graph(self)
 
   def create_parameter_table(self):
     pt = QWidget(self)
@@ -120,6 +121,7 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
     self.param_table.setColumnCount(2)
     self.param_table.setRowCount(1)
     self.param_table.setHorizontalHeaderLabels(["Name", "Value"])
+    self.param_table.horizontalHeader().setStretchLastSection(True)
     layout.addWidget(self.param_table)
     pt.setLayout(layout)
 
@@ -148,6 +150,7 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
     self.sel_slave_name.setText(NO_SLAVE_SEL)
     self.param_table.clear()
     self.param_table.setRowCount(0)
+    self.param_table.setHorizontalHeaderLabels(["Name", "Value"])
 
   def addBox(self, name, color = "black"):
     fn = utils.find_module_filename(name, self.user_dirs)
