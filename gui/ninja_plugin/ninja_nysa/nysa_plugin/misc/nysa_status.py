@@ -88,6 +88,8 @@ class NysaStatus(QWidget):
     f = str(inspect.stack()[2][3])
     d = "%s:%s" % (c.__class__.__name__, f)
     self.mdl.set_line_data([str(pos), level, d, text, fg, bg])
+    self.status_list.resizeColumnsToContents()
+    self.status_list.scrollToBottom()
 
   def SetLevel(self, level):
     self.level = level
@@ -125,6 +127,10 @@ class NysaStatus(QWidget):
         return True
 
     return False
+
+
+  def paint(self, event):
+    self.QWidget.pain(self, event)
 
 
 class NysaStatusModel(QAbstractTableModel):
