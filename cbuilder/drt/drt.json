@@ -67,7 +67,11 @@
       "description": "Identification number corresponds to a the default devices E.G. 1 == GPIO",
       "bit":0
     },
-    "Memory Device": {
+    "Memory Device":{
+      "description": "Slave is inteded to be a memory device",
+      "bit":1
+    }
+    "Memory Bus": {
       "description": "Slave is located on the memory bus",
       "bit":16
     }

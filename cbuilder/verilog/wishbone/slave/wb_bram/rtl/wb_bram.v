@@ -52,7 +52,7 @@ Log
 
   flags (read drt.txt in the slave/device_rom_table directory 1 means
   a standard device
-  DRT_FLAGS:  1
+  DRT_FLAGS:  3
 
   number of registers this should be equal to the nubmer of ADDR_???
   parameters
