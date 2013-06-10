@@ -67,33 +67,68 @@ class NysaPlugin(plugin.Plugin):
         self.tb.add_toolbar_items()
 
 
-        self._action = actions.Actions()
-        self.connect(self._action, SIGNAL("projectExecuted(QString)"),
+        self.actions = actions.Actions()
+        self.connect(self.actions, SIGNAL("projectExecuted(QString)"),
             self.cbuilder.build_core)
 
-        self._action = actions.Actions()
-        self.connect(self._action, SIGNAL("fileExecuted(QString)"),
+        self.connect(self.actions, SIGNAL("fileExecuted(QString)"),
             self.cbuilder.build_core)
 
-        #self.connect(self.editor_s._main, SIGNAL("fileOpened(QString)"), self.file_opened)
         self.connect(self.editor_s._main, SIGNAL("fileClosed(QString)"), self.file_closed)
+        self.connect(self.actions.shortSave, SIGNAL("activated()"),
+            self.save_file)
+
+
+        #Really big hack to make the 'save' from the menu work
+        self.actions.ide._menuFile.connect(self.actions.ide._menuFile.toolbar_items["save-file"], SIGNAL("triggered()"), self.save_file)
+        self.actions.ide._menuFile.connect(self.actions.ide._menuFile.toolbar_items["save-as"], SIGNAL("triggered()"), self.save_file_as)
 
         #DEMO STUFF
         #self.test_editor()
-        self.inject_file_open()
+        self.inject_functions()
+        self.actions.update_shortcuts()
 
 
-    def inject_file_open(self):
+    def inject_functions(self):
         global main
         main = self.editor_s._main
 
         self.output.Debug(self, "Replacing main open function")
-        main.old_open_file = main.open_file
-        main.open_file = hijack_open_file
+
+        #Save the current versions to a new place
+        main.main_open_file = main.open_file
+        main.main_save_file = main.save_file
+        main.main_save_file_as = main.save_file_as
+
+
+        main.open_file = nysa_open_file
+        main.save_file = self.save_file
+        main.save_file_as = nysa_save_file_as
+        #self.output.Debug(self, "Prev save file: %s, current save file: %s" % (str(main.main_save_file), str(main.save_file)))
+
 
     def open_file(self, filename):
         self.output.Debug(self, "Open file detect")
         return self.ibuilder.file_open(filename)
+
+    def save_file(self, editorWidget=None):
+        self.output.Debug(self, "Custom save file")
+        main = self.editor_s._main
+
+        if editorWidget is None:
+            editorWidget = main.actualTab.currentWidget()
+
+        if self.ibuilder.file_save(editorWidget):
+            self.output.Debug(self, "Saved designer file")
+            return
+
+        self.output.Debug(self, "Saving normal file")
+        main.main_save_file(editorWidget)
+
+    def save_file_as(self):
+        self.output.Debug(self, "Custom save as file")
+        main = self.editor_s._main
+        main.main_save_file_as()
 
     def file_closed(self, filename):
         self.output.Debug(self, "File close detected")
@@ -170,7 +205,7 @@ class NysaPlugin(plugin.Plugin):
 
 
 
-def hijack_open_file(   filename='',
+def nysa_open_file(     filename='',
                         cursorPosition=-1,
                         tabIndex=None,
                         positionIsLineNumber=False,
@@ -181,4 +216,15 @@ def hijack_open_file(   filename='',
             #print "Don't send the open file control to the main controller"
             return
     #print "Openeing: %s" % filename 
-    main.old_open_file(filename, cursorPosition, tabIndex, positionIsLineNumber, notStart)
+    main.main_open_file(filename, cursorPosition, tabIndex, positionIsLineNumber, notStart)
+
+
+
+def nysa_save_file(     editorWidget=None):
+    print "I'm 1337"
+    nysa_plugin.save_file(editorWidget)
+    main.main_save_file(editorWidget)
+
+def nysa_save_file_as():
+    print "I'm 1337 again"
+    main.main_save_file_as()

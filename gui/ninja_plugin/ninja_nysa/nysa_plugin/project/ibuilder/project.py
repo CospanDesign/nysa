@@ -123,12 +123,13 @@ class ProjectIbuilder (plugin_interfaces.IProjectTypeHandler, QObject):
         ibd = {}
         ibd["BASE_DIR"] = out_dir
         ibd["board"] = self.board_dict["board_name"]
-        if bus is "wishbone":
+        self.output.Debug(self, "Bus: %s" % bus)
+        ibd["TEMPLATE"] = {}
+        if bus == "wishbone":
             ibd["TEMPLATE"] = "wishbone_template.json"
-        elif bus is "axi":
+        elif bus == "axi":
             ibd["TEMPLATE"] = "axi_template.json"
             
-        ibd["TEMPLATE"] = {}
         ibd["SLAVES"] = {}
         ibd["MEMORY"] = {}
         ibd["internal_bind"] = {}

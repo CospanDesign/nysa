@@ -38,8 +38,8 @@ class IBuilder (QObject):
         self.load_designers()
 
     def file_open(self, filename):
-        fext = file_manager.get_file_extension(filename)
-        if fext == DESIGNER_EXT:
+        ext = file_manager.get_file_extension(filename)
+        if ext == DESIGNER_EXT:
             self.output.Debug(self, "Found designer extension")
             tab_manager = self.editor.get_tab_manager()
 
@@ -47,7 +47,7 @@ class IBuilder (QObject):
 
             fd = None
             index = -1
-            filename = None
+            #filename = None
 
             if name in self.designers.keys():
                 fd, index, filename = self.designers[name]
@@ -66,12 +66,22 @@ class IBuilder (QObject):
 
             if name not in self.designers.keys():
                 self.output.Debug(self, "Open up a new tab")
+                project = self.explorer._explorer.get_project_given_filename(filename)
                 #Not Opened
-                fd = FPGADesigner(actions=None, parent=tab_manager, output=self.output)
+                fd = FPGADesigner(actions=None, filename = filename, project=project, parent=tab_manager, output=self.output)
                 index = tab_manager.add_tab(fd, name)
                 self.designers[name] = (fd, index, filename)
                 fd.initialize_slave_lists()
 
+            return True
+
+        return False
+
+    def file_save(self, editor):
+        filename = editor.ID
+        ext = file_manager.get_file_extension(filename)
+        if ext == DESIGNER_EXT:
+            self.output.Debug(self, "Found designer extension")
             return True
 
         return False
