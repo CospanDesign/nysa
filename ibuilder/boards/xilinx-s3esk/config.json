@@ -2,6 +2,7 @@
 	"board_name":"Spartan 3 Starter Board",
 	"vendor":"Digilent",
 	"fpga_part_number":"xc3s500efg320",
+  "host_interface":"uart_io_handler",
 	"build_tool":"xilinx",
 	"default_constraint_files":[
 		"s3esk_sycamore.ucf"

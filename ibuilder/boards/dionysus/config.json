@@ -1,8 +1,9 @@
 {
 	"board_name":"Dionysus",
 	"vendor":"Cospan Design",
-	"fpga_part_number":"xc6slx9tqg144-3",
 	"build_tool":"xilinx",
+	"fpga_part_number":"xc6slx9tqg144-3",
+  "host_inteface":"ft_master_interface",
 	"default_constraint_files":[
 		"dionysus.ucf"
 	],
