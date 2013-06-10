@@ -8,10 +8,12 @@ from PyQt4.QtGui import QIcon
 
 from ninja_ide.core import plugin
 from ninja_ide.gui import actions
+
 #from ninja_ide.tools import json_manager
 #from ninja_ide.core import plugin_interfaces
 from .project.cbuilder import project
 from .project.cbuilder.cbuilder import CBuilder
+from .project.ibuilder.ibuilder import IBuilder
 from .project.ibuilder import project as ibuilder_project
 from .misc import nysa_status
 from .preferences import preferences
@@ -25,13 +27,19 @@ LOG_FORMAT = "%(asctime)s %(name)s:%(levelname)-8s %(message)s"
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 
+main = None
+nysa_plugin = None
+
 class NysaPlugin(plugin.Plugin):
 
     output = None
     cbuilder = None
+    ibuilder = None
 
     def initialize(self):
         # Init your plugin
+        global nysa_plugin
+        nysa_plugin = self
 
         #Locator
         self.editor_s = self.locator.get_service('editor')
@@ -41,8 +49,12 @@ class NysaPlugin(plugin.Plugin):
         self.explorer_s = self.locator.get_service('explorer')
 
         self.load_status()
+
         self.output.Info(self, "Started Nysa Plugin")
+
         self.cbuilder = CBuilder(self.output, self.locator)
+        self.ibuilder = IBuilder(self.output, self.locator)
+
         self.load_cbuilder_project()
         self.load_ibuilder_project()
         self.tb = toolbar.Toolbar(self.toolbar_s, self.output)
@@ -54,20 +66,6 @@ class NysaPlugin(plugin.Plugin):
         #Add all the toolbar items
         self.tb.add_toolbar_items()
 
-        #print ("Logger: %s" % str(dir(self.logger)))
-        #self.logger.addHandler()
-        #self.shandler = StringIO.StringIO()
-        #self.logger.StreamHandler(sys.stdout)
-        #self.logger.add_handler(self.shandler,
-        #self.logger.add_handler(sys.stdout,
-        #    'w',
-        #    LOG_FORMAT,
-        #    TIME_FORMAT,
-        #    stream=True)
-        #self.register_syntax()
-        #self.editor_s.fileOpened.connect(self.open_verilog)
-        self.test_editor()
-        #self.open_verilog("afifo.v")
 
         self._action = actions.Actions()
         self.connect(self._action, SIGNAL("projectExecuted(QString)"),
@@ -76,6 +74,31 @@ class NysaPlugin(plugin.Plugin):
         self._action = actions.Actions()
         self.connect(self._action, SIGNAL("fileExecuted(QString)"),
             self.cbuilder.build_core)
+
+        #self.connect(self.editor_s._main, SIGNAL("fileOpened(QString)"), self.file_opened)
+        self.connect(self.editor_s._main, SIGNAL("fileClosed(QString)"), self.file_closed)
+
+        #DEMO STUFF
+        #self.test_editor()
+        self.inject_file_open()
+
+
+    def inject_file_open(self):
+        global main
+        main = self.editor_s._main
+
+        self.output.Debug(self, "Replacing main open function")
+        main.old_open_file = main.open_file
+        main.open_file = hijack_open_file
+
+    def open_file(self, filename):
+        self.output.Debug(self, "Open file detect")
+        return self.ibuilder.file_open(filename)
+
+    def file_closed(self, filename):
+        self.output.Debug(self, "File close detected")
+        return self.ibuilder.file_closed(filename)
+
 
     def view_status(self):
         self.misc_s._misc.gain_focus()
@@ -142,3 +165,20 @@ class NysaPlugin(plugin.Plugin):
     def toolbar_test(self):
         self.logger.info("Toolbar test triggered")
         self.output.Info(self, "Toolbar test triggered")
+
+
+
+
+
+def hijack_open_file(   filename='',
+                        cursorPosition=-1,
+                        tabIndex=None,
+                        positionIsLineNumber=False,
+                        notStart=True):
+
+    if filename is not None:
+        if nysa_plugin.open_file(filename):
+            #print "Don't send the open file control to the main controller"
+            return
+    #print "Openeing: %s" % filename 
+    main.old_open_file(filename, cursorPosition, tabIndex, positionIsLineNumber, notStart)
