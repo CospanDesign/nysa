@@ -1,5 +1,33 @@
 # -*- coding: utf-8 *-*
 
+# Distributed under the MIT licesnse.
+# Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
+
+#Permission is hereby granted, free of charge, to any person obtaining a copy of
+#this software and associated documentation files (the "Software"), to deal in
+#the Software without restriction, including without limitation the rights to
+#use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+#of the Software, and to permit persons to whom the Software is furnished to do
+#so, subject to the following conditions:
+#
+#The above copyright notice and this permission notice shall be included in all
+#copies or substantial portions of the Software.
+#
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#SOFTWARE.
+
+'''
+Log
+  6/10/2013: Initial commit
+'''
+
+
+
 import os
 import sys
 import json
@@ -17,6 +45,8 @@ from ninja_ide.gui.editor.editor import Editor
 from box import Box
 from box_list import BoxList
 from graphics_view import GraphicsView
+from view_controller.wishbone_controller import WishboneController
+from view_controller.axi_controller import AxiController
 
 PERIPHERAL_COLOR = "blue"
 MEMORY_COLOR = "purple"
@@ -57,31 +87,39 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
 
 
 import utils
-import controller as model_controller
-
-#print "utils.get_nysa_base: %s" % utils.get_nysa_base()
-
 import drt
 
+
+class FPGADesignerError(Exception):
+    """
+    Errors associated with the FPGA designer
+
+    Error associated with:
+        -loading the configuration file
+        -generating configuration files
+    """
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
 
 class FPGADesigner(QWidget, itab_item.ITabItem):
 #class FPGADesigner(Editor):
     output = None
- 
+
     def __init__(self, actions, filename, project, parent=None, output=None):
         QWidget.__init__(self, parent)
         itab_item.ITabItem.__init__(self)
         #super(FPGADesigner, self).__init__(filename, project, project_obj=None)
-       
+
         self.actions = actions
         self.ID = filename
         self.lang = "fpga designer"
         self.view = GraphicsView(self)
         self.scene = QGraphicsScene()
         self.view.setScene(self.scene)
-        self.view.set_add_box(self.addBox)
         self.prevPoint = QPoint()
-       
+
         self.main_splitter = QSplitter(Qt.Horizontal)
         self.main_splitter.addWidget(self.view)
         self.main_splitter.setStretchFactor(0, 1)
@@ -89,34 +127,61 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         layout = QHBoxLayout()
         layout.addWidget(self.main_splitter)
         self.setLayout(layout)
-       
+
         #Need to windows for both the peripheral and memory slaves
         self.slave_splitter = QSplitter(Qt.Vertical)
         self.main_splitter.addWidget(self.slave_splitter)
         self.slave_splitter.setStretchFactor(0, 1)
-       
+
         self.peripheral_list = BoxList(parent = None, color = PERIPHERAL_COLOR)
         self.memory_list = BoxList(parent = None, color = MEMORY_COLOR)
-       
+
         self.slave_splitter.addWidget(self.peripheral_list)
         self.slave_splitter.addWidget(self.memory_list)
-       
+
         #Add Parameter windows
         pt = self.create_parameter_table()
         self.slave_splitter.addWidget(pt)
-       
+
         #My variables
-        self.bus = "wishbone"
-        self.mc = model_controller.Controller()
-       
+
         self.output = output
         self.output.Debug(self, "Initialized")
- 
+
+        self.vc = None
+        self.setup_controller()
+
+
+    def setup_controller(self):
+        d = {}
+        try:
+            f = open(self.ID, "r")
+            d = json.loads(f.read())
+        except IOError, err:
+            raise FPGADesignerError("IOError: %s" % str(err))
+
+        except TypeError, err:
+            raise FPGADesignerError("JSON Type Error: %s" % str(err))
+
+        #A Pathetic factory pattern, select the controller based on the bus
+        if d["TEMPLATE"] == "wishbone_template.json":
+            self.vc = WishboneController(self, self.view, self.output, config_dict = d)
+        elif d["TEMPLATE"] == "axi_template.json":
+            self.vc = AxiController(self, self.view, self.output)
+        else:
+            raise FPGADesignerError(    "Bus type (%s) not recognized, view " +
+                                        "controller cannot be setup, set the " +
+                                        "TEMPLATE value to either " +
+                                        "wishbone_template or " +
+                                        "axi_tmeplate.json" % str(d["TEMPLATE"])
+                                   )
+
     def set_config_file(self, config_file):
-        self.output.Debug(self, "set the configuration file")
-        self.mc.load_config_file(config_file)
-        self.mc.initialize_graph(self)
- 
+        self.vc.set_config_file(config_file)
+
+    def set_default_board_project(self, board_name):
+        self.vc.set_default_board_project(board_name)
+
     def create_parameter_table(self):
         pt = QWidget(self)
         self.sel_slave_name = QLabel(NO_SLAVE_SEL)
@@ -129,47 +194,47 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         self.param_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.param_table)
         pt.setLayout(layout)
-       
+
         self.user_dirs = []
-       
+
         return pt
- 
+
     def add_user_dir(self, user_dir):
         self.user_dirs.append(user_dir)
- 
-    def populate_param_table(self, module_tags):
+
+    def populate_param_table(self, tags):
         #print "Populating Parameter Table"
-        #print "Module tags: %s" % str(module_tags)
-        self.sel_slave_name.setText(module_tags["module"])
-        if "parameters" in module_tags:
-            pcnt = len(module_tags["parameters"])
-            keys = module_tags["parameters"].keys()
+        #print "Module tags: %s" % str(tags)
+        self.sel_slave_name.setText(tags["module"])
+        if "parameters" in tags:
+            pcnt = len(tags["parameters"])
+            keys = tags["parameters"].keys()
             self.param_table.setRowCount(pcnt)
             for i in range(len(keys)):
                 name = keys[i]
-                value = module_tags["parameters"][name]
+                value = tags["parameters"][name]
                 self.param_table.setCellWidget(i, 0, QLabel(keys[i]))
                 self.param_table.setCellWidget(i, 1, QLabel(value))
-        
+
     def clear_param_table(self):
         self.sel_slave_name.setText(NO_SLAVE_SEL)
         self.param_table.clear()
         self.param_table.setRowCount(0)
         self.param_table.setHorizontalHeaderLabels(["Name", "Value"])
- 
+
     def addBox(self, name, color = "black"):
         fn = utils.find_module_filename(name, self.user_dirs)
         fn = utils.find_rtl_file_location(fn, self.user_dirs)
-        mt = utils.get_module_tags(fn) 
-       
+        mt = utils.get_module_tags(fn)
+
         Box(  position = self.position(),
               scene = self.scene,
-              name = name, 
+              name = name,
               select_func = self.populate_param_table,
               deselect_func = self.clear_param_table,
               color = color,
               user_data = mt)
-  
+
     def position(self):
         point = self.mapFromGlobal(QCursor.pos())
         if not self.view.geometry().contains(point):
@@ -183,77 +248,43 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
                 self.addOffset = 5
                 self.prevPoint = point
         return self.view.mapToScene(point)
- 
+
     def mousePressEvent(self, event):
         QWidget.mousePressEvent(self, event)
-      
- 
+
+    def fileSaved(self, val):
+        self.output.Debug(self, "Saving File")
+
+
+
+
     def initialize_peripheral_list(self, d = {}):
         self.peripheral_list.add_items(d)
- 
+
     def initialize_memory_list(self, d = {}):
         self.memory_list.add_items(d)
- 
+
     def set_output(self, output):
         self.output = output
- 
-    def set_bus_type(bus = "wishbone"):
-        self.bus = bus
- 
+
     def initialize_slave_lists(self, user_paths = []):
-        slave_list = utils.get_slave_list( bus = self.bus, 
+        slave_list = utils.get_slave_list( bus = self.vc.get_bus(),
                                           user_cbuilder_paths = user_paths)
         peripheral_dict = {}
         memory_dict = {}
-       
+
         for slave in slave_list:
-            tags = utils.get_module_tags(filename = slave, keywords=["DRT_FLAGS"], bus = self.bus)
+            tags = utils.get_module_tags(   filename = slave, 
+                                            keywords=["DRT_FLAGS"], 
+                                            bus = self.vc.get_bus())
             #print "Tags: %s" % str(tags)
             flag = int(tags["keywords"]["DRT_FLAGS"])
             if drt.is_memory_core(flag):
                 memory_dict[tags["module"]] = tags
             else:
                 peripheral_dict[tags["module"]] = tags
-       
+
         self.initialize_peripheral_list(peripheral_dict)
         self.initialize_memory_list(memory_dict)
 
-    def fileSaved(self, val):
-        self.output.Debug(self, "Saving File")
 
-#
-#    def hide_pep8_errors(self):
-#        pass
-#
-#    def show_pep8_errors(self):
-#        pass
-#
-#    def show_migration_info(self):
-#        pass
-#
-#    def show_static_errors(self):
-#        pass
-#
-#    def show_lint_errors(self):
-#        pass
-#
-#    def hide_lint_errors(self):
-#        pass
-#
-#    def _sync_tab_icon_notification_signal(self):
-#        pass
-#
-#    def restyle(self, syntaxLang=None):
-#        pass
-#
-#    def apply_editor_style(self):
-#        pass
-#
-#    def register_syntax(self, lang='', syntax=None):
-#        pass
-#
-#    def get_text(self):
-#        return ""
-#
-#    def get_lines_count(self):
-#        return 0

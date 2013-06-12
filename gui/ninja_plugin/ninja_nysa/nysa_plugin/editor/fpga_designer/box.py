@@ -3,23 +3,23 @@
 # Distributed under the MIT licesnse.
 # Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy of
-# this software and associated documentation files (the "Software"), to deal in
-# the Software without restriction, including without limitation the rights to
-# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-# of the Software, and to permit persons to whom the Software is furnished to do
-# so, subject to the following conditions:
+#Permission is hereby granted, free of charge, to any person obtaining a copy of
+#this software and associated documentation files (the "Software"), to deal in
+#the Software without restriction, including without limitation the rights to
+#use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+#of the Software, and to permit persons to whom the Software is furnished to do
+#so, subject to the following conditions:
 #
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
+#The above copyright notice and this permission notice shall be included in all
+#copies or substantial portions of the Software.
 #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#SOFTWARE.
 
 
 #A huge thanks to 'Rapid GUI Programming with Python and Qt' by Mark Summerfield
@@ -52,6 +52,7 @@ class Box (QGraphicsItem):
                 color = "green",
                 select_func = None,
                 deselect_func = None,
+                rect = None,
                 user_data = None):
 
     super(Box, self).__init__()
@@ -65,7 +66,8 @@ class Box (QGraphicsItem):
     self.setFlags(QGraphicsItem.ItemIsSelectable    |
                   QGraphicsItem.ItemIsMovable       |
                   QGraphicsItem.ItemIsFocusable)
-    rect = QRectF(0, 0, DEFAULT_BOX_SIZE[0], DEFAULT_BOX_SIZE[1])
+    if rect is None:
+        rect = QRectF(0, 0, DEFAULT_BOX_SIZE[0], DEFAULT_BOX_SIZE[1])
     self.rect = rect
     self.style = Qt.SolidLine
     self.setPos(position)
@@ -89,6 +91,10 @@ class Box (QGraphicsItem):
 
     global Dirty
     Dirty = True
+
+  def set_size(self, width, height):
+      self.rect.setWidth(width)
+      self.rect.setHeight(height)
 
   def contextMenuEvent(self, event):
     wrapped = []

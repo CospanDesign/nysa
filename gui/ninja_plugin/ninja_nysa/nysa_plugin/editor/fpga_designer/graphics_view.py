@@ -36,99 +36,78 @@ import json
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from link import Link
+from link import link_type
 from box import Box
 from box_list import BoxList
 
 class GraphicsView(QGraphicsView):
-  def __init__(self, parent=None):
-    super(GraphicsView, self).__init__(parent)
-    self.setDragMode(QGraphicsView.RubberBandDrag)
-    self.setRenderHint(QPainter.Antialiasing)
-    self.setRenderHint(QPainter.TextAntialiasing)
-    self.setAcceptDrops(True)
-    self.icon = QIcon()
+    def __init__(self, parent = None):
+        super(GraphicsView, self).__init__(parent)
+        self.setDragMode(QGraphicsView.RubberBandDrag)
+        self.setRenderHint(QPainter.Antialiasing)
+        self.setRenderHint(QPainter.TextAntialiasing)
+        self.setAcceptDrops(True)
+        self.icon = QIcon()
+        self.controller = None
 
-  def dragEnterEvent(self, event):
-    #print "view Drag Event Entered"
-    if event.mimeData().hasFormat("application/flowchart-data"):
-      #print "Good"
-      event.accept()
-    else:
-      event.ignore()
+    def set_controller(self, controller):
+        self.controller = controller
 
-  def set_add_box(self, add_box):
-    self.add_box = add_box
+    def wheelEvent(self, event):
+        factor = 1.41 ** (-event.delta() / 240.0)
+        self.scale(factor, factor)
 
-  def dragMoveEvent(self, event):
-    #print "view Drag Event Entered"
-    if event.mimeData().hasFormat("application/flowchart-data"):
-      #print "Good"
-      event.setDropAction(Qt.CopyAction)
-      event.accept()
-    else:
-      event.ignore()
+    def dragEnterEvent(self, event):
+        self.controller.drag_enter(event)
 
-  def wheelEvent(self, event):
-    factor = 1.41 ** (-event.delta() / 240.0)
-    self.scale(factor, factor)
+    def dragMoveEvent(self, event):
+        self.controller.drag_move(event)
 
-  def mouseMoveEvent(self, event):
-    #print "Mouse Move Event"
-    #self.startDrag()
-    QGraphicsView.mouseMoveEvent(self, event)
+    def mouseMoveEvent(self, event):
+        QGraphicsView.mouseMoveEvent(self, event)
 
-  def dropEvent(self, event):
-    if event.mimeData().hasFormat("application/flowchart-data"):
-      data = event.mimeData().data("application/flowchart-data")
-      #print "Data: %s" % str(data)
-      d = json.loads(str(data))
-      #print "view drop event"
-      self.add_box(d["name"], d["color"])
-      event.accept()
-    else:
-      event.ignore()
+    def dropEvent(self, event):
+        self.controller.drop_event(event)
 
-  def keyPressEvent(self, event):
-    print "Key press event"
-    task_list = {
-    Qt.Key_Plus:  lambda: self._scale_view(1.2),
-    Qt.Key_Minus: lambda: self._scale_view(1 / 1.2),
-    Qt.Key_Equal: lambda: self._scale_normal()
-    #TODO: Add more key interfaces here
-    }
-    if event.key() in task_list:
-      task_list[event.key()]()
+    def keyPressEvent(self, event):
+        print "Key press event"
+        task_list = {
+        Qt.Key_Plus:  lambda: self._scale_view(1.2),
+        Qt.Key_Minus: lambda: self._scale_view(1 / 1.2),
+        Qt.Key_Equal: lambda: self._scale_normal()
+        #TODO: Add more key interfaces here
+        }
+        if event.key() in task_list:
+            task_list[event.key()]()
 
-    else:
-      #Pass the key event to the system
-      QWidget.keyPressEvent(self, event)
+        else:
+            #Pass the key event to the system
+            QWidget.keyPressEvent(self, event)
 
-  def _scale_view(self, scale_factor):
-    """Scale the view"""
-    if self.debug: print "Canvas: Scale view by: %f" % scale_factor
+    def _scale_view(self, scale_factor):
+        """Scale the view"""
+        #print "Canvas: Scale view by: %f" % scale_factor
 
-    #check if the scale factor is alright
-    factor = self.transform().scale(scale_factor, scale_factor).mapRect(QRectF(0, 0, 1, 1)).width()
+        #check if the scale factor is alright
+        factor = self.transform().scale(scale_factor, scale_factor).mapRect(QRectF(0, 0, 1, 1)).width()
 
-    if factor > self.scale_min and factor < self.scale_max:
-      #Scale factor is within limits
-      self.scale(scale_factor, scale_factor)
-    elif factor < self.scale_min:
-      if self.debug: print "Canvas: Scale too small: %f" % factor
-    elif factor > self.scale_max:
-      if self.debug: print "Canvas: Scale too large: %f" % factor
+        if factor > self.scale_min and factor < self.scale_max:
+            #Scale factor is within limits
+            self.scale(scale_factor, scale_factor)
+        elif factor < self.scale_min:
+            if self.debug: print "Canvas: Scale too small: %f" % factor
+        elif factor > self.scale_max:
+            if self.debug: print "Canvas: Scale too large: %f" % factor
 
-  def _scale_normal(self):
-    scale_factor = 1.0
-    factor = self.transform().scale(scale_factor, scale_factor).mapRect(QRectF(0, 0, 1, 1)).width()
-    scale_factor = 1.0 / factor
-    if self.debug: print "Canvas: Set scale back to 1.0"
-    self.scale(scale_factor, scale_factor)
+    def _scale_normal(self):
+        scale_factor = 1.0
+        factor = self.transform().scale(scale_factor, scale_factor).mapRect(QRectF(0, 0, 1, 1)).width()
+        scale_factor = 1.0 / factor
+        if self.debug: print "Canvas: Set scale back to 1.0"
+        self.scale(scale_factor, scale_factor)
 
-  def _scale_fit(self):
-    if self.debug: print "Canvas: Set scale to fit all items"
-    self.fitInView(self.scene)
+    def _scale_fit(self):
+        if self.debug: print "Canvas: Set scale to fit all items"
+        self.fitInView(self.scene)
 
-
-
- 
