@@ -1,5 +1,5 @@
-class GraphControllerError(Exception):
-  """GraphControllerError
+class WishboneModelError(Exception):
+  """WishboneModelError
 
   Errors associated with the graph controller:
     unknown setting.
@@ -11,7 +11,7 @@ class GraphControllerError(Exception):
     return repr(self.value)
 
 class NodeError(Exception):
-  """GraphControllerError
+  """WishboneModelError
 
   Errors associated with the graph controller:
     unknown setting.
