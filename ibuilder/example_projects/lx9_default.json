@@ -1,0 +1,44 @@
+{
+	"BASE_DIR":"~/projects/sycamore_projects",
+	"board":"lx9_microboard",
+	"PROJECT_NAME":"example_project",
+	"TEMPLATE":"wishbone_template.json",
+	"INTERFACE":{
+		"filename":"uart_io_handler.v",
+		"bind":{
+			"i_phy_uart_in":{
+				"port":"uart_rx",
+				"direction":"input"
+			},
+			"o_phy_uart_out":{
+				"port":"uart_tx",
+				"direction":"output"
+			}
+		}
+	},
+	"SLAVES":{
+		"gpio1":{
+			"filename":"wb_gpio.v",
+			"PARAMETERS":{
+				"DEFAULT_INTERRUPT_MASK":"1",
+				"DEFAULT_INTERRUPT_EDGE":"2"
+			},
+			"bind":{
+				"gpio_out[3:0]":{
+					"port":"led[3:0]",
+					"direction":"output"
+				},
+				"gpio_in[3:0]":{
+					"port":"gpio[3:0]",
+					"direction":"input"
+				}
+			}
+		}
+	},
+
+	"bind": {
+	},
+	"constraint_files":[
+	]
+
+}

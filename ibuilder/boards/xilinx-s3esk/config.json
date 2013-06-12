@@ -7,5 +7,6 @@
 	"default_constraint_files":[
 		"s3esk_sycamore.ucf"
 	],
+  "default_project":"xilinx-s3esk_default.json",
 	"invert_reset":false
 }

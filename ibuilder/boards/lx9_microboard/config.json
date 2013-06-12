@@ -7,5 +7,6 @@
 	"default_constraint_files":[
 		"lx9.ucf"
 	],
+  "default_project":"lx9_default.json",
 	"invert_reset":false
 }

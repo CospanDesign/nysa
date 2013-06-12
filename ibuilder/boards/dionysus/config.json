@@ -7,5 +7,6 @@
 	"default_constraint_files":[
 		"dionysus.ucf"
 	],
+  "default_project":"dionysus_default.json",
 	"invert_reset":true
 }
