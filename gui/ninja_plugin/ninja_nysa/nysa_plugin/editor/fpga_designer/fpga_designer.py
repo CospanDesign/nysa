@@ -48,10 +48,10 @@ from graphics_view import GraphicsView
 from view_controller.wishbone_controller import WishboneController
 from view_controller.axi_controller import AxiController
 
-PERIPHERAL_COLOR = "blue"
-MEMORY_COLOR = "purple"
+from defines import PERIPHERAL_COLOR
+from defines import MEMORY_COLOR
 
-NO_SLAVE_SEL = "No Slave Selected"
+NO_MODULE_SEL = "No Slave Selected"
 
 sys.path.append(os.path.join( os.path.dirname(__file__),
                               os.pardir,
@@ -184,7 +184,7 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
 
     def create_parameter_table(self):
         pt = QWidget(self)
-        self.sel_slave_name = QLabel(NO_SLAVE_SEL)
+        self.sel_slave_name = QLabel(NO_MODULE_SEL)
         layout = QVBoxLayout()
         layout.addWidget(self.sel_slave_name)
         self.param_table = QTableWidget()
@@ -217,7 +217,7 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
                 self.param_table.setCellWidget(i, 1, QLabel(value))
 
     def clear_param_table(self):
-        self.sel_slave_name.setText(NO_SLAVE_SEL)
+        self.sel_slave_name.setText(NO_MODULE_SEL)
         self.param_table.clear()
         self.param_table.setRowCount(0)
         self.param_table.setHorizontalHeaderLabels(["Name", "Value"])

@@ -81,27 +81,23 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
 import wishbone_model
 import utils
 
-
 from controller import BoxType
 
-HOST_INTERFACE_SIZE = (100, 200)
-HOST_INTERFACE_POS = (-200, 0)
-HOST_INTERFACE_COLOR = QColor("yellow")
+from view_defines import HOST_INTERFACE_SIZE
+from view_defines import HOST_INTERFACE_POS
+from view_defines import HOST_INTERFACE_COLOR
 
-MASTER_SIZE = (100, 200)
-MASTER_POS = (0, 0)
-MASTER_COLOR = QColor("orange")
+from view_defines import MASTER_SIZE
+from view_defines import MASTER_POS
+from view_defines import MASTER_COLOR
 
-PBUS_SIZE = (100, 200)
-PBUS_POS = (200, 150)
-PBUS_COLOR = QColor("blue")
+from view_defines import PBUS_SIZE
+from view_defines import PBUS_POS
+from view_defines import PBUS_COLOR
 
-
-MBUS_SIZE = (100, 200)
-MBUS_POS = (200, -150)
-MBUS_COLOR = QColor("purple")
-
-
+from view_defines import MBUS_SIZE
+from view_defines import MBUS_POS
+from view_defines import MBUS_COLOR
 
 class WishboneController (controller.Controller):
 
@@ -115,7 +111,7 @@ class WishboneController (controller.Controller):
         else:
             self.model.load_config_dict(config_dict)
         self.model.initialize_graph()
-        
+
         self.initialize_view()
 
     def initialize_view(self):
@@ -126,6 +122,7 @@ class WishboneController (controller.Controller):
                          ID = "master",
                          position = QPointF(MASTER_POS[0], MASTER_POS[1]))
         m.set_size(MASTER_SIZE[0], MASTER_SIZE[1])
+        self.boxes["master"] = m
 
         self.output.Debug(self, "Add Host Interface")
         hi_name = self.model.get_host_interface_name()
@@ -136,6 +133,7 @@ class WishboneController (controller.Controller):
                          position = QPointF(HOST_INTERFACE_POS[0], HOST_INTERFACE_POS[1]))
 
         hi.set_size(HOST_INTERFACE_SIZE[0], HOST_INTERFACE_SIZE[1])
+        self.boxes["host_interface"] = hi
 
 
         self.output.Debug(self, "Add Peripheral Bus")
@@ -145,6 +143,7 @@ class WishboneController (controller.Controller):
                          ID = "peripheral_bus",
                          position = QPointF(PBUS_POS[0], PBUS_POS[1]))
         pb.set_size(PBUS_SIZE[0], PBUS_SIZE[1])
+        self.boxes["peripheral_bus"] = pb
 
         self.output.Debug(self, "Add Memory Bus")
         mb = self.add_box(box_type = BoxType.MEMORY_INTERCONNECT,
@@ -153,12 +152,14 @@ class WishboneController (controller.Controller):
                          ID = "memory_bus",
                          position = QPointF(MBUS_POS[0], MBUS_POS[1]))
         mb.set_size(MBUS_SIZE[0], MBUS_SIZE[1])
+        self.boxes["memory_bus"] = mb
 
-        self.add_link(m, hi, lt.host_interface)
-        self.add_link(m, pb, lt.wishbone_bus)
-        self.add_link(m, mb, lt.wishbone_bus)
+        self.add_host_interface_link(hi, m)
+        self.add_bus_link(m, pb)
+        self.add_bus_link(m, mb)
 
-
+    def add_arbitor_link(self, arb_master, slave):
+        self.add_link(arb_master, slave, lt.arbitor, st.right) 
 
     def drag_enter(self, event):
         """

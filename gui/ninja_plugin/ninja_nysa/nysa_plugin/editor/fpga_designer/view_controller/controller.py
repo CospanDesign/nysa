@@ -36,9 +36,8 @@ from PyQt4.QtGui import *
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
 from box import Box
-from link import Link
 from link import link_type as lt
-
+from link import side_type as st
 
 sys.path.append(os.path.join( os.path.dirname(__file__),
                               os.pardir,
@@ -88,18 +87,12 @@ BoxType = enum('HOST_INTERFACE',
                'PERIPHERAL_INTERCONNECT',
                'SLAVE')
 
-
-WISHBONE_LINK_COLOR = QColor("blue")
-AXI_LINK_COLOR = QColor("blue")
-HOST_INTERFACE_LINK_COLOR = QColor("green")
-ARBITOR_LINK_COLOR = QColor("black")
-
 class DesignControlError(Exception):
     """
     Errors associated with the Controller
 
     Error associated with:
-        -wishbone/axi model not configured correclty
+        -bus/axi model not configured correclty
     """
     def __init__(self, value):
         self.value = value
@@ -117,6 +110,7 @@ class Controller (QObject):
         self.model = model
         self.canvas = canvas
         self.output = output
+        self.boxes = {}
         #Connect events
         """
         Go through view and connect all relavent events
@@ -139,7 +133,7 @@ class Controller (QObject):
         """
         #get the type of device (slave/host interface/master)
         """
-        This class should be subclassed for wishbone or Axi because Axi
+        This class should be subclassed for bus or Axi because Axi
         can add and remove masters
         """
         raise NotImplementedError("This function should be subclassed")
@@ -161,7 +155,7 @@ class Controller (QObject):
 
         if self.model is None:
             raise DesignControlError("Bus type is not set up corretly," +
-                                     "please select either axi or wishbone")
+                                     "please select either axi or bus")
 
         #self.model.add_slave
 
@@ -217,20 +211,11 @@ class Controller (QObject):
 
         #Can this be animated :) ??
 
-    def connect(self, box_ID1, box_ID2, box1_side=None, box2_side=None):
-        """
-        Connect box with ID1 to box with ID2 if box1_side and box2_side
-        is specfiied then connect them on that specific side, otherwise
-        just connect automatically
-        """
-        pass
-
-
 
     def set_config_file(self, config_file):
         if self.model is None:
             raise DesignControlError("Bus type is not set up corretly," +
-                                     "please select either axi or wishbone")
+                                     "please select either axi or bus")
         self.output.Debug(self, "set the configuration file")
         self.model.load_config_file(config_file)
         self.model.initialize_graph(self)
@@ -238,7 +223,7 @@ class Controller (QObject):
     def set_default_board_project(self, board_name):
         if self.model is None:
             raise DesignControlError("Bus type is not set up corretly," +
-                                     "please select either axi or wishbone")
+                                     "please select either axi or bus")
 
         self.model.set_default_board_project(board_name)
         self.model.initialize_graph(self)
@@ -250,16 +235,14 @@ class Controller (QObject):
     def get_bus(self):
         return self.bus
 
-    def add_link(self, from_box, to_box, link_type):
-        color = QColor("black")
-        if link_type == lt.host_interface:
-            color = HOST_INTERFACE_LINK_COLOR
-        elif link_type == lt.wishbone_bus:
-            color = WISHBONE_LINK_COLOR
-        elif link_type == lt.axi_bus:
-            color = AXI_LINK_COLOR
-        elif link_type == lt.arbitor:
-            color = ARBITOR_LINK_COLOR
+    def add_link(self, from_box, to_box, link_type, side):
+        from_box.add_connection(to_box, link_type, side)
 
-        l = Link(from_box, to_box, self.canvas.scene(), color, link_type)
+    def add_slave_link(self, bus, slave):
+        self.add_link(bux, slave, lt.bus_bus, st.right)
 
+    def add_host_interface_link(self, hi, m):
+        self.add_link(hi, m, lt.host_interface, st.right)
+
+    def add_bus_link(self, m, bus):
+        self.add_link(m, bus, lt.bus, st.right)
