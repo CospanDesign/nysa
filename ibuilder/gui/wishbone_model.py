@@ -835,6 +835,10 @@ class WishboneModel():
 
         return uname
 
+    def get_slave_parameters(self, slave_type, slave_index):
+        sname = self.gm.get_slave_name_at(slave_type, slave_index)
+        return self.gm.get_parameters(sname)
+
     def remove_slave(self, slave_type = SlaveType.PERIPHERAL, slave_index=0):
         """Removes slave from specified index."""
         self.gm.remove_slave(slave_index, slave_type)
