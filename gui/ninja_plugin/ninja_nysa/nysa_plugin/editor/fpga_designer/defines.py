@@ -25,6 +25,7 @@ Log
 '''
 
 from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 
 #Note this cannot have a QColor for these two because the values are passed
 #through MIME types
@@ -36,3 +37,37 @@ LINK_BUS_COLOR = QColor("black")
 LINK_HOST_INTERFACE_COLOR = QColor("black")
 LINK_PORT_COLOR = QColor("black")
 LINK_MASTER_COLOR = QColor("black")
+LINK_SLAVE_COLOR = QColor("black")
+
+HOST_INTERFACE_RECT = QRectF(0, 0, 100, 200)
+HOST_INTERFACE_POS = QPointF(-200, 0)
+HOST_INTERFACE_COLOR = QColor("yellow")
+HOST_INTERFACE_ID = "host_interface"
+
+MASTER_RECT = QRectF(0, 0, 100, 200)
+MASTER_POS = QPointF(0, 0)
+MASTER_COLOR = QColor("orange")
+MASTER_ID = "master"
+
+PERIPHERAL_BUS_RECT = QRectF(0, 0, 100, 200)
+PERIPHERAL_BUS_POS = QPointF(200, -150)
+PERIPHERAL_BUS_COLOR = QColor("blue")
+PERIPHERAL_BUS_ID = "peripheral_bus"
+
+MEMORY_BUS_RECT = QRectF(0, 0, 100, 200)
+MEMORY_BUS_POS = QPointF(200, 150)
+MEMORY_BUS_COLOR = QColor("purple")
+MEMORY_BUS_ID = "memory_bus"
+
+
+
+SLAVE_RECT = QRectF(0, 0, 100, 50)
+SLAVE_VERTICAL_SPACING = 50
+SLAVE_HORIZONTAL_SPACING = 50
+
+PERIPHERAL_SLAVE_COLOR = QColor("blue")
+
+MEMORY_SLAVE_COLOR = QColor("purple")
+
+
+BEZIER_CONNECTION = False

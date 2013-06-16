@@ -75,7 +75,8 @@ class GraphicsView(QGraphicsView):
         task_list = {
         Qt.Key_Plus:  lambda: self._scale_view(1.2),
         Qt.Key_Minus: lambda: self._scale_view(1 / 1.2),
-        Qt.Key_Equal: lambda: self._scale_normal()
+        #Qt.Key_Equal: lambda: self._scale_normal()
+        Qt.Key_Equal: lambda: self._scale_fit()
         #TODO: Add more key interfaces here
         }
         if event.key() in task_list:
@@ -108,6 +109,6 @@ class GraphicsView(QGraphicsView):
         self.scale(scale_factor, scale_factor)
 
     def _scale_fit(self):
-        if self.debug: print "Canvas: Set scale to fit all items"
-        self.fitInView(self.scene)
+        print "Canvas: Set scale to fit all items"
+        self.fitInView(self.scene().sceneRect(), Qt.KeepAspectRatio)
 

@@ -48,6 +48,8 @@ Dirty = False
 
 DEFAULT_BOX_SIZE = (100, 50)
 
+PADDING = 20
+
 
 class Box (QGraphicsItem):
     """Generic box used for flow charts"""
@@ -75,7 +77,10 @@ class Box (QGraphicsItem):
                       QGraphicsItem.ItemIsFocusable)
         if rect is None:
             rect = QRectF(0, 0, DEFAULT_BOX_SIZE[0], DEFAULT_BOX_SIZE[1])
+
         self.rect = rect
+        self.start_rect = QRectF(rect)
+
         self.style = Qt.SolidLine
         self.setPos(position)
         self.setMatrix(QMatrix())
@@ -151,15 +156,31 @@ class Box (QGraphicsItem):
         painter.fillRect(self.rect, QColor(self.color))
         painter.setFont(self.text_font)
 
+
         #draw text
         pen.setColor(Qt.black)
         painter.setPen(pen)
-        r = self.rect
+        r = QRectF(self.rect)
+        br = painter.fontMetrics().boundingRect(self.box_name)
 
-        #qfm = QFontMetrics(self.text_font)
-        #size = qfm.boundingRect(r, Qt.AlignCenter, self.box_name)
-        painter.drawText(r, Qt.AlignCenter, self.box_name)
-        self.update_connections()
+        scale_x = r.width() / br.width()
+
+        if scale_x > 1.0:
+            painter.drawText(r, Qt.AlignCenter, self.box_name)
+        else:
+            #For the cases where the text is larger than th box
+
+            font_height = br.height()
+            box_height = r.height()
+            #print "R: %f, %f, %f, %f" % (r.left(), r.top(), r.right(), r.bottom())
+            #print "BR: %f, %f, %f, %f" % (br.left(), br.top(), br.right(), br.bottom())
+            #print "BR: (%f, %f), R: (%f, %f)" % (br.width(), br.height(), r.width(), r.height())
+            #print "Scale: %f" % scale_x
+
+            painter.scale(scale_x, scale_x)
+            br.translate(r.left() - br.left(), r.top() - br.top())
+            br.translate(0.0, box_height * (0.5/scale_x) - font_height/2)
+            painter.drawText(br, Qt.TextSingleLine, self.box_name)
 
 
     def boundingRect(self):
@@ -168,43 +189,4 @@ class Box (QGraphicsItem):
     def parentWidget(self):
         return self.scene().views()[0]
 
-    #Edges
-    def add_connection(self, box_widget, link_type, side):
-        self.links[box_widget] = Link(self, box_widget, self.scene(), link_type)
-        self.links[box_widget].from_box_side(side)
-
-        #Set up the other side
-        side = get_inverted_side(side)
-        #self.output.Debug(self, "Link: %s" % str(self.links[box_widget]))
-        box_widget.add_link_connection(self, self.links[box_widget], side)
-
-    def add_link_connection(self, box_widget, link, side):
-        """This is used to call add connection from one box to another"""
-        #self.output.Debug(self, "in add_connection")
-        self.links[box_widget] = link
-        self.links[box_widget].to_box_side(side)
-
-    def is_connected(self):
-        if len(self.links) > 0:
-            return True
-        return False
-
-    def get_connections(self):
-        ls = []
-        for link in self.links:
-            ls.append(self.links[link])
-        return ls
-
-    def update_connections(self):
-        for link in self.links:
-            self.links[link].track_nodes()
-
-    def remove_connection(self, box_widget):
-        if box_widget in self.links:
-            del self.links[box_widget]
-
-    def remove_all_connections(self):
-        keys = self.links.keys()
-        for key in keys:
-            self.remove_connection(key)
 

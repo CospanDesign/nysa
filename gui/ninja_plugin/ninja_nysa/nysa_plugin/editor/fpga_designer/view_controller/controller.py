@@ -138,7 +138,7 @@ class Controller (QObject):
         """
         raise NotImplementedError("This function should be subclassed")
 
-    def drop (self, event):
+    def drop_event(self, event):
         """
         An item has been dropped
         """
@@ -146,12 +146,13 @@ class Controller (QObject):
         #Handle an addition/remove of a host interface
         raise NotImplementedError("This function should be subclassed")
 
+
     def add_box(self, box_type, color, name, ID, position, rect=QRect()):
         """Add a box to the canvas"""
         scene = self.canvas.scene()
         if box_type == BoxType.SLAVE:
             fn = utils.find_module_filename(name, self.fd.user_dirs)
-            fn = utils.find_rtl_location(fn, self.fd.user_dirs)
+            fn = utils.find_rtl_file_location(fn, self.fd.user_dirs)
 
         if self.model is None:
             raise DesignControlError("Bus type is not set up corretly," +
@@ -167,7 +168,11 @@ class Controller (QObject):
                         deselect_func = self.box_deselect,
                         user_data = ID)
 
+
+
     def get_index_from_position(self, position):
+        #Check if this is the peripheral bus or the memory slave
+        #If this is the peripheral bus then
         return -1
 
     def remove_box(self, ID):

@@ -51,12 +51,12 @@ class BoxList(QListWidget):
     self.d = {}
     self._color = color
 
-  def add_items(self, items_dict):
+  def add_items(self, items_dict, box_type):
     #print "Adding items to box list"
     for key in items_dict:
-      self.add_item(key, items_dict[key])
+      self.add_item(key, items_dict[key], box_type)
 
-  def add_item(self, name, item_data):
+  def add_item(self, name, item_data, box_type):
     #print "Name: %s" % name
     lwi = QListWidgetItem(name)
     lwi.setIcon(self.create_icon(name, self._color))
@@ -64,6 +64,7 @@ class BoxList(QListWidget):
     mime_data["name"] = name
     mime_data["color"] = self._color
     mime_data["data"] = item_data
+    mime_data["type"] = box_type
     js = json.dumps(mime_data)
     #Reference the json version of the data with the list widget item
     self.d[name] = js

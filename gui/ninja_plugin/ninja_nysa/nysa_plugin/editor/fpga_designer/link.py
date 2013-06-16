@@ -43,6 +43,7 @@ def enum(*sequential, **named):
 link_type = enum(   "bus",
                     "host_interface",
                     "arbitor",
+                    "slave",
                     "port")
 
 
@@ -51,12 +52,14 @@ side_type = enum(   "top",
                     "right",
                     "left")
 
+from defines import BEZIER_CONNECTION
 
 from defines import LINK_ARBITOR_COLOR
 from defines import LINK_BUS_COLOR
 from defines import LINK_HOST_INTERFACE_COLOR
 from defines import LINK_PORT_COLOR
 from defines import LINK_MASTER_COLOR
+from defines import LINK_SLAVE_COLOR
 
 
 padding = 20
@@ -86,7 +89,6 @@ class Link (QGraphicsItem):
         self.setFlags
         self.setZValue(-1)
         self.scene = scene
-        self.scene.addItem(self)
         #self.setFlags(QGraphicsItem.ItemIsSelectable    |
         #          QGraphicsItem.ItemIsFocusable)
         self.link_type = ltype
@@ -99,8 +101,18 @@ class Link (QGraphicsItem):
         self.pen = pen
         self.path = QPainterPath()
         self.track_nodes()
+        self.bezier_en = BEZIER_CONNECTION
+        self.start = QPointF(0.0, 0.0)
+        self.end = QPointF(0.0, 0.0)
+        self.start_offset = QLineF(0.0, 0.0, 0.0, 0.0)
+        self.end_offset = QLineF(0.0, 0.0, 0.0, 0.0)
+        self.line = QLineF(self.start, self.end)
 
+    def en_bezier_connections(self, enable):
+        self.bezier_en = enable
 
+    def bezier_connections(self):
+        return self.bezier_en
 
     def from_box_side(self, side):
         self.from_side = side
@@ -111,7 +123,39 @@ class Link (QGraphicsItem):
     def track_nodes(self):
         self.update()
 
-    def update(self):
+    def get_min_max_to(self):
+        return self.end_offset.y()
+
+    def set_start_end(self, start, end):
+        self.prepareGeometryChange()
+
+        self.start = start
+        self.end = end
+
+        s_offset_point = QPointF(self.start.x() + 15, self.start.y())
+        e_offset_point = QPointF(self.end.x() - 15, self.end.y())
+        
+
+        self.start_offset = QLineF(self.start, s_offset_point)
+        self.end_offset = QLineF(self.end, e_offset_point)
+
+        self.line = QLineF(self.start, self.end)
+
+    def auto_update(self):
+        self.prepareGeometryChange()
+
+        self.start = self.mapFromItem(self.from_box, self.from_box.side_coordinates(self.from_side))
+        self.end = self.mapFromItem(self.to_box, self.from_box.side_coordinates(self.to_side))
+
+
+        self.start_offset = QLineF(self.start, QPointF(self.start.x() + 15, self.start.y()))
+        self.end_offset = QLineF(self.end, QPointF(self.end.x() - 15, self.end.y()))
+
+        self.line = QLineF(self.start, self.end)
+
+
+
+    def update_back(self):
         self.prepareGeometryChange()
 
         self.start = self.mapFromItem(self.from_box, self.from_box.side_coordinates(self.from_side))
@@ -151,51 +195,49 @@ class Link (QGraphicsItem):
             pen.setWidth(4)
         if self.link_type == link_type.port:
             pen.setWidth(4)
-        painter.setPen(pen)
+        if self.link_type == link_type.slave:
+            pen.setWidth(2)
 
+        painter.setPen(pen)
         path = QPainterPath()
         
         pstart = self.start_offset.p1()
         pend = self.end_offset.p1()
 
-        one = (QPointF(pend.x(), pstart.y()) + pstart) / 2
-        two = (QPointF(pstart.x(), pend.y()) + pend) / 2
-
-
-        path.moveTo(pstart)
-
-        if (pstart.x() + padding) < pend.x():
-            path.lineTo(one)
-            path.lineTo(two)
+        if self.link_type == link_type.slave:
+            pstart = QPointF(pstart.x(), pend.y())
+            path.moveTo(pstart)
             path.lineTo(pend)
+            #self.from_box.slave_adjust(mapToItem(from_box, pstart))
 
         else:
-            start_pad = QPointF(pstart.x() + padding, pstart.y())
-            end_pad = QPointF(pend.x() - padding, pend.y())
-            center = QLineF(pstart, pend).pointAt(0.5)
-            one = (QPointF(start_pad.x(), center.y()))
-            two = (QPointF(end_pad.x(), center.y()))
+            one = (QPointF(pend.x(), pstart.y()) + pstart) / 2
+            two = (QPointF(pstart.x(), pend.y()) + pend) / 2
+            path.moveTo(pstart)
 
-
-            path.lineTo(start_pad)
-            path.lineTo(one)
-            path.lineTo(two)
-            path.lineTo(end_pad)
-            path.lineTo(pend)
-
-
-
-        '''
-        if pstart.x() > pend.x():
-            dist = (pstart.x() - pend.x()) * 2
-            tLine = QLineF((dist / 2), 0.0, -(dist / 2), 0.0).translated(QLineF(pstart, pend).pointAt(0.5))
-            one = tLine.p1()
-            two = tLine.p2()
-        '''
-
-
-
-        #path.cubicTo(one, two, pend)
+ 
+            if self.bezier_en:
+                path.cubicTo(one, two, pend)
+ 
+            else:
+                if (pstart.x() + padding) < pend.x():
+                    path.lineTo(one)
+                    path.lineTo(two)
+                    path.lineTo(pend)
+  
+                else:
+                    start_pad = QPointF(pstart.x() + padding, pstart.y())
+                    end_pad = QPointF(pend.x() - padding, pend.y())
+                    center = QLineF(pstart, pend).pointAt(0.5)
+                    one = (QPointF(start_pad.x(), center.y()))
+                    two = (QPointF(end_pad.x(), center.y()))
+  
+  
+                    path.lineTo(start_pad)
+                    path.lineTo(one)
+                    path.lineTo(two)
+                    path.lineTo(end_pad)
+                    path.lineTo(pend)
 
         #painter.drawRect(self.rect)
         #painter.drawText(self.rect, Qt.AlignCenter, "%s,%s" % (str(start.x()), str(start.y())))
@@ -215,6 +257,8 @@ def get_color_from_type(lt):
         return LINK_ARBITOR_COLOR
     elif lt == link_type.port:
         return LINK_PORT_COLOR
+    elif lt == link_type.slave:
+        return LINK_SLAVE_COLOR
     raise BoxLinkError("Invalid or undefined link type: %s, valid options \
             are: %s" % (str(lt), str(link_type)))
 

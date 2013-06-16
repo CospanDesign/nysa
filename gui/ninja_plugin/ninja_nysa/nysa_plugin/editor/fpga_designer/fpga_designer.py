@@ -176,6 +176,7 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
                                         "axi_tmeplate.json" % str(d["TEMPLATE"])
                                    )
 
+                
     def set_config_file(self, config_file):
         self.vc.set_config_file(config_file)
 
@@ -259,10 +260,10 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
 
 
     def initialize_peripheral_list(self, d = {}):
-        self.peripheral_list.add_items(d)
+        self.peripheral_list.add_items(d, "peripheral_slave")
 
     def initialize_memory_list(self, d = {}):
-        self.memory_list.add_items(d)
+        self.memory_list.add_items(d, "memory_slave")
 
     def set_output(self, output):
         self.output = output

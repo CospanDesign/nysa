@@ -21,12 +21,37 @@
 
 '''
 Log
-  6/12/2013: Initial commit
+  6/14/2013: Initial commit
 '''
 
-"""
-Add all view controller defines here
-"""
+import os
+import sys
+from PyQt4.Qt import *
+from PyQt4.QtCore import *
+from PyQt4 import QtCore
 from PyQt4.QtGui import *
 
+from box import Box
+
+from defines import SLAVE_RECT
+from defines import MEMORY_SLAVE_COLOR
+
+class MemorySlave(Box):
+    """Host Interface Box"""
+
+    def __init__(self,
+                 scene,
+                 instance_name,
+                 select_func,
+                 deselect_func,
+                 parameters):
+
+        super(MemorySlave, self).__init__(position = QPointF(0.0, 0.0),
+                                     scene = scene,
+                                     name = instance_name,
+                                     color = MEMORY_SLAVE_COLOR,
+                                     select_func = select_func,
+                                     deselect_func = deselect_func,
+                                     rect = SLAVE_RECT,
+                                     user_data = parameters)
 
