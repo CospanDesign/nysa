@@ -99,24 +99,18 @@ class WishboneController (controller.Controller):
 
     def initialize_view(self):
         self.output.Debug(self, "Add Master")
-        m = Master(scene = self.canvas.scene(),
-                   select_func = self.box_select,
-                   deselect_func = self.box_deselect)
+        m = Master(scene = self.canvas.scene())
         self.boxes["master"] = m
 
         self.output.Debug(self, "Add Host Interface")
         hi_name = self.model.get_host_interface_name()
         hi = HostInterface(self.canvas.scene(), 
-                           hi_name, 
-                           self.box_select, 
-                           self.box_deselect)
+                           hi_name)
         hi.link_master(m)
         self.boxes["host_interface"] = hi
 
         self.output.Debug(self, "Add Peripheral Bus")
         pb = PeripheralBus(self.canvas.scene(),
-                           self.box_select,
-                           self.box_deselect,
                            m)
         m.link_peripheral_bus(pb)
         self.boxes["peripheral_bus"] = pb
@@ -124,8 +118,6 @@ class WishboneController (controller.Controller):
 
         self.output.Debug(self, "Add Memory Bus")
         mb = MemoryBus(self.canvas.scene(),
-                       self.box_select,
-                       self.box_deselect,
                        m)
         self.boxes["memory_bus"] = mb
         m.link_memory_bus(mb)
@@ -166,12 +158,12 @@ class WishboneController (controller.Controller):
         for i in range(nslaves):
             sitem = {}
             sitem["instance_name"] = self.model.get_slave_name(slave_type, i)
-            sitem["parameters"] = params = self.model.get_slave_parameters(slave_type, i)
+            sitem["parameters"] = self.model.get_slave_parameters(slave_type, i)
             slave_list.append(sitem)
 
         pb = self.boxes["peripheral_bus"]
         #update the bus
-        print "updating slave view"
+        print "WBC: updating slave view"
         pb.update_slaves(slave_list)
 
 
@@ -182,17 +174,17 @@ class WishboneController (controller.Controller):
         for i in range(nslaves):
             sitem = {}
             sitem["instance_name"] = self.model.get_slave_name(slave_type, i)
-            sitem["parameters"] = params = self.model.get_slave_parameters(slave_type, i)
+            sitem["parameters"] = self.model.get_slave_parameters(slave_type, i)
             slave_list.append(sitem)
 
         mb = self.boxes["memory_bus"]
         #update the bus
-        print "updating slave view"
+        print "WBC: updating slave view"
         mb.update_slaves(slave_list)
 
 
     def add_slave(self, slave_dict, index):
-        print "Adding slave"
+        print "WBC: Adding slave"
         module_name = slave_dict["name"]
         slave_type = None
         if slave_dict["type"] == "peripheral_slave":
@@ -211,7 +203,7 @@ class WishboneController (controller.Controller):
         #start with the module name
         name = module_name
 
-        print "Getting number of slaves"
+        print "WBC: Getting number of slaves"
         nslaves = self.model.get_number_of_slaves(slave_type)
         snames = []
         #Get all the slave names
@@ -275,4 +267,9 @@ class WishboneController (controller.Controller):
         else:
             event.ignore()
 
+    def connect_arbitor_master(self, from_type, from_index, arbitor_name, to_type, to_index):
+        self.model.add_arbitor(from_type, from_index, arbitor_name, to_type, to_index)
+
+    def disconnect_arbitor_master(self, from_type, from_index, arbitor_name, to_type, to_index):
+        self.model.remove_arbitor(from_type, from_index, to_type, to_index)
 

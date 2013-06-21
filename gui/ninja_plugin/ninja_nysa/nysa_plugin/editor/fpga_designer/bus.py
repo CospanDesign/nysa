@@ -46,7 +46,6 @@ from link import Link
 from link import link_type as lt
 from link import side_type as st
 
-#from fpga_designer import FPGADesignerError
 import fpga_designer
 
 class Bus(Box):
@@ -58,8 +57,6 @@ class Bus(Box):
                  name,
                  color,
                  rect,
-                 select_func,
-                 deselect_func,
                  user_data,
                  master,
                  slave_class):
@@ -68,8 +65,6 @@ class Bus(Box):
                                   scene = scene,
                                   name = name,
                                   color = color,
-                                  select_func = select_func,
-                                  deselect_func = deselect_func,
                                   rect = rect,
                                   user_data = user_data)
         #Need a reference to a master to update the link if the peripheral bus
@@ -78,6 +73,7 @@ class Bus(Box):
         self.master = master
         self.slaves = []
         self.links = {}
+        self.expand_slaves = False
 
     def recalculate_size_pos(self):
         raise NotImplementedError("Subclass must implement this function")
@@ -94,9 +90,12 @@ class Bus(Box):
 
         #at the end
         return -1
-            
+
+    def slave_selection_changed(self, slave):
+        return
 
     def update_slaves(self, slave_list):
+        self.expand_slaves = False
         #might need to change the slaves around
         #remove all the links
         for link in self.links:
@@ -116,9 +115,8 @@ class Bus(Box):
             params = slave_list[i]["parameters"]
             slave = self.slave_class (scene = self.scene(),
                                       instance_name = instance_name,
-                                      select_func = self.select_func,
-                                      deselect_func = self.deselect_func,
-                                      parameters = params)
+                                      parameters = params,
+                                      bus = self)
             self.slaves.append(slave)
             self.links[slave] = Link(self, slave, self.scene(), lt.slave)
             self.links[slave].from_box_side(st.right)
@@ -140,14 +138,12 @@ class Bus(Box):
             #print "\t\tlink start: %f,%f" % (right.x(), right.y())
             #print "\t\tlink end: %f,%f" % (left.x(), left.y())
             link.update()
- 
+
 
     def add_slave(self, module_name, instance_name, index=-1):
         #the first slave should be at the same y position as the bus
         slave = slave_class      (scene = self.scene(),
                                  module_name = module_name,
-                                 select_func = self.box_select,
-                                 deselect_func = self.box_deselect,
                                  instance_name = instance_name)
         self.slaves.insert(index, slave)
         self.links[slave] = Link(self, slave, self.scene(), lt.slave)
@@ -155,8 +151,17 @@ class Bus(Box):
         self.links[slave].to_box_side(st.left)
         self.recalculate_size_pos()
 
+    def get_slave_index (self, instance_name):
+        for i in range(len(self.slaves)):
+            slave = self.slaves[i]
+            if slave.box_name == instance_name:
+                return i
 
+        raise fpga_designer.FPGADesignerError("%s not found in bus %s" % (instance_name, self.__class__))
 
+    def get_slave(self, name):
+        index = self.get_slave_index(name)
+        return self.slaves[index]
 
     def remove_slave(self, instance_name = None, index = None):
         found_index = -1
@@ -185,4 +190,11 @@ class Bus(Box):
     def update(self):
         self.master.update()
         super(Bus, self).update()
+
+    def enable_expand_slaves(self, arbitor_master, enable):
+        self.expand_slaves = enable
+        self.recalculate_size_pos()
+        self.scene().fit_view()
+        #view = self.scene().get_view()
+        #view.fitInView(self.scene().sceneRect(), Qt.KeepAspectRatio)
 

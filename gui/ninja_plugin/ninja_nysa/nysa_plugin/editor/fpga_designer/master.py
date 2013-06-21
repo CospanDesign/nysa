@@ -48,20 +48,17 @@ class Master(Box):
     """Host Interface Box"""
 
     def __init__(self,
-                 scene,
-                 select_func,
-                 deselect_func):
+                 scene):
 
         super(Master, self).__init__(position = MASTER_POS,
                                      scene = scene,
                                      name = "Master",
                                      color = MASTER_COLOR,
-                                     select_func = select_func,
-                                     deselect_func = deselect_func,
                                      rect = MASTER_RECT,
                                      user_data = MASTER_ID)
         self.peripheral_bus = None
         self.memory_bus = None
+        self.scene().set_master(self)
         self.links = {}
 
     def link_peripheral_bus(self, peripheral_bus):
@@ -76,10 +73,22 @@ class Master(Box):
         self.links[memory_bus].from_box_side(st.right)
         self.links[memory_bus].to_box_side(st.left)
 
-
     def paint(self, painter, option, widget):
         super(Master, self).paint(painter, option, widget)
-        for link in self.links:
-            self.links[link].auto_update()
+        self.update_master_links()
+
+    def update_master_links(self):
+        pbus_start = self.mapToScene(self.side_coordinates(st.right))
+        pbus_start = QPointF(pbus_start.x(), pbus_start.y() - (self.rect.height() / 4))
+        pbus_end = self.mapToScene(self.mapFromItem(self.peripheral_bus, self.peripheral_bus.side_coordinates(st.left)))
+        link = self.links[self.peripheral_bus]
+        link.set_start_end(pbus_start, pbus_end)
+
+        mbus_start = self.mapToScene(self.side_coordinates(st.right))
+        mbus_start = QPointF(pbus_start.x(), mbus_start.y() + (self.rect.height() / 4))
+        mbus_end = self.mapToScene(self.mapFromItem(self.memory_bus, self.memory_bus.side_coordinates(st.left)))
+
+        link = self.links[self.memory_bus]
+        link.set_start_end(mbus_start, mbus_end)
 
 

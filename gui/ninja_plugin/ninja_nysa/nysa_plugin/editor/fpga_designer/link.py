@@ -44,7 +44,8 @@ link_type = enum(   "bus",
                     "host_interface",
                     "arbitor",
                     "slave",
-                    "port")
+                    "port",
+                    "arbitor_master")
 
 
 side_type = enum(   "top",
@@ -60,6 +61,7 @@ from defines import LINK_HOST_INTERFACE_COLOR
 from defines import LINK_PORT_COLOR
 from defines import LINK_MASTER_COLOR
 from defines import LINK_SLAVE_COLOR
+from defines import LINK_ARBITOR_MASTER_COLOR
 
 
 padding = 20
@@ -88,7 +90,7 @@ class Link (QGraphicsItem):
         self.to_box = to_box
         self.setFlags
         self.setZValue(-1)
-        self.scene = scene
+        #self.scene = scene
         #self.setFlags(QGraphicsItem.ItemIsSelectable    |
         #          QGraphicsItem.ItemIsFocusable)
         self.link_type = ltype
@@ -110,6 +112,9 @@ class Link (QGraphicsItem):
 
     def en_bezier_connections(self, enable):
         self.bezier_en = enable
+
+    def get_link_type(self):
+        return self.link_type
 
     def bezier_connections(self):
         return self.bezier_en
@@ -197,6 +202,8 @@ class Link (QGraphicsItem):
             pen.setWidth(4)
         if self.link_type == link_type.slave:
             pen.setWidth(2)
+        if self.link_type == link_type.arbitor_master:
+            pen.setWidth(2)
 
         painter.setPen(pen)
         path = QPainterPath()
@@ -259,6 +266,8 @@ def get_color_from_type(lt):
         return LINK_PORT_COLOR
     elif lt == link_type.slave:
         return LINK_SLAVE_COLOR
+    elif lt == link_type.arbitor_master:
+        return LINK_ARBITOR_MASTER_COLOR
     raise BoxLinkError("Invalid or undefined link type: %s, valid options \
             are: %s" % (str(lt), str(link_type)))
 

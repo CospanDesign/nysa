@@ -21,7 +21,7 @@
 
 '''
 Log
-  6/14/2013: Initial commit
+  6/18/2013: Initial commit
 '''
 
 import os
@@ -33,43 +33,33 @@ from PyQt4.QtGui import *
 
 from box import Box
 
-from defines import HOST_INTERFACE_RECT
-from defines import HOST_INTERFACE_POS
-from defines import HOST_INTERFACE_COLOR
-from defines import HOST_INTERFACE_ID
-
-from link import Link
-from link import link_type as lt
-from link import side_type as st
-
-from link import get_inverted_side
-
-class HostInterface(Box):
+class Slave(Box):
     """Host Interface Box"""
 
     def __init__(self,
                  scene,
-                 name):
+                 position,
+                 instance_name,
+                 color,
+                 parameters,
+                 rect,
+                 bus):
 
-        super(HostInterface, self).__init__(position = HOST_INTERFACE_POS,
-                                            scene = scene,
-                                            name = name,
-                                            color = HOST_INTERFACE_COLOR,
-                                            rect = HOST_INTERFACE_RECT,
-                                            user_data = HOST_INTERFACE_ID)
-        self.master = None
-        self.links = {}
+        self.bus = bus
+        super(Slave, self).__init__( position = position,
+                                     scene = scene,
+                                     name = instance_name,
+                                     color = color,
+                                     rect = rect,
+                                     user_data = parameters)
 
-    def link_master(self, master):
-        self.master = master
-        self.links[master] = Link(self, master, self.scene(), lt.host_interface)
-        self.links[master].from_box_side(st.right)
-        self.links[master].to_box_side(st.left)
-        self.links[master].track_nodes()
 
-    def paint(self, painter, option, widget):
-        super(HostInterface, self).paint(painter, option, widget)
-        for link in self.links:
-            self.links[link].auto_update()
-
+    def itemChange(self, a, b):
+        if self.isSelected():
+            if self.scene() is not None:
+                self.scene().slave_selected(self.box_name, self.bus, self.user_data)
+        else:
+            if self.scene() is not None:
+                self.scene().slave_deselected(self.box_name, self.bus, self.user_data)
+        return super(Slave, self).itemChange(a, b)
 

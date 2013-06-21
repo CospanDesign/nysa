@@ -71,7 +71,7 @@ class GraphicsView(QGraphicsView):
         self.controller.drop_event(event)
 
     def keyPressEvent(self, event):
-        print "Key press event"
+        print "GV: Key press event"
         task_list = {
         Qt.Key_Plus:  lambda: self._scale_view(1.2),
         Qt.Key_Minus: lambda: self._scale_view(1 / 1.2),
@@ -97,18 +97,18 @@ class GraphicsView(QGraphicsView):
             #Scale factor is within limits
             self.scale(scale_factor, scale_factor)
         elif factor < self.scale_min:
-            if self.debug: print "Canvas: Scale too small: %f" % factor
+            if self.debug: print "GV: Scale too small: %f" % factor
         elif factor > self.scale_max:
-            if self.debug: print "Canvas: Scale too large: %f" % factor
+            if self.debug: print "GV: Scale too large: %f" % factor
 
     def _scale_normal(self):
         scale_factor = 1.0
         factor = self.transform().scale(scale_factor, scale_factor).mapRect(QRectF(0, 0, 1, 1)).width()
         scale_factor = 1.0 / factor
-        if self.debug: print "Canvas: Set scale back to 1.0"
+        if self.debug: print "GV: Set scale back to 1.0"
         self.scale(scale_factor, scale_factor)
 
     def _scale_fit(self):
-        print "Canvas: Set scale to fit all items"
+        print "GV: Set scale to fit all items"
         self.fitInView(self.scene().sceneRect(), Qt.KeepAspectRatio)
 

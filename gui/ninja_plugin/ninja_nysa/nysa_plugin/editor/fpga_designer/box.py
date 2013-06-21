@@ -30,19 +30,10 @@ Log
 
 __author__ = "Dave McCoy dave.mccoy@cospandesign.com"
 
-import os
-import sys
-from PyQt4.Qt import *
 from PyQt4.QtCore import *
-from PyQt4 import QtCore
 from PyQt4.QtGui import *
 
-
-from link import Link
-from link import link_type as lt
 from link import side_type as st
-
-from link import get_inverted_side
 
 Dirty = False
 
@@ -54,27 +45,20 @@ PADDING = 20
 class Box (QGraphicsItem):
     """Generic box used for flow charts"""
 
-    def __init__( self,
-                  position,
-                  scene,
-                  name = "Test",
-                  color = "green",
-                  select_func = None,
-                  deselect_func = None,
-                  rect = None,
-                  user_data = None):
+    def __init__(self,
+                position,
+                scene,
+                name="Test",
+                color="green",
+                rect=None,
+                user_data=None):
 
         super(Box, self).__init__()
         #Box Properties
         self.box_name = name
         self.color = QColor(color)
         self.user_data = user_data
-        self.select_func = select_func
-        self.deselect_func = deselect_func
 
-        self.setFlags(QGraphicsItem.ItemIsSelectable    |
-                      QGraphicsItem.ItemIsMovable       |
-                      QGraphicsItem.ItemIsFocusable)
         if rect is None:
             rect = QRectF(0, 0, DEFAULT_BOX_SIZE[0], DEFAULT_BOX_SIZE[1])
 
@@ -86,8 +70,9 @@ class Box (QGraphicsItem):
         self.setMatrix(QMatrix())
         scene.clearSelection()
         scene.addItem(self)
-        self.setSelected(True)
-        self.setFocus()
+
+        #self.setSelected(True)
+        #self.setFocus()
 
         #Tooltip
         self.setToolTip(
@@ -98,45 +83,52 @@ class Box (QGraphicsItem):
         self.text_font = QFont('White Rabbit')
         self.text_font.setPointSize(16)
 
-        if self.select_func is not None:
-          self.select_func(self.user_data)
+        #if self.select_func is not None:
+        #  self.select_func(self.user_data)
 
         global Dirty
         Dirty = True
         self.links = {}
 
+        self.setFlags(QGraphicsItem.ItemIsSelectable |
+                      QGraphicsItem.ItemIsMovable |
+                      QGraphicsItem.ItemIsFocusable)
+
+    def movable(self, enable):
+        self.setFlag(QGraphicsItem.ItemIsMovable, enable)
+
     def side_coordinates(self, side):
         if side == st.top:
-            return QPointF(self.rect.width()/2, self.rect.top())
+            return QPointF(self.rect.width() / 2, self.rect.top())
         if side == st.bottom:
-            return QPointF(self.rect.width()/2, self.rect.bottom())
+            return QPointF(self.rect.width() / 2, self.rect.bottom())
         if side == st.left:
-            return QPointF(self.rect.left(), self.rect.height()/2)
+            return QPointF(self.rect.left(), self.rect.height() / 2)
         if side == st.right:
-            return QPointF(self.rect.right(), self.rect.height()/2)
-
+            return QPointF(self.rect.right(), self.rect.height() / 2)
 
     def set_size(self, width, height):
         self.rect.setWidth(width)
         self.rect.setHeight(height)
 
     def contextMenuEvent(self, event):
-        wrapped = []
+        #wrapped = []
         menu = QMenu(self.parentWidget())
         for text, func in (("&Demo Function", self.demo_function),):
             menu.addAction(text, func)
         menu.exec_(event.screenPos())
 
     def demo_function(self):
-        print "Demo function!"
+        print ("Demo function!")
 
     def itemChange(self, a, b):
         if self.isSelected():
-            self.select_func(self.user_data)
+            if self.scene() is not None:
+                self.scene().box_selected(self.user_data)
         else:
-            self.deselect_func()
+            if self.scene() is not None:
+                self.scene().box_deselected(self.user_data)
         return QGraphicsItem.itemChange(self, a, b)
-
 
     #Paint
     def paint(self, painter, option, widget):
@@ -147,15 +139,14 @@ class Box (QGraphicsItem):
         pen.setColor(Qt.black)
         pen.setWidth(1)
         if option.state & QStyle.State_Selected:
-          #Selected
-          pen.setColor(QColor("black"))
-          pen.setWidth(highlight_width)
+            #Selected
+            pen.setColor(QColor("black"))
+            pen.setWidth(highlight_width)
 
         painter.setPen(pen)
         painter.drawRect(self.rect)
         painter.fillRect(self.rect, QColor(self.color))
         painter.setFont(self.text_font)
-
 
         #draw text
         pen.setColor(Qt.black)
@@ -172,16 +163,11 @@ class Box (QGraphicsItem):
 
             font_height = br.height()
             box_height = r.height()
-            #print "R: %f, %f, %f, %f" % (r.left(), r.top(), r.right(), r.bottom())
-            #print "BR: %f, %f, %f, %f" % (br.left(), br.top(), br.right(), br.bottom())
-            #print "BR: (%f, %f), R: (%f, %f)" % (br.width(), br.height(), r.width(), r.height())
-            #print "Scale: %f" % scale_x
 
             painter.scale(scale_x, scale_x)
             br.translate(r.left() - br.left(), r.top() - br.top())
-            br.translate(0.0, box_height * (0.5/scale_x) - font_height/2)
+            br.translate(0.0, box_height * (0.5 / scale_x) - font_height / 2)
             painter.drawText(br, Qt.TextSingleLine, self.box_name)
-
 
     def boundingRect(self):
         return self.rect.adjusted(-2, -2, 2, 2)

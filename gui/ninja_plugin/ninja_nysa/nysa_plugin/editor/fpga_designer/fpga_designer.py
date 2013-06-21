@@ -45,8 +45,13 @@ from ninja_ide.gui.editor.editor import Editor
 from box import Box
 from box_list import BoxList
 from graphics_view import GraphicsView
+from graphics_scene import GraphicsScene
 from view_controller.wishbone_controller import WishboneController
 from view_controller.axi_controller import AxiController
+
+
+from peripheral_bus import PeripheralBus
+from memory_bus import MemoryBus
 
 from defines import PERIPHERAL_COLOR
 from defines import MEMORY_COLOR
@@ -73,6 +78,7 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
                               "ibuilder",
                               "gui"))
 
+from graph_manager import SlaveType
 
 sys.path.append(os.path.join( os.path.dirname(__file__),
                               os.pardir,
@@ -116,7 +122,7 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         self.ID = filename
         self.lang = "fpga designer"
         self.view = GraphicsView(self)
-        self.scene = QGraphicsScene()
+        self.scene = GraphicsScene(self.view, self)
         self.view.setScene(self.scene)
         self.prevPoint = QPoint()
 
@@ -151,7 +157,6 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         self.vc = None
         self.setup_controller()
 
-
     def setup_controller(self):
         d = {}
         try:
@@ -176,7 +181,66 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
                                         "axi_tmeplate.json" % str(d["TEMPLATE"])
                                    )
 
-                
+    def connect_arbitor_master(self, from_slave, arbitor_name, to_slave):
+        from_type = None
+        from_index = 0
+
+        to_type = None
+        to_index = 0
+        if type(from_slave.bus) is PeripheralBus:
+            from_type = SlaveType.PERIPHERAL
+        else:
+            from_type = SlaveType.MEMORY
+
+        from_index = from_slave.bus.get_slave_index(from_slave.box_name)
+
+
+        if type(to_slave.bus) is PeripheralBus:
+            to_type = SlaveType.PERIPHERAL
+        else:
+            to_type = SlaveType.MEMORY
+
+        to_index = to_slave.bus.get_slave_index(to_slave.box_name)
+
+        self.vc.connect_arbitor_master(from_type,
+                                       from_index,
+                                       arbitor_name,
+                                       to_type,
+                                       to_index)
+
+
+    def disconnect_arbitor_master(self, from_slave, arbitor_name, to_slave):
+        from_type = None
+        from_index = 0
+
+        to_type = None
+        to_index = 0
+        if from_slave is None:
+            raise FPGADesignerError("Cannot remove arbitor connection for %s" % str(arbitor_name))
+        if to_slave is None:
+            raise FPGADesignerError("Cannot remove arbitor connection for %s" % str(arbitor_name))
+
+        if type(from_slave.bus) is PeripheralBus:
+            from_type = SlaveType.PERIPHERAL
+        else:
+            from_type = SlaveType.MEMORY
+
+        from_index = from_slave.bus.get_slave_index(from_slave.box_name)
+
+
+        if type(to_slave.bus) is PeripheralBus:
+            to_type = SlaveType.PERIPHERAL
+        else:
+            to_type = SlaveType.MEMORY
+
+        to_index = to_slave.bus.get_slave_index(to_slave.box_name)
+        self.vc.disconnect_arbitor_master(  from_type, 
+                                            from_index,
+                                            arbitor_name,
+                                            to_type,
+                                            to_index)
+        self.output.Info(self, "Disconnect Arbitor master: %s from slave: %s" % (arbitor_name, to_slave.box_name))
+
     def set_config_file(self, config_file):
         self.vc.set_config_file(config_file)
 
@@ -275,8 +339,8 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         memory_dict = {}
 
         for slave in slave_list:
-            tags = utils.get_module_tags(   filename = slave, 
-                                            keywords=["DRT_FLAGS"], 
+            tags = utils.get_module_tags(   filename = slave,
+                                            keywords=["DRT_FLAGS"],
                                             bus = self.vc.get_bus())
             #print "Tags: %s" % str(tags)
             flag = int(tags["keywords"]["DRT_FLAGS"])
@@ -288,4 +352,6 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         self.initialize_peripheral_list(peripheral_dict)
         self.initialize_memory_list(memory_dict)
 
+    def fit_view(self):
+        self.view._scale_fit()
 

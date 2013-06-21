@@ -39,6 +39,8 @@ from defines import MEMORY_BUS_POS
 from defines import MEMORY_BUS_COLOR
 from defines import MEMORY_BUS_ID
 
+from defines import ARB_MASTER_EXPAND_OFFSET
+
 from defines import SLAVE_RECT
 from defines import SLAVE_VERTICAL_SPACING
 from defines import SLAVE_HORIZONTAL_SPACING
@@ -48,8 +50,6 @@ class MemoryBus(Bus):
 
     def __init__(self,
                  scene,
-                 select_func,
-                 deselect_func,
                  master):
 
 
@@ -57,14 +57,13 @@ class MemoryBus(Bus):
                                             scene = scene,
                                             name = "Memory",
                                             color = MEMORY_BUS_COLOR,
-                                            select_func = select_func,
-                                            deselect_func = deselect_func,
                                             rect = MEMORY_BUS_RECT,
                                             user_data = MEMORY_BUS_ID,
                                             master = master,
                                             slave_class = MemorySlave)
         #Need a reference to a master to update the link if the memory bus
         #   grows
+        self.scene().set_memory_bus(self)
 
 
     def recalculate_size_pos(self):
@@ -82,12 +81,14 @@ class MemoryBus(Bus):
 
         #Calculate the position of each slave
         for i in range(len(self.slaves)):
-            x = MEMORY_BUS_POS.x() + MEMORY_BUS_RECT.width() + SLAVE_HORIZONTAL_SPACING
+            if self.expand_slaves:
+                x = MEMORY_BUS_POS.x() + MEMORY_BUS_RECT.width() + SLAVE_HORIZONTAL_SPACING + ARB_MASTER_EXPAND_OFFSET
+            else:
+                x = MEMORY_BUS_POS.x() + MEMORY_BUS_RECT.width() + SLAVE_HORIZONTAL_SPACING
             y = MEMORY_BUS_POS.y() + i * (SLAVE_RECT.height() + SLAVE_VERTICAL_SPACING)
             self.slaves[i].setPos(QPointF(x, y))
 
         self.update_links()
         self.update()
-        print "Position: %f, %f" % (self.pos().x(), self.pos().y())
-
+        #print "Position: %f, %f" % (self.pos().x(), self.pos().y())
 

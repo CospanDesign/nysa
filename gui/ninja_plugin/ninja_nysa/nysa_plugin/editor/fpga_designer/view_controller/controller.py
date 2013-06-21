@@ -39,7 +39,7 @@ from box import Box
 from link import link_type as lt
 from link import side_type as st
 
-sys.path.append(os.path.join( os.path.dirname(__file__),
+sys.path.append(os.path.join(os.path.dirname(__file__),
                               os.pardir,
                               os.pardir,
                               os.pardir,
@@ -50,7 +50,7 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
                               "ibuilder",
                               "lib"))
 
-sys.path.append(os.path.join( os.path.dirname(__file__),
+sys.path.append(os.path.join(os.path.dirname(__file__),
                               os.pardir,
                               os.pardir,
                               os.pardir,
@@ -62,7 +62,7 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
                               "gui"))
 
 
-sys.path.append(os.path.join( os.path.dirname(__file__),
+sys.path.append(os.path.join(os.path.dirname(__file__),
                               os.pardir,
                               os.pardir,
                               os.pardir,
@@ -78,14 +78,15 @@ import utils
 
 
 def enum(*sequential, **named):
-  enums = dict(zip(sequential, range(len(sequential))), **named)
-  return type('Enum', (), enums)
+    enums = dict(list(zip(sequential, list(range(len(sequential))))), **named)
+    return type('Enum', (), enums)
 
 BoxType = enum('HOST_INTERFACE',
                'MASTER',
                'MEMORY_INTERCONNECT',
                'PERIPHERAL_INTERCONNECT',
                'SLAVE')
+
 
 class DesignControlError(Exception):
     """
@@ -96,6 +97,7 @@ class DesignControlError(Exception):
     """
     def __init__(self, value):
         self.value = value
+
     def __str__(self):
         return repr(self.value)
 
@@ -146,7 +148,6 @@ class Controller (QObject):
         #Handle an addition/remove of a host interface
         raise NotImplementedError("This function should be subclassed")
 
-
     def add_box(self, box_type, color, name, ID, position, rect=QRect()):
         """Add a box to the canvas"""
         scene = self.canvas.scene()
@@ -160,15 +161,13 @@ class Controller (QObject):
 
         #self.model.add_slave
 
-        return Box(     position = position,
-                        scene = scene,
-                        name = name,
-                        color = color,
-                        select_func = self.box_select,
-                        deselect_func = self.box_deselect,
-                        user_data = ID)
-
-
+        return Box(position=position,
+                   scene=scene,
+                   name=name,
+                   color=color,
+                   select_func=self.box_select,
+                   deselect_func=self.box_deselect,
+                   user_data=ID)
 
     def get_index_from_position(self, position):
         #Check if this is the peripheral bus or the memory slave
@@ -185,7 +184,7 @@ class Controller (QObject):
         """An item has been selected"""
         #Get the module tags for this item
         #XXX:Need to get the module tags for this
-        m = self.model
+        #m = self.model
 
         if type(data) is str:
             d = {}
@@ -216,7 +215,6 @@ class Controller (QObject):
 
         #Can this be animated :) ??
 
-
     def set_config_file(self, config_file):
         if self.model is None:
             raise DesignControlError("Bus type is not set up corretly," +
@@ -232,7 +230,6 @@ class Controller (QObject):
 
         self.model.set_default_board_project(board_name)
         self.model.initialize_graph(self)
-
 
     def set_bus(self, bus):
         raise NotImplementedError("This function should be subclassed")

@@ -43,17 +43,19 @@ from defines import SLAVE_RECT
 from defines import SLAVE_VERTICAL_SPACING
 from defines import SLAVE_HORIZONTAL_SPACING
 
+from defines import ARB_MASTER_EXPAND_OFFSET
+
 from link import Link
 from link import link_type as lt
 from link import side_type as st
+
+from graphics_scene import view_state
 
 class PeripheralBus(Bus):
     """Host Interface Box"""
 
     def __init__(self,
                  scene,
-                 select_func,
-                 deselect_func,
                  master):
 
 
@@ -61,14 +63,14 @@ class PeripheralBus(Bus):
                                             scene = scene,
                                             name = "Peripherals",
                                             color = PERIPHERAL_BUS_COLOR,
-                                            select_func = select_func,
-                                            deselect_func = deselect_func,
                                             rect = PERIPHERAL_BUS_RECT,
                                             user_data = PERIPHERAL_BUS_ID,
                                             master = master,
                                             slave_class = PeripheralSlave)
         #Need a reference to a master to update the link if the peripheral bus
         #   grows
+        self.prev_selected_slave = None
+        self.scene().set_peripheral_bus(self)
 
     def recalculate_size_pos(self):
         num_slaves = len(self.slaves)
@@ -91,11 +93,35 @@ class PeripheralBus(Bus):
 
         #Calculate the position of each slave
         for i in range(len(self.slaves)):
-            x = PERIPHERAL_BUS_POS.x() + PERIPHERAL_BUS_RECT.width() + SLAVE_HORIZONTAL_SPACING
+            if self.expand_slaves and self.slaves[i] != self.prev_selected_slave and self.slaves[i].box_name != "DRT":
+                x = PERIPHERAL_BUS_POS.x() + PERIPHERAL_BUS_RECT.width() + SLAVE_HORIZONTAL_SPACING + ARB_MASTER_EXPAND_OFFSET
+            else:
+                x = PERIPHERAL_BUS_POS.x() + PERIPHERAL_BUS_RECT.width() + SLAVE_HORIZONTAL_SPACING
             slave_y = y + i * (SLAVE_RECT.height() + SLAVE_VERTICAL_SPACING)
             self.slaves[i].setPos(QPointF(x, slave_y))
 
         self.update_links()
         self.update()
+
+    def slave_selection_changed(self, slave):
+        if slave == self.prev_selected_slave:
+            return
+
+        if self.prev_selected_slave is not None:
+            #print "Slave ID: %s" % str(slave.user_data)
+            if self.scene().is_arbitor_master_selected():
+                return
+            self.prev_selected_slave.remove_arbitor_masters()
+
+        self.prev_selected_slave = slave
+
+    def update_slaves(self, slave_list):
+        if self.prev_selected_slave is not None:
+            self.prev_selected_slave.remove_arbitor_masters()
+            self.prev_selected_slave = None
+        super(PeripheralBus, self).update_slaves(slave_list)
+
+    def enable_expand_slaves(self, arbitor_master, enable):
+        super(PeripheralBus, self).enable_expand_slaves(arbitor_master, enable)
 
 
