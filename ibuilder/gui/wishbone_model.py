@@ -48,9 +48,9 @@ class WishboneModel():
         if self.get_board_name() != "undefined":
 
             base = utils.get_nysa_base()
-            print "board name: %s" % str(self.get_board_name())
-            print "board dict: %s" % str(self.board_dict)
-            print "project dict: %s" % str(self.project_tags)
+            #print "board name: %s" % str(self.get_board_name())
+            #print "board dict: %s" % str(self.board_dict)
+            #print "project dict: %s" % str(self.project_tags)
             config_file = self.board_dict["default_project"]
             config_file = os.path.join(base, "ibuilder", "example_projects", config_file)
             self.load_config_file(config_file)
@@ -427,7 +427,7 @@ class WishboneModel():
 
         self.project_tags["board"] = board_name
         self.board_dict = utils.get_board_config(board_name)
-        print "board dict: %s" % str(self.board_dict)
+        #print "board dict: %s" % str(self.board_dict)
 
     def get_board_name(self):
         if "board" in self.project_tags.keys():
