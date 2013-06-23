@@ -30,8 +30,24 @@ Log
 __author__ = "Dave McCoy dave.mccoy@cospandesign.com"
 
 
+import os
+import sys
+
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              "ibuilder",
+                              "gui"))
+
+from graph_manager import SlaveType
+
 
 
 def enum(*sequential, **named):
@@ -52,8 +68,12 @@ class GraphicsScene(QGraphicsScene):
         self.state = view_state.normal
         print "GS: Set state for normal"
         self.links = []
+        self.dbg = False
 
     def set_link_ref(self, lref):
+        if self.dbg: print "GS: set_link_ref()"
+        if self.dbg: print "\tlink_ref: %s - %s" % (lref.from_box.box_name, lref.to_box.box_name)
+
         self.links.append(lref)
 
     def set_master(self, master):
@@ -66,104 +86,153 @@ class GraphicsScene(QGraphicsScene):
         self.memory_bus = memory_bus
 
     def get_view(self):
+        if self.dbg: print "GS: get_view()"
         return self.view
 
     def box_selected(self, data):
+        if self.dbg: print "GS: box_selected()"
         if type(data) is dict and "module" in data.keys():
+            if self.dbg: print "\tbox: %s" % data["module"]
             self.fd.populate_param_table(data)
 
     def box_deselected(self, data):
+        if self.dbg: print "GS: box_deselected()"
         if type(data) is dict and "module" in data.keys():
+            if self.dbg: print "\tbox: %s" % data["module"]
             self.fd.clear_param_table()
 
     def slave_selected(self, name, bus, tags):
-        print "GS: Slave: %s" % tags["module"]
+        if self.dbg: print "GS: slave_selected()"
+        if self.dbg: print "\t%s" % name
         if self.arbitor_selected is None:
-            print "GS: Arbitor master is not selected"
+            if self.dbg: print "\tArbitor master is not selected"
+            if self.dbg: print "\tSet state for normal"
+            #slave = bus.get_slave(name)
+            #bus.slave_selection_changed(slave)
             self.state = view_state.normal
-            print "GS: Set state for normal"
             return
 
-        print "GS: Arbitor master is selected: %s" % self.arbitor_selected.box_name
+        self.state = view_state.arbitor_master_selected
+
+        if self.dbg: print "\tArbitor master is selected: %s" % self.arbitor_selected.box_name
 
         if  name == "DRT":
-            print "GS: Can't attach to the DRT"
-            return
-
-        if self.arbitor_selected.get_slave().box_name == name:
-            print "GS: Can't attach to ourselves"
-            #self.arbitor_master_deselected(tags, self.arbitor_selected)
-            #self.state = view_state.normal
+            if self.dbg: print "\tCan't attach to the DRT"
             return
 
         from_slave = self.arbitor_selected.get_slave()
+        if from_slave.box_name == name:
+            if self.dbg: print "\tCan't attach to ourselves"
+            return
+
         arbitor_name = self.arbitor_selected.box_name
         to_slave = bus.get_slave(name)
         
-        if self.arbitor_selected.get_connected_slave() is not None:
-            connected_slave = self.arbitor_selected.get_connected_slave()
+        connected_slave = self.get_arbitor_master_connected(self.arbitor_selected)
+        if connected_slave is not None:
             self.arbitor_master_disconnect(self.arbitor_selected, connected_slave)
 
         self.fd.connect_arbitor_master(from_slave, arbitor_name, to_slave)
-        self.arbitor_selected.set_activate(True)
+        self.arbitor_selected.update_view()
         self.arbitor_selected.connect_slave(to_slave)
 
+    def is_arbitor_master_active(self):
+        if self.dbg: print "GS: is_arbitor_master_active()"
+        #return self.state == view_state.arbitor_master_selected
+        return self.arbitor_selected is not None
+
     def get_state(self):
+        if self.dbg: print "GS: get_state()"
         return self.state
 
     def slave_deselected(self, name, bus, tags):
-        #print "GS: Slave deselected: %s" % tags["module"]
-
-        pass
+        if self.dbg: print "GS: slave_deselect()"
+        if self.arbitor_selected is None:
+            self.state = view_state.normal
 
     def arbitor_master_selected(self, slave, arbitor_master):
-        print "GS: arbitor master selected"
+        if self.dbg: print "GS: arbitor_master_selected()"
         name = arbitor_master.box_name
         self.state = view_state.arbitor_master_selected
-        print "GS: Set state for arbitor master"
+        if self.dbg: print "\tSet state for arbitor master"
         self.arbitor_selected = arbitor_master
         self.peripheral_bus.enable_expand_slaves(name, True)
         self.memory_bus.enable_expand_slaves(name, True)
         slave.arbitor_master_selected(name)
 
-    def arbitor_master_deselected(self, slave_tags, arbitor_master):
-        print "GS: arbitor master deselected"
+    def arbitor_master_deselected(self, arbitor_master):
+        if self.dbg: print "GS: arbitor_master_deselected()"
+        for i in range (len(self.links)):
+            self.removeItem(self.links[i])
+        self.links = []
+        self.arbitor_selected = None
         name = arbitor_master.box_name
         self.state = view_state.normal
-        print "GS: Set state for normal"
+        if self.dbg: print "\tSet state for normal"
         self.peripheral_bus.enable_expand_slaves(name, False)
         self.memory_bus.enable_expand_slaves(name, False)
-        self.arbitor_selected = None
         slave = arbitor_master.get_slave()
         slave.remove_arbitor_masters()
         slave.show_arbitor_masters()
+        slave.setSelected(True)
+    #def arbitor_master_fake_selected(self, slave, arbitor_master):
+    #    print "GS: arbitor master selected selected"
+    #    self.arbitor_selected = arbitor_master
+
+    def is_arbitor_master_selected(self):
+        if self.dbg: print "GS: is_arbitor_master_selected()"
+        return self.arbitor_selected is not None
+
+    def get_arbitor_master_selected(self):
+        if self.dbg: print "GS: get_arbitor_master_selected()"
+        return self.arbitor_selected
+
+    def arbitor_master_disconnect(self, arbitor_master, to_slave):
+        if self.dbg: print "GS: arbitor_master_disconnect()"
+        from_slave = arbitor_master.get_slave()
         for i in range (len(self.links)):
             self.removeItem(self.links[i])
 
-        self.links = []
-
-
-    def arbitor_master_fake_selected(self, slave, arbitor_master):
-        print "GS: arbitor master selected selected"
-        self.arbitor_selected = arbitor_master
-
-    def is_arbitor_master_selected(self):
-        return self.arbitor_selected is not None
-
-    def arbitor_master_disconnect(self, arbitor_master, to_slave):
-        from_slave = arbitor_master.get_slave()
         arbitor_name = arbitor_master.box_name
+        if self.dbg: print "\tarbitor_master: %s" % arbitor_master.box_name
 
         #XXX: Remove the arbitor connctor
         self.fd.disconnect_arbitor_master(from_slave, arbitor_name, to_slave)
         arbitor_master.disconnect_slave()
 
+    def get_arbitor_master_connected(self, arbitor_master):
+        if self.dbg: print "GS: get_arbitor_master_connected()"
+        from_slave = arbitor_master.get_slave()
+        arbitor_name = arbitor_master.box_name
+        typ = None
+        index = 0
+        slave = None
+
+        typ, index = self.fd.get_arbitor_master_connected(from_slave, arbitor_name)
+
+        if typ is None:
+            if self.dbg: print "\tNo slave is attached to the arbitor"
+            return None
+
+        if typ == SlaveType.PERIPHERAL:
+            slave = self.peripheral_bus.get_slave_from_index(index)
+        else:
+            slave = self.memory_bus.get_slave_from_index(index)
+
+        if self.dbg: print "\tGetting Arbitor Master connected for %s which is: %s" % (arbitor_name, slave.box_name)
+        return slave
+
     def fit_view(self):
         self.fd.fit_view()
 
-
     def remove_selected(self, reference):
-        print "GS: User removed"
+        if self.dbg: print "GS: remove_selected()"
 
 
+    def clear_links(self):
+        for i in range (len(self.links)):
+            self.removeItem(self.links[i])
 
+
+    def startDrag(self, event):
+        print "GS: Drag start event"

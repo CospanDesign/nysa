@@ -65,6 +65,7 @@ class BoxList(QListWidget):
     mime_data["color"] = self._color
     mime_data["data"] = item_data
     mime_data["type"] = box_type
+    mime_data["move_type"] = "copy"
     js = json.dumps(mime_data)
     #Reference the json version of the data with the list widget item
     self.d[name] = js

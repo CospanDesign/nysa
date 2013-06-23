@@ -158,9 +158,7 @@ class Controller (QObject):
         if self.model is None:
             raise DesignControlError("Bus type is not set up corretly," +
                                      "please select either axi or bus")
-
         #self.model.add_slave
-
         return Box(position=position,
                    scene=scene,
                    name=name,

@@ -70,6 +70,7 @@ class PeripheralSlave(Slave):
         self.am_selected = False
         self.peripheral_bus = bus
         self.ignore_selection = False
+        self.dbg = False
 
         super(PeripheralSlave, self).__init__(position = QPointF(0.0, 0.0),
                                              scene = scene,
@@ -141,6 +142,7 @@ class PeripheralSlave(Slave):
             painter.drawText(br, Qt.TextSingleLine, self.box_name)
 
     def update_links(self):
+        if self.dbg: print "PS: update_links()"
         start = self.mapToScene(self.side_coordinates(st.right))
 
         for link in self.links:
@@ -148,6 +150,7 @@ class PeripheralSlave(Slave):
             self.links[link].set_start_end(start, end)
 
     def show_arbitor_masters(self):
+        if self.dbg: print "show_arbitor_masters()"
         if len(self.arbitor_boxes) > 0:
             #print "There are already arbitor boxes: %d" % len(self.arbitor_boxes)
             return 
@@ -174,6 +177,7 @@ class PeripheralSlave(Slave):
 
             am = ArbitorMaster(name = self.arbitor_masters[i], 
                                position = arb_pos,
+                               y_pos = position.y(),
                                scene = self.scene(),
                                slave = self)
 
@@ -193,17 +197,19 @@ class PeripheralSlave(Slave):
         self.update_links()
 
     def is_arbitor_master_selected(self):
+        if self.dbg: print "PS: is_arbitor_master_selected()"
         for am in self.arbitor_boxes:
             if am.isSelected():
                 return True
         return False
 
     def arbitor_master_selected(self, arbitor_master):
-        #print "Slave arbitor master selected: %s" % arbitor_master
+        if self.dbg: print "PS: arbitor_master_selected()"
         if self.ignore_selection:
             return
 
         self.ignore_selection = True
+        self.s.clearSelection()
         self.remove_arbitor_masters()
         position = QPointF(self.pos())
         rect = QRectF(self.rect)
@@ -214,10 +220,12 @@ class PeripheralSlave(Slave):
         #print "Adding arbitor master"
         am = ArbitorMaster(name = arbitor_master,
                            position = arb_pos,
+                           y_pos = arb_y,
                            scene = self.scene(),
                            slave = self)
 
-        am.set_activate(True)
+        #am.set_activate(True)
+        am.update_view()
         self.arbitor_boxes.append(am)
         al = Link(self, am, self.scene(), lt.arbitor_master)
         al.from_box_side(st.right)
@@ -229,33 +237,33 @@ class PeripheralSlave(Slave):
         #print "update links"
         self.update_links()
         self.ignore_selection = False
+        self.s.invalidate(self.s.sceneRect())
 
     def remove_arbitor_masters(self):
-        print "PS: Remove Arbitor Masters"
+        if self.dbg: print "PS: remove_arbitor_masters()"
+
         ams = self.links.keys()
         for am in ams:
-            self.scene().removeItem(self.links[am])
+            if self.links[am] is not None:
+                self.scene().removeItem(self.links[am])
 
         self.links = {}
         for am in ams:
             am.clear_link()
             self.s.removeItem(am)
 
-        #if len(ams) > 0:
-        #    print "Removed arbitor masters"
-
         self.arbitor_boxes = []
 
     def mouseReleaseEvent(self, event):
+        if self.dbg: print "PS: mouse release event()"
         if (len(self.arbitor_masters) > 0) and (len(self.arbitor_boxes) == 0):
             self.show_arbitor_masters()
         return QGraphicsItem.mouseReleaseEvent(self, event)
 
     def itemChange(self, a, b):
+        if self.dbg: print "PS: itemChange()"
         #print "Peripheral slave item change: %s" % self.box_name
         if self.isSelected():
             self.peripheral_bus.slave_selection_changed(self)
-
         return super(PeripheralSlave, self).itemChange(a, b)
-
 

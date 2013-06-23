@@ -81,14 +81,19 @@ class MemoryBus(Bus):
 
         #Calculate the position of each slave
         for i in range(len(self.slaves)):
+            self.slaves[i].selectable(False)
             if self.expand_slaves:
                 x = MEMORY_BUS_POS.x() + MEMORY_BUS_RECT.width() + SLAVE_HORIZONTAL_SPACING + ARB_MASTER_EXPAND_OFFSET
             else:
                 x = MEMORY_BUS_POS.x() + MEMORY_BUS_RECT.width() + SLAVE_HORIZONTAL_SPACING
             y = MEMORY_BUS_POS.y() + i * (SLAVE_RECT.height() + SLAVE_VERTICAL_SPACING)
             self.slaves[i].setPos(QPointF(x, y))
+            self.slaves[i].selectable(True)
 
         self.update_links()
         self.update()
         #print "Position: %f, %f" % (self.pos().x(), self.pos().y())
+
+    def get_bus_type(self):
+        return "peripheral_bus"
 

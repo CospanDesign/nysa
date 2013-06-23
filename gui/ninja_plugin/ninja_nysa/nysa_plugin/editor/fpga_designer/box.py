@@ -93,9 +93,14 @@ class Box (QGraphicsItem):
         self.setFlags(QGraphicsItem.ItemIsSelectable |
                       QGraphicsItem.ItemIsMovable |
                       QGraphicsItem.ItemIsFocusable)
+        self.dbg = False
 
     def movable(self, enable):
         self.setFlag(QGraphicsItem.ItemIsMovable, enable)
+
+    def selectable(self, enable):
+        if self.dbg: print "BOX: %s selectable %s" % (self.box_name, str(enable))
+        self.setFlag(QGraphicsItem.ItemIsSelectable, enable)
 
     def side_coordinates(self, side):
         if side == st.top:

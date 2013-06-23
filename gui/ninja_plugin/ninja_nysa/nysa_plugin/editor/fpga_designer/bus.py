@@ -74,28 +74,46 @@ class Bus(Box):
         self.slaves = []
         self.links = {}
         self.expand_slaves = False
+        self.s = scene
+        self.dbg = False
 
     def recalculate_size_pos(self):
         raise NotImplementedError("Subclass must implement this function")
 
     def find_index_from_position(self, position):
+        if self.dbg: print "BUS: find_index_from_position()"
+        #Need to transform everything so that the top left is 0 and more
+        #Positive y's are larger numbers
+
+        r = self.s.sceneRect()
+        y_start = r.top()
+        y_new = position.y() - y_start
+
         index = 0
+        print "\tNew Slave position: %f, %f" % (position.x(), position.y())
         for slave in self.slaves:
             pos = slave.pos()
+            y_slave = pos.y() - y_start
+
+            print "\tslave %s position: %f %f" % (slave.box_name, pos.x(), pos.y())
             height = slave.rect.height()
-            midpoint = pos.y() + (height/2)
-            if position < midpoint:
+            midpoint = y_slave + (height/2)
+            if y_new < midpoint:
                 return index
             index += 1
 
         #at the end
+        print "\tNew slave position is at the end"
         return -1
 
     def slave_selection_changed(self, slave):
+        if self.dbg: print "BUS: slave_selection_changed()"
         return
 
     def update_slaves(self, slave_list):
+        if self.dbg: print "BUS: update_slaves()"
         self.expand_slaves = False
+           
         #might need to change the slaves around
         #remove all the links
         for link in self.links:
@@ -125,6 +143,7 @@ class Bus(Box):
             self.update_links()
 
     def update_links(self):
+        if self.dbg: print "BUS: update_links()"
         right_x = self.mapToScene(self.side_coordinates(st.right)).x()
         #print "Updating slave links"
         for i in range (len(self.slaves)):
@@ -141,6 +160,7 @@ class Bus(Box):
 
 
     def add_slave(self, module_name, instance_name, index=-1):
+        if self.dbg: print "BUS: add_slave()"
         #the first slave should be at the same y position as the bus
         slave = slave_class      (scene = self.scene(),
                                  module_name = module_name,
@@ -152,6 +172,7 @@ class Bus(Box):
         self.recalculate_size_pos()
 
     def get_slave_index (self, instance_name):
+        if self.dbg: print "BUS: get_slave_index()"
         for i in range(len(self.slaves)):
             slave = self.slaves[i]
             if slave.box_name == instance_name:
@@ -160,10 +181,16 @@ class Bus(Box):
         raise fpga_designer.FPGADesignerError("%s not found in bus %s" % (instance_name, self.__class__))
 
     def get_slave(self, name):
+        if self.dbg: print "BUS: get_slave()"
         index = self.get_slave_index(name)
         return self.slaves[index]
 
+    def get_slave_from_index(self, index):
+        if self.dbg: print "BUS: get_slave_from_index()"
+        return self.slaves[index]
+
     def remove_slave(self, instance_name = None, index = None):
+        if self.dbg: print "BUS: remove_slave()"
         found_index = -1
         if instance_name is not None:
             for i in range(len(self.slaves)):
@@ -182,19 +209,25 @@ class Bus(Box):
         self.recalculate_size_pos()
 
     def move_slave(self, name = None, from_index = None, to_index = None):
+        if self.dbg: print "BUS: move_slave()"
         slave = self.slaves[from_index]
         self.slaves.insert(to_index, slave)
         self.slaves.remove(from_index)
         self.recalculate_size_pos()
 
     def update(self):
+        if self.dbg: print "BUS: move()"
         self.master.update()
         super(Bus, self).update()
 
     def enable_expand_slaves(self, arbitor_master, enable):
+        if self.dbg: print "BUS: enable_expand_slaves()"
         self.expand_slaves = enable
         self.recalculate_size_pos()
         self.scene().fit_view()
         #view = self.scene().get_view()
         #view.fitInView(self.scene().sceneRect(), Qt.KeepAspectRatio)
+
+    def get_bus_type(self):
+        raise NotImplementedError("Subclass must implement this function")
 

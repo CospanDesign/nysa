@@ -181,33 +181,38 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
                                         "axi_tmeplate.json" % str(d["TEMPLATE"])
                                    )
 
+    def get_type_index_from_slave(self, slave):
+        typ = None
+        index = None
+        if slave is None:
+            raise FPGADesignerError("Cannot get type or index from None!")
+
+        if type(slave.bus) is PeripheralBus:
+            print "\t%s: Peripheral Bus" % slave.box_name
+            typ = SlaveType.PERIPHERAL
+        elif type(slave.bus) is MemoryBus:
+            print "\t%s: Memory Bus" % slave.box_name
+            typ = SlaveType.MEMORY
+
+        index = slave.bus.get_slave_index(slave.box_name)
+        return typ, index
+
+
     def connect_arbitor_master(self, from_slave, arbitor_name, to_slave):
         from_type = None
         from_index = 0
 
         to_type = None
         to_index = 0
-        if type(from_slave.bus) is PeripheralBus:
-            from_type = SlaveType.PERIPHERAL
-        else:
-            from_type = SlaveType.MEMORY
+        from_type, from_index = self.get_type_index_from_slave(from_slave)
+        to_type, to_index = self.get_type_index_from_slave(to_slave)
 
-        from_index = from_slave.bus.get_slave_index(from_slave.box_name)
-
-
-        if type(to_slave.bus) is PeripheralBus:
-            to_type = SlaveType.PERIPHERAL
-        else:
-            to_type = SlaveType.MEMORY
-
-        to_index = to_slave.bus.get_slave_index(to_slave.box_name)
-
+        print "FD: Connect: %s - %s - %s" % (from_slave.box_name, arbitor_name, to_slave.box_name)
         self.vc.connect_arbitor_master(from_type,
                                        from_index,
                                        arbitor_name,
                                        to_type,
                                        to_index)
-
 
     def disconnect_arbitor_master(self, from_slave, arbitor_name, to_slave):
         from_type = None
@@ -215,31 +220,26 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
 
         to_type = None
         to_index = 0
-        if from_slave is None:
-            raise FPGADesignerError("Cannot remove arbitor connection for %s" % str(arbitor_name))
-        if to_slave is None:
-            raise FPGADesignerError("Cannot remove arbitor connection for %s" % str(arbitor_name))
 
-        if type(from_slave.bus) is PeripheralBus:
-            from_type = SlaveType.PERIPHERAL
-        else:
-            from_type = SlaveType.MEMORY
+        from_type, from_index = self.get_type_index_from_slave(from_slave)
+        to_type, to_index = self.get_type_index_from_slave(to_slave)
 
-        from_index = from_slave.bus.get_slave_index(from_slave.box_name)
-
-
-        if type(to_slave.bus) is PeripheralBus:
-            to_type = SlaveType.PERIPHERAL
-        else:
-            to_type = SlaveType.MEMORY
-
-        to_index = to_slave.bus.get_slave_index(to_slave.box_name)
         self.vc.disconnect_arbitor_master(  from_type, 
                                             from_index,
                                             arbitor_name,
                                             to_type,
                                             to_index)
+
+        print "FD: Disconnect: %s - %s - %s" % (from_slave.box_name, arbitor_name, to_slave.box_name)
         self.output.Info(self, "Disconnect Arbitor master: %s from slave: %s" % (arbitor_name, to_slave.box_name))
+
+
+    def get_arbitor_master_connected(self, from_slave, arbitor_name):
+        typ = None
+        index = None
+
+        typ, index = self.get_type_index_from_slave(from_slave)
+        return self.vc.get_arbitor_master_connected(typ, index, arbitor_name)
 
     def set_config_file(self, config_file):
         self.vc.set_config_file(config_file)
@@ -319,9 +319,6 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
 
     def fileSaved(self, val):
         self.output.Debug(self, "Saving File")
-
-
-
 
     def initialize_peripheral_list(self, d = {}):
         self.peripheral_list.add_items(d, "peripheral_slave")

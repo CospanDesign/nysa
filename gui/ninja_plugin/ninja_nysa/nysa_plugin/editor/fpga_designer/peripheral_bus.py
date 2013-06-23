@@ -71,6 +71,7 @@ class PeripheralBus(Bus):
         #   grows
         self.prev_selected_slave = None
         self.scene().set_peripheral_bus(self)
+        self.s = self.scene()
 
     def recalculate_size_pos(self):
         num_slaves = len(self.slaves)
@@ -93,12 +94,18 @@ class PeripheralBus(Bus):
 
         #Calculate the position of each slave
         for i in range(len(self.slaves)):
-            if self.expand_slaves and self.slaves[i] != self.prev_selected_slave and self.slaves[i].box_name != "DRT":
+            self.slaves[i].selectable(False)
+            am = self.s.get_arbitor_master_selected()
+            sm = None
+            if am is not None:
+                sm = am.get_slave()
+            if self.expand_slaves and self.slaves[i] != sm and self.slaves[i].box_name != "DRT":
                 x = PERIPHERAL_BUS_POS.x() + PERIPHERAL_BUS_RECT.width() + SLAVE_HORIZONTAL_SPACING + ARB_MASTER_EXPAND_OFFSET
             else:
                 x = PERIPHERAL_BUS_POS.x() + PERIPHERAL_BUS_RECT.width() + SLAVE_HORIZONTAL_SPACING
             slave_y = y + i * (SLAVE_RECT.height() + SLAVE_VERTICAL_SPACING)
             self.slaves[i].setPos(QPointF(x, slave_y))
+            self.slaves[i].selectable(True)
 
         self.update_links()
         self.update()
@@ -116,12 +123,25 @@ class PeripheralBus(Bus):
         self.prev_selected_slave = slave
 
     def update_slaves(self, slave_list):
+
+        if self.scene().is_arbitor_master_selected():
+            am = self.scene().get_arbitor_master_selected()
+            self.scene().arbitor_master_deselected(am)
+            am.get_slave().remove_arbitor_masters()
+            self.scene().clear_links()
+ 
         if self.prev_selected_slave is not None:
+
             self.prev_selected_slave.remove_arbitor_masters()
             self.prev_selected_slave = None
+
+           #self.scene().arbitor_master_deselected(am) 
+ 
         super(PeripheralBus, self).update_slaves(slave_list)
 
     def enable_expand_slaves(self, arbitor_master, enable):
         super(PeripheralBus, self).enable_expand_slaves(arbitor_master, enable)
 
+    def get_bus_type(self):
+        return "peripheral_bus"
 

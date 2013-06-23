@@ -26,9 +26,10 @@ Log
 
 import os
 import sys
-from PyQt4.Qt import *
+import json
+import inspect
+
 from PyQt4.QtCore import *
-from PyQt4 import QtCore
 from PyQt4.QtGui import *
 
 from box import Box
@@ -46,20 +47,94 @@ class Slave(Box):
                  bus):
 
         self.bus = bus
+        self.s = scene
         super(Slave, self).__init__( position = position,
                                      scene = scene,
                                      name = instance_name,
                                      color = color,
                                      rect = rect,
                                      user_data = parameters)
+        md = {}
+        md["name"] = instance_name
+        md["color"] = "color"
+        md["data"] = parameters
+        md["move_type"] = "move"
+
+        #This will raise an error if there is an illegal bus type
+        bus_type = bus.get_bus_type()
+        if bus_type == "peripheral_bus":
+            md["box_type"] = "peripheral_slave"
+        elif bus_type == "memory_bus":
+            md["box_type"] = "memory_slave"
+
+        js = json.dumps(md)
+        self.slave_data = js
+        self.setAcceptDrops(True)
+        self.sdbg = True
+
 
 
     def itemChange(self, a, b):
+        #if self.sdbg: print "SLAVE: itemChange()"
         if self.isSelected():
-            if self.scene() is not None:
-                self.scene().slave_selected(self.box_name, self.bus, self.user_data)
+            #if self.sdbg: print "\t%s is selected" % self.box_name
+            self.s.slave_selected(self.box_name, self.bus, self.user_data)
         else:
-            if self.scene() is not None:
-                self.scene().slave_deselected(self.box_name, self.bus, self.user_data)
+            #if self.sdbg: print "\t%s is NOT selected" % self.box_name
+            self.s.slave_deselected(self.box_name, self.bus, self.user_data)
         return super(Slave, self).itemChange(a, b)
 
+    def dragEvent(self, dragEvent):
+        if self.sdbg: print "SLAVE: dragEvent: %s" % self.box_name
+    #    super(QGraphicsItem, self).dragEvent(dragEvent)
+
+    def startDrag(self, dropActions):
+        if self.sdbg: print "SLAVE: startDrag: %s" % self.box_name
+        super(Slave, self).startDrag(dropActions)
+    #    drag.start(Qt.MoveAction)
+    #    mime_data = QMimeData()
+    #    mime_data.setData("application/flowchart-data", self.slave_data)
+    #    drag = QDrag(self)
+    #    drag.setMimData(mime_data)
+    #    drag.start(Qt.MoveAction)
+
+    #def mousePressEvent(self, event):
+    #    #Copy over the mime data to a new structure
+    #    if self.sdbg: print "SLAVE.%s: startDrag: %s" % (inspect.getframeinfo(inspect.currentframe()).function, self.box_name)
+    #    mime_data = QMimeData()
+    #    mime_data.setData("application/flowchart-data", self.slave_data)
+
+    #    #Create and dispatch a move event
+    #    drag = QDrag(event.widget())
+    #    drag.start(Qt.MoveAction)
+    #    drag.setMimeData(mime_data)
+    #    #drag.start(Qt.MoveAction)
+    #    drag.exec_()
+    #    if self.sdbg: print "\tdrag started"
+    #    event.accept()
+    #    super (Slave, self).mousePressEvent(event)
+
+
+
+    #def mouseMoveEvent(self, event):
+    #    if self.sdbg: print "SLAVE: mouseMoveEvent: %s" % self.box_name
+    #    if (Qt.LeftButton & event.buttons()) > 0:
+    #        l = QLineF(event.pos(), QPointF(event.buttonDownScreenPos(Qt.LeftButton)))
+    #        if (l.length > QApplication.startDragDistance()):
+    #            super(Slave, self).mouseMoveEvent(event)
+    #            
+    #        #Copy over the mime data to a new structure
+    #        mime_data = QMimeData()
+    #        mime_data.setData("application/flowchart-data", self.slave_data)
+
+    #        #Create and dispatch a move event
+    #        drag = QDrag(event.widget())
+    #        drag.start(Qt.MoveAction)
+    #        drag.setMimeData(mime_data)
+    #        drag.start(Qt.MoveAction)
+    #        if self.sdbg: print "\tdrag started"
+
+    #    super(Slave, self).mouseMoveEvent(event)
+
+
+        

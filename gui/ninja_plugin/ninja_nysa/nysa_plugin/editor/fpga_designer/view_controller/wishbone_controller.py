@@ -66,6 +66,7 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
                               "lib"))
 
 import utils
+import ibuilder_error
 
 sys.path.append(os.path.join( os.path.dirname(__file__),
                               os.pardir,
@@ -79,6 +80,7 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
                               "gui"))
 
 
+from graph_manager import NodeType
 from graph_manager import SlaveType
 import wishbone_model
 
@@ -145,7 +147,6 @@ class WishboneController (controller.Controller):
             event.accept()
         else:
             event.ignore()
-
         #check if this is a slave
         #if this is a slave check if it is a memory
         #if this is a slave, or memory make sure it's in the correct area
@@ -219,8 +220,16 @@ class WishboneController (controller.Controller):
             temp_name = "%s_%d" % (name, append_num)
 
         name = temp_name
-        self.model.add_slave(name, fn, slave_type, index)
+        try:
+            self.model.add_slave(name, fn, slave_type, index)
+        except ibuilder_error.SlaveError, err:
+            #Can't a non DRT device to address 0 of the peripheral bus
+            self.model.add_slave(name, fn, slave_type, 1)
+
         self.refresh_slaves()
+
+    #def move_slave(self, slave_bus, from_index, to_index):
+    #    print "Moving Slave"
 
     def find_slave_position(self, drop_position):
         self.output.Debug(self, "Looking for slave position")
@@ -228,24 +237,19 @@ class WishboneController (controller.Controller):
 
 
     def drop_event(self, event):
+        print "VC: drop_event()"
         if event.mimeData().hasFormat("application/flowchart-data"):
             data = event.mimeData().data("application/flowchart-data")
             position = self.fd.position()
 
-            #get all the slaves, find out if where this drop occured
-
-            #go through each of the slaves
-            #if position > slave.position, go to next, increase increment
-            #if position < slave.position, stop
-            #if position < 0th, and we are on the peripheral bus then drop on
-                #on the first
-
-
             #print "Data: %s" % str(data)
             d = json.loads(str(data))
             if "type" in d.keys():
+                print "\ttype: %s" % d["type"]
                 if d["type"] == "memory_slave" or d["type"] == "peripheral_slave":
-                    if d["type"] == "peirpheral_slave":
+
+                    if d["type"] == "peripheral_slave":
+                        print "\tSearching peripheral bus"
                         pb = self.boxes["peripheral_bus"]
                         index = pb.find_index_from_position(position)
                         self.add_slave(d, index)
@@ -254,22 +258,30 @@ class WishboneController (controller.Controller):
                         mb = self.boxes["memory_bus"]
                         index = mb.find_index_from_position(position)
                         self.add_slave(d, index)
-
-
-
-            ##print "view drop event"
-            #self.add_box(box_type = BoxType.SLAVE,
-            #             color = QColor(d["color"]),
-            #             name = d["name"],
-            #             ID = "TEMP_NAME",
-            #             position = position)
             event.accept()
         else:
             event.ignore()
 
     def connect_arbitor_master(self, from_type, from_index, arbitor_name, to_type, to_index):
+        if from_type == SlaveType.PERIPHERAL and from_index == 0:
+            raise DesignControlError("DRT cannot be a Arbitor slave")
         self.model.add_arbitor(from_type, from_index, arbitor_name, to_type, to_index)
 
     def disconnect_arbitor_master(self, from_type, from_index, arbitor_name, to_type, to_index):
         self.model.remove_arbitor(from_type, from_index, to_type, to_index)
+
+    def get_arbitor_master_connected(self, host_type, host_index, arbitor_name):
+        name = self.model.get_slave_name(host_type, host_index)
+        #print "WBC: get_arbitor_master_connected name: %s" % name
+        uname = self.model.get_unique_name(name = name, 
+                                           node_type = NodeType.SLAVE, 
+                                           slave_type = host_type, 
+                                           slave_index = host_index)
+        #print "WBC: unique name: %s" % uname
+        uname = self.model.get_connected_arbitor_slave(uname, arbitor_name)
+        if uname is None:
+            return None, None
+
+        s = self.model.get_graph_manager().get_node(uname)
+        return s.slave_type, s.slave_index
 
