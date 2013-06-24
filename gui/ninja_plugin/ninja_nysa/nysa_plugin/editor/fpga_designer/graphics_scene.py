@@ -69,6 +69,7 @@ class GraphicsScene(QGraphicsScene):
         print "GS: Set state for normal"
         self.links = []
         self.dbg = False
+        #self.setAcceptDrops(True)
 
     def set_link_ref(self, lref):
         if self.dbg: print "GS: set_link_ref()"
@@ -233,6 +234,16 @@ class GraphicsScene(QGraphicsScene):
         for i in range (len(self.links)):
             self.removeItem(self.links[i])
 
+    def mousePressEvent(self, event):
+        print "GS: mouse press event"
+        super (GraphicsScene, self).mousePressEvent(event)
+
+    def dropEvent(self, event):
+        print "GS: Drag Event"
+        super (GraphicsScene, self).dropEvent(event)
 
     def startDrag(self, event):
         print "GS: Drag start event"
+
+
+

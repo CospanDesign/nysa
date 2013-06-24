@@ -64,6 +64,7 @@ class MemoryBus(Bus):
         #Need a reference to a master to update the link if the memory bus
         #   grows
         self.scene().set_memory_bus(self)
+        self.movable(False)
 
 
     def recalculate_size_pos(self):
@@ -95,5 +96,5 @@ class MemoryBus(Bus):
         #print "Position: %f, %f" % (self.pos().x(), self.pos().y())
 
     def get_bus_type(self):
-        return "peripheral_bus"
+        return "memory_bus"
 

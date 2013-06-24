@@ -104,7 +104,7 @@ class Bus(Box):
 
         #at the end
         print "\tNew slave position is at the end"
-        return -1
+        return index
 
     def slave_selection_changed(self, slave):
         if self.dbg: print "BUS: slave_selection_changed()"

@@ -95,6 +95,10 @@ class Box (QGraphicsItem):
                       QGraphicsItem.ItemIsFocusable)
         self.dbg = False
 
+    def setPos(self, pos):
+        print "Position: %f, %f" % (pos.x(), pos.y())
+        super(Box, self).setPos(pos)
+
     def movable(self, enable):
         self.setFlag(QGraphicsItem.ItemIsMovable, enable)
 

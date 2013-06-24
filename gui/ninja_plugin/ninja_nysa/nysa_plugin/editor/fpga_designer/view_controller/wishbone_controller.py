@@ -52,8 +52,6 @@ import fpga_designer
 
 
 
-
-
 sys.path.append(os.path.join( os.path.dirname(__file__),
                               os.pardir,
                               os.pardir,
@@ -142,8 +140,7 @@ class WishboneController (controller.Controller):
 
     def drag_move(self, event):
         if event.mimeData().hasFormat("application/flowchart-data"):
-            #print "Good"
-            event.setDropAction(Qt.CopyAction)
+            #event.setDropAction(Qt.CopyAction)
             event.accept()
         else:
             event.ignore()
@@ -152,6 +149,7 @@ class WishboneController (controller.Controller):
         #if this is a slave, or memory make sure it's in the correct area
 
     def refresh_slaves(self):
+        print "WBC: refresh_slaves"
         #Create a list of slaves to send to the bus
         slave_type = SlaveType.PERIPHERAL
         nslaves = self.model.get_number_of_slaves(slave_type)
@@ -164,7 +162,7 @@ class WishboneController (controller.Controller):
 
         pb = self.boxes["peripheral_bus"]
         #update the bus
-        print "WBC: updating slave view"
+        print "\tupdating slave view"
         pb.update_slaves(slave_list)
 
 
@@ -228,8 +226,31 @@ class WishboneController (controller.Controller):
 
         self.refresh_slaves()
 
-    #def move_slave(self, slave_bus, from_index, to_index):
-    #    print "Moving Slave"
+    def move_slave(self, bus, slave_name, to_index):
+        print "VC: Moving Slave"
+        from_index = bus.get_slave_index(slave_name)
+        if from_index == to_index:
+            self.refresh_slaves()
+            return
+
+        slave_type = None
+
+        if bus.get_bus_type() == "peripheral_bus":
+            slave_type = SlaveType.PERIPHERAL
+        else:
+            slave_type = SlaveType.MEMORY
+
+        try:
+            self.model.move_slave(slave_name = slave_name,
+                                  from_slave_type = slave_type,
+                                  from_slave_index = from_index,
+                                  to_slave_type = slave_type,
+                                  to_slave_index = to_index)
+
+        except ibuilder_error.SlaveError, err:
+            pass
+
+        self.refresh_slaves()
 
     def find_slave_position(self, drop_position):
         self.output.Debug(self, "Looking for slave position")
@@ -244,20 +265,35 @@ class WishboneController (controller.Controller):
 
             #print "Data: %s" % str(data)
             d = json.loads(str(data))
-            if "type" in d.keys():
-                print "\ttype: %s" % d["type"]
-                if d["type"] == "memory_slave" or d["type"] == "peripheral_slave":
-
+            if event.dropAction() == Qt.MoveAction:
+                print "Moving Slave"
+                if "type" in d.keys():
+                    print "\tSlave type: %s" % d["type"]
                     if d["type"] == "peripheral_slave":
-                        print "\tSearching peripheral bus"
                         pb = self.boxes["peripheral_bus"]
+                        print "\tMoving within peripheral bus"
                         index = pb.find_index_from_position(position)
-                        self.add_slave(d, index)
-
+                        self.move_slave(bus=pb, slave_name = d["name"], to_index = index)
                     else:
+                        print "\tMoving within memory bus"
                         mb = self.boxes["memory_bus"]
                         index = mb.find_index_from_position(position)
-                        self.add_slave(d, index)
+                        self.move_slave(bus=mb, slave_name = d["name"], to_index = index)
+            else:
+                if "type" in d.keys():
+                    print "\ttype: %s" % d["type"]
+                    if d["type"] == "memory_slave" or d["type"] == "peripheral_slave":
+                
+                        if d["type"] == "peripheral_slave":
+                            print "\tSearching peripheral bus"
+                            pb = self.boxes["peripheral_bus"]
+                            index = pb.find_index_from_position(position)
+                            self.add_slave(d, index)
+                
+                        else:
+                            mb = self.boxes["memory_bus"]
+                            index = mb.find_index_from_position(position)
+                            self.add_slave(d, index)
             event.accept()
         else:
             event.ignore()

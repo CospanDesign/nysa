@@ -60,6 +60,7 @@ class Master(Box):
         self.memory_bus = None
         self.scene().set_master(self)
         self.links = {}
+        self.movable(False)
 
     def link_peripheral_bus(self, peripheral_bus):
         self.peripheral_bus = peripheral_bus

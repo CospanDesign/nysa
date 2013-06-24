@@ -59,6 +59,7 @@ class HostInterface(Box):
                                             user_data = HOST_INTERFACE_ID)
         self.master = None
         self.links = {}
+        self.movable(False)
 
     def link_master(self, master):
         self.master = master

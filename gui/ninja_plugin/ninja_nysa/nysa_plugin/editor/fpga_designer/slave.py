@@ -33,6 +33,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from box import Box
+import graphics_utils as gu
 
 class Slave(Box):
     """Host Interface Box"""
@@ -48,6 +49,7 @@ class Slave(Box):
 
         self.bus = bus
         self.s = scene
+        self.dragging = False
         super(Slave, self).__init__( position = position,
                                      scene = scene,
                                      name = instance_name,
@@ -63,9 +65,9 @@ class Slave(Box):
         #This will raise an error if there is an illegal bus type
         bus_type = bus.get_bus_type()
         if bus_type == "peripheral_bus":
-            md["box_type"] = "peripheral_slave"
+            md["type"] = "peripheral_slave"
         elif bus_type == "memory_bus":
-            md["box_type"] = "memory_slave"
+            md["type"] = "memory_slave"
 
         js = json.dumps(md)
         self.slave_data = js
@@ -84,57 +86,64 @@ class Slave(Box):
             self.s.slave_deselected(self.box_name, self.bus, self.user_data)
         return super(Slave, self).itemChange(a, b)
 
-    def dragEvent(self, dragEvent):
-        if self.sdbg: print "SLAVE: dragEvent: %s" % self.box_name
-    #    super(QGraphicsItem, self).dragEvent(dragEvent)
+    def dragMoveEvent(self, event):
+        print "Drag Move Event"
+        super(Slave, self).dragMoveEvent(event)
 
-    def startDrag(self, dropActions):
-        if self.sdbg: print "SLAVE: startDrag: %s" % self.box_name
-        super(Slave, self).startDrag(dropActions)
-    #    drag.start(Qt.MoveAction)
-    #    mime_data = QMimeData()
-    #    mime_data.setData("application/flowchart-data", self.slave_data)
-    #    drag = QDrag(self)
-    #    drag.setMimData(mime_data)
-    #    drag.start(Qt.MoveAction)
+    def mouseMoveEvent(self, event):
+        if self.sdbg: print "SLAVE: mouseMoveEvent: %s" % self.box_name
+        if (Qt.LeftButton & event.buttons()) > 0:
+            pos = event.pos()
+            epos = event.buttonDownPos(Qt.LeftButton)
+            l = QLineF(pos, epos)
+            if (l.length() < QApplication.startDragDistance()):
+            #if (l.length() < 10):
+                print "\tLength: %f" % l.length()
+                event.accept
+                return
 
-    #def mousePressEvent(self, event):
-    #    #Copy over the mime data to a new structure
-    #    if self.sdbg: print "SLAVE.%s: startDrag: %s" % (inspect.getframeinfo(inspect.currentframe()).function, self.box_name)
-    #    mime_data = QMimeData()
-    #    mime_data.setData("application/flowchart-data", self.slave_data)
+            else:
+                self.dragging = True
+                self.hide()
+                if self.sdbg: print "SLAVE.%s: startDrag: %s" % (inspect.getframeinfo(inspect.currentframe()).function, self.box_name)
+                mime_data = QMimeData()
+                mime_data.setData("application/flowchart-data", self.slave_data)
+                
+               
+                #Create and dispatch a move event
+                drag = QDrag(event.widget())
+                drag.start(Qt.MoveAction)
+                drag.setMimeData(mime_data)
+                #drag.start(Qt.MoveAction)
+                
+                #create an image for the drag
+                size = QSize(self.start_rect.width(), self.start_rect.height())
+                pixmap = QPixmap(size)
+                pixmap.fill(QColor(self.color))
+                painter = QPainter(pixmap)
+                pen = QPen(self.style)
+                pen.setColor(Qt.black)
+                painter.setPen(pen)
+                painter.setFont(self.text_font)
+                #painter.drawText(0, 0, 100, 100, 0x24, self.box_name)
 
-    #    #Create and dispatch a move event
-    #    drag = QDrag(event.widget())
-    #    drag.start(Qt.MoveAction)
-    #    drag.setMimeData(mime_data)
-    #    #drag.start(Qt.MoveAction)
-    #    drag.exec_()
-    #    if self.sdbg: print "\tdrag started"
-    #    event.accept()
-    #    super (Slave, self).mousePressEvent(event)
+                gu.add_label_to_rect(painter, self.rect, self.box_name)
+                painter.end()
+                drag.setPixmap(pixmap)
+                #p = QPointF(event.buttonDownScreenPos(Qt.LeftButton))
+                #p = p.toPoint()
+                print "Position: %f, %f" % (pos.x(), pos.y())
+                drag.setHotSpot(epos.toPoint())
+                
+                if self.sdbg: print "\tdrag started"
+                drag.exec_()
+                event.accept
+                #self.s.invalidate(self.s.sceneRect())
+
+        super(Slave, self).mouseMoveEvent(event)
 
 
-
-    #def mouseMoveEvent(self, event):
-    #    if self.sdbg: print "SLAVE: mouseMoveEvent: %s" % self.box_name
-    #    if (Qt.LeftButton & event.buttons()) > 0:
-    #        l = QLineF(event.pos(), QPointF(event.buttonDownScreenPos(Qt.LeftButton)))
-    #        if (l.length > QApplication.startDragDistance()):
-    #            super(Slave, self).mouseMoveEvent(event)
-    #            
-    #        #Copy over the mime data to a new structure
-    #        mime_data = QMimeData()
-    #        mime_data.setData("application/flowchart-data", self.slave_data)
-
-    #        #Create and dispatch a move event
-    #        drag = QDrag(event.widget())
-    #        drag.start(Qt.MoveAction)
-    #        drag.setMimeData(mime_data)
-    #        drag.start(Qt.MoveAction)
-    #        if self.sdbg: print "\tdrag started"
-
-    #    super(Slave, self).mouseMoveEvent(event)
-
-
+    def paint(self, painter, option, widget):
+        print "Position: %f %f" % (self.pos().x(), self.pos().y())
+        super(Slave, self).paint(painter, option, widget)
         

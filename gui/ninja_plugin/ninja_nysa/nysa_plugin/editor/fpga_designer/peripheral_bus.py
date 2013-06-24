@@ -72,8 +72,11 @@ class PeripheralBus(Bus):
         self.prev_selected_slave = None
         self.scene().set_peripheral_bus(self)
         self.s = self.scene()
+        self.dbg = False
+        self.movable(False)
 
     def recalculate_size_pos(self):
+        if self.dbg: print "PB: recalculate_size_pos"
         num_slaves = len(self.slaves)
         #the position of of the slaves are at the top left corner
         total_height = (num_slaves * SLAVE_RECT.height())

@@ -50,6 +50,7 @@ class GraphicsView(QGraphicsView):
         self.setAcceptDrops(True)
         self.icon = QIcon()
         self.controller = None
+        #self.setAcceptDrops(True)
 
     def set_controller(self, controller):
         self.controller = controller
@@ -62,12 +63,18 @@ class GraphicsView(QGraphicsView):
         self.controller.drag_enter(event)
 
     def dragMoveEvent(self, event):
+        print "GV: dragMoveEvent"
         self.controller.drag_move(event)
 
-    def mouseMoveEvent(self, event):
-        QGraphicsView.mouseMoveEvent(self, event)
+    def mousePressEvent(self, event):
+        print "GV: mousePressEvent"
+        super(GraphicsView, self).mousePressEvent(event)
+
+    #def mouseMoveEvent(self, event):
+    #    super(QGraphicsView, self).mouseMoveEvent(event)
 
     def dropEvent(self, event):
+        print "GV: dropEvent"
         self.controller.drop_event(event)
 
     def keyPressEvent(self, event):
