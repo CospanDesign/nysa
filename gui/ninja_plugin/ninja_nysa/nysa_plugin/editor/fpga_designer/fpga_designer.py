@@ -352,3 +352,7 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
     def fit_view(self):
         self.view._scale_fit()
 
+    def remove_slave(self, bus, index):
+        self.output.Debug(self, "Removing slave from bus")
+        self.vc.remove_slave(bus, index)
+

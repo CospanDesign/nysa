@@ -90,12 +90,12 @@ class Bus(Box):
         y_new = position.y() - y_start
 
         index = 0
-        print "\tNew Slave position: %f, %f" % (position.x(), position.y())
+        if self.dbg: print "\tNew Slave position: %f, %f" % (position.x(), position.y())
         for slave in self.slaves:
             pos = slave.pos()
             y_slave = pos.y() - y_start
 
-            print "\tslave %s position: %f %f" % (slave.box_name, pos.x(), pos.y())
+            if self.dbg: print "\tslave %s position: %f %f" % (slave.box_name, pos.x(), pos.y())
             height = slave.rect.height()
             midpoint = y_slave + (height/2)
             if y_new < midpoint:
@@ -103,7 +103,7 @@ class Bus(Box):
             index += 1
 
         #at the end
-        print "\tNew slave position is at the end"
+        if self.dbg: print "\tNew slave position is at the end"
         return index
 
     def slave_selection_changed(self, slave):

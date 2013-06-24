@@ -72,9 +72,20 @@ class Slave(Box):
         js = json.dumps(md)
         self.slave_data = js
         self.setAcceptDrops(True)
-        self.sdbg = True
+        self.sdbg = False
+
+    def contextMenuEvent(self, event):
+
+        menu_items = (("&Remove", self.remove_slave),)
+
+        menu = QMenu(self.parentWidget())
+        for text, func in menu_items:
+            menu.addAction(text, func)
+        menu.exec_(event.screenPos())
 
 
+    def remove_slave(self):
+        self.s.remove_slave(self)
 
     def itemChange(self, a, b):
         #if self.sdbg: print "SLAVE: itemChange()"
@@ -87,7 +98,7 @@ class Slave(Box):
         return super(Slave, self).itemChange(a, b)
 
     def dragMoveEvent(self, event):
-        print "Drag Move Event"
+        if self.dbg: print "Drag Move Event"
         super(Slave, self).dragMoveEvent(event)
 
     def mouseMoveEvent(self, event):
@@ -98,7 +109,7 @@ class Slave(Box):
             l = QLineF(pos, epos)
             if (l.length() < QApplication.startDragDistance()):
             #if (l.length() < 10):
-                print "\tLength: %f" % l.length()
+                if self.dbg: print "\tLength: %f" % l.length()
                 event.accept
                 return
 
@@ -132,7 +143,7 @@ class Slave(Box):
                 drag.setPixmap(pixmap)
                 #p = QPointF(event.buttonDownScreenPos(Qt.LeftButton))
                 #p = p.toPoint()
-                print "Position: %f, %f" % (pos.x(), pos.y())
+                if self.dbg: print "Position: %f, %f" % (pos.x(), pos.y())
                 drag.setHotSpot(epos.toPoint())
                 
                 if self.sdbg: print "\tdrag started"
@@ -144,6 +155,6 @@ class Slave(Box):
 
 
     def paint(self, painter, option, widget):
-        print "Position: %f %f" % (self.pos().x(), self.pos().y())
+        if self.dbg: print "Position: %f %f" % (self.pos().x(), self.pos().y())
         super(Slave, self).paint(painter, option, widget)
         

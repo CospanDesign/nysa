@@ -51,6 +51,7 @@ class GraphicsView(QGraphicsView):
         self.icon = QIcon()
         self.controller = None
         #self.setAcceptDrops(True)
+        self.dbg = False
 
     def set_controller(self, controller):
         self.controller = controller
@@ -63,22 +64,22 @@ class GraphicsView(QGraphicsView):
         self.controller.drag_enter(event)
 
     def dragMoveEvent(self, event):
-        print "GV: dragMoveEvent"
+        if self.dbg: print "GV: dragMoveEvent"
         self.controller.drag_move(event)
 
     def mousePressEvent(self, event):
-        print "GV: mousePressEvent"
+        if self.dbg: print "GV: mousePressEvent"
         super(GraphicsView, self).mousePressEvent(event)
 
     #def mouseMoveEvent(self, event):
     #    super(QGraphicsView, self).mouseMoveEvent(event)
 
     def dropEvent(self, event):
-        print "GV: dropEvent"
+        if self.dbg: print "GV: dropEvent"
         self.controller.drop_event(event)
 
     def keyPressEvent(self, event):
-        #print "GV: Key press event"
+        if self.dbg: print "GV: Key press event"
         task_list = {
         Qt.Key_Plus:  lambda: self._scale_view(1.2),
         Qt.Key_Minus: lambda: self._scale_view(1 / 1.2),
@@ -95,7 +96,7 @@ class GraphicsView(QGraphicsView):
 
     def _scale_view(self, scale_factor):
         """Scale the view"""
-        #print "Canvas: Scale view by: %f" % scale_factor
+        if self.dbg: print "Canvas: Scale view by: %f" % scale_factor
 
         #check if the scale factor is alright
         factor = self.transform().scale(scale_factor, scale_factor).mapRect(QRectF(0, 0, 1, 1)).width()
@@ -104,18 +105,18 @@ class GraphicsView(QGraphicsView):
             #Scale factor is within limits
             self.scale(scale_factor, scale_factor)
         elif factor < self.scale_min:
-            if self.debug: print "GV: Scale too small: %f" % factor
+            if self.dbg: print "GV: Scale too small: %f" % factor
         elif factor > self.scale_max:
-            if self.debug: print "GV: Scale too large: %f" % factor
+            if self.dbg: print "GV: Scale too large: %f" % factor
 
     def _scale_normal(self):
         scale_factor = 1.0
         factor = self.transform().scale(scale_factor, scale_factor).mapRect(QRectF(0, 0, 1, 1)).width()
         scale_factor = 1.0 / factor
-        #if self.debug: print "GV: Set scale back to 1.0"
+        if self.dbg: print "GV: Set scale back to 1.0"
         self.scale(scale_factor, scale_factor)
 
     def _scale_fit(self):
-        #print "GV: Set scale to fit all items"
+        if self.dbg: print "GV: Set scale to fit all items"
         self.fitInView(self.scene().sceneRect(), Qt.KeepAspectRatio)
 

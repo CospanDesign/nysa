@@ -66,9 +66,9 @@ class GraphicsScene(QGraphicsScene):
         self.fd = fpga_designer
         self.arbitor_selected = None
         self.state = view_state.normal
-        print "GS: Set state for normal"
         self.links = []
         self.dbg = False
+        if self.dbg: print "GS: Set state for normal"
         #self.setAcceptDrops(True)
 
     def set_link_ref(self, lref):
@@ -235,15 +235,20 @@ class GraphicsScene(QGraphicsScene):
             self.removeItem(self.links[i])
 
     def mousePressEvent(self, event):
-        print "GS: mouse press event"
+        if self.dbg: print "GS: mouse press event"
         super (GraphicsScene, self).mousePressEvent(event)
 
     def dropEvent(self, event):
-        print "GS: Drag Event"
+        if self.dbg: print "GS: Drag Event"
         super (GraphicsScene, self).dropEvent(event)
 
     def startDrag(self, event):
-        print "GS: Drag start event"
+        if self.dbg: print "GS: Drag start event"
+        pass
 
-
+    def remove_slave(self, slave):
+        if self.dbg: print "GS: Remove slave"
+        index = slave.bus.get_slave_index(slave.box_name)
+        bus_type = slave.bus.get_bus_type()
+        self.fd.remove_slave(bus_type, index)
 
