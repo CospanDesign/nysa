@@ -38,8 +38,22 @@ from PyQt4.QtGui import *
 
 import controller
 
+
+#epath = os.path.abspath(os.path.join(os.path.dirname(__file__),
+#                                     os.pardir,
+#                                     os.pardir,
+#                                     os.pardir,
+#                                     "editor",
+#                                     "fpga_designer"))
+#print "epath %s" % epath
+
 sys.path.append(os.path.join( os.path.dirname(__file__),
-                              os.pardir))
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              "editor",
+                              "fpga_designer"))
+
 
 from host_interface import HostInterface
 from master import Master
@@ -47,9 +61,6 @@ from peripheral_bus import PeripheralBus
 from memory_bus import MemoryBus
 from peripheral_slave import PeripheralSlave
 from memory_slave import MemorySlave
-
-import fpga_designer
-
 
 
 sys.path.append(os.path.join( os.path.dirname(__file__),
@@ -81,13 +92,14 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
 from graph_manager import NodeType
 from graph_manager import SlaveType
 import wishbone_model
+print "Imported Wishbone Model"
 
 class WishboneController (controller.Controller):
 
-    def __init__(self, fpga_designer, canvas, output, config_dict):
+    def __init__(self, output, config_dict):
         self.dbg = False
         self.model = wishbone_model.WishboneModel()
-        super(WishboneController, self).__init__(fpga_designer, self.model, canvas, output)
+        super(WishboneController, self).__init__(self.model, output)
         self.output.Debug(self, "Wishbone controller started")
         self.bus = "wishbone"
         if "INTERFACE" not in config_dict.keys():
@@ -95,8 +107,7 @@ class WishboneController (controller.Controller):
         else:
             self.model.load_config_dict(config_dict)
         self.model.initialize_graph()
-
-        self.initialize_view()
+        #self.initialize_view()
 
     def initialize_view(self):
         self.output.Debug(self, "Add Master")
@@ -183,6 +194,9 @@ class WishboneController (controller.Controller):
         mb.update_slaves(slave_list)
 
 
+    def get_project_name(self):
+        return self.model.get_project_name()
+    
     def add_slave(self, slave_dict, index):
         if self.dbg: print "WBC: Adding slave"
         module_name = slave_dict["name"]
@@ -195,8 +209,8 @@ class WishboneController (controller.Controller):
         if slave_type is None:
             raise fpga_deisgner.FPGADesignerError("Unrecognized slave type: %s" % slave_type)
 
-        fn = utils.find_module_filename(module_name, self.fd.user_dirs)
-        fn = utils.find_rtl_file_location(fn, self.fd.user_dirs)
+        fn = utils.find_module_filename(module_name, self.get_user_dirs())
+        fn = utils.find_rtl_file_location(fn, self.get_user_dirs())
 
         #Need to create a new name for the slave
 
@@ -269,11 +283,11 @@ class WishboneController (controller.Controller):
         return drop_position
 
 
-    def drop_event(self, event):
+    def drop_event(self, position, event):
         if self.dbg: print "VC: drop_event()"
         if event.mimeData().hasFormat("application/flowchart-data"):
             data = event.mimeData().data("application/flowchart-data")
-            position = self.fd.position()
+            #position = self.fd.position()
 
             #print "Data: %s" % str(data)
             d = json.loads(str(data))

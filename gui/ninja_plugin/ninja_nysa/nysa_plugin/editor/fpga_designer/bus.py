@@ -46,7 +46,7 @@ from link import Link
 from link import link_type as lt
 from link import side_type as st
 
-import fpga_designer
+from errors import FPGADesignerError
 
 class Bus(Box):
     """Host Interface Box"""
@@ -178,7 +178,7 @@ class Bus(Box):
             if slave.box_name == instance_name:
                 return i
 
-        raise fpga_designer.FPGADesignerError("%s not found in bus %s" % (instance_name, self.__class__))
+        raise FPGADesignerError("%s not found in bus %s" % (instance_name, self.__class__))
 
     def get_slave(self, name):
         if self.dbg: print "BUS: get_slave()"
@@ -199,7 +199,7 @@ class Bus(Box):
                     break
 
         elif index is None:
-            raise fpga_designer.FPGADesignerError("index and instance name are not declared in remove_slave is not in peripheral bus")
+            raise FPGADesignerError("index and instance name are not declared in remove_slave is not in peripheral bus")
         else:
             found_index = index
 

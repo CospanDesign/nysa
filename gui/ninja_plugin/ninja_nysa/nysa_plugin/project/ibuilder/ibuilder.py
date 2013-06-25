@@ -15,6 +15,8 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
                                 "editor",
                                 "fpga_designer"))
 
+from controller.wishbone_controller import WishboneController
+from controller.axi_controller import AxiController
 from fpga_designer import FPGADesigner
 
 '''
@@ -22,6 +24,8 @@ Functions independent of the project used to build/simulate/debug
 '''
 
 DESIGNER_EXT = "ibd"
+
+
 
 class IBuilder (QObject):
     output = None
@@ -36,6 +40,35 @@ class IBuilder (QObject):
         self.output.Debug(self, "create ibuilder!")
         self.designers = {}
         self.load_designers()
+        self.controller = None
+
+    def setup_controller(self, filename):
+        d = {}
+        controller = None
+        #try:
+        f = open(filename, "r")
+        d = json.loads(f.read())
+        #except IOError, err:
+        #    raise FPGADesignerError("IOError: %s" % str(err))
+
+        #except TypeError, err:
+        #    raise FPGADesignerError("JSON Type Error: %s" % str(err))
+
+        #A Pathetic factory pattern, select the controller based on the bus
+        print "Getting Wishbone Controller"
+        if d["TEMPLATE"] == "wishbone_template.json":
+            controller = WishboneController(output = self.output, config_dict = d)
+        elif d["TEMPLATE"] == "axi_template.json":
+            controller = AxiController(self, self.output)
+        else:
+            raise FPGADesignerError(    "Bus type (%s) not recognized, view " +
+                                        "controller cannot be setup, set the " +
+                                        "TEMPLATE value to either " +
+                                        "wishbone_template or " +
+                                        "axi_tmeplate.json" % str(d["TEMPLATE"])
+                                   )
+        return controller
+
 
     def file_open(self, filename):
         ext = file_manager.get_file_extension(filename)
@@ -61,7 +94,7 @@ class IBuilder (QObject):
 
                 else:
                     tab_manager.move_to_open(fd)
-                    self.output.Debug(self, "It already is open")
+                    self.output.Debug(self, "FPGA Designer is already is open")
 
 
             if name not in self.designers.keys():
@@ -69,8 +102,13 @@ class IBuilder (QObject):
                 project = self.explorer._explorer.get_project_given_filename(filename)
                 #Not Opened
                 fd = FPGADesigner(actions=None, filename = filename, project=project, parent=tab_manager, output=self.output)
+                #I'm assuming there is no controller set already so create a new one
+                controller = self.setup_controller(filename)
+                fd.set_controller(controller)
+
                 index = tab_manager.add_tab(fd, name)
                 self.designers[name] = (fd, index, filename)
+                controller.initialize_view()
                 fd.initialize_slave_lists()
 
             return True

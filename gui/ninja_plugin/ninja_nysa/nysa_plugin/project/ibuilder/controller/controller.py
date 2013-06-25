@@ -33,7 +33,12 @@ import sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
+sys.path.append(os.path.join(os.path.dirname(__file__), 
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              "editor",
+                              "fpga_editor"))
 
 from box import Box
 from link import link_type as lt
@@ -49,6 +54,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                               os.pardir,
                               "ibuilder",
                               "lib"))
+
+import utils
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                               os.pardir,
@@ -74,7 +81,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                               "drt"))
 
 
-import utils
 
 
 def enum(*sequential, **named):
@@ -105,20 +111,36 @@ class DesignControlError(Exception):
 class Controller (QObject):
     output = None
 
-    def __init__(self, fpga_designer, model, canvas, output):
+    def __init__(self, model, output):
         QObject.__init__(self)
 
-        self.fd = fpga_designer
+        self.fd = None
         self.model = model
-        self.canvas = canvas
+        self.canvas = None
         self.output = output
         self.boxes = {}
+        self.user_dirs = []
         #Connect events
         """
         Go through view and connect all relavent events
         """
 
+
+    def set_canvas(self, canvas):
+        self.canvas = canvas
         self.canvas.set_controller(self)
+
+    def set_fpga_designer(self, fd):
+        self.fd = fd
+
+    def add_user_dir(self, user_dir):
+        self.user_dirs.append(user_dir)
+
+    def remove_user_dir(self, user_dir):
+        self.user_dirs.remove(user_dir)
+
+    def get_user_dirs(self):
+        return self.user_dirs
 
     def drag_enter(self, event):
         """
@@ -140,7 +162,7 @@ class Controller (QObject):
         """
         raise NotImplementedError("This function should be subclassed")
 
-    def drop_event(self, event):
+    def drop_event(self, position, event):
         """
         An item has been dropped
         """
@@ -152,8 +174,8 @@ class Controller (QObject):
         """Add a box to the canvas"""
         scene = self.canvas.scene()
         if box_type == BoxType.SLAVE:
-            fn = utils.find_module_filename(name, self.fd.user_dirs)
-            fn = utils.find_rtl_file_location(fn, self.fd.user_dirs)
+            fn = utils.find_module_filename(name, self.user_dirs)
+            fn = utils.find_rtl_file_location(fn, self.user_dirs)
 
         if self.model is None:
             raise DesignControlError("Bus type is not set up corretly," +

@@ -46,12 +46,13 @@ from box import Box
 from box_list import BoxList
 from graphics_view import GraphicsView
 from graphics_scene import GraphicsScene
-from view_controller.wishbone_controller import WishboneController
-from view_controller.axi_controller import AxiController
+#from view_controller.wishbone_controller import WishboneController
+#from view_controller.axi_controller import AxiController
 
 
-from peripheral_bus import PeripheralBus
-from memory_bus import MemoryBus
+from errors import FPGADesignerError
+from peripheral_bus import *
+from memory_bus import *
 
 from defines import PERIPHERAL_COLOR
 from defines import MEMORY_COLOR
@@ -96,19 +97,6 @@ import utils
 import drt
 
 
-class FPGADesignerError(Exception):
-    """
-    Errors associated with the FPGA designer
-
-    Error associated with:
-        -loading the configuration file
-        -generating configuration files
-    """
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return repr(self.value)
-
 class FPGADesigner(QWidget, itab_item.ITabItem):
 #class FPGADesigner(Editor):
     output = None
@@ -122,6 +110,7 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         self.ID = filename
         self.lang = "fpga designer"
         self.view = GraphicsView(self)
+        self.view.set_fpga_designer(self)
         self.scene = GraphicsScene(self.view, self)
         self.view.setScene(self.scene)
         self.prevPoint = QPoint()
@@ -155,31 +144,41 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         self.output.Debug(self, "Initialized")
 
         self.vc = None
-        self.setup_controller()
+        #self.setup_controller()
 
-    def setup_controller(self):
-        d = {}
-        try:
-            f = open(self.ID, "r")
-            d = json.loads(f.read())
-        except IOError, err:
-            raise FPGADesignerError("IOError: %s" % str(err))
+    def set_controller(self, controller):
+        #d = {}
+        #try:
+        #    f = open(self.ID, "r")
+        #    d = json.loads(f.read())
+        #except IOError, err:
+        #    raise FPGADesignerError("IOError: %s" % str(err))
 
-        except TypeError, err:
-            raise FPGADesignerError("JSON Type Error: %s" % str(err))
+        #except TypeError, err:
+        #    raise FPGADesignerError("JSON Type Error: %s" % str(err))
 
-        #A Pathetic factory pattern, select the controller based on the bus
-        if d["TEMPLATE"] == "wishbone_template.json":
-            self.vc = WishboneController(self, self.view, self.output, config_dict = d)
-        elif d["TEMPLATE"] == "axi_template.json":
-            self.vc = AxiController(self, self.view, self.output)
-        else:
-            raise FPGADesignerError(    "Bus type (%s) not recognized, view " +
-                                        "controller cannot be setup, set the " +
-                                        "TEMPLATE value to either " +
-                                        "wishbone_template or " +
-                                        "axi_tmeplate.json" % str(d["TEMPLATE"])
-                                   )
+        ##A Pathetic factory pattern, select the controller based on the bus
+        #if d["TEMPLATE"] == "wishbone_template.json":
+        #    self.vc = WishboneController(self, self.view, self.output, config_dict = d)
+        #elif d["TEMPLATE"] == "axi_template.json":
+        #    self.vc = AxiController(self, self.view, self.output)
+        #else:
+        #    raise FPGADesignerError(    "Bus type (%s) not recognized, view " +
+        #                                "controller cannot be setup, set the " +
+        #                                "TEMPLATE value to either " +
+        #                                "wishbone_template or " +
+        #                                "axi_tmeplate.json" % str(d["TEMPLATE"])
+        #                           )
+        self.vc = controller
+        self.vc.set_fpga_designer(self)
+        self.vc.set_canvas(self.view)
+        self.view.set_controller(self.vc)
+
+    def get_controller(self):
+        return self.vc
+
+    def is_controller_defined(self):
+        return self.vc is not None
 
     def get_type_index_from_slave(self, slave):
         typ = None
@@ -348,6 +347,9 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
 
         self.initialize_peripheral_list(peripheral_dict)
         self.initialize_memory_list(memory_dict)
+
+    def drop_event(self, event):
+        self.vc.drop_event(self.position(), event)
 
     def fit_view(self):
         self.view._scale_fit()
