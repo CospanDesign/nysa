@@ -21,6 +21,7 @@ from .toolbar import toolbar
 
 #This is here only for testing
 from .editor.fpga_designer.fpga_designer import FPGADesigner
+from .editor.constraint_editor.constraint_editor import ConstraintEditor
 
 
 LOG_FORMAT = "%(asctime)s %(name)s:%(levelname)-8s %(message)s"
@@ -84,7 +85,7 @@ class NysaPlugin(plugin.Plugin):
         self.actions.ide._menuFile.connect(self.actions.ide._menuFile.toolbar_items["save-as"], SIGNAL("triggered()"), self.save_file_as)
 
         #DEMO STUFF
-        #self.test_editor()
+        self.test_editor()
         self.inject_functions()
         self.actions.update_shortcuts()
 
@@ -193,9 +194,44 @@ class NysaPlugin(plugin.Plugin):
         #This doesn't belong here but when I work on ibuilder then I need to
         #implement this
         tab_manager = self.editor_s.get_tab_manager()
-        fpgaDesigner = FPGADesigner(actions=None, parent=tab_manager, output=self.output)
-        tab_manager.add_tab(fpgaDesigner, self.tr("FPGA Designer"))
-        fpgaDesigner.initialize_slave_lists()
+        #fpgaDesigner = FPGADesigner(actions=None, parent=tab_manager, output=self.output)
+        #tab_manager.add_tab(fpgaDesigner, self.tr("FPGA Designer"))
+        #fpgaDesigner.initialize_slave_lists()
+        constraintEditor = ConstraintEditor(parent=tab_manager,
+                                            actions=None,
+                                            output=self.output,
+                                            project_name = "Demo")
+        tab_manager.add_tab(constraintEditor, self.tr("Constraint Editor"))
+
+
+        #Add signals
+        constraintEditor.add_signal("Module1", "Port1", "input")
+        constraintEditor.add_signal("Module1", "Port2", "output")
+        constraintEditor.add_signal("Module2", "Port1", "output")
+        constraintEditor.add_signal("Module2", "Port2", "input")
+
+        #Remove Signals
+        constraintEditor.remove_signal("Module2", "Port1")
+
+        #Add pins
+        constraintEditor.add_pin("NAME1", "10")
+        constraintEditor.add_pin("NAME2", "11")
+        constraintEditor.add_pin("NAME3", "9")
+
+        #Remove Pins
+        constraintEditor.remove_pin("NAME2")
+
+
+        #Add Connections
+        constraintEditor.add_connection("ModuleB", "PortC", "output", "PIN_NAME_ALSO", "100")
+        constraintEditor.add_connection("ModuleC", "PortC", "output", "PIN_NAME_ALSO", "100")
+        constraintEditor.add_connection("ModuleD", "PortC", "output", "PIN_NAME_ALSO", "100")
+        constraintEditor.add_connection("ModuleA", "PortB", "inout", "PIN_NAME", "100")
+
+        #Remove Connections
+        constraintEditor.remove_connection("ModuleA", "PortB")
+
+
 
     def toolbar_test(self):
         self.logger.info("Toolbar test triggered")
@@ -215,7 +251,7 @@ def nysa_open_file(     filename='',
         if nysa_plugin.open_file(filename):
             #print "Don't send the open file control to the main controller"
             return
-    #print "Openeing: %s" % filename 
+    #print "Openeing: %s" % filename
     main.main_open_file(filename, cursorPosition, tabIndex, positionIsLineNumber, notStart)
 
 

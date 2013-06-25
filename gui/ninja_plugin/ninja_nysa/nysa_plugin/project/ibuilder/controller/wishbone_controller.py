@@ -92,7 +92,6 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
 from graph_manager import NodeType
 from graph_manager import SlaveType
 import wishbone_model
-print "Imported Wishbone Model"
 
 class WishboneController (controller.Controller):
 
