@@ -54,6 +54,8 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
                               "editor",
                               "fpga_designer"))
 
+from defines import PS_COLOR
+from defines import MS_COLOR
 
 from host_interface import HostInterface
 from master import Master
@@ -117,7 +119,7 @@ class WishboneController (controller.Controller):
 
         self.output.Debug(self, "Add Host Interface")
         hi_name = self.model.get_host_interface_name()
-        hi = HostInterface(self.canvas.scene(), 
+        hi = HostInterface(self.canvas.scene(),
                            hi_name)
         hi.link_master(m)
         self.boxes["host_interface"] = hi
@@ -142,7 +144,7 @@ class WishboneController (controller.Controller):
         self.boxes["constraint_editor"] = ceb
 
     def add_arbitor_link(self, arb_master, slave):
-        self.add_link(arb_master, slave, lt.arbitor, st.right) 
+        self.add_link(arb_master, slave, lt.arbitor, st.right)
 
     def drag_enter(self, event):
         """
@@ -201,7 +203,7 @@ class WishboneController (controller.Controller):
 
     def get_project_name(self):
         return self.model.get_project_name()
-    
+
     def add_slave(self, slave_dict, index):
         if self.dbg: print "WBC: Adding slave"
         module_name = slave_dict["name"]
@@ -314,13 +316,13 @@ class WishboneController (controller.Controller):
                 if "type" in d.keys():
                     if self.dbg: print "\ttype: %s" % d["type"]
                     if d["type"] == "memory_slave" or d["type"] == "peripheral_slave":
-                
+
                         if d["type"] == "peripheral_slave":
                             if self.dbg: print "\tSearching peripheral bus"
                             pb = self.boxes["peripheral_bus"]
                             index = pb.find_index_from_position(position)
                             self.add_slave(d, index)
-                
+
                         else:
                             mb = self.boxes["memory_bus"]
                             index = mb.find_index_from_position(position)
@@ -340,9 +342,9 @@ class WishboneController (controller.Controller):
     def get_arbitor_master_connected(self, host_type, host_index, arbitor_name):
         name = self.model.get_slave_name(host_type, host_index)
         #print "WBC: get_arbitor_master_connected name: %s" % name
-        uname = self.model.get_unique_name(name = name, 
-                                           node_type = NodeType.SLAVE, 
-                                           slave_type = host_type, 
+        uname = self.model.get_unique_name(name = name,
+                                           node_type = NodeType.SLAVE,
+                                           slave_type = host_type,
                                            slave_index = host_index)
         #print "WBC: unique name: %s" % uname
         uname = self.model.get_connected_arbitor_slave(uname, arbitor_name)
@@ -381,7 +383,7 @@ class WishboneController (controller.Controller):
                     else:
                         print "%s is not a port of %s" % (key, name)
                     #XXX: Need a way to detect vectors, sometimes a user will only use part of a vector
-                     
+
 
                 for key in signals:
                     if key == "clk":
@@ -391,9 +393,20 @@ class WishboneController (controller.Controller):
                     if wishbone_utils.is_wishbone_bus_signal(key):
                         continue
 
-                    self.constraint_editor.add_signal(name,
-                                                      key,
-                                                      ports[key]["direction"])
+                    if ports[key]["size"] > 1:
+                        rng = (ports[key]["max_val"], ports[key]["min_val"])
+                        self.constraint_editor.add_signal(PS_COLOR,
+                                                          name,
+                                                          key,
+                                                          rng,
+                                                          ports[key]["direction"])
+
+                    else:
+                        self.constraint_editor.add_signal(PS_COLOR,
+                                                          name,
+                                                          key,
+                                                          None,
+                                                          ports[key]["direction"])
 
 
             for i in range(mcount):
@@ -413,7 +426,7 @@ class WishboneController (controller.Controller):
                     else:
                         print "%s is not a port of %s" % (key, name)
                     #XXX: Need a way to detect vectors, sometimes a user will only use part of a vector
- 
+
 
                 for key in signals:
                     if key == "clk":
@@ -422,10 +435,20 @@ class WishboneController (controller.Controller):
                         continue
                     if wishbone_utils.is_wishbone_bus_signal(key):
                         continue
-                    self.constraint_editor.add_signal(name,
-                                                      key,
-                                                      ports[key]["direction"])
 
+                    if ports[key]["size"] > 1:
+                        rng = (ports[key]["max_val"], ports[key]["min_val"])
+                        self.constraint_editor.add_signal(MS_COLOR,
+                                                          name,
+                                                          key,
+                                                          rng,
+                                                          ports[key]["direction"])
+                    else:
+                        self.constraint_editor.add_signal(MS_COLOR,
+                                                          name,
+                                                          key,
+                                                          None,
+                                                          ports[key]["direction"])
 
 
 

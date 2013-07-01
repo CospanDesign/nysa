@@ -33,7 +33,7 @@ import sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 
+sys.path.append(os.path.join(os.path.dirname(__file__),
                               os.pardir,
                               os.pardir,
                               os.pardir,
@@ -43,6 +43,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 from box import Box
 from link import link_type as lt
 from link import side_type as st
+
+from defines import HI_COLOR
+from defines import PS_COLOR
+from defines import MS_COLOR
+
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                               os.pardir,
@@ -56,6 +61,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                               "lib"))
 
 import utils
+import constraint_utils as cu
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                               os.pardir,
@@ -309,19 +315,19 @@ class Controller (QObject):
         #   e.g. the host interface, master, etc...
         mbd = self.model.get_master_bind_dict()
         self.constraint_editor.clear_all()
-        
+
         if name is None or name == "Host Interface":
             #for key in mbd:
             #    print "%s: %s" % (key, mbd[key])
-            
+
             print "Get bindings for host_interface"
             hib = self.model.get_host_interface_bindings()
             for key in hib:
                 self.constraint_editor.add_connection("Host Interface",
-                                                      key, 
-                                                      hib[key]["direction"], 
+                                                      key,
+                                                      hib[key]["direction"],
                                                       hib[key]["pin"])
-            
+
             hip = self.model.get_host_interface_ports()
             hports = {}
             hib_keys = hib.keys()
@@ -331,18 +337,30 @@ class Controller (QObject):
                     continue
                 if key not in hib_keys:
                     hports[key] = hip[key]
-            
+
+            print "Hports: %s" % str(hports)
             for signal in hports:
-                self.constraint_editor.add_signal("Host Interface",
-                                                  signal, 
-                                                  hports[signal]["direction"])
+
+                if hports[signal]["size"] > 1:
+                    rng = (hports[signal]["max_val"], hports[signal]["min_val"])
+                    self.constraint_editor.add_signal(HI_COLOR,
+                                                      "Host Interface",
+                                                      signal,
+                                                      rng,
+                                                      hports[signal]["direction"])
+                else:
+                    self.constraint_editor.add_signal(HI_COLOR,
+                                                      "Host Interface",
+                                                      signal,
+                                                      None,
+                                                      hports[signal]["direction"])
 
 
         if name is None or name != "Host Interface":
             #Call the bus specific interface
             self.bus_refresh_constraint_editor(name)
 
-        #populate the constraint view 
+        #populate the constraint view
         cfiles = self.model.get_constraint_filenames()
         constraints = []
         for f in cfiles:

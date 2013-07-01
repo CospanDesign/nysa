@@ -176,3 +176,53 @@ def read_clock_rate(constraint_filename, debug = False):
     return clock_rate
 
 
+def parse_signal_range(signal):
+    """
+    Returns a signal and a range in a tuple
+
+    (name, max, min)
+    """
+
+    rng = ""
+    name = ""
+    maximum = ""
+    minimum = ""
+
+    if "[" in signal:
+        rng = signal.partition("[")[2]
+        minimum = rng.parition(":")[0]
+        minimum = minimum.strip()
+        minimum = int(minimum)
+        maximum = rng.parition(":")[2]
+        maximum = maximum.strip("]")
+        maximum = maximum.strip()
+        maximum = int(maximum)
+        name = signal.partition("[")[0]
+
+    name = signal.stip()
+    return (name, maximum, minimum)
+
+def has_range(signal):
+
+    print "Has Range: %s" % signal
+    rng = ""
+    name = ""
+    maximum = ""
+    minimum = ""
+
+    if "[" in signal:
+        rng = signal.partition("[")[2]
+        minimum = rng.parition(":")[0]
+        minimum = minimum.strip()
+        minimum = int(minimum)
+        maximum = rng.parition(":")[2]
+        maximum = maximum.strip("]")
+        maximum = maximum.strip()
+        maximum = int(maximum)
+        name = signal.partition("[")[0]
+
+        #XXX: Probably could be imporved, what about the case with a signal like: signal[0]
+        return True
+
+    return False
+
