@@ -153,9 +153,13 @@ class WishboneModelTest (unittest.TestCase):
         fn = utils.find_module_filename("wb_i2c")
         fn = utils.find_rtl_file_location(fn)
        
-        self.assertEqual(self.c.get_number_of_peripheral_slaves(), 0)
+        retval = self.c.get_number_of_peripheral_slaves()
+        print "Number of slaves %d" % retval
+        self.assertEqual(retval, 1)
         self.c.add_slave("S0", fn, st.PERIPHERAL)
-        self.assertEqual(self.c.get_number_of_peripheral_slaves(), 1)
+        retval = self.c.get_number_of_peripheral_slaves()
+        print "Number of slaves after adding one: %d" % retval
+        self.assertEqual(retval, 2)
 
     def test_save_config_file(self):
         fname = os.path.join( os.path.dirname(__file__),
@@ -696,7 +700,8 @@ class WishboneModelTest (unittest.TestCase):
                           from_slave_index = 0,
                           to_slave_type = st.PERIPHERAL,
                           to_slave_index = -1)
-        self.assertEqual(self.c.get_number_of_peripheral_slaves(), 1)
+        #Need to account for the DRT
+        self.assertEqual(self.c.get_number_of_peripheral_slaves(), 2)
 
 
     def test_generate_project(self):

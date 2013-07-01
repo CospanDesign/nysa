@@ -260,10 +260,9 @@ class Test (unittest.TestCase):
     filename = "lx9.ucf"
     netnames = utils.get_net_names(filename, debug = self.dbg)
     if self.dbg:
-      print "net names: "
-      for name in netnames:
-        print "\t%s" % name
-
+        print "net names: "
+        for name in netnames:
+            print "\t%s" % name
     self.assertIn("clk", netnames)
 
 

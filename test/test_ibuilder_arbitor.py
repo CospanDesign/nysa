@@ -67,7 +67,7 @@ class Test (unittest.TestCase):
       filename = os.path.join(  self.nysa_base,
                                 "ibuilder",
                                 "example_projects",
-                                "gpio_example.json")
+                                "dionysus_default.json")
 
       filein = open(filename)
       filestr = filein.read()
