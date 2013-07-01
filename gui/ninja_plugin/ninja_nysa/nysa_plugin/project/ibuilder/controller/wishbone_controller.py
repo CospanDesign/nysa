@@ -31,6 +31,7 @@ Log
 import os
 import sys
 import json
+import copy
 
 
 from PyQt4.QtCore import *
@@ -80,6 +81,7 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
 import utils
 import wishbone_utils
 import ibuilder_error
+import constraint_utils as cu
 
 sys.path.append(os.path.join( os.path.dirname(__file__),
                               os.pardir,
@@ -371,15 +373,42 @@ class WishboneController (controller.Controller):
                 name = self.model.get_slave_name(SlaveType.PERIPHERAL, i)
                 ports = self.model.get_slave_ports(SlaveType.PERIPHERAL, i)
                 bindings = self.model.get_slave_bindings(SlaveType.PERIPHERAL, i)
+                ex_bindings = cu.expand_user_constraints(bindings)
                 signals = ports.keys()
+                #signals = ex_bindings.keys()
                 #Add Peripheral Signals
-                for key in bindings:
-                    self.constraint_editor.add_connection(name,
-                                                          key,
-                                                          bindings[key]["direction"],
-                                                          bindings[key]["pin"])
+                #for key in bindings:
+                bound_count = 0
+                for key in ex_bindings:
+                    if not ex_bindings[key]["range"]:
+                        self.constraint_editor.add_connection(name,
+                                                              key,
+                                                              bindings[key]["direction"],
+                                                              bindings[key]["pin"])
+                    else:
+                        indexes = copy.deepcopy(ex_bindings[key].keys())
+                        print "Indexes: %s" % str(indexes)
+                        indexes.remove("range")
+                        bound_count = 0
+                        for i in indexes:
+                            bound_count += 1
+                            #XXX: This should change to accomodate the tree constraints view
+                            n = "%s[%d]" % (key, i)
+                            self.constraint_editor.add_connection(name,
+                                                                  n,
+                                                                  ex_bindings[key][i]["direction"],
+                                                                  ex_bindings[key][i]["pin"])
+
+
                     if key in signals:
-                        signals.remove(key)
+                        if not ex_bindings[key]["range"]:
+                            signals.remove(key)
+                        else:
+                            print "Signal: %s" % key
+                            print "Checking if bound count: %d == %d" % (bound_count, ports[key]["size"])
+                            if bound_count == ports[key]["size"]:
+                                print "All of the items in the bus are constrained"
+                                signals.remove[key]
                     else:
                         print "%s is not a port of %s" % (key, name)
                     #XXX: Need a way to detect vectors, sometimes a user will only use part of a vector
@@ -413,19 +442,45 @@ class WishboneController (controller.Controller):
                 name = self.model.get_slave_name(SlaveType.MEMORY, i)
                 ports = self.model.get_slave_ports(SlaveType.MEMORY, i)
                 bindings = self.model.get_slave_bindings(SlaveType.MEMORY, i)
+                ex_bindings = cu.expand_user_constraints(bindings)
                 signals = ports.keys()
+                #signals = ex_bindings.keys()
 
                 #Add Memory Signals
-                for key in bindings:
-                    self.constraint_editor.add_connection(name,
-                                                          key,
-                                                          bindings[key]["direction"],
-                                                          bindings[key]["pin"])
+                for key in ex_bindings:
+                    if not ex_bindings[key]["range"]:
+                        self.constraint_editor.add_connection(name,
+                                                              key,
+                                                              bindings[key]["direction"],
+                                                              bindings[key]["pin"])
+                    else:
+                        indexes = copy.deepcopy(ex_bindings[key].keys())
+                        print "Indexes: %s" % str(indexes)
+                        indexes.remove("range")
+                        bound_count = 0
+                        for i in indexes:
+                            bound_count += 1
+                            #XXX: This should change to accomodate the tree constraints view
+                            n = "%s[%d]" % (key, i)
+                            self.constraint_editor.add_connection(name,
+                                                                  n,
+                                                                  ex_bindings[key][i]["direction"],
+                                                                  ex_bindings[key][i]["pin"])
+
+
                     if key in signals:
-                        signals.remove(key)
+                        if not ex_bindings[key]["range"]:
+                            signals.remove(key)
+                        else:
+                            print "Signal: %s" % key
+                            print "Checking if bound count: %d == %d" % (bound_count, ports[key]["size"])
+                            if bound_count == ports[key]["size"]:
+                                print "All of the items in the bus are constrained"
+                                signals.remove(key)
                     else:
                         print "%s is not a port of %s" % (key, name)
                     #XXX: Need a way to detect vectors, sometimes a user will only use part of a vector
+
 
 
                 for key in signals:
