@@ -27,9 +27,9 @@ import utils
 
 class WishboneModel():
     def __init__(self, board_name=None, config_file=None):
+        self.project_tags = {}
         self.new_design()
         self.filename = ""
-        self.project_tags = {}
 
         # Add some variable functions for dependency injection.
         self.get_board_config = utils.get_board_config
@@ -40,6 +40,9 @@ class WishboneModel():
             self.initialize_graph()
         elif board_name is not None:
             self.set_default_board_project(board_name)
+            self.initialize_graph()
+        else:
+            #initialize an empty tags
             self.initialize_graph()
 
     def set_default_board_project(self, board_name):
@@ -299,10 +302,12 @@ class WishboneModel():
 ##      bind_dict = self.get_master_bind_dict()
 
         for i in range(0, p_count):
+            #print "apply slave tags to project: %d:" % i
             sc_slave = self.gm.get_slave_at(i, SlaveType.PERIPHERAL)
             uname = sc_slave.unique_name
             name = sc_slave.name
             if debug: print "name: " + str(name)
+            if debug: print "Projct tags: %s" % str(self.project_tags)
             if name == "DRT":
                 continue
             if name not in self.project_tags["SLAVES"].keys():
@@ -437,6 +442,9 @@ class WishboneModel():
     def get_constraint_filenames(self):
         board_name = self.project_tags["board"]
         pt = self.project_tags
+        if "constraint_files" not in pt.keys():
+            pt["constraint_files"] = []
+
         cfiles = utils.get_constraint_filenames(board_name)
         for cf in pt["constraint_files"]:
             cfiles.append(cf)
@@ -444,6 +452,10 @@ class WishboneModel():
 
     def add_project_constraint_file(self, constraint_file):
         pt = self.project_tags
+
+        if "constraint_files" not in pt.keys():
+            pt["constraint_files"] = []
+
         cfiles = pt["constraint_files"]
         if constraint_file not in cfiles:
             cfiles.append(constraint_file)
@@ -550,6 +562,24 @@ class WishboneModel():
                 bind_dict[key] = mb[key]
 
         return bind_dict
+
+    def get_slave_ports(self, slave_type, slave_index):
+        slave_name = self.get_slave_name(slave_type, slave_index)
+        uname = self.get_unique_name(slave_name, NodeType.SLAVE, slave_type, slave_index)
+        return self.get_node_ports(uname)
+
+    def get_slave_bindings(self, slave_type, slave_index):
+        slave_name = self.get_slave_name(slave_type, slave_index)
+        uname = self.get_unique_name(slave_name, NodeType.SLAVE, slave_type, slave_index)
+        return self.gm.get_node_bindings(uname)
+
+    def get_host_interface_bindings(self):
+        hi_name = self.get_unique_name("Host Interface", NodeType.HOST_INTERFACE)
+        return self.gm.get_node_bindings(hi_name)
+
+    def get_host_interface_ports(self):
+        hi_name = self.get_unique_name("Host Interface", NodeType.HOST_INTERFACE)
+        return self.get_node_ports(hi_name)
 
     def get_node_ports(self, node_name):
         return self.gm.get_node(node_name).parameters["ports"]

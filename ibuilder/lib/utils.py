@@ -7,10 +7,10 @@
 # use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
 # of the Software, and to permit persons to whom the Software is furnished to do
 # so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -54,9 +54,11 @@ import json
 
 import preprocessor
 import arbitor
+import constraint_utils
 
 from ibuilder_error import ModuleNotFound
 from ibuilder_error import NysaEnvironmentError
+from ibuilder_error import IBuilderError
 
 nysa_base = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 
@@ -570,199 +572,70 @@ def get_board_config (board_name, debug = False):
   return board_dict
 
 def get_net_names(constraint_filename, debug = False):
-  """Gets a list of net in a given constraint file
+    """Gets a list of net in a given constraint file
 
-  Args:
-    constrint_filename: name of a constraint file with an absolute path
+    Args:
+        constrint_filename: name of a constraint file with an absolute path
 
-  Returns:
-    A list of constraint for the module
-    NOTE: This file fails quietly and shouldn't this needs to be fixed!
+    Returns:
+        A list of constraint for the module
+        NOTE: This file fails quietly and shouldn't this needs to be fixed!
 
-  Raises:
-    Nothing
-  """
+    Raises:
+        IBuilder Error
+    """
 
-  board_dir = os.path.join(nysa_base, "ibuilder", "boards")
-  filename = ""
-  buf = ""
-  nets = []
+    board_dir = os.path.join(nysa_base, "ibuilder", "boards")
+    filename = ""
+    buf = ""
+    nets = []
 
 
-  if debug:
-    print "Looking for: " + constraint_filename
-  for root, dirs, names in os.walk(board_dir):
-    if debug:
-      print "name: " + str(names)
+    if debug: print "Looking for: " + constraint_filename
+    for root, dirs, names in os.walk(board_dir):
+        if debug: print "name: " + str(names)
+        if constraint_filename in names:
+            if debug: print "found the file!"
+            filename =  os.path.join(root, constraint_filename)
+            break
 
-    if constraint_filename in names:
-      if debug:
-        print "found the file!"
-      filename =  os.path.join(root, constraint_filename)
-      break
+    if (len(filename) == 0):
+        if debug:print "didn't find constraint file"
+        return ""
 
-  if (len(filename) == 0):
-    if debug:
-      print "didn't find constraint file"
-    return ""
-
-  #open up the ucf file
-  try:
-    file_in = open(filename)
-    buf = file_in.read()
-    file_in.close()
-  except:
-    #fail
-#XXX: This should probably allow the calling function to handle a failure
-    if debug:
-      print "failed to open file: " + filename
-    return ""
-
-  if debug:
-    print "Opened up the UCF file"
-
-  lines = buf.splitlines()
-  #first search for the TIMESPEC keyword
-  for line in lines:
-    line = line.lower()
-    #get rid of comments
-    if ("#" in line):
-      line = line.partition("#")[0]
-
-    if "net" not in line:
-      continue
-
-    #split separate all space deliminated tokens
-    line = line.partition("net")[2].strip()
-    token = line.split()[0]
-    token = token.strip("\"")
-
-    token = token.replace('<', '[')
-    token = token.replace('>', ']')
-#    if debug:
-#      print "possible net name: " + token
-
-    if token not in nets:
-      nets.append(token)
-
-  return nets
+    return constraint_utils.get_net_names(filename)
 
 def read_clock_rate(constraint_filename, debug = False):
-  """Returns a string of the clock rate
+    """Returns a string of the clock rate
 
-  Searches through the specified constraint file to determine if there
-  is a specified clock. If no clock is specified then return 50MHz = 50000000
+    Searches through the specified constraint file to determine if there
+    is a specified clock. If no clock is specified then return 50MHz = 50000000
 
-  Args:
-    constraint_filename: the name of the constraint file to search through
+    Args:
+      constraint_filename: the name of the constraint file to search through
 
-  Returns:
-    A string representation of the clock rate
-    NOTE: on error this fails quietly this should probably be different
+    Returns:
+      A string representation of the clock rate
+      NOTE: on error this fails quietly this should probably be different
 
-  Raises:
-    Nothing
-  """
-  board_dir = os.path.join(nysa_base, "ibuilder", "boards")
-  filename = ""
-  buf = ""
-  clock_rate = ""
-#  print "rtl dir: " + board_dir
-  if debug:
-    print "Looking for: " + constraint_filename
-  for root, dirs, names in os.walk(board_dir):
-    if debug:
-      print "name: " + str(names)
-
-    if constraint_filename in names:
-      if debug:
-        print "found the file!"
-      filename =  os.path.join(root, constraint_filename)
-      break
-
-  if (len(filename) == 0):
-    if debug:
-      print "didn't find constraing file"
-    return ""
-
-  #open up the ucf file
-  try:
-    file_in = open(filename)
-    buf = file_in.read()
-    file_in.close()
-  except:
-#XXX: This should probably allow the calling function to handle a failure
-    #fail
-    if debug:
-      print "failed to open file: " + filename
-    return ""
-
-  if debug:
-    print "Opened up the UCF file"
-
-  lines = buf.splitlines()
-  #first search for the TIMESPEC keyword
-  for line in lines:
-    line = line.lower()
-    #get rid of comments
-    if ("#" in line):
-      line = line.partition("#")[0]
-
-    #is this the timespec for the "clk" clock?
-    if ("timespec" in line) and ("ts_clk" in line):
-      if debug:
-        print "found timespec"
-      #this is the "clk" clock, now read the clock value
-      if debug:
-        print "found TIMESPEC"
-      line = line.partition("period")[2].strip()
-      if debug:
-        print "line: " + line
-      line = line.partition("clk")[2].strip()
-      line = line.strip("\"");
-      line = line.strip();
-      line = line.strip(";")
-      if debug:
-        print "line: " + line
-
-      #now there is a time value and a multiplier
-      clock_lines = line.split(" ")
-      if debug:
-        for line in clock_lines:
-          print "line: " + line
-
-      if (clock_lines[1] == "mhz"):
-        clock_rate = clock_lines[0] + "000000"
-      if (clock_lines[1] == "khz"):
-        clock_rate = clock_lines[0] + "000"
-
-
-  #if that didn't work search for the PERIOD keyword, this is an older version
-  if (len(clock_rate) == 0):
-    if debug:
-      print "didn't find TIMESPEC, looking for period"
-    #we need to check period
-    for line in lines:
-      #get rid of comments
-      line = line.lower()
-      if ("#" in line):
-        line = line.partition("#")[0]
-      if ("period" in line) and  ("clk" in line):
-        if debug:
-          print "found clock period"
-        line = line.partition("period")[2]
-        line = line.partition("=")[2].strip()
-        if " " in line:
-          line = line.partition(" ")[0].strip()
-        if debug:
-          print "line: " + line
-        clock_rate = str(int(1/(string.atoi(line) * 1e-9)))
-        break;
-
-  if debug:
-    print "Clock Rate: " + clock_rate
-  return clock_rate
-
+    Raises:
+      Nothing
+    """
+    board_dir = os.path.join(nysa_base, "ibuilder", "boards")
+    filename = ""
+    buf = ""
+    clock_rate = ""
+    if debug: print "Looking for: " + constraint_filename
+    for root, dirs, names in os.walk(board_dir):
+        if debug: print "name: " + str(names)
+        if constraint_filename in names:
+            if debug: print "found the file!"
+            filename =  os.path.join(root, constraint_filename)
+            break
+    if (len(filename) == 0):
+        if debug: print "didn't find constraing file"
+        return ""
+    return constraint_utils.read_clock_rate(filename)
 
 def _get_slave_list(directory, debug = False):
   """Gets a list of slaves given a directory"""
