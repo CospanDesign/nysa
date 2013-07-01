@@ -81,6 +81,26 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                               "drt"))
 
 
+no_detect_ports = [
+    "rst",
+    "clk",
+    "o_in_address",
+    "i_out_address",
+    "o_oh_ready",
+    "o_in_data_count",
+    "o_ih_ready",
+    "o_in_command",
+    "i_ftdi_suspend_n",
+    "o_ih_reset",
+    "i_out_status",
+    "i_master_ready",
+    "i_out_data",
+    "i_out_data_count",
+    "i_oh_en",
+    "io_ftdi_data",
+    "o_in_data"
+]
+
 
 
 def enum(*sequential, **named):
@@ -120,6 +140,7 @@ class Controller (QObject):
         self.output = output
         self.boxes = {}
         self.user_dirs = []
+        self.constraint_editor = None
         #Connect events
         """
         Go through view and connect all relavent events
@@ -268,3 +289,86 @@ class Controller (QObject):
 
     def add_bus_link(self, m, bus):
         self.add_link(m, bus, lt.bus, st.right)
+
+
+    def get_project_name(self):
+        raise NotImplementedError("This function should be subclassed")
+
+
+    #Constraint Editor interface
+    def initialize_constraint_editor(self, constraint_editor):
+        print "Initialize constraint editor"
+        self.constraint_editor = constraint_editor
+        self.constraint_editor.set_connect_callback(self.connect_signal)
+        self.constraint_editor.set_disconnect_callback(self.disconnect_signal)
+        self.constraint_editor.initialize_view()
+        self.refresh_constraint_editor()
+
+    def refresh_constraint_editor(self, name = None):
+        #If a name is present just populate connections for that one item
+        #   e.g. the host interface, master, etc...
+        mbd = self.model.get_master_bind_dict()
+        self.constraint_editor.clear_all()
+        
+        if name is None or name == "Host Interface":
+            #for key in mbd:
+            #    print "%s: %s" % (key, mbd[key])
+            
+            print "Get bindings for host_interface"
+            hib = self.model.get_host_interface_bindings()
+            for key in hib:
+                self.constraint_editor.add_connection("Host Interface",
+                                                      key, 
+                                                      hib[key]["direction"], 
+                                                      hib[key]["pin"])
+            
+            hip = self.model.get_host_interface_ports()
+            hports = {}
+            hib_keys = hib.keys()
+            hip_keys = hip.keys()
+            for key in hip_keys:
+                if key in no_detect_ports:
+                    continue
+                if key not in hib_keys:
+                    hports[key] = hip[key]
+            
+            for signal in hports:
+                self.constraint_editor.add_signal("Host Interface",
+                                                  signal, 
+                                                  hports[signal]["direction"])
+
+
+        if name is None or name != "Host Interface":
+            #Call the bus specific interface
+            self.bus_refresh_constraint_editor(name)
+
+        #populate the constraint view 
+        cfiles = self.model.get_constraint_filenames()
+        constraints = []
+        for f in cfiles:
+            constraints.extend(utils.get_net_names(f))
+
+        #Go through all the connected signals and create a list of constraint that are not used
+        mbd = self.model.get_master_bind_dict()
+        for key in mbd:
+            if key in constraints:
+                constraints.remove(key)
+
+        for c in constraints:
+            self.constraint_editor.add_pin(c)
+
+
+
+
+    def get_constraint_editor(self):
+        return self.constraint_editor
+
+    def connect_signal(self, module_name, port, direction, pin_name, pin_number):
+        print "Connect"
+
+    def disconnect_signal(self, module_name, port, direction, pin_name, pin_number):
+        print "Disconnect"
+
+    def bus_refresh_constraint_editor(self, name = None):
+        raise NotImplementedError("This function should be subclassed")
+

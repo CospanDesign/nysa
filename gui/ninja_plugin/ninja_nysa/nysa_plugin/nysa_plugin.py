@@ -201,32 +201,33 @@ class NysaPlugin(plugin.Plugin):
                                             actions=None,
                                             output=self.output,
                                             project_name = "Demo")
+        constraintEditor.initialize_view()
         tab_manager.add_tab(constraintEditor, self.tr("Constraint Editor"))
 
 
         #Add signals
-        constraintEditor.add_signal("Module1", "Port1", "input")
-        constraintEditor.add_signal("Module1", "Port2", "output")
-        constraintEditor.add_signal("Module2", "Port1", "output")
-        constraintEditor.add_signal("Module2", "Port2", "input")
+        constraintEditor.add_signal("blue", "Module1", "Port1", (0), "input")
+        constraintEditor.add_signal("blue", "Module1", "Port2", (0,1), "output")
+        constraintEditor.add_signal("yellow", "Module2", "Port1", (3, 0), "output")
+        constraintEditor.add_signal("yellow", "Module2", "Port2", (0), "input")
 
         #Remove Signals
-        constraintEditor.remove_signal("Module2", "Port1")
+        #constraintEditor.remove_signal("Module2", "Port1")
 
         #Add pins
-        constraintEditor.add_pin("NAME1", "10")
-        constraintEditor.add_pin("NAME2", "11")
-        constraintEditor.add_pin("NAME3", "9")
+        constraintEditor.add_pin("NAME1")
+        constraintEditor.add_pin("NAME2")
+        constraintEditor.add_pin("NAME3")
 
         #Remove Pins
         constraintEditor.remove_pin("NAME2")
 
 
         #Add Connections
-        constraintEditor.add_connection("ModuleB", "PortC", "output", "PIN_NAME_ALSO", "100")
-        constraintEditor.add_connection("ModuleC", "PortC", "output", "PIN_NAME_ALSO", "100")
-        constraintEditor.add_connection("ModuleD", "PortC", "output", "PIN_NAME_ALSO", "100")
-        constraintEditor.add_connection("ModuleA", "PortB", "inout", "PIN_NAME", "100")
+        constraintEditor.add_connection("ModuleB", "PortC", "output", "PIN_NAME_ALSO")
+        constraintEditor.add_connection("ModuleC", "PortC", "output", "PIN_NAME_ALSO")
+        constraintEditor.add_connection("ModuleD", "PortC", "output", "PIN_NAME_ALSO")
+        constraintEditor.add_connection("ModuleA", "PortB", "inout", "PIN_NAME")
 
         #Remove Connections
         constraintEditor.remove_connection("ModuleA", "PortB")

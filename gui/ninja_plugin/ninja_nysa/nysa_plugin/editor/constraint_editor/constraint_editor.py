@@ -37,6 +37,7 @@ from PyQt4.QtGui import *
 from ninja_ide.gui.main_panel import itab_item
 from ninja_ide.gui.editor.editor import Editor
 
+from signal_tree_table import SignalTreeTableModel
 
 class ConstraintEditor (QWidget, itab_item.ITabItem):
 
@@ -57,8 +58,8 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
         self.pin_table = None
         self.connection_table = None
 
-        self.initialize_view()
-        self.show()
+        #self.initialize_view()
+        #self.show()
 
     def clear_all(self):
         row_count = self.signal_model.rowCount()
@@ -109,35 +110,19 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
         layout.addWidget(splitter)
         layout.addWidget(self.connection_table)
         self.setLayout(layout)
+        self.show()
 
 
     def create_signal_table(self):
         #Setup the Signal Table
-        self.signal_table = QTableView()
-        self.signal_table.setSelectionBehavior(QAbstractItemView.SelectRows)
-
-        header = ["Module", "Port", "Direction"]
-
-        self.signal_model = ConstraintModel([[]],header_data = header, parent = self)
-        self.signal_table.setModel(self.signal_model)
-
-        #Show the grids
-        self.signal_table.setShowGrid(True)
-
-        #Vertical tab settings
-        vh = self.signal_table.verticalHeader()
-        vh.setVisible(True)
-
-        #Set horizontal header properties
-        hh = self.signal_table.horizontalHeader()
-        hh.setStretchLastSection(True)
+        self.signal_table = SignalTable()
 
     def create_pin_table(self):
         self.pin_table = QTableView()
         self.pin_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.pin_table.setShowGrid(True)
 
-        header = ["Pin Name", "Position"]
+        header = ["Pin Name"]
 
         self.pin_model = ConstraintModel([[]], header_data = header, parent = self)
         self.pin_table.setModel(self.pin_model)
@@ -154,7 +139,7 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
         hh.setStretchLastSection(True)
 
     def create_connection_table(self):
-        header = ["Module", "Port", "Direction", "Pin Name", "Position", "Disconnect"]
+        header = ["Module", "Port", "Direction", "Pin Name", "Disconnect"]
         self.connection_table = ConnectionTable()
         self.connection_table.set_delete_callback(self.notify_connection_delete)
         self.connection_table.setColumnCount(len(header))
@@ -176,13 +161,17 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
         hh = self.connection_table.horizontalHeader()
         hh.setStretchLastSection(True)
 
-    def add_signal(self, module_name, port, direction):
-        pos = self.signal_model.rowCount()
-        self.output.Debug(self, "Adding signal")
-        self.signal_model.insertRows(pos, 1)
-        self.signal_model.set_line_data([module_name, port, direction])
+    def add_signal(self, color, module_name, name, signal_range, direction):
+        print "Adding Signal"
+        #pos = self.signal_model.rowCount()
+        #self.output.Debug(self, "Adding signal")
+        #self.signal_model.insertRows(pos, 1)
+        #self.signal_model.set_line_data([module_name, port, direction])
+        self.signal_table.add_signal(color, module_name, name, signal_range, direction)
 
     def remove_signal(self, module_name, port):
+        print "Removing Signal"
+        return
         #get data from the model
         #search each entry for a module name
         #print "Remove signal"
@@ -194,11 +183,11 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
             success = self.signal_model.removeRow(pos)
             self.output.Debug(self, "%s: Removing: %s %s" % (str(success), module_name, port))
 
-    def add_pin(self, pin_name, position):
+    def add_pin(self, pin_name):
         pos = self.pin_model.rowCount()
         self.output.Debug(self, "Adding Pin")
         self.pin_model.insertRows(pos, 1)
-        self.pin_model.set_line_data([pin_name, position])
+        self.pin_model.set_line_data([pin_name])
 
     def remove_pin(self, pin_name):
         pos = self.pin_model.find_pos([pin_name])
@@ -208,12 +197,12 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
             if success:
                 self.output.Debug(self, "Removed Signal")
             
-    def add_connection(self, module_name, port, direction, pin_name, position):
+    def add_connection(self, module_name, port, direction, pin_name):
         pos = self.connection_table.rowCount()
         self.output.Debug(self, "Adding Connection")
 
         self.connection_table.insertRow(pos)
-        self.connection_table.set_row_data(pos, [module_name, port, direction, pin_name, position])
+        self.connection_table.set_row_data(pos, [module_name, port, direction, pin_name])
 
     def remove_connection(self, module_name, port):
         pos = self.connection_table.find_pos(module_name, port)
@@ -230,10 +219,10 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
     def notify_connection_delete(self, row_data):
         print "Disconnect Row Data: %s" % str(row_data)
         self.add_signal(row_data[0], row_data[1], row_data[2])
-        self.add_pin(row_data[3], row_data[4])
+        self.add_pin(row_data[3])
         self.remove_connection(row_data[0], row_data[1])
         if self.disconnect_callback is not None:
-            self.disconnect_callback(row_data[0], row_data[1], row_data[2], row_data[3], row_data[4])
+            self.disconnect_callback(row_data[0], row_data[1], row_data[2], row_data[3])
 
     def connect(self):
         print "Connect"
@@ -257,9 +246,9 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
         connection.extend(pin_data)
         self.signal_model.removeRow(signal_row)
         self.pin_model.removeRow(pin_row)
-        self.add_connection(connection[0], connection[1], connection[2], connection[3], connection[4])
+        self.add_connection(connection[0], connection[1], connection[2], connection[3])
         if self.connect_callback is not None:
-            self.connect_callback(connection[0], connection[1], conneciton[2], connection[3], connection[4])
+            self.connect_callback(connection[0], connection[1], conneciton[2], connection[3])
 
 
         #print "Connection: %s" % str(connection)
@@ -335,8 +324,13 @@ class ConstraintModel(QAbstractTableModel):
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def data(self, index, role):
-        if index.isValid() and role == Qt.DisplayRole:
-            return self.array_data[index.row()][index.column()]
+        if index.isValid():
+            #if role == Qt.DecorationRole:
+            #    node = self.nodeFromIndex(index)
+            #    if node is None:
+            #        return QVariant()
+            if role == Qt.DisplayRole:
+                return self.array_data[index.row()][index.column()]
 
     def find_pos(self, data):
         for i in range (len(self.array_data)):
@@ -376,4 +370,32 @@ class ConstraintModel(QAbstractTableModel):
         return True
 
 
+class SignalTable(QTreeView):
 
+    def __init__(self, parent=None):
+        super(SignalTable, self).__init__(parent)
+        self.setSelectionBehavior(QAbstractItemView.SelectRows |
+                                  QAbstractItemView.SingleSelection)
+        self.setUniformRowHeights(True)
+        self.m = SignalTreeTableModel(self)
+        #A tree of two depth to allow users to select isolate modules
+        self.setModel(self.m)
+        self.connect(self, SIGNAL("activated(QModelIndex)"), self.activated)
+
+        self.expand(self.rootIndex())
+
+    def add_signal(self, color, module_name, name, signal_range, direction):
+        #fields = [module_name, name, signal_range, direction]
+        self.m.addRecord(color, module_name, name, signal_range, direction)
+
+    def remove_signal(self, module_name, name, index=-1):
+        print "Impliment me!!"
+
+    def activated(self, index):
+        print "Actived: %d, %d" % (index.row(), index.column())
+        self.emit(SIGNAL("activated"), self.model().asRecord(index))
+
+
+    def selectionChanged(self, a, b):
+        print "Selection Changed"
+        super (SignalTable, self).selectionChanged(a, b)

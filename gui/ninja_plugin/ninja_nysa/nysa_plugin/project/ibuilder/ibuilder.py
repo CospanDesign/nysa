@@ -9,6 +9,7 @@ from PyQt4.QtCore import SIGNAL
 
 from ninja_ide.core import file_manager
 
+
 sys.path.append(os.path.join( os.path.dirname(__file__),
                                 os.pardir,
                                 os.pardir,
@@ -18,6 +19,15 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
 from controller.wishbone_controller import WishboneController
 from controller.axi_controller import AxiController
 from fpga_designer import FPGADesigner
+
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                                os.pardir,
+                                os.pardir,
+                                "editor",
+                                "constraint_editor"))
+
+from constraint_editor import ConstraintEditor
+
 
 '''
 Functions independent of the project used to build/simulate/debug
@@ -29,7 +39,7 @@ DESIGNER_EXT = "ibd"
 
 class IBuilder (QObject):
     output = None
-    
+
     def __init__(self, output, locator):
         self.output = output
         self.locator = locator
@@ -41,6 +51,9 @@ class IBuilder (QObject):
         self.designers = {}
         self.load_designers()
         self.controller = None
+        self.actions = None
+        self.commands = {}
+        self.setup_commands()
 
     def setup_controller(self, filename):
         d = {}
@@ -68,6 +81,32 @@ class IBuilder (QObject):
                                         "axi_tmeplate.json" % str(d["TEMPLATE"])
                                    )
         return controller
+
+    def setup_commands(self):
+        #This is sort of like the actions for the entire IDE but I only need
+        #This locally (for ibuilder)
+        self.commands["constraint_editor"] = self.open_constraint_editor
+
+
+    def open_constraint_editor(self, view_controller, name = None):
+        print "open constraint editor"
+        tab_manager = self.editor.get_tab_manager()
+        ce = view_controller.get_constraint_editor()
+        if ce is None or (tab_manager.is_open(ce) == -1):
+            self.output.Debug(self, "Constraint editor is not open")
+            if ce is not None: 
+                self.output.Debug(self, "There is a bogus constraint editor in the controller")
+            ce = ConstraintEditor(parent=tab_manager,
+                                  actions=self.actions,
+                                  output=self.output,
+                                  project_name = view_controller.get_project_name())
+
+            name = "%s ce" % view_controller.get_project_name()
+            tab_manager.add_tab(ce, name)
+            view_controller.initialize_constraint_editor(ce)
+
+        else:
+            tab_manager.move_to_open(ce)
 
 
     def file_open(self, filename):
@@ -101,7 +140,13 @@ class IBuilder (QObject):
                 self.output.Debug(self, "Open up a new tab")
                 project = self.explorer._explorer.get_project_given_filename(filename)
                 #Not Opened
-                fd = FPGADesigner(actions=None, filename = filename, project=project, parent=tab_manager, output=self.output)
+                fd = FPGADesigner(actions=self.actions,
+                                  commands = self.commands,
+                                  filename = filename,
+                                  project=project,
+                                  parent=tab_manager,
+                                  output=self.output)
+
                 #I'm assuming there is no controller set already so create a new one
                 controller = self.setup_controller(filename)
                 fd.set_controller(controller)
@@ -127,7 +172,7 @@ class IBuilder (QObject):
     def file_closed(self, filename):
         self.output.Debug(self, "Filename: %s" % filename)
         name = filename.split(os.path.sep)[-1]
-        
+
         if filname in self.designers.keys():
             fd = None
             index = -1
@@ -139,10 +184,10 @@ class IBuilder (QObject):
             tab_manager.remove_tab(index)
             name = filename.split(os.path.sep)[-1]
             self.designers.remove(filename)
-            
+
 
 
     def load_designers(self):
         tab_manager = self.editor.get_tab_manager()
 
- 
+

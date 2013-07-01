@@ -61,6 +61,7 @@ from peripheral_bus import PeripheralBus
 from memory_bus import MemoryBus
 from peripheral_slave import PeripheralSlave
 from memory_slave import MemorySlave
+from constraint_editor_box import ConstraintEditorBox
 
 
 sys.path.append(os.path.join( os.path.dirname(__file__),
@@ -75,6 +76,7 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
                               "lib"))
 
 import utils
+import wishbone_utils
 import ibuilder_error
 
 sys.path.append(os.path.join( os.path.dirname(__file__),
@@ -134,6 +136,10 @@ class WishboneController (controller.Controller):
         m.link_memory_bus(mb)
         self.refresh_slaves()
 
+        #Add the constraint editor box
+        self.output.Debug(self, "Add Constraint Editor")
+        ceb = ConstraintEditorBox(self.canvas.scene())
+        self.boxes["constraint_editor"] = ceb
 
     def add_arbitor_link(self, arb_master, slave):
         self.add_link(arb_master, slave, lt.arbitor, st.right) 
@@ -345,4 +351,83 @@ class WishboneController (controller.Controller):
 
         s = self.model.get_graph_manager().get_node(uname)
         return s.slave_type, s.slave_index
+
+
+    def get_project_name(self):
+        return self.model.get_project_name()
+
+
+    def bus_refresh_constraint_editor(self, name = None):
+        print "Wishbone Specific Constraint editor refresh"
+        if name is not None:
+            print "View only one module"
+        else:
+            print "Display all modules"
+            pcount = self.model.get_number_of_peripheral_slaves()
+            mcount = self.model.get_number_of_memory_slaves()
+            for i in range(pcount):
+                name = self.model.get_slave_name(SlaveType.PERIPHERAL, i)
+                ports = self.model.get_slave_ports(SlaveType.PERIPHERAL, i)
+                bindings = self.model.get_slave_bindings(SlaveType.PERIPHERAL, i)
+                signals = ports.keys()
+                #Add Peripheral Signals
+                for key in bindings:
+                    self.constraint_editor.add_connection(name,
+                                                          key,
+                                                          bindings[key]["direction"],
+                                                          bindings[key]["pin"])
+                    if key in signals:
+                        signals.remove(key)
+                    else:
+                        print "%s is not a port of %s" % (key, name)
+                    #XXX: Need a way to detect vectors, sometimes a user will only use part of a vector
+                     
+
+                for key in signals:
+                    if key == "clk":
+                        continue
+                    if key == "rst":
+                        continue
+                    if wishbone_utils.is_wishbone_bus_signal(key):
+                        continue
+
+                    self.constraint_editor.add_signal(name,
+                                                      key,
+                                                      ports[key]["direction"])
+
+
+            for i in range(mcount):
+                name = self.model.get_slave_name(SlaveType.MEMORY, i)
+                ports = self.model.get_slave_ports(SlaveType.MEMORY, i)
+                bindings = self.model.get_slave_bindings(SlaveType.MEMORY, i)
+                signals = ports.keys()
+
+                #Add Memory Signals
+                for key in bindings:
+                    self.constraint_editor.add_connection(name,
+                                                          key,
+                                                          bindings[key]["direction"],
+                                                          bindings[key]["pin"])
+                    if key in signals:
+                        signals.remove(key)
+                    else:
+                        print "%s is not a port of %s" % (key, name)
+                    #XXX: Need a way to detect vectors, sometimes a user will only use part of a vector
+ 
+
+                for key in signals:
+                    if key == "clk":
+                        continue
+                    if key == "rst":
+                        continue
+                    if wishbone_utils.is_wishbone_bus_signal(key):
+                        continue
+                    self.constraint_editor.add_signal(name,
+                                                      key,
+                                                      ports[key]["direction"])
+
+
+
+
+
 
