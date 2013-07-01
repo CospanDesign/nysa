@@ -357,6 +357,9 @@ class Controller (QObject):
         for c in constraints:
             self.constraint_editor.add_pin(c)
 
+    def item_is_enabled(self, path):
+        print "VC: Path: %s" % path
+        return True
 
 
 

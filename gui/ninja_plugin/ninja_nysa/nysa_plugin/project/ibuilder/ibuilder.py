@@ -99,6 +99,7 @@ class IBuilder (QObject):
             ce = ConstraintEditor(parent=tab_manager,
                                   actions=self.actions,
                                   output=self.output,
+                                  controller = view_controller,
                                   project_name = view_controller.get_project_name())
 
             name = "%s ce" % view_controller.get_project_name()

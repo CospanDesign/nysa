@@ -57,10 +57,10 @@ class IndexSignalLeafNode(LeafNode):
         record = []
         branch = self.parent.parent
         while branch is not None:
-            record.insert(0, branch.toString())
+            if isinstance(branch, ModuleBranchNode):
+                record.insert(0, branch.toString())
+                record.insert(0, str(branch.color))
             branch = branch.parent
-        assert record and not record[0]
-        record = record[1:]
         return record + self.fields
 
 
@@ -141,8 +141,15 @@ class SignalLeafNode(LeafNode):
 
         return separator.join(self.fields)
 
-
-
+    def asRecord(self):
+        record = []
+        branch = self.parent
+        while branch is not None:
+            if isinstance(branch, ModuleBranchNode):
+                record.insert(0, branch.toString())
+                record.insert(0, str(branch.color))
+            branch = branch.parent
+        return record + self.fields
 
 class ModuleBranchNode(BranchNode):
     def __init__(self, color, name, parent=None):
