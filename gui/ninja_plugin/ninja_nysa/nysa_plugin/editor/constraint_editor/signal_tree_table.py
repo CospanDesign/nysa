@@ -52,6 +52,19 @@ class IndexSignalLeafNode(LeafNode):
             #print "Get column 3"
             return self.direction
 
+
+    def asRecord(self):
+        record = []
+        branch = self.parent.parent
+        while branch is not None:
+            record.insert(0, branch.toString())
+            branch = branch.parent
+        assert record and not record[0]
+        record = record[1:]
+        return record + self.fields
+
+
+
 class SignalLeafNode(LeafNode):
 
     def __init__(self, signal_name, signal_range, direction, parent = None):
@@ -108,6 +121,29 @@ class SignalLeafNode(LeafNode):
             return self.direction
 
 
+    def orderKey(self):
+        if self.has_range():
+            out_string = u""
+            out_string += self.signal_name
+            out_string += "\t[%d:%d]" % (max(self.signal_range), min(self.signal_range))
+            out_string += "\t%s" % self.direction
+            return out_string.lower()
+        return u"\t".join(self.fields).lower()
+
+
+    def toString(self, separator="\t"):
+        if self.has_range():
+            out_string = ""
+            out_string += self.signal_name
+            out_string += "%s[%d:%d]" % (separator, max(self.signal_range), min(self.signal_range))
+            out_string += "%s%s" % (separator, self.direction)
+            return out_string
+
+        return separator.join(self.fields)
+
+
+
+
 class ModuleBranchNode(BranchNode):
     def __init__(self, color, name, parent=None):
         super(ModuleBranchNode, self).__init__(name, parent)
@@ -150,7 +186,7 @@ class RootBranchNode(BranchNode):
 
 class SignalTreeTableModel(QAbstractItemModel):
 
-    def __init__(self, parent=None):
+    def __init__(self, controller, parent=None):
         super(SignalTreeTableModel, self).__init__(parent)
         self.columns = 0
         #Empty Branch Node is the root
@@ -158,6 +194,22 @@ class SignalTreeTableModel(QAbstractItemModel):
         self.headers = ["Module", "Port", "index", "Direction"]
         self.nesting = 2
         self.columns = len(self.headers)
+        self.controller = controller
+
+    def flags(self, index):
+        node = self.nodeFromIndex(index)
+        if isinstance (node, ModuleBranchNode):
+            return Qt.ItemIsEnabled
+        if isinstance (node, BranchNode):
+            return Qt.ItemIsEnabled
+        if isinstance(node, SignalLeafNode):
+            if node.has_range():
+                return Qt.NoItemFlags
+
+        if self.controller.item_is_enabled(node.asRecord()):
+            return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+        else:
+            return Qt.NoItemFlags
 
     def addRecord(self, color, module_name, signal_name, signal_range, direction, callReset=True):
         #print "TT: add record"

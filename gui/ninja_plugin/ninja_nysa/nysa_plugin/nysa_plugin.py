@@ -200,16 +200,17 @@ class NysaPlugin(plugin.Plugin):
         constraintEditor = ConstraintEditor(parent=tab_manager,
                                             actions=None,
                                             output=self.output,
+                                            controller=self,
                                             project_name = "Demo")
         constraintEditor.initialize_view()
         tab_manager.add_tab(constraintEditor, self.tr("Constraint Editor"))
 
 
         #Add signals
-        constraintEditor.add_signal("blue", "Module1", "Port1", (0), "input")
+        constraintEditor.add_signal("blue", "Module1", "Port1", None, "input")
         constraintEditor.add_signal("blue", "Module1", "Port2", (0,1), "output")
         constraintEditor.add_signal("yellow", "Module2", "Port1", (3, 0), "output")
-        constraintEditor.add_signal("yellow", "Module2", "Port2", (0), "input")
+        constraintEditor.add_signal("yellow", "Module2", "Port2", None, "input")
 
         #Remove Signals
         #constraintEditor.remove_signal("Module2", "Port1")
@@ -231,6 +232,10 @@ class NysaPlugin(plugin.Plugin):
 
         #Remove Connections
         constraintEditor.remove_connection("ModuleA", "PortB")
+
+    def item_is_enabled(self, path):
+        print "Path: %s" % path
+        return True
 
 
 

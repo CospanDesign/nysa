@@ -23,7 +23,11 @@
 
 '''
 Log
-  6/24/2013: Initial commit
+  6/24/2013:
+    -Initial commit
+  6/30/2013:
+    -Added Icons
+    -Changed view from table to tree view
 '''
 
 import os
@@ -43,7 +47,7 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
 
     output = None
 
-    def __init__(self, parent, actions, output, project_name):
+    def __init__(self, parent, actions, output, controller, project_name):
         QWidget.__init__(self, parent)
         itab_item.ITabItem.__init__(self)
 
@@ -51,6 +55,7 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
         self.ID = project_name + "_constraints"
         self.lang = "Constraint Editor"
         self.output = output
+        self.controller = controller
         self.connect_callback = None
         self.disconnect_callback = None
 
@@ -115,7 +120,7 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
 
     def create_signal_table(self):
         #Setup the Signal Table
-        self.signal_table = SignalTable()
+        self.signal_table = SignalTable(self.controller)
 
     def create_pin_table(self):
         self.pin_table = QTableView()
@@ -372,12 +377,12 @@ class ConstraintModel(QAbstractTableModel):
 
 class SignalTable(QTreeView):
 
-    def __init__(self, parent=None):
+    def __init__(self, controller, parent=None):
         super(SignalTable, self).__init__(parent)
         self.setSelectionBehavior(QAbstractItemView.SelectRows |
                                   QAbstractItemView.SingleSelection)
         self.setUniformRowHeights(True)
-        self.m = SignalTreeTableModel(self)
+        self.m = SignalTreeTableModel(controller, self)
         #A tree of two depth to allow users to select isolate modules
         self.setModel(self.m)
         self.connect(self, SIGNAL("activated(QModelIndex)"), self.activated)
