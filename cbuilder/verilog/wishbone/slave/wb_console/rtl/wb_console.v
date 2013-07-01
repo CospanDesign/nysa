@@ -4,21 +4,21 @@ Distributed under the MIT license.
 Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all 
+The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
@@ -46,7 +46,7 @@ SOFTWARE.
 
 */
 
-`define CONTROL_ENABLE          0 
+`define CONTROL_ENABLE          0
 `define CONTROL_ENABLE_TIMEOUT  1
 
 module wb_console (
@@ -159,11 +159,11 @@ always @ (posedge clk) begin
 			//master is requesting somethign
 			if (i_wbs_we) begin
 				//write request
-				case (i_wbs_adr) 
+				case (i_wbs_adr)
 					ADDR_CONTROL: begin
 						//writing something to address 0
 						//do something
-	
+
 						//NOTE THE FOLLOWING LINE IS AN EXAMPLE
 						//	THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
             control   <=  i_wbs_dat;
@@ -172,7 +172,7 @@ always @ (posedge clk) begin
 					ADDR_TIMEOUT: begin
 						//writing something to address 1
 						//do something
-	
+
 						//NOTE THE FOLLOWING LINE IS AN EXAMPLE
 						//	THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
 						$display("user wrote %h", i_wbs_dat);
@@ -181,7 +181,7 @@ always @ (posedge clk) begin
 					ADDR_UPDATE_RATE: begin
 						//writing something to address 3
 						//do something
-	
+
 						//NOTE THE FOLLOWING LINE IS AN EXAMPLE
 						//	THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
 						$display("user wrote %h", i_wbs_dat);
@@ -192,7 +192,7 @@ always @ (posedge clk) begin
 				endcase
 			end
 
-			else begin 
+			else begin
 				//read request
 				case (i_wbs_adr)
 					ADDR_CONTROL: begin
@@ -249,7 +249,7 @@ always @ (posedge clk) begin
 			o_fb_sel  <= 4'b1111;
 			o_fb_we	  <= 1;
 			o_fb_adr  <= 0;
-			o_fb_dat  <= 32'h1234567;  
+			o_fb_dat  <= 32'h1234567;
 		end
 	end
 end

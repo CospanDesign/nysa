@@ -74,7 +74,7 @@ module wb_logic_analyzer(
 
   //uart interface
   input                                 i_la_uart_rx,
-  output                                i_la_uart_tx
+  output                                o_la_uart_tx
 
 
 );

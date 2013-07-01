@@ -4,21 +4,21 @@ Distributed under the MIT license.
 Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all 
+The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
@@ -47,85 +47,55 @@ SOFTWARE.
 `include "i2s_defines.v"
 `timescale 1 ns/1 ps
 
-module wb_i2s (
-  clk,
-  rst,
-
-  //Add signals to control your device here
-
-  wbs_we_i,
-  wbs_cyc_i,
-  wbs_sel_i,
-  wbs_dat_i,
-  wbs_stb_i,
-  wbs_ack_o,
-  wbs_dat_o,
-  wbs_adr_i,
-  wbs_int_o,
-
-  mem_we_o,
-  mem_stb_o,
-  mem_cyc_o,
-  mem_sel_o,
-  mem_adr_o,
-  mem_dat_o,
-  mem_dat_i,
-  mem_ack_i,
-  mem_int_i,
-
-  writer_starved,
-
-  phy_mclock,
-  phy_clock,
-  phy_data,
-  phy_lr
-);
-
 `define DEFAULT_CLOCK_DIVISOR (`CLOCK_RATE / (`AUDIO_RATE * `AUDIO_BITS * `AUDIO_CHANNELS)) / 2
 
-input         clk;
-input         rst;
+module wb_i2s (
+  
+  input               clk,
+  input               rst,
+  
+  //wishbone slave signals
+  input               i_wbs_we,
+  input               i_wbs_stb,
+  input               i_wbs_cyc,
+  input       [3:0]   i_wbs_sel,
+  input       [31:0]  i_wbs_adr,
+  input       [31:0]  i_wbs_dat,
+  output reg  [31:0]  o_wbs_dat,
+  output reg          o_wbs_ack,
+  output reg          o_wbs_int,
+  
+  //master control signal for memory arbitration
+  output reg          o_mem_we,
+  output reg          o_mem_stb,
+  output reg          o_mem_cyc,
+  output reg  [3:0]   o_mem_sel,
+  output reg  [31:0]  o_mem_adr,
+  output reg  [31:0]  o_mem_dat,
+  input       [31:0]  i_mem_dat,
+  input               i_mem_ack,
+  input               i_mem_int,
+  
+  //status
+  output              writer_starved,
+  
+  //i2s signals
+  output              phy_mclock,
+  output              phy_clock,
+  output              phy_data,
+  output              phy_lr
 
-//wishbone slave signals
-input               wbs_we_i;
-input               wbs_stb_i;
-input               wbs_cyc_i;
-input       [3:0]   wbs_sel_i;
-input       [31:0]  wbs_adr_i;
-input       [31:0]  wbs_dat_i;
-output reg  [31:0]  wbs_dat_o;
-output reg          wbs_ack_o;
-output reg          wbs_int_o;
-
-//master control signal for memory arbitration
-output reg          mem_we_o;
-output reg          mem_stb_o;
-output reg          mem_cyc_o;
-output reg  [3:0]   mem_sel_o;
-output reg  [31:0]  mem_adr_o;
-output reg  [31:0]  mem_dat_o;
-input       [31:0]  mem_dat_i;
-input               mem_ack_i;
-input               mem_int_i;
-
-//status
-output              writer_starved;
-
-//i2s signals
-output              phy_mclock;
-output              phy_clock;
-output              phy_data;
-output              phy_lr;
+);
 
 
-parameter           REG_CONTROL       = 32'h00000000;
-parameter           REG_STATUS        = 32'h00000001;
-parameter           REG_CLOCK_RATE    = 32'h00000002;
-parameter           REG_CLOCK_DIVIDER = 32'h00000003;
-parameter           REG_MEM_0_BASE    = 32'h00000004;
-parameter           REG_MEM_0_SIZE    = 32'h00000005;
-parameter           REG_MEM_1_BASE    = 32'h00000006;
-parameter           REG_MEM_1_SIZE    = 32'h00000007;
+localparam           REG_CONTROL       = 32'h00000000;
+localparam           REG_STATUS        = 32'h00000001;
+localparam           REG_CLOCK_RATE    = 32'h00000002;
+localparam           REG_CLOCK_DIVIDER = 32'h00000003;
+localparam           REG_MEM_0_BASE    = 32'h00000004;
+localparam           REG_MEM_0_SIZE    = 32'h00000005;
+localparam           REG_MEM_1_BASE    = 32'h00000006;
+localparam           REG_MEM_1_SIZE    = 32'h00000007;
 
 
 //Reg/Wire
@@ -184,7 +154,7 @@ wire                enable_interrupt;
 wire                post_fifo_wave_en;
 wire                pre_fifo_wave_en;
 
-//status  
+//status
 wire                memory_0_empty;
 wire                memory_1_empty;
 
@@ -217,7 +187,7 @@ i2s_controller controller (
 
 
 //Asynchronous Logic
-//assign        memory_data           = mem_dat_i;
+//assign        memory_data           = i_mem_dat;
 
 assign        enable                = control[`CONTROL_ENABLE];
 assign        enable_interrupt      = control[`CONTROL_ENABLE_INTERRUPT];
@@ -232,7 +202,7 @@ assign        status[`STATUS_MEMORY_1_EMPTY]  = memory_1_empty;
 assign        status[31:2]          = 0;
 
 assign        request_data_pos_edge = request_data && ~prev_request_data;
-assign        mem_ack_pos_edge      = mem_ack_i && ~prev_mem_ack;
+assign        mem_ack_pos_edge      = i_mem_ack && ~prev_mem_ack;
 
 assign        memory_count[0]       = memory_0_size - memory_pointer[0];
 assign        memory_count[1]       = memory_1_size - memory_pointer[1];
@@ -250,8 +220,8 @@ assign        memory_1_base         = memory_base[1];
 //blocks
 always @ (posedge clk) begin
   if (rst) begin
-    wbs_dat_o       <=  32'h0;
-    wbs_ack_o       <=  0;
+    o_wbs_dat       <=  32'h0;
+    o_wbs_ack       <=  0;
     timeout_enable  <=  0;
     timeout_value   <=  `DEFAULT_MEMORY_TIMEOUT;
 
@@ -276,36 +246,36 @@ always @ (posedge clk) begin
 
 
     //when the master acks our ack, then put our ack down
-    if (wbs_ack_o & ~ wbs_stb_i)begin
-      wbs_ack_o <= 0;
+    if (o_wbs_ack & ~ i_wbs_stb)begin
+      o_wbs_ack <= 0;
     end
 
-    if (wbs_stb_i & wbs_cyc_i) begin
+    if (i_wbs_stb & i_wbs_cyc) begin
       //master is requesting somethign
-      if (wbs_we_i) begin
+      if (i_wbs_we) begin
         //write request
-        case (wbs_adr_i) 
+        case (i_wbs_adr)
           REG_CONTROL: begin
-            control           <=  wbs_dat_i;
+            control           <=  i_wbs_dat;
           end
           REG_CLOCK_DIVIDER: begin
-            clock_divider     <=  wbs_dat_i;
+            clock_divider     <=  i_wbs_dat;
           end
           REG_MEM_0_BASE: begin
-            memory_base[0]    <=  wbs_dat_i;
+            memory_base[0]    <=  i_wbs_dat;
           end
           REG_MEM_0_SIZE: begin
-            memory_0_size     <=  wbs_dat_i;
-            if (wbs_dat_i > 0) begin
+            memory_0_size     <=  i_wbs_dat;
+            if (i_wbs_dat > 0) begin
               memory_0_new_data <=  1;
             end
           end
           REG_MEM_1_BASE: begin
-            memory_base[1]    <=  wbs_dat_i;
+            memory_base[1]    <=  i_wbs_dat;
           end
           REG_MEM_1_SIZE: begin
-            memory_1_size     <=  wbs_dat_i;
-            if (wbs_dat_i > 0) begin
+            memory_1_size     <=  i_wbs_dat;
+            if (i_wbs_dat > 0) begin
               memory_1_new_data <=  1;
             end
           end
@@ -314,40 +284,40 @@ always @ (posedge clk) begin
         endcase
       end
 
-      else begin 
+      else begin
         //read request
-        case (wbs_adr_i)
+        case (i_wbs_adr)
           REG_CONTROL: begin
-            wbs_dat_o <= control;
+            o_wbs_dat <= control;
           end
           REG_STATUS: begin
-            wbs_dat_o <= status;
+            o_wbs_dat <= status;
           end
           REG_CLOCK_RATE: begin
-            wbs_dat_o <= `CLOCK_RATE;
+            o_wbs_dat <= `CLOCK_RATE;
           end
           REG_CLOCK_DIVIDER: begin
-            wbs_dat_o <=  clock_divider;
+            o_wbs_dat <=  clock_divider;
           end
           REG_MEM_0_BASE: begin
-            wbs_dat_o <=  memory_0_base;
+            o_wbs_dat <=  memory_0_base;
           end
           REG_MEM_0_SIZE: begin
-            wbs_dat_o <=  memory_0_count;
+            o_wbs_dat <=  memory_0_count;
           end
           REG_MEM_1_BASE: begin
-            wbs_dat_o <=  memory_1_base;
+            o_wbs_dat <=  memory_1_base;
           end
           REG_MEM_1_SIZE: begin
-            wbs_dat_o <=  memory_1_count;
+            o_wbs_dat <=  memory_1_count;
           end
           //add as many ADDR_X you need here
           default: begin
-            wbs_dat_o <=  32'h00;
+            o_wbs_dat <=  32'h00;
           end
         endcase
       end
-      wbs_ack_o <= 1;
+      o_wbs_ack <= 1;
     end
   end
 end
@@ -360,7 +330,7 @@ always @ (posedge clk) begin
   end
   else begin
     prev_request_data   <=  request_data;
-    prev_mem_ack        <=  mem_ack_i;
+    prev_mem_ack        <=  i_mem_ack;
   end
 end
 
@@ -368,12 +338,12 @@ end
 //wishbone master module
 always @ (posedge clk) begin
   if (rst) begin
-    mem_we_o            <=  0;
-    mem_stb_o           <=  0;
-    mem_cyc_o           <=  0;
-    mem_sel_o           <=  4'h0;
-    mem_adr_o           <=  32'h00000000;
-    mem_dat_o           <=  32'h00000000;
+    o_mem_we            <=  0;
+    o_mem_stb           <=  0;
+    o_mem_cyc           <=  0;
+    o_mem_sel           <=  4'h0;
+    o_mem_adr           <=  32'h00000000;
+    o_mem_dat           <=  32'h00000000;
 
     //strobe for the i2s memory controller
     memory_data_strobe  <=  0;
@@ -420,36 +390,36 @@ always @ (posedge clk) begin
     if (mem_ack_pos_edge) begin
       $display ("got an ack!");
       if (request_count == 1) begin
-        mem_cyc_o                   <=  0;
+        o_mem_cyc                   <=  0;
       end
-      memory_data                   <=  mem_dat_i;
+      memory_data                   <=  i_mem_dat;
       enable_strobe                 <=  1;
       request_count                 <=  request_count - 1;
       memory_pointer[active_block]  <=  memory_pointer[active_block] + 4;
-      mem_stb_o                       <=  0;
+      o_mem_stb                       <=  0;
     end
     if (memory_ready) begin
-      if ((request_count > 0) && (memory_count[active_block] > 0) && ~mem_stb_o && ~mem_ack_i) begin
+      if ((request_count > 0) && (memory_count[active_block] > 0) && ~o_mem_stb && ~i_mem_ack) begin
         //need to request data from the memory
         $display("get some data from the memory");
-        mem_cyc_o                     <=  1;
-        mem_stb_o                     <=  1;
-        mem_sel_o                     <=  4'b1111;
-        mem_we_o                      <=  0;
-        mem_dat_o                     <=  0;  
-        mem_adr_o                     <=  memory_base[active_block] + memory_pointer[active_block];
+        o_mem_cyc                     <=  1;
+        o_mem_stb                     <=  1;
+        o_mem_sel                     <=  4'b1111;
+        o_mem_we                      <=  0;
+        o_mem_dat                     <=  0;
+        o_mem_adr                     <=  memory_base[active_block] + memory_pointer[active_block];
       end
     end
     else begin
       //the memory is not ready
-      mem_stb_o                       <=  0;
-      mem_cyc_o                       <=  0;
+      o_mem_stb                       <=  0;
+      o_mem_cyc                       <=  0;
     end
 /*
     if (request_count == 0) begin
       //finished filling up the internal buffer
-      mem_stb_o                       <=  0;
-      mem_cyc_o                       <=  0;
+      o_mem_stb                       <=  0;
+      o_mem_cyc                       <=  0;
     end
 */
   end
@@ -490,24 +460,24 @@ end
 //initerrupt controller
 always @ (posedge clk) begin
   if (rst) begin
-    wbs_int_o <=  0;
+    o_wbs_int <=  0;
   end
   else if (enable) begin
     if (!memory_0_empty && !memory_1_empty) begin
-      wbs_int_o <=  0;
+      o_wbs_int <=  0;
     end
-    if (wbs_stb_i) begin
+    if (i_wbs_stb) begin
       //de-assert the interrupt on wbs transactions so I can launch another
       //interrupt when the wbs is de-asserted
-      wbs_int_o <=  0;
+      o_wbs_int <=  0;
     end
     else if (memory_0_empty || memory_1_empty) begin
-      wbs_int_o <=  1;
+      o_wbs_int <=  1;
     end
   end
   else begin
     //if we're not enable de-assert interrupt
-    wbs_int_o <=  0;
+    o_wbs_int <=  0;
   end
 end
 
