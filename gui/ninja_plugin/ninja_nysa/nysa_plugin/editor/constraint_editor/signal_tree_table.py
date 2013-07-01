@@ -59,7 +59,7 @@ class IndexSignalLeafNode(LeafNode):
         while branch is not None:
             if isinstance(branch, ModuleBranchNode):
                 record.insert(0, branch.toString())
-                record.insert(0, str(branch.color))
+                #record.insert(0, str(branch.color))
             branch = branch.parent
         return record + self.fields
 
@@ -147,7 +147,7 @@ class SignalLeafNode(LeafNode):
         while branch is not None:
             if isinstance(branch, ModuleBranchNode):
                 record.insert(0, branch.toString())
-                record.insert(0, str(branch.color))
+                #record.insert(0, str(branch.color))
             branch = branch.parent
         return record + self.fields
 
