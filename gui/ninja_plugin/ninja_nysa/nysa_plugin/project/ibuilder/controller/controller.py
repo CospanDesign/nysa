@@ -28,6 +28,7 @@ Log
 
 import os
 import sys
+import copy
 
 
 from PyQt4.QtCore import *
@@ -322,38 +323,63 @@ class Controller (QObject):
 
             print "Get bindings for host_interface"
             hib = self.model.get_host_interface_bindings()
-            for key in hib:
-                self.constraint_editor.add_connection("Host Interface",
-                                                      key,
-                                                      hib[key]["direction"],
-                                                      hib[key]["pin"])
-
             hip = self.model.get_host_interface_ports()
-            hports = {}
-            hib_keys = hib.keys()
-            hip_keys = hip.keys()
-            for key in hip_keys:
-                if key in no_detect_ports:
-                    continue
-                if key not in hib_keys:
-                    hports[key] = hip[key]
+            signals = copy.deepcopy(hip.keys())
+            for s in hip.keys():
+                if s in no_detect_ports:
+                    signals.remove(s)
 
-            print "Hports: %s" % str(hports)
-            for signal in hports:
+            ex_bindings = cu.expand_user_constraints(hib)
+            bound_count = 0
+            for key in ex_bindings:
+                if not ex_bindings[key]["range"]:
+                    self.constraint_editor.add_connection("Host Interface",
+                                                          key,
+                                                          ex_bindings[key]["direction"],
+                                                          ex_bindings[key]["pin"])
+                else:
+                    indexes = copy.deepcopy(ex_bindings[key].keys())
+                    indexes.remove("range")
+                    bound_count = 0
+                    for i in indexes:
+                        bound_count += 1
+                        n = "%s[%d]" % (key, i)
+                        self.constraint_editor.add_connection("Host Interface",
+                                                              n,
+                                                              ex_bindings[key][i]["direction"],
+                                                              ex_bindings[key][i]["pin"])
 
-                if hports[signal]["size"] > 1:
-                    rng = (hports[signal]["max_val"], hports[signal]["min_val"])
+                #Remove signals from ports list
+                if key in signals:
+                    if not ex_bindings[key]["range"]:
+                        print "remove an item that has only no range: %s" % key
+                        signals.remove(key)
+                    else:
+                        print "Signal: %s" % key
+                        print "Checking if bound count: %d == %d" % (bound_count, ports[key]["size"])
+                        if bound_count == ports[key]["size"]:
+                            print "All of the items in the bus are constrained"
+                            signals.remove[key]
+                else:
+                    print "%s is not a port of %s" % (key, name)
+
+
+            print "Hports keys: %s" % str(signals)
+            for signal in signals:
+
+                if hip[signal]["size"] > 1:
+                    rng = (hip[signal]["max_val"], hip[signal]["min_val"])
                     self.constraint_editor.add_signal(HI_COLOR,
                                                       "Host Interface",
                                                       signal,
                                                       rng,
-                                                      hports[signal]["direction"])
+                                                      hip[signal]["direction"])
                 else:
                     self.constraint_editor.add_signal(HI_COLOR,
                                                       "Host Interface",
                                                       signal,
                                                       None,
-                                                      hports[signal]["direction"])
+                                                      hip[signal]["direction"])
 
 
         if name is None or name != "Host Interface":
