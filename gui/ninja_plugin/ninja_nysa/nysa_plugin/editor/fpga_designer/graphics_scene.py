@@ -252,3 +252,7 @@ class GraphicsScene(QGraphicsScene):
         bus_type = slave.bus.get_bus_type()
         self.fd.remove_slave(bus_type, index)
 
+    def constraint_item_selected(self, module_name=None):
+        if self.dbg: print "GS: constraint item clicked"
+        self.fd.show_constraint_editor(module_name)
+

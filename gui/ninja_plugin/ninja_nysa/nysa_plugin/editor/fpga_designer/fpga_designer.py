@@ -101,11 +101,12 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
 #class FPGADesigner(Editor):
     output = None
 
-    def __init__(self, actions, filename, project, parent=None, output=None):
+    def __init__(self, actions, commands, filename, project, parent=None, output=None):
         QWidget.__init__(self, parent)
         itab_item.ITabItem.__init__(self)
         #super(FPGADesigner, self).__init__(filename, project, project_obj=None)
 
+        self.commands = commands
         self.actions = actions
         self.ID = filename
         self.lang = "fpga designer"
@@ -357,4 +358,7 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
     def remove_slave(self, bus, index):
         self.output.Debug(self, "Removing slave from bus")
         self.vc.remove_slave(bus, index)
+
+    def show_constraint_editor(self, module_name):
+        self.commands["constraint_editor"](self.vc, module_name)
 
