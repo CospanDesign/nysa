@@ -95,13 +95,8 @@ class WishboneModelTest (unittest.TestCase):
         self.assertEqual(self.c.board_dict["board_name"], self.BOARD_CONFIG["board_name"])
 
     def test_start_with_board_name(self):
-
         self.c = wishbone_model.WishboneModel(board_name="xilinx-s3esk")
-
         self.assertEqual(self.c.board_dict["board_name"], self.BOARD_CONFIG["board_name"])
-
-
-
     
     def test_load_config_file(self):
         """Loads the config file and compares it to EXAMPLE_CONFIG"""
