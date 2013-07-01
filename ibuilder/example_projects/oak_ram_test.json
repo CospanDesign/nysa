@@ -20,43 +20,43 @@
 		"mem1":{
 			"filename":"wb_sdram.v",
 			"bind": {
-				"sdram_clk":{
+				"o_sdram_clk":{
 					"port":"sdr_clk",
 					"direction":"output"
 				},
-				"sdram_cke":{
+				"o_sdram_cke":{
 					"port":"sdr_cke",
 					"direction":"output"
 				},
-				"sdram_cs_n":{
+				"o_sdram_cs_n":{
 					"port":"sdr_cs_n",
 					"direction":"output"
 				},
-				"sdram_ras_n":{
+				"o_sdram_ras_n":{
 					"port":"sdr_ras_n",
 					"direction":"output"
 				},
-				"sdram_cas_n":{
+				"o_sdram_cas_n":{
 					"port":"sdr_cas_n",
 					"direction":"output"
 				},
-				"sdram_we_n":{
+				"o_sdram_we_n":{
 					"port":"sdr_we_n",
 					"direction":"output"
 				},
-				"sdram_bank[1:0]":{
+				"o_sdram_bank[1:0]":{
 					"port":"sdr_ba[1:0]",
 					"direction":"output"
 				},
-				"sdram_addr[11:0]":{
+				"o_sdram_addr[11:0]":{
 					"port":"sdr_a[11:0]",
 					"direction":"output"
 				},
-				"sdram_data[15:0]":{
+				"io_sdram_data[15:0]":{
 					"port":"sdr_dq[15:0]",
 					"direction":"inout"
 				},
-				"sdram_data_mask[1:0]":{
+				"io_sdram_data_mask[1:0]":{
 					"port":"sdr_dm[1:0]",
 					"direction":"output"
 				}

@@ -16,4 +16,19 @@ echo "Changing UART Interface"
 sed -i 's/\"phy_uart_in/\"i_phy_uart_in/g' *.json
 sed -i 's/\"phy_uart_out/\"o_phy_uart_out/g' *.json
 
+echo "Changing LAX UART interface"
+sed -i 's/\"la_uart_tx/\"o_la_uart_tx/g' *.json
+sed -i 's/\"la_uart_rx/\"i_la_uart_rx/g' *.json
+
+echo "Changing SDRAM interface"
+sed -i 's/\"sdram_clk/\"o_sdram_clk/g' *.json
+sed -i 's/\"sdram_cke/\"o_sdram_cke/g' *.json
+sed -i 's/\"sdram_cs_n/\"o_sdram_cs_n/g' *.json
+sed -i 's/\"sdram_ras/\"o_sdram_ras/g' *.json
+sed -i 's/\"sdram_cas/\"o_sdram_cas/g' *.json
+sed -i 's/\"sdram_we/\"o_sdram_we/g' *.json
+sed -i 's/\"sdram_bank/\"o_sdram_bank/g' *.json
+sed -i 's/\"sdram_addr/\"o_sdram_addr/g' *.json
+sed -i 's/\"sdram_data/\"io_sdram_data/g' *.json
+sed -i 's/\"sdram_data_mask/\"o_sdram_data_mask/g' *.json
 

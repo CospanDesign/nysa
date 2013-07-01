@@ -85,47 +85,47 @@
 			"filename":"wb_sdram.v",
 			"bind":{
 	
-				"sdram_clk":{
-					"port":"sdram_clk",
+				"o_sdram_clk":{
+					"port":"o_sdram_clk",
 					"direction":"output"
 				},
-				"sdram_cke":{
+				"o_sdram_cke":{
 					"port":"cke",
 					"direction":"output"
 				},
-				"sdram_cs_n":{
+				"o_sdram_cs_n":{
 					"port":"cs_n",
 					"direction":"output"
 				},
-				"sdram_ras":{
+				"o_sdram_ras":{
 					"port":"ras",
 					"direction":"output"
 				},
-				"sdram_cas":{
+				"o_sdram_cas":{
 					"port":"cas",
 					"direction":"output"
 				},
-				"sdram_we":{
+				"o_sdram_we":{
 					"port":"we",
 					"direction":"output"
 				},
-				"sdram_bank[1:0]":{
+				"o_sdram_bank[1:0]":{
 					"port":"ba[1:0]",
 					"direction":"output"
 				},
-				"sdram_addr[11:0]":{
+				"o_sdram_addr[11:0]":{
 					"port":"a[11:0]",
 					"direction":"output"
 				},
-				"sdram_data[15:0]":{
+				"io_sdram_data[15:0]":{
 					"port":"dq[15:0]",
 					"direction":"inout"
 				},
-				"sdram_data_mask[1]":{
+				"io_sdram_data_mask[1]":{
 					"port":"dqmh",
 					"direction":"output"
 				},
-				"sdram_data_mask[0]":{
+				"io_sdram_data_mask[0]":{
 					"port":"dqml",
 					"direction":"output"
 				}
