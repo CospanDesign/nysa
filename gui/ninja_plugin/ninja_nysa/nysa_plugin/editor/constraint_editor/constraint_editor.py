@@ -67,9 +67,7 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
         #self.show()
 
     def clear_all(self):
-        row_count = self.signal_model.rowCount()
-        for i in range(row_count):
-            self.signal_model.removeRow(0)
+        self.signal_table.clear()
 
         row_count = self.pin_model.rowCount()
         for i in range(row_count):
@@ -400,6 +398,8 @@ class SignalTable(QTreeView):
         print "Actived: %d, %d" % (index.row(), index.column())
         self.emit(SIGNAL("activated"), self.model().asRecord(index))
 
+    def clear(self):
+        self.m.clear()
 
     def selectionChanged(self, a, b):
         print "Selection Changed"

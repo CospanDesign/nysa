@@ -338,9 +338,11 @@ class SignalTreeTableModel(QAbstractItemModel):
         assert row != -1
         return self.createIndex(row, 0, parent)
 
-
     def nodeFromIndex(self, index):
         return index.internalPointer() \
             if index.isValid() else self.root
 
+    def clear(self):
+        self.root = BranchNode("")
+        self.reset()
 
