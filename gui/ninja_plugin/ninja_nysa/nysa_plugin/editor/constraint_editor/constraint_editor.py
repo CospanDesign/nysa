@@ -42,6 +42,7 @@ from ninja_ide.gui.main_panel import itab_item
 from ninja_ide.gui.editor.editor import Editor
 
 from signal_tree_table import SignalTreeTableModel
+from constraint_tree_table import ConstraintTreeTableModel
 
 class ConstraintEditor (QWidget, itab_item.ITabItem):
 
@@ -142,27 +143,28 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
         hh.setStretchLastSection(True)
 
     def create_connection_table(self):
-        header = ["Module", "Port", "Direction", "Pin Name", "Disconnect"]
-        self.connection_table = ConnectionTable()
-        self.connection_table.set_delete_callback(self.notify_connection_delete)
-        self.connection_table.setColumnCount(len(header))
-        self.connection_table.setHorizontalHeaderLabels(header)
+        self.connection_table = ConnectionTable(self.controller)
+        #header = ["Module", "Port", "Direction", "Pin Name", "Disconnect"]
+        #self.connection_table = ConnectionTable()
+        #self.connection_table.set_delete_callback(self.notify_connection_delete)
+        #self.connection_table.setColumnCount(len(header))
+        #self.connection_table.setHorizontalHeaderLabels(header)
         #self.connection_table.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         #self.connection_model = ConnectionModel([[]], header_data = header, parent = self)
         #self.connection_table.setModel(self.connection_model)
 
         #Show the grids
-        self.connection_table.setShowGrid(True)
+        #self.connection_table.setShowGrid(True)
 
         #Vertical tab settings
-        vh = self.connection_table.verticalHeader()
-        vh.setVisible(True)
+        #vh = self.connection_table.verticalHeader()
+        #vh.setVisible(True)
 
         #Set horizontal header properties
-        hh = self.pin_table.horizontalHeader()
-        hh = self.connection_table.horizontalHeader()
-        hh.setStretchLastSection(True)
+        #hh = self.pin_table.horizontalHeader()
+        #hh = self.connection_table.horizontalHeader()
+        #hh.setStretchLastSection(True)
 
     def add_signal(self, color, module_name, name, signal_range, direction):
         print "Adding Signal"
@@ -200,21 +202,23 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
             if success:
                 self.output.Debug(self, "Removed Signal")
             
-    def add_connection(self, module_name, port, direction, pin_name):
-        pos = self.connection_table.rowCount()
-        self.output.Debug(self, "Adding Connection")
+    def add_connection(self, color, module_name, port, direction, pin_name, index = None):
+        #pos = self.connection_table.rowCount()
+        #self.output.Debug(self, "Adding Connection")
 
-        self.connection_table.insertRow(pos)
-        self.connection_table.set_row_data(pos, [module_name, port, direction, pin_name])
+        #self.connection_table.insertRow(pos)
+        #self.connection_table.set_row_data(pos, [module_name, port, direction, pin_name])
+        self.connection_table.add_connection(color, module_name, port, index, direction, pin_name)
 
-    def remove_connection(self, module_name, port):
-        pos = self.connection_table.find_pos(module_name, port)
+    def remove_connection(self, module_name, port, index):
+        #pos = self.connection_table.find_pos(module_name, port)
 
-        if pos != -1:
-            self.output.Debug(self, "Connection Table: Remove Position: %d" % pos)
-            success = self.connection_table.removeRow(pos)
-            if success:
-                self.output.Debug(self, "Removed Signal")
+        #if pos != -1:
+        #    self.output.Debug(self, "Connection Table: Remove Position: %d" % pos)
+        #    success = self.connection_table.removeRow(pos)
+        #    if success:
+        #        self.output.Debug(self, "Removed Signal")
+        self.connetion_table.remove_connection(module_name, port, index)
 
     def set_controller(self, controller):
         self.controller = controller
@@ -259,9 +263,9 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
                
 
 
-class ConnectionTable(QTableWidget):
+class ConnectionTableBack(QTableWidget):
     def __init__(self, parent = None):
-        super(ConnectionTable, self).__init__(parent)
+        super(ConnectionTableBack, self).__init__(parent)
         self.delete_callback = None
 
     def set_delete_callback(self, callback):
@@ -404,3 +408,33 @@ class SignalTable(QTreeView):
     def selectionChanged(self, a, b):
         print "Selection Changed"
         super (SignalTable, self).selectionChanged(a, b)
+
+
+class ConnectionTable(QTreeView):
+    def __init__(self, controller, parent = None):
+        super(ConnectionTable, self).__init__(parent)
+        self.setSelectionBehavior(QAbstractItemView.SelectRows |
+                                  QAbstractItemView.SingleSelection)
+        self.setUniformRowHeights(True)
+        self.m = ConstraintTreeTableModel(controller, self)
+        self.setModel(self.m)
+        self.connect(self, SIGNAL("activated(QModelIndex)"), self.activated)
+
+    def add_connection(self, color, module_name, name, index, direction, constraint_name):
+        return self.m.addRecord(color, module_name, name, index, direction, constraint_name)
+
+    def remove_connection(self, module_name, name, index = None):
+        print "Impliment me!!"
+
+    def activated(self, index):
+        print "Actived: %d, %d" % (index.row(), index.column())
+        self.emit(SIGNAL("activated"), self.model().asRecord(index))
+
+    def clear(self):
+        self.m.clear()
+
+    def selectionChanged(self, a, b):
+        print "Constraint Table Selection Changed"
+        super(ConnectionTable, self).selectionChanged(a, b)
+
+

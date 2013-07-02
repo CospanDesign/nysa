@@ -93,6 +93,7 @@ class ConstraintLeafNodeRange(LeafNode):
             i = 0
             if len(self.children) == 0:
                 #found an existing child
+                self.children.append(c)
             else:
                 #Create a new child and put them into the children
                 pos = 0
@@ -113,7 +114,7 @@ class ConstraintLeafNodeRange(LeafNode):
 
         else:
             old_constraint = c.get_constraint_name()
-            c.set_constraint_name(constraint_name):
+            c.set_constraint_name(constraint_name)
 
         return old_constraint
 
@@ -318,7 +319,7 @@ class ConstraintTreeTableModel(QAbstractItemModel):
         if isinstance(leaf, IndexConstraintLeafNode): 
             return leaf.asRecord
 
-    def addRecord(self, color, module_name, signal_name, signal_index = None, direction, constraint_name, callReset=True):
+    def addRecord(self, color, module_name, signal_name, signal_index, direction, constraint_name, callReset=True):
         old_constraint = None
         if signal_index is None:
             #Add a node that has no range
@@ -350,7 +351,7 @@ class ConstraintTreeTableModel(QAbstractItemModel):
 
             module_branch.insert_child(sl)
         else:
-            if signal_index is None
+            if signal_index is None:
                 old_constraint = sl.get_constraint()
                 sl.set_constraint(constraint_name)
             else:
@@ -368,7 +369,7 @@ class ConstraintTreeTableModel(QAbstractItemModel):
         if isinstance(node, RootBranch):
             return len(node)
         if isinstance(node, ModuleBranch):
-            return len(node):
+            return len(node)
         if isinstance(node, ConstraintLeafNodeNoRange):
             return 0
         if isinstance(node, ConstraintLeafNodeRange):
@@ -388,7 +389,7 @@ class ConstraintTreeTableModel(QAbstractItemModel):
             return
 
         node = self.nodeFromIndex(index)
-        asert node is not None
+        assert node is not None
 
         node_value = ""
         if isinstance(node, RootBranch):

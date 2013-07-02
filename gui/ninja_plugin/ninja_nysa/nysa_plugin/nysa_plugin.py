@@ -225,13 +225,33 @@ class NysaPlugin(plugin.Plugin):
 
 
         #Add Connections
-        constraintEditor.add_connection("ModuleB", "PortC", "output", "PIN_NAME_ALSO")
-        constraintEditor.add_connection("ModuleC", "PortC", "output", "PIN_NAME_ALSO")
-        constraintEditor.add_connection("ModuleD", "PortC", "output", "PIN_NAME_ALSO")
-        constraintEditor.add_connection("ModuleA", "PortB", "inout", "PIN_NAME")
+        print "Adding connections"
+        constraintEditor.add_connection(color = "green",
+                                        module_name = "ModuleB", 
+                                        port = "PortC", 
+                                        direction = "output", 
+                                        pin_name = "PIN_NAME_ALSO")
+        constraintEditor.add_connection(color = "blue",
+                                        module_name = "ModuleC", 
+                                        port = "PortC", 
+                                        direction = "output", 
+                                        pin_name = "PIN_NAME_ALSO", 
+                                        index = 0)
+        constraintEditor.add_connection(color = "orange",
+                                        module_name = "ModuleD", 
+                                        port = "PortC", 
+                                        direction = "output", 
+                                        pin_name = "PIN_NAME_ALSO")
+        constraintEditor.add_connection(color = "red",
+                                        module_name = "ModuleA", 
+                                        port = "PortB", 
+                                        direction = "inout", 
+                                        pin_name = "PIN_NAME",
+                                        index = 2)
+        print "Added connections"
 
         #Remove Connections
-        constraintEditor.remove_connection("ModuleA", "PortB")
+        #constraintEditor.remove_connection("ModuleA", "PortB")
 
     def item_is_enabled(self, path):
         print "Path: %s" % path
