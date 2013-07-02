@@ -56,7 +56,7 @@ class IndexSignalLeafNode(LeafNode):
         record = []
         branch = self.parent.parent
         while branch is not None:
-            if isinstance(branch, ModuleBranchNode):
+            if isinstance(branch, ModuleBranch):
                 record.insert(0, branch.toString())
                 #record.insert(0, str(branch.color))
             branch = branch.parent
@@ -144,15 +144,15 @@ class SignalLeafNode(LeafNode):
         record = []
         branch = self.parent
         while branch is not None:
-            if isinstance(branch, ModuleBranchNode):
+            if isinstance(branch, ModuleBranch):
                 record.insert(0, branch.toString())
                 #record.insert(0, str(branch.color))
             branch = branch.parent
         return record + self.fields
 
-class ModuleBranchNode(BranchNode):
+class ModuleBranch(BranchNode):
     def __init__(self, color, name, parent=None):
-        super(ModuleBranchNode, self).__init__(name, parent)
+        super(ModuleBranch, self).__init__(name, parent)
         self.color = color
         self.icon = QIcon(name)
         pm = self.icon.pixmap(22, 15)
@@ -166,9 +166,20 @@ class ModuleBranchNode(BranchNode):
     def get_pixmap(self):
         return self.pm
 
-class RootBranchNode(BranchNode):
+    def remove_signal(self, signal_name):
+        c = None
+        for child in self.children:
+            if child[NODE].signal_name.lower() == signal_name.lower():
+                c = child
+
+        if c is None:
+            print "Didn't find child"
+            return False
+        self.children.remove(c)
+
+class RootBranch(BranchNode):
     def __init__(self, name, parent=None):
-        super(RootBranchNode, self).__init__(name, parent)
+        super(RootBranch, self).__init__(name, parent)
 
     def __len__(self):
         return len(self.children)
@@ -196,7 +207,7 @@ class SignalTreeTableModel(QAbstractItemModel):
         super(SignalTreeTableModel, self).__init__(parent)
         self.columns = 0
         #Empty Branch Node is the root
-        self.root = RootBranchNode("")
+        self.root = RootBranch("")
         self.headers = ["Module", "Port", "index", "Direction"]
         self.nesting = 2
         self.columns = len(self.headers)
@@ -204,7 +215,7 @@ class SignalTreeTableModel(QAbstractItemModel):
 
     def flags(self, index):
         node = self.nodeFromIndex(index)
-        if isinstance (node, ModuleBranchNode):
+        if isinstance (node, ModuleBranch):
             return Qt.ItemIsEnabled
         if isinstance (node, BranchNode):
             return Qt.ItemIsEnabled
@@ -230,7 +241,7 @@ class SignalTreeTableModel(QAbstractItemModel):
         if module_branch is None:
             #print "\tDidn't find it, creating"
             #Need to create this new branch
-            module_branch = ModuleBranchNode(color, module_name)
+            module_branch = ModuleBranch(color, module_name)
             root.insertChild(module_branch)
 
         #Add the signal
@@ -241,6 +252,11 @@ class SignalTreeTableModel(QAbstractItemModel):
             module_branch.insertChild(sl)
         if callReset:
             self.reset()
+
+    def removeRecord(self, module_name, signal_name):
+        module_branch = self.root.childWithKey(module_name.lower())
+        module_branch.remove_signal(signal_name.lower())
+        self.reset()
 
 
     def asRecord(self, index):
@@ -271,7 +287,7 @@ class SignalTreeTableModel(QAbstractItemModel):
             node = self.nodeFromIndex(index)
             
             #print "TT: Decoration role at %d, %d: %s" % (index.row(), index.column(), node.toString())
-            if isinstance(node, ModuleBranchNode) and index.column() == 0:
+            if isinstance(node, ModuleBranch) and index.column() == 0:
                 return node.get_pixmap()
         if role != Qt.DisplayRole:
             return
@@ -280,7 +296,7 @@ class SignalTreeTableModel(QAbstractItemModel):
         assert node is not None
 
         node_value = ""
-        if isinstance(node, ModuleBranchNode):
+        if isinstance(node, ModuleBranch):
             if index.column() == 0:
                 #return node.get_icon()
                 #return node.get_pixmap()

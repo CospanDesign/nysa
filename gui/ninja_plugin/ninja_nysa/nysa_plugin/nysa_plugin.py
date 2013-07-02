@@ -213,7 +213,7 @@ class NysaPlugin(plugin.Plugin):
         constraintEditor.add_signal("yellow", "Module2", "Port2", None, "input")
 
         #Remove Signals
-        #constraintEditor.remove_signal("Module2", "Port1")
+        constraintEditor.remove_signal("Module2", "Port1")
 
         #Add pins
         constraintEditor.add_pin("NAME1")

@@ -175,19 +175,8 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
         self.signal_table.add_signal(color, module_name, name, signal_range, direction)
 
     def remove_signal(self, module_name, port):
-        print "Removing Signal"
-        return
-        #get data from the model
-        #search each entry for a module name
-        #print "Remove signal"
-        pos = self.signal_model.find_pos([module_name, port])
-        if pos != -1:
-            #print "Remove position: %d" % pos
-            self.output.Debug(self, "Signal Table: Remove Position: %d" % pos)
-
-            success = self.signal_model.removeRow(pos)
-            self.output.Debug(self, "%s: Removing: %s %s" % (str(success), module_name, port))
-
+        self.signal_table.remove_signal(module_name, port)
+        
     def add_pin(self, pin_name):
         pos = self.pin_model.rowCount()
         self.output.Debug(self, "Adding Pin")
@@ -396,7 +385,7 @@ class SignalTable(QTreeView):
         self.m.addRecord(color, module_name, name, signal_range, direction)
 
     def remove_signal(self, module_name, name, index=-1):
-        print "Impliment me!!"
+        self.m.removeRecord(module_name, name)
 
     def activated(self, index):
         print "Actived: %d, %d" % (index.row(), index.column())
