@@ -62,28 +62,26 @@ class IndexConstraintLeafNode(LeafNode):
         record = []
         branch = self.parent.parent
         while branch is not None:
-            if isinstance(branch, ModuleBranchNode):
+            if isinstance(branch, ModuleBranch):
                 record.insert(0, branch.toString())
                 #record.insert(0, str(branch.color))
             branch = branch.parent
         return record + self.fields
 
 class ConstraintLeafNodeRange(LeafNode):
-    def __init__(self, signal_name, signal_range, direction, parent = None):
-        fields = [signal_name, str(signal_range), direction]
+    def __init__(self, signal_name, direction, parent = None):
+        fields = [signal_name, direction]
         super (SignalLeafNode, self).__init__(fields, parent)
         self.signal_name = signal_name
-        self.signal_range = signal_range
         self.direction = direction
         self.children = []
         #if there is a range add all the index sigal leaf nodes
 
     def __len_(self):
-        return len(self.signal_name, self.signal_range, self.direction)
+        return len(self.children)
 
     def set_constraint(self, index, constraint_name):
         old_constraint = None
-        assert min(self.signal_range) <= index < max(self.signal_range)
         c = None
         for child in self.children:
             if child.get_index() == index:
@@ -128,10 +126,7 @@ class ConstraintLeafNodeRange(LeafNode):
         return self.children[row]
 
     def has_range(self):
-        if self.signal_range is None:
-            return False
-        if type(self.signal_range) is tuple and self.signal_range[0] != self.signal_range[1]:
-            return True
+        return True
 
     def hasLeaves(self):
         if self.has_range():
@@ -175,7 +170,7 @@ class ConstraintLeafNodeRange(LeafNode):
         record = []
         branch = self.parent
         while branch is not None:
-            if isinstance(branch, ModuleBranchNode):
+            if isinstance(branch, ModuleBranch):
                 record.insert(0, branch.toString())
             branch = branch.parent
         return record + [self.signal_name, self.direction]
@@ -192,6 +187,13 @@ class ConstraintLeafNodeNoRange(LeafNode):
 
     def __len_(self):
         return len(self.signal_name, self.direction, self.constraint_name)
+
+
+    def get_constraint(self):
+        return self.constraint_name
+
+    def set_constraint(self, constraint_name):
+        self.constraint_name = constraint_name
 
     def row_count(self):
         return 1
@@ -239,21 +241,24 @@ class ConstraintLeafNodeNoRange(LeafNode):
         record = []
         branch = self.parent
         while branch is not None:
-            if isinstance(branch, ModuleBranchNode):
+            if isinstance(branch, ModuleBranch):
                 record.insert(0, branch.toString())
                 #record.insert(0, str(branch.color))
             branch = branch.parent
         return record + self.fields
 
-class ModuleBranchNode(BranchNode):
+class ModuleBranch(BranchNode):
     def __init__(self, color, name, parent=None):
-        super(ModuleBranchNode, self).__init__(name, parent)
+        super(ModuleBranch, self).__init__(name, parent)
         self.color = color
         self.icon = QIcon(name)
         pm = self.icon.pixmap(22, 15)
         pm.fill(QColor(self.color))
         self.pm = QPixmap(22, 15)
         self.pm.fill(QColor(color))
+
+    def __len__(self):
+        return len(self.children)
 
     def get_icon(self):
         return self.icon
@@ -298,25 +303,107 @@ class ConstraintTreeTableModel(QAbstractItemModel):
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def asRecord(self, index):
-        #TODO
-        pass
+        leaf = self.nodeFromIndex(index)
+        #Basically only return valid records
+        if leaf is None:
+            return []
+        if isinstance(leaf, ModuleBranch):
+            return []
+        if isinstance(leaf, RootBranch):
+            return []
+        if isinstance(leaf, ConstraintLeafNodeNoRange): 
+            return leaf.asRecord
+        if isinstance(leaf, ConstraintLeafNodeRange):
+            return []
+        if isinstance(leaf, IndexConstraintLeafNode): 
+            return leaf.asRecord
 
-    def addRecord(self, color, module_name, signal_name, index = None, direction, constraint_name, callReset=True):
+    def addRecord(self, color, module_name, signal_name, signal_index = None, direction, constraint_name, callReset=True):
+        old_constraint = None
+        if signal_index is None:
+            #Add a node that has no range
+            fields = [module_name, signal_name, direction, constraint_name]
+        else:
+            fields = [module_name, signal_name, signal_index, direction, constraint_name]
+
+        assert len(fields) > self.nesting
+        root = self.root
+        module_branch = None
+
+        #Look for a module that matches
+        module_name = root.childWithKey(module_name.lower())
+        if module_name is None:
+            #didn't find, make reference and add it to the root
+            module_branch = ModuleBranch(color, module_name)
+            root.insertChild(module_branch)
+
+        #Now we have a module node
+        sl = module_branch.childWithKey(signal_name.lower())
+        if sl is None:
+            if signal_index is None:
+                #signal with no range
+                sl = ConstraintLeafNodeNoRange(signal_name, direction, constraint_name)
+            else:
+                #signal with range
+                sl = ConstraintLeafNodeRange(signel_name, direction)
+                sl.set_constraint(signal_index, constraint_name)
+
+            module_branch.insert_child(sl)
+        else:
+            if signal_index is None
+                old_constraint = sl.get_constraint()
+                sl.set_constraint(constraint_name)
+            else:
+                old_constraint = sl.set_constraint(signal_index, constraint_name)
+
         if callReset:
             self.reset()
 
-
-        #TODO
-        pass
+        return old_constraint
 
     def rowCount(self, parent):
-        #TODO
-        pass
+        node = self.nodeFromIndex(parent)
+        if node is None:
+            return 0
+        if isinstance(node, RootBranch):
+            return len(node)
+        if isinstance(node, ModuleBranch):
+            return len(node):
+        if isinstance(node, ConstraintLeafNodeNoRange):
+            return 0
+        if isinstance(node, ConstraintLeafNodeRange):
+            return len(leaf)
+        if isinstance(node, IndexConstraintLeafNode):
+            return 0
 
 
     def data(self, index, role):
-        #TODO
-        pass
+        if role == Qt.TextAlignmentRole:
+            return int(Qt.AlignTop | Qt.AlignLeft)
+        if role == Qt.DecorationRole:
+            node = self.nodeFromIndex(index)
+            if isinstance(node, ModuleBranch) and index.column() == 0:
+                return node.get_pixmap()
+        if role != Qt.DisplayRole:
+            return
+
+        node = self.nodeFromIndex(index)
+        asert node is not None
+
+        node_value = ""
+        if isinstance(node, RootBranch):
+            return None
+        if isinstance(node, ModuleBranch):
+            if index.column() != 0:
+                return None
+            return node.toString()
+        if isinstance(node, ConstraintLeafNodeNoRange):
+            return field(index.column())
+        if isinstance(node, ConstraintLeafNodeRange):
+            return field(index.column())
+        if isinstance(node, IndexConstraintLeafNode):
+            return field(index.column())
+        return None
 
     def headerData(self, section, orientation, role):
         if orientation == Qt.Horizontal and \
@@ -326,8 +413,6 @@ class ConstraintTreeTableModel(QAbstractItemModel):
 
     def columnCount(self, parent):
         return self.columns
-
-
 
     def nodeFromIndex(self, index):
         return index.internalPointer() \
@@ -340,13 +425,21 @@ class ConstraintTreeTableModel(QAbstractItemModel):
         return self.createIndex(row, column,
                                 branch.childAtRow(row))
 
-
     def parent(self, child):
-        #TODO
-        pass
+        node = self.nodeFromIndex(child)
+        if node is None:
+            return QModelIndex()
+        parent = node.parent
+        if parent is None:
+            return QModelIndex()
+        grandparent = parent.parent
+        if grandparent is None:
+            return QModelIndex()
+        row = grandparent.rowOfChild(parent)
+        assert row != -1
+        return self.createIndex(row, 0, parent)
 
     def clear(self):
         self.root = BranchNode("")
         self.reset()
-
 
