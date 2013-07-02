@@ -31,13 +31,14 @@ from tree_table import LeafNode
 class IndexConstraintLeafNode(LeafNode):
     def __init__(self, signal_name, signal_index, direction, constraint_name):
         fields = [signal_name, str(signal_index), direction, constraint_name]
-        super(IndexSignalLeafNode, self).__init__(fields)
+        super(IndexConstraintLeafNode, self).__init__(fields)
         self.signal_name = signal_name
         self.signal_index = signal_index
         self.direction = direction
         self.constraint_name = constraint_name
 
     def field(self, column):
+        #print "ICLN: get column %d" % column
         if column == 0:
             return ""
         if column == 1:
@@ -69,16 +70,17 @@ class IndexConstraintLeafNode(LeafNode):
         return record + self.fields
 
 class ConstraintLeafNodeRange(LeafNode):
+
     def __init__(self, signal_name, direction, parent = None):
-        fields = [signal_name, direction]
-        super (SignalLeafNode, self).__init__(fields, parent)
+        fields = [signal_name, "", direction, ""]
+        super (ConstraintLeafNodeRange, self).__init__(fields, parent)
         self.signal_name = signal_name
         self.direction = direction
         self.children = []
         #if there is a range add all the index sigal leaf nodes
 
     def __len_(self):
-        return len(self.children)
+        return len([self.signal_name, "index", self.direction, "constraint name"])
 
     def set_constraint(self, index, constraint_name):
         old_constraint = None
@@ -89,7 +91,9 @@ class ConstraintLeafNodeRange(LeafNode):
                 break
 
         if c is None:
-            c = IndexConstraintLeafNode(self.signal_name, index, direction, constraint_name)
+            #print "Adding new child"
+            c = IndexConstraintLeafNode(self.signal_name, index, self.direction, constraint_name)
+            c.parent = self
             i = 0
             if len(self.children) == 0:
                 #found an existing child
@@ -118,12 +122,28 @@ class ConstraintLeafNodeRange(LeafNode):
 
         return old_constraint
 
+    def remove_signal(self, signal_index):
+        print "remove signal index: %d" % index
+        c = None
+        for child in self.children:
+            if child.get_index() == index:
+                c = child
+                break
+
+        if c is None:
+            return False
+
+        self.children.remove(c)
+        return True
 
     def row_count(self):
         return len(self.children)
 
     def childAtRow(self, row):
         assert 0 <= row < len(self.children)
+        #print "Getting child"
+        #if isinstance(self.children[row], IndexConstraintLeafNode):
+        #    print "Instance of index constraint leaf node"
         return self.children[row]
 
     def has_range(self):
@@ -176,12 +196,20 @@ class ConstraintLeafNodeRange(LeafNode):
             branch = branch.parent
         return record + [self.signal_name, self.direction]
 
+    def rowOfChild(self, child):
+        for i, item in enumerate(self.children):
+            if item[NODE] == child:
+                return i
+        return -1
+
+
+
 
 class ConstraintLeafNodeNoRange(LeafNode):
 
     def __init__(self, signal_name, direction, constraint_name, parent = None):
         fields = [signal_name, direction, constraint_name]
-        super (SignalLeafNode, self).__init__(fields, parent)
+        super (ConstraintLeafNodeNoRange, self).__init__(fields, parent)
         self.signal_name = signal_name
         self.direction = direction
         self.constraint_name = constraint_name
@@ -267,9 +295,46 @@ class ModuleBranch(BranchNode):
     def get_pixmap(self):
         return self.pm
 
-class RootBranchNode(BranchNode):
+    def remove_signal(self, signal_name, signal_index = None):
+        c = None
+        for child in self.children:
+            print "Checking: %s with %s" % (child[NODE].signal_name.lower(), signal_name)
+            if child[NODE].signal_name.lower() == signal_name:
+                c = child
+
+        if c is None:
+            print "didn't find child"
+            return False
+
+        if signal_index is not None:
+            if c.remove_signal(signal_index):
+                if c.row_count() == 0:
+                    self.children.remove(c)
+        else:
+            self.children.remove(c)
+        return True
+
+    def childWithKey(self, key):
+        if not self.children:
+            return None
+        print "Getting child with key: %s" % key
+        i = bisect.bisect_left(self.children, (key, None))
+        if i < 0 or i >= len(self.children):
+            return None
+        if self.children[i][KEY] == key:
+            return self.children[i][NODE]
+        return None
+
+    def get_signal(self, signal_name, signal_index = None):
+        for child in self.children:
+            print "Checking: %s" % child[NODE].signal_name
+            if child[NODE].signal_name.lower() == signal_name:
+                return child[NODE]
+        return None        
+
+class RootBranch(BranchNode):
     def __init__(self, name, parent=None):
-        super(RootBranchNode, self).__init__(name, parent)
+        super(RootBranch, self).__init__("", parent)
 
     def __len__(self):
         return len(self.children)
@@ -287,12 +352,24 @@ class RootBranchNode(BranchNode):
             return self.children[i][NODE]
         return None
 
+    def remove_module(self, module_name):
+        c = None
+        for child in self.children:
+            if child[NODE].name.lower() == module_name:
+                c = child
+                break
+        self.children.remove(c)
+
+    def removeChild(self, child):
+        #assert child in self.children[NODE]:
+        self.children.remove(child)
+
 
 class ConstraintTreeTableModel(QAbstractItemModel):
     def __init__(self, controller, parent=None):
         super(ConstraintTreeTableModel, self).__init__(parent)
         self.columns = 0
-        self.root = RootBranchNode("")
+        self.root = RootBranch("")
         self.headers = ["Module", "Port", "Index", "Direction", "Constraint Name", "Delete"]
         self.nesting = 2
         self.columns = len(self.headers)
@@ -332,8 +409,8 @@ class ConstraintTreeTableModel(QAbstractItemModel):
         module_branch = None
 
         #Look for a module that matches
-        module_name = root.childWithKey(module_name.lower())
-        if module_name is None:
+        module_branch = root.childWithKey(module_name.lower())
+        if module_branch is None:
             #didn't find, make reference and add it to the root
             module_branch = ModuleBranch(color, module_name)
             root.insertChild(module_branch)
@@ -346,10 +423,10 @@ class ConstraintTreeTableModel(QAbstractItemModel):
                 sl = ConstraintLeafNodeNoRange(signal_name, direction, constraint_name)
             else:
                 #signal with range
-                sl = ConstraintLeafNodeRange(signel_name, direction)
+                sl = ConstraintLeafNodeRange(signal_name, direction)
                 sl.set_constraint(signal_index, constraint_name)
 
-            module_branch.insert_child(sl)
+            module_branch.insertChild(sl)
         else:
             if signal_index is None:
                 old_constraint = sl.get_constraint()
@@ -362,6 +439,36 @@ class ConstraintTreeTableModel(QAbstractItemModel):
 
         return old_constraint
 
+    def removeRecord(self, module_name, signal_name, signal_index = None):
+        print "Remove record"
+        root = self.root
+        module_branch = root.childWithKey(module_name.lower())
+        if module_branch is None:
+            return False
+        print "Found Module"
+        print "Looking for %s" % signal_name
+        sl = module_branch.get_signal(signal_name.lower())
+        if sl is None:
+            return False
+        print "Found Leaf"
+        if isinstance(sl, ConstraintLeafNodeNoRange):
+            #remove this signal from the
+            print "removing %s" % signal_name.lower()
+            module_branch.remove_signal(signal_name.lower())
+            if len(module_branch) == 0:
+                #need to remove this module branch too
+                root.removeChild(module_branch)
+            return True
+        if isinstance(sl, ConstraintLeafNodeRange):
+            module_branch.remove_signal(signal_name.lower(), signal_index)
+
+        if len(module_branch) == 0:
+            root.remove_module(module_name.lower())
+
+        self.reset()
+
+
+
     def rowCount(self, parent):
         node = self.nodeFromIndex(parent)
         if node is None:
@@ -373,18 +480,18 @@ class ConstraintTreeTableModel(QAbstractItemModel):
         if isinstance(node, ConstraintLeafNodeNoRange):
             return 0
         if isinstance(node, ConstraintLeafNodeRange):
-            return len(leaf)
+            return node.row_count()
         if isinstance(node, IndexConstraintLeafNode):
             return 0
-
 
     def data(self, index, role):
         if role == Qt.TextAlignmentRole:
             return int(Qt.AlignTop | Qt.AlignLeft)
         if role == Qt.DecorationRole:
             node = self.nodeFromIndex(index)
-            if isinstance(node, ModuleBranch) and index.column() == 0:
-                return node.get_pixmap()
+            if isinstance(node, ModuleBranch):
+                if index.column() == 0:
+                    return node.get_pixmap()
         if role != Qt.DisplayRole:
             return
 
@@ -399,11 +506,11 @@ class ConstraintTreeTableModel(QAbstractItemModel):
                 return None
             return node.toString()
         if isinstance(node, ConstraintLeafNodeNoRange):
-            return field(index.column())
+            return node.field(index.column())
         if isinstance(node, ConstraintLeafNodeRange):
-            return field(index.column())
+            return node.field(index.column())
         if isinstance(node, IndexConstraintLeafNode):
-            return field(index.column())
+            return node.field(index.column())
         return None
 
     def headerData(self, section, orientation, role):
@@ -420,19 +527,70 @@ class ConstraintTreeTableModel(QAbstractItemModel):
             if index.isValid() else self.root
 
     def index(self, row, column, parent):
+        #print "Parent: %s" % str(parent)
         assert self.root
         branch = self.nodeFromIndex(parent)
         assert branch is not None
+        #print "Brance Node: %s" % str(branch)
+        #if isinstance(parent, RootBranch):
+        #    print "parent is root"
+        #if isinstance(parent, ModuleBranch):
+        #    print "Parent is module"
+        #    print "row: %d" %row
+        #    print "column: %d" %column
+        #if isinstance(parent, IndexConstraintLeafNode):
+        #    print "Parent is index constraint leaf node"
+        #    print "row: %d" %row
+        #    print "column: %d" %column
+        #if isinstance(parent, ConstraintLeafNodeRange):
+        #    print "Parent is constraint leaf not with range"
+        #    print "row: %d" %row
+        #    print "column: %d" %column
+        #if isinstance(parent, ConstraintLeafNodeNoRange):
+        #    print "parent is constraint leaf node with NO range"
+        #    print "row: %d" %row
+        #    print "column: %d" %column
         return self.createIndex(row, column,
                                 branch.childAtRow(row))
 
     def parent(self, child):
+        #print "Parent called"
         node = self.nodeFromIndex(child)
         if node is None:
             return QModelIndex()
         parent = node.parent
         if parent is None:
             return QModelIndex()
+
+        #if isinstance(child, ModuleBranch):
+        #    print "Child is module"
+        #if isinstance(child, IndexConstraintLeafNode):
+        #    print "Child is Index constraint leaf node"
+        #if isinstance(child, ConstraintLeafNodeRange):
+        #    print "Child is constraint leaf node range"
+        #if isinstance(child, ConstraintLeafNodeNoRange):
+        #    print "Child is constraint leaf node no range"
+
+
+        if isinstance(parent, RootBranch):
+            #print "parent is root"
+            #print "Child is module"
+            return self.createIndex(0, 0, parent)
+        if isinstance(parent, ModuleBranch):
+            #print "Parent is module"
+            row = self.root.rowOfChild(parent)
+            return self.createIndex(row, 0, parent)
+        #if isinstance(parent, IndexConstraintLeafNode):
+        #    print "Parent is index constraint leaf node"
+        if isinstance(parent, ConstraintLeafNodeRange):
+            #print "Parent is constraint leaf node with range"
+            grandparent = parent.parent
+            #Get the module
+            row = grandparent.rowOfChild(parent)
+            return self.createIndex(row, 1, parent)
+        #if isinstance(parent, ConstraintLeafNodeNoRange):
+        #    print "parent is constraint leaf node with NO range"
+
         grandparent = parent.parent
         if grandparent is None:
             return QModelIndex()

@@ -210,7 +210,7 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
         #self.connection_table.set_row_data(pos, [module_name, port, direction, pin_name])
         self.connection_table.add_connection(color, module_name, port, index, direction, pin_name)
 
-    def remove_connection(self, module_name, port, index):
+    def remove_connection(self, module_name, port, index=None):
         #pos = self.connection_table.find_pos(module_name, port)
 
         #if pos != -1:
@@ -218,7 +218,7 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
         #    success = self.connection_table.removeRow(pos)
         #    if success:
         #        self.output.Debug(self, "Removed Signal")
-        self.connetion_table.remove_connection(module_name, port, index)
+        self.connection_table.remove_connection(module_name, port, index)
 
     def set_controller(self, controller):
         self.controller = controller
@@ -424,7 +424,7 @@ class ConnectionTable(QTreeView):
         return self.m.addRecord(color, module_name, name, index, direction, constraint_name)
 
     def remove_connection(self, module_name, name, index = None):
-        print "Impliment me!!"
+        return self.m.removeRecord(module_name, name, index)
 
     def activated(self, index):
         print "Actived: %d, %d" % (index.row(), index.column())

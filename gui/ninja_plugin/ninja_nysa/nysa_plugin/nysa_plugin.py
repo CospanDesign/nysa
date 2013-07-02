@@ -251,7 +251,7 @@ class NysaPlugin(plugin.Plugin):
         print "Added connections"
 
         #Remove Connections
-        #constraintEditor.remove_connection("ModuleA", "PortB")
+        constraintEditor.remove_connection("ModuleA", "PortB")
 
     def item_is_enabled(self, path):
         print "Path: %s" % path
