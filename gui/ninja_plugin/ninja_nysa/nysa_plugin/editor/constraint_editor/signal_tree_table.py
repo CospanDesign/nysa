@@ -19,7 +19,6 @@ by: Mark Summerfield
 
 """
 import bisect
-import codecs
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
