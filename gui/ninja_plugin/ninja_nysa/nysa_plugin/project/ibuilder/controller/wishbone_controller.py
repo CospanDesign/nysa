@@ -381,10 +381,11 @@ class WishboneController (controller.Controller):
                 bound_count = 0
                 for key in ex_bindings:
                     if not ex_bindings[key]["range"]:
-                        self.constraint_editor.add_connection(name,
-                                                              key,
-                                                              bindings[key]["direction"],
-                                                              bindings[key]["pin"])
+                        self.constraint_editor.add_connection(color = PS_COLOR,
+                                                              module_name = name,
+                                                              port = key,
+                                                              direction = bindings[key]["direction"],
+                                                              pin_name = bindings[key]["pin"])
                     else:
                         indexes = copy.deepcopy(ex_bindings[key].keys())
                         print "Indexes: %s" % str(indexes)
@@ -393,11 +394,13 @@ class WishboneController (controller.Controller):
                         for i in indexes:
                             bound_count += 1
                             #XXX: This should change to accomodate the tree constraints view
-                            n = "%s[%d]" % (key, i)
-                            self.constraint_editor.add_connection(name,
-                                                                  n,
-                                                                  ex_bindings[key][i]["direction"],
-                                                                  ex_bindings[key][i]["pin"])
+                            #n = "%s[%d]" % (key, i)
+                            self.constraint_editor.add_connection(color = PS_COLOR,
+                                                                  module_name = name,
+                                                                  port = key,
+                                                                  direction = ex_bindings[key][i]["direction"],
+                                                                  pin_name = ex_bindings[key][i]["pin"],
+                                                                  index = i)
 
 
                     if key in signals:
@@ -449,10 +452,11 @@ class WishboneController (controller.Controller):
                 #Add Memory Signals
                 for key in ex_bindings:
                     if not ex_bindings[key]["range"]:
-                        self.constraint_editor.add_connection(name,
-                                                              key,
-                                                              bindings[key]["direction"],
-                                                              bindings[key]["pin"])
+                        self.constraint_editor.add_connection(color = MS_COLOR,
+                                                              module_name = name,
+                                                              port = key,
+                                                              direction = bindings[key]["direction"],
+                                                              pin_name = bindings[key]["pin"])
                     else:
                         indexes = copy.deepcopy(ex_bindings[key].keys())
                         print "Indexes: %s" % str(indexes)
@@ -462,10 +466,12 @@ class WishboneController (controller.Controller):
                             bound_count += 1
                             #XXX: This should change to accomodate the tree constraints view
                             n = "%s[%d]" % (key, i)
-                            self.constraint_editor.add_connection(name,
-                                                                  n,
-                                                                  ex_bindings[key][i]["direction"],
-                                                                  ex_bindings[key][i]["pin"])
+                            self.constraint_editor.add_connection(color = MS_COLOR,
+                                                                  module_name = name,
+                                                                  port = key,
+                                                                  direction = ex_bindings[key][i]["direction"],
+                                                                  pin_name = ex_bindings[key][i]["pin"],
+                                                                  index = i)
 
 
                     if key in signals:

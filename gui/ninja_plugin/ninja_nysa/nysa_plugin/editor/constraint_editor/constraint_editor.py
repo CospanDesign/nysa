@@ -167,7 +167,8 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
         #hh.setStretchLastSection(True)
 
     def add_signal(self, color, module_name, name, signal_range, direction):
-        print "Adding Signal"
+        #print "Adding Signal: %s.%s" % (module_name, name)
+
         #pos = self.signal_model.rowCount()
         #self.output.Debug(self, "Adding signal")
         #self.signal_model.insertRows(pos, 1)
@@ -192,6 +193,7 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
                 self.output.Debug(self, "Removed Signal")
             
     def add_connection(self, color, module_name, port, direction, pin_name, index = None):
+        print "Adding Connection: %s.%s" % (module_name, port)
         #pos = self.connection_table.rowCount()
         #self.output.Debug(self, "Adding Connection")
 

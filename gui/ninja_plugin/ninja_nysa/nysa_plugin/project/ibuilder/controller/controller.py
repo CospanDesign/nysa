@@ -333,21 +333,24 @@ class Controller (QObject):
             bound_count = 0
             for key in ex_bindings:
                 if not ex_bindings[key]["range"]:
-                    self.constraint_editor.add_connection("Host Interface",
-                                                          key,
-                                                          ex_bindings[key]["direction"],
-                                                          ex_bindings[key]["pin"])
+                    self.constraint_editor.add_connection(color = HI_COLOR,
+                                                          module_name = "Host Interface",
+                                                          port = key,
+                                                          direction = ex_bindings[key]["direction"],
+                                                          pin_name = ex_bindings[key]["pin"])
                 else:
                     indexes = copy.deepcopy(ex_bindings[key].keys())
                     indexes.remove("range")
                     bound_count = 0
                     for i in indexes:
                         bound_count += 1
-                        n = "%s[%d]" % (key, i)
-                        self.constraint_editor.add_connection("Host Interface",
-                                                              n,
-                                                              ex_bindings[key][i]["direction"],
-                                                              ex_bindings[key][i]["pin"])
+                        #n = "%s[%d]" % (key, i)
+                        self.constraint_editor.add_connection(color = HI_COLOR,
+                                                              module_name = "Host Interface",
+                                                              port = key,
+                                                              direction = ex_bindings[key][i]["direction"],
+                                                              pin_name = ex_bindings[key][i]["pin"],
+                                                              index = i)
 
                 #Remove signals from ports list
                 if key in signals:

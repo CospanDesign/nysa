@@ -416,7 +416,7 @@ class ConstraintTreeTableModel(QAbstractItemModel):
             root.insertChild(module_branch)
 
         #Now we have a module node
-        sl = module_branch.childWithKey(signal_name.lower())
+        sl = module_branch.get_signal(signal_name.lower())
         if sl is None:
             if signal_index is None:
                 #signal with no range
@@ -470,7 +470,9 @@ class ConstraintTreeTableModel(QAbstractItemModel):
 
 
     def rowCount(self, parent):
+        #print "Get Row Count: %s" % str(parent)
         node = self.nodeFromIndex(parent)
+        #print "Node %s" % str(node)
         if node is None:
             return 0
         if isinstance(node, RootBranch):
@@ -483,6 +485,9 @@ class ConstraintTreeTableModel(QAbstractItemModel):
             return node.row_count()
         if isinstance(node, IndexConstraintLeafNode):
             return 0
+        if isinstance(node, BranchNode):
+            return len(node)
+        return 0
 
     def data(self, index, role):
         if role == Qt.TextAlignmentRole:
