@@ -426,6 +426,7 @@ class ConnectionTable(QTreeView):
 
     def selectionChanged(self, a, b):
         print "Constraint Table Selection Changed"
+        self.m.selection_changed(a, b)
         super(ConnectionTable, self).selectionChanged(a, b)
 
 

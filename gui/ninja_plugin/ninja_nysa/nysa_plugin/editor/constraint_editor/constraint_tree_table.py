@@ -29,13 +29,16 @@ from tree_table import BranchNode
 from tree_table import LeafNode
 
 class IndexConstraintLeafNode(LeafNode):
-    def __init__(self, signal_name, signal_index, direction, constraint_name):
+    def __init__(self, signal_name, signal_index, direction, constraint_name, callback):
         fields = [signal_name, str(signal_index), direction, constraint_name]
         super(IndexConstraintLeafNode, self).__init__(fields)
         self.signal_name = signal_name
         self.signal_index = signal_index
         self.direction = direction
         self.constraint_name = constraint_name
+        #self.delete_button = QPushButton("Disconnect")
+        self.callback = callback
+        #self.connect(self.delete_button, SIGNAL("clicked()"), self.disconnect_clicked)
 
     def field(self, column):
         #print "ICLN: get column %d" % column
@@ -49,6 +52,9 @@ class IndexConstraintLeafNode(LeafNode):
             return self.direction
         if column == 4:
             return self.constraint_name
+        if column == 5:
+            #print "Returning button"
+            return "Delete"
 
     def get_index(self):
         return self.signal_index
@@ -58,6 +64,14 @@ class IndexConstraintLeafNode(LeafNode):
 
     def set_constraint_name(self, constraint_name):
         self.constraint_name = constraint_name
+
+    def disconnect_clicked(self):
+        module_name = self.parent.parent.toString()
+        self.callback(module_name = module_name,
+                      signal_name = self.signal_name,
+                      direction = self.direction,
+                      index = self.signal_index,
+                      pin_name = self.constraint_name)
 
     def asRecord(self):
         record = []
@@ -71,16 +85,17 @@ class IndexConstraintLeafNode(LeafNode):
 
 class ConstraintLeafNodeRange(LeafNode):
 
-    def __init__(self, signal_name, direction, parent = None):
+    def __init__(self, signal_name, direction, callback, parent = None):
         fields = [signal_name, "", direction, ""]
         super (ConstraintLeafNodeRange, self).__init__(fields, parent)
         self.signal_name = signal_name
         self.direction = direction
         self.children = []
+        self.callback = callback
         #if there is a range add all the index sigal leaf nodes
 
     def __len_(self):
-        return len([self.signal_name, "index", self.direction, "constraint name"])
+        return len([self.signal_name, "index", self.direction, "constraint name", "delete button"])
 
     def set_constraint(self, index, constraint_name):
         old_constraint = None
@@ -92,7 +107,11 @@ class ConstraintLeafNodeRange(LeafNode):
 
         if c is None:
             #print "Adding new child"
-            c = IndexConstraintLeafNode(self.signal_name, index, self.direction, constraint_name)
+            c = IndexConstraintLeafNode(self.signal_name, 
+                                        index, 
+                                        self.direction, 
+                                        constraint_name, 
+                                        self.callback)
             c.parent = self
             i = 0
             if len(self.children) == 0:
@@ -166,6 +185,8 @@ class ConstraintLeafNodeRange(LeafNode):
             return self.direction
         if column == 4:
             return ""
+        if column == 5:
+            return ""
 
 
     def orderKey(self):
@@ -207,15 +228,28 @@ class ConstraintLeafNodeRange(LeafNode):
 
 class ConstraintLeafNodeNoRange(LeafNode):
 
-    def __init__(self, signal_name, direction, constraint_name, parent = None):
+    def __init__(self, signal_name, direction, constraint_name, callback, parent = None):
         fields = [signal_name, direction, constraint_name]
         super (ConstraintLeafNodeNoRange, self).__init__(fields, parent)
         self.signal_name = signal_name
         self.direction = direction
         self.constraint_name = constraint_name
+        self.callback = callback
+
+        self.delete_button = QPushButton("Disconnect")
+        self.delete_button.connect(self.delete_button, SIGNAL("clicked()"), self.disconnect_clicked)
 
     def __len_(self):
-        return len(self.signal_name, self.direction, self.constraint_name)
+        return len(self.signal_name, self.direction, "", self.constraint_name, "delete_button")
+
+    def disconnect_clicked(self):
+        self.callback(module_name = module_name,
+                      signal_name = self.signal_name,
+                      direction = self.direction,
+                      index = None,
+                      pin_name = self.constraint_name)
+
+
 
 
     def get_constraint(self):
@@ -244,6 +278,9 @@ class ConstraintLeafNodeNoRange(LeafNode):
             return self.direction
         if column == 4:
             return self.constraint_name
+        if column == 5:
+            #print "Returning button"
+            return self.delete_button
 
 
     def orderKey(self):
@@ -370,10 +407,20 @@ class ConstraintTreeTableModel(QAbstractItemModel):
         super(ConstraintTreeTableModel, self).__init__(parent)
         self.columns = 0
         self.root = RootBranch("")
-        self.headers = ["Module", "Port", "Index", "Direction", "Constraint Name", "Delete"]
+        self.headers = ["Module", "Port", "Index", "Direction", "Pin Name", "Delete"]
         self.nesting = 2
         self.columns = len(self.headers)
         self.controller = controller
+
+        #Brush style
+        self.brush = QBrush(Qt.gray)
+        self.brush.setStyle(Qt.RadialGradientPattern)
+
+        #Font for delete
+        self.font = QFont('White Rabbit')
+        self.font.setBold(True)
+
+        #Foreground
 
     def flags(self, index):
         node = self.nodeFromIndex(index)
@@ -420,10 +467,10 @@ class ConstraintTreeTableModel(QAbstractItemModel):
         if sl is None:
             if signal_index is None:
                 #signal with no range
-                sl = ConstraintLeafNodeNoRange(signal_name, direction, constraint_name)
+                sl = ConstraintLeafNodeNoRange(signal_name, direction, constraint_name, self.controller.disconnect_signal)
             else:
                 #signal with range
-                sl = ConstraintLeafNodeRange(signal_name, direction)
+                sl = ConstraintLeafNodeRange(signal_name, direction, self.controller.disconnect_signal)
                 sl.set_constraint(signal_index, constraint_name)
 
             module_branch.insertChild(sl)
@@ -497,6 +544,34 @@ class ConstraintTreeTableModel(QAbstractItemModel):
             if isinstance(node, ModuleBranch):
                 if index.column() == 0:
                     return node.get_pixmap()
+
+        if role == Qt.FontRole:
+            node = self.nodeFromIndex(index)
+            if isinstance(node, IndexConstraintLeafNode):
+                if index.column() == 5:
+                    return self.font
+            if isinstance(node, ConstraintLeafNodeNoRange): 
+                if index.column() == 5:
+                    return self.font
+
+        if role == Qt.ForegroundRole:
+            node = self.nodeFromIndex(index)
+            if isinstance(node, IndexConstraintLeafNode):
+                if index.column() == 5:
+                    return None
+            if isinstance(node, ConstraintLeafNodeNoRange): 
+                if index.column() == 5:
+                    return None
+
+        if role == Qt.BackgroundRole:
+            node = self.nodeFromIndex(index)
+            if isinstance(node, IndexConstraintLeafNode):
+                if index.column() == 5:
+                    return self.brush
+            if isinstance(node, ConstraintLeafNodeNoRange): 
+                if index.column() == 5:
+                    return self.brush
+
         if role != Qt.DisplayRole:
             return
 
@@ -557,6 +632,16 @@ class ConstraintTreeTableModel(QAbstractItemModel):
         #    print "column: %d" %column
         return self.createIndex(row, column,
                                 branch.childAtRow(row))
+
+    def selection_changed(self, a, b):
+        indexes = a.indexes()
+        for index in indexes:
+            if index.column() == 5:
+                node = self.nodeFromIndex(index)
+                if isinstance(node, IndexConstraintLeafNode):
+                    node.disconnect_clicked()
+                if isinstance(node, ConstraintLeafNodeNoRange): 
+                    node.disconnect_clicked()
 
     def parent(self, child):
         #print "Parent called"

@@ -85,7 +85,7 @@ class NysaPlugin(plugin.Plugin):
         self.actions.ide._menuFile.connect(self.actions.ide._menuFile.toolbar_items["save-as"], SIGNAL("triggered()"), self.save_file_as)
 
         #DEMO STUFF
-        self.test_editor()
+        #self.test_editor()
         self.inject_functions()
         self.actions.update_shortcuts()
 

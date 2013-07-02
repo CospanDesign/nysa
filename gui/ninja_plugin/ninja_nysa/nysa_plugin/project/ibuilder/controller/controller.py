@@ -413,10 +413,10 @@ class Controller (QObject):
     def get_constraint_editor(self):
         return self.constraint_editor
 
-    def connect_signal(self, module_name, port, direction, pin_name, pin_number):
+    def connect_signal(self, module_name, signal_name, direction, index, pin_name):
         print "Connect"
 
-    def disconnect_signal(self, module_name, port, direction, pin_name, pin_number):
+    def disconnect_signal(self, module_name, signal_name, direction, index, pin_name):
         print "Disconnect"
 
     def bus_refresh_constraint_editor(self, name = None):

@@ -81,7 +81,7 @@ class BranchNode(object):
         return isinstance(self.children[0], LeafNode)
 
 
-class LeafNode(object):
+class LeafNode(QObject):
 
     def __init__(self, fields, parent=None):
         super(LeafNode, self).__init__()
