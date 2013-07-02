@@ -225,8 +225,6 @@ class SignalTreeTableModel(QAbstractItemModel):
         module_branch = None
 
         #See if we can find the module name
-        key = module_name.lower()
-        #print "Looking for: %s" % key
         module_branch = root.childWithKey(module_name.lower())
 
         if module_branch is None:
