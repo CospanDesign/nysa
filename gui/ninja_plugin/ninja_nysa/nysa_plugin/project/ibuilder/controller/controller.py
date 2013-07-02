@@ -417,7 +417,7 @@ class Controller (QObject):
         print "Connect"
 
     def disconnect_signal(self, module_name, signal_name, direction, index, pin_name):
-        print "Disconnect"
+        self.constraint_editor.remove_connection(module_name, signal_name, index)
 
     def bus_refresh_constraint_editor(self, name = None):
         raise NotImplementedError("This function should be subclassed")
