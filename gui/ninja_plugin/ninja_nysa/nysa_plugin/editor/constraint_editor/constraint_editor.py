@@ -144,35 +144,8 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
 
     def create_connection_table(self):
         self.connection_table = ConnectionTable(self.controller)
-        #header = ["Module", "Port", "Direction", "Pin Name", "Disconnect"]
-        #self.connection_table = ConnectionTable()
-        #self.connection_table.set_delete_callback(self.notify_connection_delete)
-        #self.connection_table.setColumnCount(len(header))
-        #self.connection_table.setHorizontalHeaderLabels(header)
-        #self.connection_table.setSelectionBehavior(QAbstractItemView.SelectRows)
-
-        #self.connection_model = ConnectionModel([[]], header_data = header, parent = self)
-        #self.connection_table.setModel(self.connection_model)
-
-        #Show the grids
-        #self.connection_table.setShowGrid(True)
-
-        #Vertical tab settings
-        #vh = self.connection_table.verticalHeader()
-        #vh.setVisible(True)
-
-        #Set horizontal header properties
-        #hh = self.pin_table.horizontalHeader()
-        #hh = self.connection_table.horizontalHeader()
-        #hh.setStretchLastSection(True)
 
     def add_signal(self, color, module_name, name, signal_range, direction):
-        #print "Adding Signal: %s.%s" % (module_name, name)
-
-        #pos = self.signal_model.rowCount()
-        #self.output.Debug(self, "Adding signal")
-        #self.signal_model.insertRows(pos, 1)
-        #self.signal_model.set_line_data([module_name, port, direction])
         self.signal_table.add_signal(color, module_name, name, signal_range, direction)
 
     def remove_signal(self, module_name, port):
@@ -194,21 +167,9 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
             
     def add_connection(self, color, module_name, port, direction, pin_name, index = None):
         print "Adding Connection: %s.%s" % (module_name, port)
-        #pos = self.connection_table.rowCount()
-        #self.output.Debug(self, "Adding Connection")
-
-        #self.connection_table.insertRow(pos)
-        #self.connection_table.set_row_data(pos, [module_name, port, direction, pin_name])
         self.connection_table.add_connection(color, module_name, port, index, direction, pin_name)
 
     def remove_connection(self, module_name, port, index=None):
-        #pos = self.connection_table.find_pos(module_name, port)
-
-        #if pos != -1:
-        #    self.output.Debug(self, "Connection Table: Remove Position: %d" % pos)
-        #    success = self.connection_table.removeRow(pos)
-        #    if success:
-        #        self.output.Debug(self, "Removed Signal")
         self.connection_table.remove_connection(module_name, port, index)
 
     def set_controller(self, controller):
@@ -253,59 +214,6 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
         self.output.Info(self, "Connect: %s" % str(connection))
                
 
-
-class ConnectionTableBack(QTableWidget):
-    def __init__(self, parent = None):
-        super(ConnectionTableBack, self).__init__(parent)
-        self.delete_callback = None
-
-    def set_delete_callback(self, callback):
-        self.delete_callback = callback
-
-
-    def set_row_data(self, row, data):
-        for i in range(len(data)):
-            #print "Adding: %s to the cell" % data[i]
-            self.setItem(row, i, QTableWidgetItem(data[i]))
-
-
-        btn = QPushButton("Disconnect")
-        #btn.clicked.connect(self.disconnect_clicked)
-        cb = lambda who=row: self.disconnect_clicked(who)
-        self.connect(btn, SIGNAL("clicked()"), cb)
-        self.setCellWidget(row, self.columnCount() - 1, btn)
-
-    def find_pos(self, module_name, port):
-        print "Number of rows: %d" % self.rowCount()
-        for i in range(self.rowCount()):
-            #print "Row pos: %d" % i
-            mname = self.item(i, 0)
-            pname = self.item(i, 1)
-            if mname is None:
-                print "Module name in table is None"
-                return -1
-            if pname is None:
-                print "Port name in table is none"
-                return -1
-
-
-            if module_name == mname.text() and port == pname.text():
-                return i
-
-        return -1
-
-    def disconnect_clicked(self, row):
-        #print "Disconnect clicked on Row: %d" % row
-        if self.rowCount() == 1:
-            row = 0
-        row_data = []
-        print "Row: %d" % row
-        for i in range (self.columnCount() - 1):
-            row_data.append(self.item(row, i).text())
-
-        self.delete_callback(row_data)
-
-
 class ConstraintModel(QAbstractTableModel):
     def __init__(self, data_in = [[]], header_data=[], parent=None, *args):
         QAbstractTableModel.__init__(self, parent, *args)
@@ -323,10 +231,6 @@ class ConstraintModel(QAbstractTableModel):
 
     def data(self, index, role):
         if index.isValid():
-            #if role == Qt.DecorationRole:
-            #    node = self.nodeFromIndex(index)
-            #    if node is None:
-            #        return QVariant()
             if role == Qt.DisplayRole:
                 return self.array_data[index.row()][index.column()]
 
@@ -402,6 +306,7 @@ class SignalTable(QTreeView):
 
 
 class ConnectionTable(QTreeView):
+
     def __init__(self, controller, parent = None):
         super(ConnectionTable, self).__init__(parent)
         self.setSelectionBehavior(QAbstractItemView.SelectRows |
