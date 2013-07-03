@@ -289,7 +289,7 @@ class WishboneModelTest (unittest.TestCase):
         hi = self.c.project_tags["INTERFACE"]["filename"]
         self.assertEqual(hi, "ft_master_interface.v")
 
-    def test_get_master_bind_dict(self):
+    def test_get_consolodated_master_bind_dict(self):
         fname = os.path.join( os.path.dirname(__file__),
                               os.pardir,
                               "ibuilder",
@@ -298,7 +298,7 @@ class WishboneModelTest (unittest.TestCase):
         self.c.load_config_file(fname)
         self.c.initialize_graph(debug = False)
        
-        mbd = self.c.get_master_bind_dict()
+        mbd = self.c.get_consolodated_master_bind_dict()
         #XXX: This is wrong, it should be from the ft_master_interface!!!!!
         self.assertIn("i_ftdi_clk", mbd.keys())
 
@@ -317,7 +317,7 @@ class WishboneModelTest (unittest.TestCase):
        
         ps = self.c.get_number_of_peripheral_slaves()
         name = ""
-        mbd = self.c.get_master_bind_dict()
+        mbd = self.c.get_consolodated_master_bind_dict()
        
         name = self.c.get_slave_name(st.PERIPHERAL, 1)
        
@@ -333,10 +333,10 @@ class WishboneModelTest (unittest.TestCase):
                               "dionysus_internal_lax_example.json")
         self.c.load_config_file(fname)
         self.c.initialize_graph(debug = False)
-        mbd = self.c.get_master_bind_dict()
+        mbd = self.c.get_consolodated_master_bind_dict()
         self.assertNotEqual(len(mbd.keys()), 0)
         self.c.unbind_all()
-        mbd = self.c.get_master_bind_dict()
+        mbd = self.c.get_consolodated_master_bind_dict()
         self.assertEqual(len(mbd.keys()), 0)
       
 
@@ -352,7 +352,7 @@ class WishboneModelTest (unittest.TestCase):
        
        
         ps = self.c.get_number_of_peripheral_slaves()
-        mbd = self.c.get_master_bind_dict()
+        mbd = self.c.get_consolodated_master_bind_dict()
         name = self.c.get_slave_name(st.PERIPHERAL, 1)
         uname = self.c.get_unique_name(name, nt.SLAVE, st.PERIPHERAL, slave_index = 1)
         ports = self.c.get_node_ports(uname)
@@ -375,7 +375,7 @@ class WishboneModelTest (unittest.TestCase):
         self.c.load_config_file(fname)
         self.c.initialize_graph(debug = False)
        
-        mbd = self.c.get_master_bind_dict()
+        mbd = self.c.get_consolodated_master_bind_dict()
         self.assertNotEqual(len(mbd.keys()), 0)
         node_names = self.c.gm.get_node_names()
         for nn in node_names:
@@ -383,7 +383,7 @@ class WishboneModelTest (unittest.TestCase):
             for b in nb.keys():
                 self.c.unbind_port(nn, b)
        
-        mbd = self.c.get_master_bind_dict()
+        mbd = self.c.get_consolodated_master_bind_dict()
         self.assertEqual(len(mbd.keys()), 0)
 
 

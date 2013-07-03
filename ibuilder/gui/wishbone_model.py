@@ -2,6 +2,7 @@
 import os
 import sys
 import json
+import copy
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, "lib"))
@@ -9,6 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
 #Inner package modules
 from lib import ibuilder
+from lib import constraint_utils as cu
 
 from ibuilder_error import ModuleNotFound
 from ibuilder_error import SlaveError
@@ -171,10 +173,12 @@ class WishboneModel():
 ##                 self.project_tags["SLAVES"][slave_name]["bind"] = {}
 
                 if "bind" in skeys:
-##                  print "found binding"
-                    bindings = {}
-                    bindings = self.project_tags["SLAVES"][slave_name]["bind"]
-                    self.gm.set_config_bindings(uname, bindings)
+                    #print "found binding for: %s" % slave_name
+                    #print "bindings: %s" % self.project_tags["SLAVES"][slave_name]["bind"]
+                    c_bindings = self.project_tags["SLAVES"][slave_name]["bind"]
+                    e_bindings = cu.expand_user_constraints(c_bindings)
+                    #print "ebindings: %s" % str(e_bindings)
+                    self.gm.set_config_bindings(uname, e_bindings)
                 else:
                     self.project_tags["SLAVES"][slave_name]["bind"] = {}
 
@@ -196,8 +200,9 @@ class WishboneModel():
                 # Add the bindings from the config file.
                 mkeys = list(self.project_tags["MEMORY"][slave_name].keys())
                 if "bind" in mkeys:
-                    bindings = self.project_tags["MEMORY"][slave_name]["bind"]
-                    self.gm.set_config_bindings(uname, bindings)
+                    c_bindings = self.project_tags["MEMORY"][slave_name]["bind"]
+                    e_bindings = cu.expand_user_constraints(c_bindings)
+                    self.gm.set_config_bindings(uname, e_bindings)
                 else:
                     self.project_tags["MEMORY"][slave_name]["bind"] = {}
 
@@ -211,8 +216,9 @@ class WishboneModel():
                             filename=filename, bus=self.get_bus_type())
             self.set_host_interface(parameters["module"])
             if "bind" in list(self.project_tags["INTERFACE"].keys()):
-                self.gm.set_config_bindings(hi_name,
-                    self.project_tags["INTERFACE"]["bind"])
+                c_bindings = self.project_tags["INTERFACE"]["bind"]
+                e_bindings = cu.expand_user_constraints(c_bindings)
+                self.gm.set_config_bindings(hi_name, e_bindings)
             else:
                 self.project_tags["INTERFACE"]["bind"] = {}
 
@@ -326,7 +332,7 @@ class WishboneModel():
 
         for i in range(0, p_count):
             #print "apply slave tags to project: %d:" % i
-            sc_slave = self.gm.get_slave_at(i, SlaveType.PERIPHERAL)
+            sc_slave = self.gm.get_slave_at(SlaveType.PERIPHERAL, i)
             uname = sc_slave.unique_name
             name = sc_slave.name
             if debug:
@@ -370,10 +376,11 @@ class WishboneModel():
 ##           print "bind id: " + str(id(bindings))
             if debug:
                 print (("bind contents: %s" % str(bindings)))
-            for p in bindings:
-                pt_slave["bind"][p] = {}
-                pt_slave["bind"][p]["port"] = bindings[p]["pin"]
-                pt_slave["bind"][p]["direction"] = bindings[p]["direction"]
+            pt_slave["bind"] = cu.consolodate_constraints(bindings)
+            #for p in bindings:
+                #pt_slave["bind"][p] = {}
+                #pt_slave["bind"][p]["port"] = bindings[p]["pin"]
+                #pt_slave["bind"][p]["direction"] = bindings[p]["direction"]
 
             # Add filenames.
             module = sc_slave.parameters["module"]
@@ -382,7 +389,7 @@ class WishboneModel():
 
       # Memory BUS
         for i in range(0, m_count):
-            sc_slave = self.gm.get_slave_at(i, SlaveType.MEMORY)
+            sc_slave = self.gm.get_slave_at(SlaveType.MEMORY, i)
             uname = sc_slave.unique_name
             name = sc_slave.name
             if debug:
@@ -421,10 +428,12 @@ class WishboneModel():
 ##           print "bind id: " + str(id(bindings))
             if debug:
                 print (("bind contents: %s" % str(bindings)))
-            for p in bindings:
-                pt_slave["bind"][p] = {}
-                pt_slave["bind"][p]["port"] = bindings[p]["pin"]
-                pt_slave["bind"][p]["direction"] = bindings[p]["direction"]
+            pt_slave["bind"] = cu.consolodate_constraints(bindings)
+            #for p in bindings:
+            #    pt_slave["bind"] = cu.consolodate_constraints(bindings)
+            #    pt_slave["bind"][p] = {}
+            #    pt_slave["bind"][p]["port"] = bindings[p]["pin"]
+            #    pt_slave["bind"][p]["direction"] = bindings[p]["direction"]
 
     def set_project_location(self, location):
         """Sets the location of the project to output."""
@@ -552,12 +561,41 @@ class WishboneModel():
         self.gm.set_parameters(hi_name, parameters, debug=debug)
         return True
 
-    def get_master_bind_dict(self):
+    def get_expanded_master_bind_dict(self):
+        """Create a large dictionary of all the constraints from
+            - project
+            - host interface
+            - peripheral slaves
+            - memory slaves
+        """
+        bind_dict = {}
+        bind_dict["project"] = cu.expand_user_constraints(
+                                        self.project_tags["bind"])
+        bind_dict["host interface"] = self.get_host_interface_bindings()
+
+        #Get Peripheral Slaves
+        p_count = self.get_number_of_slaves(SlaveType.PERIPHERAL)
+        for i in range(p_count):
+            slave = self.get_slave_at(SlaveType.PERIPHERAL, i)
+            bind_dict[slave.name] = self.get_node_bindings(slave.uname)
+
+        #Get Memory Slaves
+        m_count = self.get_number_of_slaves(SlaveType.MEMORY)
+        for i in range(m_count):
+            slave = self.get_slave_at(SlaveType.MEMORY, i)
+            bind_dict[slave.name] = self.get_node_bindings(slave.uname)
+
+    def get_consolodated_master_bind_dict(self):
         """Combine the dictionary from:
           - project
           - host interface
           - peripheral slaves
-          - memory slaves"""
+          - memory slaves
+
+          The returned dictionary is consolodated in that all the pins are
+          not expanded to a unique index, this is good for a project but not
+          good for manipulation
+          """
 
         # The dictionary to put the entries in and return.
         bind_dict = {}
@@ -570,23 +608,25 @@ class WishboneModel():
         # Get host interface bindings.
         hi_name = self.get_unique_name("Host Interface",
                                        NodeType.HOST_INTERFACE)
-        hib = self.gm.get_node_bindings(hi_name)
+        hib = cu.consolodate_constraints(self.gm.get_node_bindings(hi_name))
         for k, v in list(hib.items()):
             bind_dict[k] = v
 
         # Get all the peripheral slave bindings.
         p_count = self.get_number_of_slaves(SlaveType.PERIPHERAL)
         for i in range(p_count):
-            slave = self.gm.get_slave_at(i, SlaveType.PERIPHERAL)
-            pb = self.gm.get_node_bindings(slave.unique_name)
+            slave = self.gm.get_slave_at(SlaveType.PERIPHERAL, i)
+            pb = cu.consolodate_constraints(
+                                self.gm.get_node_bindings(slave.unique_name))
             for key in pb:
                 bind_dict[key] = pb[key]
 
         # Get all the memory slave bindings.
         m_count = self.get_number_of_slaves(SlaveType.MEMORY)
         for i in range(m_count):
-            slave = self.gm.get_slave_at(i, SlaveType.MEMORY)
-            mb = self.gm.get_node_bindings(slave.unique_name)
+            slave = self.gm.get_slave_at(SlaveType.MEMORY, i)
+            mb = cu.consolodate_constraints(
+                                self.gm.get_node_bindings(slave.unique_name))
             for key in mb:
                 bind_dict[key] = mb[key]
 
@@ -619,10 +659,16 @@ class WishboneModel():
     def get_node_ports(self, node_name):
         return self.gm.get_node(node_name).parameters["ports"]
 
-    def set_binding(self, node_name, port_name, pin_name):
+    def set_binding(self, node_name, port_name, pin_name, index=None):
         """Add a binding between the port and the pin."""
-        node = self.gm.get_node(node_name)
-        ports = node.parameters["ports"]
+        bindings = self.gm.get_node_bindings(node_name)
+        #node = self.gm.get_node(node_name)
+        ports = self.get_node_ports(node_name)
+
+
+        
+
+        
 
         pn = port_name.partition("[")[0]
         if ":" in port_name:

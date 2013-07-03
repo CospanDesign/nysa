@@ -549,18 +549,18 @@ class GraphManager:
 
     def set_config_bindings(self, name, bindings):
         node = self.get_node(name)
-        node.bindings.clear()
-        for p in bindings:
-            node.bindings[p] = {}
-            node.bindings[p]["pin"] = bindings[p]["port"]
-            node.bindings[p]["direction"] = bindings[p]["direction"]
+        node.bindings = bindings
+        #for p in bindings:
+        #    node.bindings[p] = {}
+        #    node.bindings[p]["loc"] = bindings[p]["loc"]
+        #    node.bindings[p]["direction"] = bindings[p]["direction"]
 
-    def bind_port(self, name, port, pin, debug=False):
+    def bind_port(self, name, port, loc, debug=False):
         node = self.get_node(name)
         ports = node.parameters["ports"]
         direction = ports[port]["direction"]
         node.bindings[port] = {}
-        node.bindings[port]["pin"] = pin
+        node.bindings[port]["loc"] = loc
         node.bindings[port]["direction"] = direction
 
     def unbind_port(self, name, port):
@@ -574,12 +574,12 @@ class GraphManager:
     def get_node_bindings(self, name):
         return self.get_node(name).bindings
 
-#  def bind_pin_to_port(self, name, port, pin, debug = False):
+#  def bind_pin_to_port(self, name, port, loc, debug = False):
 #    """
-#    binds the specific port to a pin
+#    binds the specific port to a loc
 #    """
 #    g = self.get_nodes_dict()
 #    if debug:
 #      print "Dictionary: " + str(g[name].parameters["ports"][port])
 #    node = self.get_node(name)
-#    g[name].parameters["ports"][port]["port"] = pin
+#    g[name].parameters["ports"][port]["port"] = loc

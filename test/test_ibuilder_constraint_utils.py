@@ -6,6 +6,7 @@ import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
+from ibuilder.lib import utils
 from ibuilder.lib import constraint_utils as cu
 from ibuilder.gui import wishbone_model
 
@@ -53,6 +54,8 @@ class Test (unittest.TestCase):
         hib = self.c.get_host_interface_bindings()
 
         uc = cu.expand_user_constraints(hib)
+        #print "uc: %s" % str(uc)
+        #print ""
         self.assertIn("io_ftdi_data", uc.keys())
 
     def test_consolodate_constraints(self):
@@ -76,9 +79,6 @@ class Test (unittest.TestCase):
         #print "Post SDRAM: %s" % str(ud)
         self.assertIn("io_sdram_data[15:0]", ud)
 
-
-
-
         #Test the peripheral interface
         gpio = self.c.get_slave_bindings(SlaveType.PERIPHERAL, 2)
         #print "Pre GPIO: %s" % str(gpio)
@@ -88,10 +88,6 @@ class Test (unittest.TestCase):
         ud = cu.consolodate_constraints(gpio, debug=self.dbg)
         #print "Post GPIO: %s" % str(ud)
         self.assertIn("gpio_in[3:2]", ud)
-
-
-
-
 
         #Test another constraint file
         filename = os.path.join(self.nysa_base, "ibuilder", "example_projects", "lx9_default.json")
@@ -106,6 +102,76 @@ class Test (unittest.TestCase):
         ud = cu.consolodate_constraints(uc, debug = self.dbg)
         self.assertIn("o_phy_uart_out", ud)
 
+    def test_expand_ports(self):
+
+        f = utils.find_rtl_file_location("wb_sdram.v")
+        parameters = utils.get_module_tags(filename=f,
+                                           bus="wishbone")
+        c_ports = parameters["ports"]
+        #print "c_ports: %s" % str(c_ports)
+        e_ports = cu.expand_ports(c_ports)
+        #e_ports = cu.get_only_signal_ports(e_ports)
+        #print ""
+        #print "e_ports: %s" % str(e_ports)
+        #print ""
+        self.assertFalse(e_ports["o_sdram_clk"]["range"])
+        self.assertTrue(e_ports["io_sdram_data"]["range"])
+
+        f = utils.find_rtl_file_location("wb_logic_analyzer.v")
+        parameters = utils.get_module_tags(filename=f,
+                                           bus="wishbone")
+        c_ports = parameters["ports"]
+        #print "c_ports: %s" % str(c_ports)
+        e_ports = cu.expand_ports(c_ports)
+        e_ports = cu.get_only_signal_ports(e_ports)
+        #print ""
+        #print "c_ports: %s" % str(e_ports)
+        #print ""
+        self.assertFalse(e_ports["o_la_uart_tx"]["range"])
+        self.assertFalse(e_ports["i_la_uart_rx"]["range"])
+
+        f = utils.find_rtl_file_location("wb_gpio.v")
+        parameters = utils.get_module_tags(filename=f,
+                                           bus="wishbone")
+        c_ports = parameters["ports"]
+        #print "c_ports: %s" % str(c_ports)
+        e_ports = cu.expand_ports(c_ports)
+        e_ports = cu.get_only_signal_ports(e_ports)
+        #print ""
+        #print "c_ports: %s" % str(e_ports)
+        #print ""
+        self.assertTrue(e_ports["gpio_out"]["range"])
+        self.assertTrue(e_ports["gpio_in"]["range"])
+
+
+
+    def test_get_only_signal_ports(self):
+        f = utils.find_rtl_file_location("wb_sdram.v")
+        parameters = utils.get_module_tags(filename=f,
+                                           bus="wishbone")
+        c_ports = parameters["ports"]
+        e_ports = cu.expand_ports(c_ports)
+        #print "e_ports: %s" % str(e_ports)
+        #print ""
+        ports = cu.get_only_signal_ports(e_ports)
+        #print "ports: %s" % str(ports)
+        #print ""
+ 
+    def test_consolodate_ports(self):
+        f = utils.find_rtl_file_location("wb_sdram.v")
+        parameters = utils.get_module_tags(filename=f,
+                                           bus="wishbone")
+        c_ports = parameters["ports"]
+        #print "c_ports: %s" % str(c_ports)
+        e_ports = cu.expand_ports(c_ports)
+        ports = cu.consolodate_ports(e_ports)
+
+        for direction in ports:
+            #print "Direction: %s" % direction
+            for port in ports[direction]:
+                #print "port: %s" % port
+                self.assertIn(port, c_ports[direction].keys())
+                self.assertDictEqual(ports[direction][port], c_ports[direction][port])
 
 
 
