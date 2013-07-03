@@ -7,11 +7,11 @@
 		"filename":"uart_io_handler.v",
 		"bind":{
 			"i_phy_uart_in":{
-				"port":"rx",
+				"loc":"rx",
 				"direction":"input"
 			},
 			"o_phy_uart_out":{
-				"port":"tx",
+				"loc":"tx",
 				"direction":"output"
 			}
 
@@ -22,35 +22,35 @@
 			"filename":"tft.v",
 			"bind":{
 				"red[7:0]":{
-					"port":"tft_red[7:0]",
+					"loc":"tft_red[7:0]",
 					"direction":"output"
 				},
 				"green[7:0]":{
-					"port":"tft_green[7:0]",
+					"loc":"tft_green[7:0]",
 					"direction":"output"
 				},
 				"blue[7:0]":{
-					"port":"tft_blue[7:0]",
+					"loc":"tft_blue[7:0]",
 					"direction":"output"
 				},
 				"disp_en":{
-					"port":"tft_disp_en",
+					"loc":"tft_disp_en",
 					"direction":"output"
 				},
 				"hsync":{
-					"port":"tft_hsync",
+					"loc":"tft_hsync",
 					"direction":"output"
 				},
 				"vsync":{
-					"port":"tft_vsync",
+					"loc":"tft_vsync",
 					"direction":"output"
 				},
 				"data_en":{
-					"port":"tft_data_en",
+					"loc":"tft_data_en",
 					"direction":"output"
 				},
 				"pclk":{
-					"port":"tft_pclk",
+					"loc":"tft_pclk",
 					"direction":"output"
 				}
 			}

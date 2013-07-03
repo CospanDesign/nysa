@@ -4,39 +4,39 @@
         "bind": {
             "i_ftdi_clk": {
                 "direction": "input", 
-                "port": "i_ftdi_clk"
+                "loc": "i_ftdi_clk"
             }, 
             "i_ftdi_rde_n": {
                 "direction": "input", 
-                "port": "rxe_n"
+                "loc": "rxe_n"
             }, 
             "i_ftdi_suspend_n": {
                 "direction": "input", 
-                "port": "suspend_n"
+                "loc": "suspend_n"
             }, 
             "i_ftdi_txe_n": {
                 "direction": "input", 
-                "port": "txe_n"
+                "loc": "txe_n"
             }, 
             "io_ftdi_data[7:0]": {
                 "direction": "inout", 
-                "port": "d[7:0]"
+                "loc": "d[7:0]"
             }, 
             "o_ftdi_oe_n": {
                 "direction": "output", 
-                "port": "oe_n"
+                "loc": "oe_n"
             }, 
             "o_ftdi_rd_n": {
                 "direction": "output", 
-                "port": "rd_n"
+                "loc": "rd_n"
             }, 
             "o_ftdi_siwu": {
                 "direction": "output", 
-                "port": "siwua"
+                "loc": "siwua"
             }, 
             "o_ftdi_wr_n": {
                 "direction": "output", 
-                "port": "wr_n"
+                "loc": "wr_n"
             }
         }, 
         "filename": "ft_master_interface.v"
@@ -46,47 +46,47 @@
             "bind": {
                 "io_sdram_data[15:0]": {
                     "direction": "inout", 
-                    "port": "dq[15:0]"
+                    "loc": "dq[15:0]"
                 }, 
                 "o_sdram_addr[11:0]": {
                     "direction": "output", 
-                    "port": "a[11:0]"
+                    "loc": "a[11:0]"
                 }, 
                 "o_sdram_bank[1:0]": {
                     "direction": "output", 
-                    "port": "ba[1:0]"
+                    "loc": "ba[1:0]"
                 }, 
                 "o_sdram_cas": {
                     "direction": "output", 
-                    "port": "cas"
+                    "loc": "cas"
                 }, 
                 "o_sdram_cke": {
                     "direction": "output", 
-                    "port": "cke"
+                    "loc": "cke"
                 }, 
                 "o_sdram_clk": {
                     "direction": "output", 
-                    "port": "o_sdram_clk"
+                    "loc": "o_sdram_clk"
                 }, 
                 "o_sdram_cs_n": {
                     "direction": "output", 
-                    "port": "cs_n"
+                    "loc": "cs_n"
                 }, 
                 "o_sdram_data_mask[0]": {
                     "direction": "output", 
-                    "port": "dqml"
+                    "loc": "dqml"
                 }, 
                 "o_sdram_data_mask[1]": {
                     "direction": "output", 
-                    "port": "dqmh"
+                    "loc": "dqmh"
                 }, 
                 "o_sdram_ras": {
                     "direction": "output", 
-                    "port": "ras"
+                    "loc": "ras"
                 }, 
                 "o_sdram_we": {
                     "direction": "output", 
-                    "port": "we"
+                    "loc": "we"
                 }
             }, 
             "filename": "wb_sdram.v"
@@ -98,11 +98,11 @@
             "bind": {
                 "gpio_in[3:2]": {
                     "direction": "input", 
-                    "port": "button[1:0]"
+                    "loc": "button[1:0]"
                 }, 
                 "gpio_out[1:0]": {
                     "direction": "output", 
-                    "port": "led[1:0]"
+                    "loc": "led[1:0]"
                 }
             }, 
             "filename": "wb_gpio.v"
@@ -111,11 +111,11 @@
             "bind": {
                 "i_la_uart_rx": {
                     "direction": "input", 
-                    "port": "s1"
+                    "loc": "s1"
                 }, 
                 "o_la_uart_tx": {
                     "direction": "output", 
-                    "port": "s0"
+                    "loc": "s0"
                 }
             }, 
             "filename": "wb_logic_analyzer.v"

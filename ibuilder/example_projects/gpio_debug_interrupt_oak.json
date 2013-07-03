@@ -7,11 +7,11 @@
 		"filename":"uart_io_handler.v",
 		"bind":{
 			"i_phy_uart_in":{
-				"port":"gpio_rx",
+				"loc":"gpio_rx",
 				"direction":"input"
 			},
 			"o_phy_uart_out":{
-				"port":"gpio_tx",
+				"loc":"gpio_tx",
 				"direction":"output"
 			}
 		}
@@ -21,7 +21,7 @@
 			"filename":"wb_gpio.v",
 			"bind":{
 				"gpio_out[0]":{
-					"port":"led",
+					"loc":"led",
 					"direction":"output"
 				}
 			}

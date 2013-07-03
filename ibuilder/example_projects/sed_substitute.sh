@@ -32,3 +32,5 @@ sed -i 's/\"sdram_addr/\"o_sdram_addr/g' *.json
 sed -i 's/\"sdram_data/\"io_sdram_data/g' *.json
 sed -i 's/\"sdram_data_mask/\"o_sdram_data_mask/g' *.json
 
+sed -i 's/\"port/\"loc/g' *.json
+

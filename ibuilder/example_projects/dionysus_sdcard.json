@@ -7,39 +7,39 @@
 		"filename":"ft_master_interface.v",
 		"bind":{
 			"i_ftdi_clk":{
-				"port":"i_ftdi_clk",
+				"loc":"i_ftdi_clk",
 				"direction":"input"
 			},
 			"io_ftdi_data[7:0]":{
-				"port":"d[7:0]",
+				"loc":"d[7:0]",
 				"direction":"inout"
 			},
 			"i_ftdi_txe_n":{
-				"port":"txe_n",
+				"loc":"txe_n",
 				"direction":"input"
 			},
 			"o_ftdi_wr_n":{
-				"port":"wr_n",
+				"loc":"wr_n",
 				"direction":"output"
 			},
 			"i_ftdi_rde_n":{
-				"port":"rxe_n",
+				"loc":"rxe_n",
 				"direction":"input"
 			},
 			"o_ftdi_rd_n":{
-				"port":"rd_n",
+				"loc":"rd_n",
 				"direction":"output"
 			},
 			"o_ftdi_oe_n":{
-				"port":"oe_n",
+				"loc":"oe_n",
 				"direction":"output"
 			},
 			"o_ftdi_siwu":{
-				"port":"siwua",
+				"loc":"siwua",
 				"direction":"output"
 			},
 			"o_ftdi_suspend_n":{
-				"port":"suspend_n",
+				"loc":"suspend_n",
 				"direction":"input"
 			}
 		}
@@ -49,11 +49,11 @@
 			"filename":"wb_gpio.v",
 			"bind":{
 				"gpio_out[1:0]":{
-					"port":"led[1:0]",
+					"loc":"led[1:0]",
 					"direction":"output"
 				},
  				"gpio_in[1:0]":{
-					"port":"button[1:0]",
+					"loc":"button[1:0]",
 					"direction":"input"
 				}
 			}
@@ -62,19 +62,19 @@
       "filename":"wb_spi.v",
       "bind":{
         "ss_pad_o[0]":{
-          "port":"s10",
+          "loc":"s10",
           "direction":"output"
         },
         "sclk_pad_o":{
-          "port":"s13",
+          "loc":"s13",
           "direction":"output"
         },
         "mosi_pad_o":{
-          "port":"s11",
+          "loc":"s11",
           "direction":"output"
         },
         "miso_pad_i":{
-          "port":"s12",
+          "loc":"s12",
           "direction":"input"
         }
       }
@@ -86,47 +86,47 @@
 			"bind":{
 	
 				"o_sdram_clk":{
-					"port":"o_sdram_clk",
+					"loc":"o_sdram_clk",
 					"direction":"output"
 				},
 				"o_sdram_cke":{
-					"port":"cke",
+					"loc":"cke",
 					"direction":"output"
 				},
 				"o_sdram_cs_n":{
-					"port":"cs_n",
+					"loc":"cs_n",
 					"direction":"output"
 				},
 				"o_sdram_ras":{
-					"port":"ras",
+					"loc":"ras",
 					"direction":"output"
 				},
 				"o_sdram_cas":{
-					"port":"cas",
+					"loc":"cas",
 					"direction":"output"
 				},
 				"o_sdram_we":{
-					"port":"we",
+					"loc":"we",
 					"direction":"output"
 				},
 				"o_sdram_bank[1:0]":{
-					"port":"ba[1:0]",
+					"loc":"ba[1:0]",
 					"direction":"output"
 				},
 				"o_sdram_addr[11:0]":{
-					"port":"a[11:0]",
+					"loc":"a[11:0]",
 					"direction":"output"
 				},
 				"io_sdram_data[15:0]":{
-					"port":"dq[15:0]",
+					"loc":"dq[15:0]",
 					"direction":"inout"
 				},
 				"io_sdram_data_mask[1]":{
-					"port":"dqmh",
+					"loc":"dqmh",
 					"direction":"output"
 				},
 				"io_sdram_data_mask[0]":{
-					"port":"dqml",
+					"loc":"dqml",
 					"direction":"output"
 				}
 

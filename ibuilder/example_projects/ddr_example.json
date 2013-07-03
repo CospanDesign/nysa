@@ -7,11 +7,11 @@
 		"filename":"uart_io_handler.v",
 		"bind":{
 			"i_phy_uart_in":{
-				"port":"rx",
+				"loc":"rx",
 				"direction":"input"
 			},
 			"o_phy_uart_out":{
-				"port":"tx",
+				"loc":"tx",
 				"direction":"output"
 			}
 		}
@@ -21,56 +21,56 @@
 			"filename":"wb_ddr.v",
 			"bind": {
 				"ddr_mem_ddr_a[12:0]":{
-					"port":"ddr_a[12:0]",
+					"loc":"ddr_a[12:0]",
 					"direction":"output"
 				},
 				"ddr_mem_ddr_ba[1:0]":{
-					"port":"ddr_ba[1:0]",
+					"loc":"ddr_ba[1:0]",
 					"direction":"output"
 				},
 				"ddr_mem_ddr_dq[15:0]":{
-					"port":"ddr_dq[15:0]",
+					"loc":"ddr_dq[15:0]",
 					"direction":"inout"
 				},
 				"ddr_mem_ddr_dm[1:0]":{
-					"port":"ddr_dm[1:0]",
+					"loc":"ddr_dm[1:0]",
 					"direction":"output"
 				},
 				"ddr_mem_ddr_dqs[1:0]":{
-					"port":"ddr_dqs[1:0]",
+					"loc":"ddr_dqs[1:0]",
 					"direction":"inout"
 				},
 				"ddr_mem_ddr_cas_n":{
-					"port":"ddr_cas_n",
+					"loc":"ddr_cas_n",
 					"direction":"output"
 				},
 				"ddr_mem_ddr_ras_n":{
-					"port":"ddr_ras_n",
+					"loc":"ddr_ras_n",
 					"direction":"output"
 				},
 				"ddr_mem_ddr_cke":{
-					"port":"ddr_cke",
+					"loc":"ddr_cke",
 					"direction":"output"
 				},
 				"ddr_mem_ddr_cs_n":{
-					"port":"ddr_cs_n",
+					"loc":"ddr_cs_n",
 					"direction":"output"
 				},
 				"ddr_mem_ddr_we_n":{
-					"port":"ddr_we_n",
+					"loc":"ddr_we_n",
 					"direction":"output"
 				},
 
 				"ddr_mem_ddr_clk":{
-					"port":"ddr_clk",
+					"loc":"ddr_clk",
 					"direction":"output"
 				},
 				"ddr_mem_ddr_clk_n":{
-					"port":"ddr_clk_n",
+					"loc":"ddr_clk_n",
 					"direction":"output"
 				},
 				"ddr_mem_rot[2:0]":{
-					"port":"rot[2:0]",
+					"loc":"rot[2:0]",
 					"direction":"input"
 				}
 			}
