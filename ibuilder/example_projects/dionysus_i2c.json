@@ -7,7 +7,7 @@
 		"filename":"ft_master_interface.v",
 		"bind":{
 			"i_ftdi_clk":{
-				"loc":"i_ftdi_clk",
+				"loc":"ftdi_clk",
 				"direction":"input"
 			},
 			"io_ftdi_data[7:0]":{
@@ -94,7 +94,7 @@
 			"bind":{
 	
 				"o_sdram_clk":{
-					"loc":"o_sdram_clk",
+					"loc":"sdram_clk",
 					"direction":"output"
 				},
 				"o_sdram_cke":{

@@ -1,7 +1,7 @@
 #! /bin/bash
 
 echo "Fixing FTDI Interface"
-sed -i 's/\"ftdi_clk/\"i_ftdi_clk/g' *.json
+sed -i 's/\"ftdi_clk\":/\"i_ftdi_clk\":/g' *.json
 sed -i 's/\"ftdi_data/\"io_ftdi_data/g' *.json
 sed -i 's/\"ftdi_txe/\"i_ftdi_txe/g' *.json
 sed -i 's/\"ftdi_wr_n/\"o_ftdi_wr_n/g' *.json
@@ -33,4 +33,7 @@ sed -i 's/\"sdram_data/\"io_sdram_data/g' *.json
 sed -i 's/\"sdram_data_mask/\"o_sdram_data_mask/g' *.json
 
 sed -i 's/\"port/\"loc/g' *.json
+
+sed -i 's/:\"i_ftdi_clk\"/:\"ftdi_clk\"/g' *.json
+sed -i 's/:\"o_sdram_clk\"/:\"sdram_clk\"/g' *.json
 
