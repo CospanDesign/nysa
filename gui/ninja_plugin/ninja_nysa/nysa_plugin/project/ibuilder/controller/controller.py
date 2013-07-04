@@ -304,7 +304,7 @@ class Controller (QObject):
 
     #Constraint Editor interface
     def initialize_constraint_editor(self, constraint_editor):
-        print "Initialize constraint editor"
+        #print "Initialize constraint editor"
         self.constraint_editor = constraint_editor
         self.constraint_editor.set_connect_callback(self.connect_signal)
         self.constraint_editor.set_disconnect_callback(self.disconnect_signal)
@@ -321,26 +321,25 @@ class Controller (QObject):
             #for key in mbd:
             #    print "%s: %s" % (key, mbd[key])
 
-            print "Get bindings for host_interface"
+            #print "Get bindings for host_interface"
             hib = self.model.get_host_interface_bindings()
             hip = self.model.get_host_interface_ports()
             signals = copy.deepcopy(hip.keys())
-            print "signals: %s" % str(signals)
+            #print "signals: %s" % str(signals)
             for s in hip.keys():
                 if s in no_detect_ports:
                     signals.remove(s)
 
-            ex_bindings = cu.expand_user_constraints(hib)
             bound_count = 0
-            for key in ex_bindings:
-                if not ex_bindings[key]["range"]:
+            for key in hib:
+                if not hib[key]["range"]:
                     self.constraint_editor.add_connection(color = HI_COLOR,
                                                           module_name = "Host Interface",
                                                           port = key,
-                                                          direction = ex_bindings[key]["direction"],
-                                                          pin_name = ex_bindings[key]["loc"])
+                                                          direction = hib[key]["direction"],
+                                                          pin_name = hib[key]["loc"])
                 else:
-                    indexes = copy.deepcopy(ex_bindings[key].keys())
+                    indexes = copy.deepcopy(hib[key].keys())
                     indexes.remove("range")
                     bound_count = 0
                     for i in indexes:
@@ -349,26 +348,27 @@ class Controller (QObject):
                         self.constraint_editor.add_connection(color = HI_COLOR,
                                                               module_name = "Host Interface",
                                                               port = key,
-                                                              direction = ex_bindings[key][i]["direction"],
-                                                              pin_name = ex_bindings[key][i]["loc"],
+                                                              direction = hib[key][i]["direction"],
+                                                              pin_name = hib[key][i]["loc"],
                                                               index = i)
 
                 #Remove signals from ports list
                 if key in signals:
-                    if not ex_bindings[key]["range"]:
-                        print "remove an item that has only no range: %s" % key
+                    if not hib[key]["range"]:
+                        #print "remove an item that has only no range: %s" % key
                         signals.remove(key)
                     else:
-                        print "Signal: %s" % key
-                        print "Checking if bound count: %d == %d" % (bound_count, ports[key]["size"])
+                        #print "Signal: %s" % key
+                        #print "Checking if bound count: %d == %d" % (bound_count, ports[key]["size"])
                         if bound_count == ports[key]["size"]:
-                            print "All of the items in the bus are constrained"
+                            #print "All of the items in the bus are constrained"
                             signals.remove[key]
                 else:
-                    print "%s is not a port of %s" % (key, name)
+                    #print "%s is not a port of %s" % (key, name)
+                    pass
 
 
-            print "Hports keys: %s" % str(signals)
+            #print "Hports keys: %s" % str(signals)
             for signal in signals:
 
                 if hip[signal]["size"] > 1:
@@ -396,12 +396,35 @@ class Controller (QObject):
         for f in cfiles:
             constraints.extend(utils.get_net_names(f))
 
-        #Go through all the connected signals and create a list of constraint that are not used
-        mbd = self.model.get_consolodated_master_bind_dict()
-        for key in mbd:
-            if key in constraints:
-                constraints.remove(key)
+        #Don't let the user select where the clk and rst are, let the board file do this
+        constraints.remove("clk")
+        if "rst" in constraints:
+            constraints.remove("rst")
+        if "rst_n" in constraints:
+            constraints.remove("rst_n")
 
+        #Go through all the connected signals and create a list of constraint that are not used
+        mbd = self.model.get_expanded_master_bind_dict()
+        #print "mbd: %s" % str(mbd)
+        #print "constraints: %s" % str(constraints)
+        for module in mbd:
+            module_dict = mbd[module]
+            for signal in module_dict:
+                signal_dict = module_dict[signal]
+
+                print "signal: %s" % str(signal)
+                if signal_dict["range"]:
+                    print "check range"
+                    ikeys = copy.deepcopy(signal_dict.keys())
+                    ikeys.remove("range")
+                    for i in ikeys:
+                        if signal_dict[i]["loc"] in constraints:
+                            print "Checking: %s" % signal_dict[i]["loc"]
+                            constraints.remove(signal_dict[i]["loc"])
+                else:   
+                    if signal_dict["loc"] in constraints:
+                        constraints.remove(signal_dict["loc"])
+            
         for c in constraints:
             self.constraint_editor.add_pin(c)
 
@@ -419,6 +442,7 @@ class Controller (QObject):
 
     def disconnect_signal(self, module_name, signal_name, direction, index, pin_name):
         #Remove signal from model
+        print "Disconnect"
         self.constraint_editor.remove_connection(module_name, signal_name, index)
         self.refresh_constraint_editor()
 

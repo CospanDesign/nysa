@@ -123,7 +123,7 @@ class ConstraintLeafNodeRange(LeafNode):
                 for child in self.children:
                     compare_index = child.get_index()
                     #this is no the last one
-                    if index < compare_index:
+                    if index > compare_index:
                         self.children.insert(pos, c)
                         break
 
@@ -142,7 +142,7 @@ class ConstraintLeafNodeRange(LeafNode):
         return old_constraint
 
     def remove_signal(self, signal_index):
-        print "remove signal index: %d" % signal_index
+        #print "remove signal index: %d" % signal_index
         c = None
         for child in self.children:
             if child.get_index() == signal_index:
@@ -159,7 +159,7 @@ class ConstraintLeafNodeRange(LeafNode):
         return len(self.children)
 
     def childAtRow(self, row):
-        print "child at row: %d" % row
+        #print "child at row: %d" % row
         assert 0 <= row < len(self.children)
         #print "Getting child"
         #if isinstance(self.children[row], IndexConstraintLeafNode):
@@ -244,7 +244,7 @@ class ConstraintLeafNodeNoRange(LeafNode):
         return len(self.signal_name, self.direction, "", self.constraint_name, "delete_button")
 
     def disconnect_clicked(self):
-        print "signal name: %s" % self.signal_name
+        #print "signal name: %s" % self.signal_name
         module_name = self.parent.toString()
         self.callback(module_name = module_name,
                       signal_name = self.signal_name,
@@ -339,13 +339,13 @@ class ModuleBranch(BranchNode):
         c = None
         node = None
         for child in self.children:
-            print "Checking: %s with %s" % (child[NODE].signal_name.lower(), signal_name)
+            #print "Checking: %s with %s" % (child[NODE].signal_name.lower(), signal_name)
             if child[NODE].signal_name.lower() == signal_name:
                 c = child
                 node = c[NODE]
 
         if node is None:
-            print "didn't find child"
+            #print "didn't find child"
             return False
 
         if signal_index is not None:
@@ -359,7 +359,7 @@ class ModuleBranch(BranchNode):
     def childWithKey(self, key):
         if not self.children:
             return None
-        print "Getting child with key: %s" % key
+        #print "Getting child with key: %s" % key
         i = bisect.bisect_left(self.children, (key, None))
         if i < 0 or i >= len(self.children):
             return None
@@ -369,7 +369,7 @@ class ModuleBranch(BranchNode):
 
     def get_signal(self, signal_name, signal_index = None):
         for child in self.children:
-            print "Checking: %s" % child[NODE].signal_name
+            #print "Checking: %s" % child[NODE].signal_name
             if child[NODE].signal_name.lower() == signal_name:
                 return child[NODE]
         return None        
@@ -493,20 +493,20 @@ class ConstraintTreeTableModel(QAbstractItemModel):
         return old_constraint
 
     def removeRecord(self, module_name, signal_name, signal_index = None, callReset=True):
-        print "Remove record"
+        #print "Remove record"
         root = self.root
         module_branch = root.childWithKey(module_name.lower())
         if module_branch is None:
             return False
-        print "Found Module"
-        print "Looking for %s" % signal_name
+        #print "Found Module"
+        #print "Looking for %s" % signal_name
         sl = module_branch.get_signal(signal_name.lower())
         if sl is None:
             return False
-        print "Found Leaf"
+        #print "Found Leaf"
         if isinstance(sl, ConstraintLeafNodeNoRange):
             #remove this signal from the
-            print "removing %s" % signal_name.lower()
+            #print "removing %s" % signal_name.lower()
             module_branch.remove_signal(signal_name.lower())
             if len(module_branch) == 0:
                 #need to remove this module branch too
@@ -660,7 +660,7 @@ class ConstraintTreeTableModel(QAbstractItemModel):
             return QModelIndex()
         if isinstance(node, tuple):
             return QModelIndex()
-        print "node: %s" % str(node)
+        #print "node: %s" % str(node)
         parent = node.parent
         if parent is None:
             return QModelIndex()
@@ -695,7 +695,7 @@ class ConstraintTreeTableModel(QAbstractItemModel):
             return QModelIndex()
             #    print "parent is constraint leaf node with NO range"
 
-        print "Parent: %s" % str(parent)
+        #print "Parent: %s" % str(parent)
 
         grandparent = parent.parent
         if grandparent is None:

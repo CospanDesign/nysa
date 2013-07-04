@@ -362,33 +362,33 @@ class WishboneController (controller.Controller):
 
 
     def bus_refresh_constraint_editor(self, name = None):
-        print "Wishbone Specific Constraint editor refresh"
+        if self.dbg: print "Wishbone Specific Constraint editor refresh"
         if name is not None:
-            print "View only one module"
+            if self.dbg: print "View only one module"
         else:
-            print "Display all modules"
+            if self.dbg: print "Display all modules"
             pcount = self.model.get_number_of_peripheral_slaves()
             mcount = self.model.get_number_of_memory_slaves()
             for i in range(pcount):
                 name = self.model.get_slave_name(SlaveType.PERIPHERAL, i)
                 ports = self.model.get_slave_ports(SlaveType.PERIPHERAL, i)
                 bindings = self.model.get_slave_bindings(SlaveType.PERIPHERAL, i)
-                ex_bindings = cu.expand_user_constraints(bindings)
+                if self.dbg: print ""
                 signals = ports.keys()
-                #signals = ex_bindings.keys()
+                #signals = bindings.keys()
                 #Add Peripheral Signals
                 #for key in bindings:
                 bound_count = 0
-                for key in ex_bindings:
-                    if not ex_bindings[key]["range"]:
+                for key in bindings:
+                    if not bindings[key]["range"]:
                         self.constraint_editor.add_connection(color = PS_COLOR,
                                                               module_name = name,
                                                               port = key,
                                                               direction = bindings[key]["direction"],
                                                               pin_name = bindings[key]["loc"])
                     else:
-                        indexes = copy.deepcopy(ex_bindings[key].keys())
-                        print "Indexes: %s" % str(indexes)
+                        indexes = copy.deepcopy(bindings[key].keys())
+                        if self.dbg: print "Indexes: %s" % str(indexes)
                         indexes.remove("range")
                         bound_count = 0
                         for i in indexes:
@@ -398,22 +398,22 @@ class WishboneController (controller.Controller):
                             self.constraint_editor.add_connection(color = PS_COLOR,
                                                                   module_name = name,
                                                                   port = key,
-                                                                  direction = ex_bindings[key][i]["direction"],
-                                                                  pin_name = ex_bindings[key][i]["loc"],
+                                                                  direction = bindings[key][i]["direction"],
+                                                                  pin_name = bindings[key][i]["loc"],
                                                                   index = i)
 
 
                     if key in signals:
-                        if not ex_bindings[key]["range"]:
+                        if not bindings[key]["range"]:
                             signals.remove(key)
                         else:
-                            print "Signal: %s" % key
-                            print "Checking if bound count: %d == %d" % (bound_count, ports[key]["size"])
+                            if self.dbg: print "Signal: %s" % key
+                            if self.dbg: print "Checking if bound count: %d == %d" % (bound_count, ports[key]["size"])
                             if bound_count == ports[key]["size"]:
-                                print "All of the items in the bus are constrained"
+                                if self.dbg: print "All of the items in the bus are constrained"
                                 signals.remove[key]
                     else:
-                        print "%s is not a port of %s" % (key, name)
+                        if self.dbg: print "%s is not a port of %s" % (key, name)
                     #XXX: Need a way to detect vectors, sometimes a user will only use part of a vector
 
 
@@ -445,21 +445,20 @@ class WishboneController (controller.Controller):
                 name = self.model.get_slave_name(SlaveType.MEMORY, i)
                 ports = self.model.get_slave_ports(SlaveType.MEMORY, i)
                 bindings = self.model.get_slave_bindings(SlaveType.MEMORY, i)
-                ex_bindings = cu.expand_user_constraints(bindings)
                 signals = ports.keys()
-                #signals = ex_bindings.keys()
+                #signals = bindings.keys()
 
                 #Add Memory Signals
-                for key in ex_bindings:
-                    if not ex_bindings[key]["range"]:
+                for key in bindings:
+                    if not bindings[key]["range"]:
                         self.constraint_editor.add_connection(color = MS_COLOR,
                                                               module_name = name,
                                                               port = key,
                                                               direction = bindings[key]["direction"],
                                                               pin_name = bindings[key]["loc"])
                     else:
-                        indexes = copy.deepcopy(ex_bindings[key].keys())
-                        print "Indexes: %s" % str(indexes)
+                        indexes = copy.deepcopy(bindings[key].keys())
+                        if self.dbg: print "Indexes: %s" % str(indexes)
                         indexes.remove("range")
                         bound_count = 0
                         for i in indexes:
@@ -469,22 +468,22 @@ class WishboneController (controller.Controller):
                             self.constraint_editor.add_connection(color = MS_COLOR,
                                                                   module_name = name,
                                                                   port = key,
-                                                                  direction = ex_bindings[key][i]["direction"],
-                                                                  pin_name = ex_bindings[key][i]["loc"],
+                                                                  direction = bindings[key][i]["direction"],
+                                                                  pin_name = bindings[key][i]["loc"],
                                                                   index = i)
 
 
                     if key in signals:
-                        if not ex_bindings[key]["range"]:
+                        if not bindings[key]["range"]:
                             signals.remove(key)
                         else:
-                            print "Signal: %s" % key
-                            print "Checking if bound count: %d == %d" % (bound_count, ports[key]["size"])
+                            if self.dbg: print "Signal: %s" % key
+                            if self.dbg: print "Checking if bound count: %d == %d" % (bound_count, ports[key]["size"])
                             if bound_count == ports[key]["size"]:
-                                print "All of the items in the bus are constrained"
+                                if self.dbg: print "All of the items in the bus are constrained"
                                 signals.remove(key)
                     else:
-                        print "%s is not a port of %s" % (key, name)
+                        if self.dbg: print "%s is not a port of %s" % (key, name)
                     #XXX: Need a way to detect vectors, sometimes a user will only use part of a vector
 
 

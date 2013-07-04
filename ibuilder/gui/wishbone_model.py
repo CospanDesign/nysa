@@ -576,14 +576,16 @@ class WishboneModel():
         #Get Peripheral Slaves
         p_count = self.get_number_of_slaves(SlaveType.PERIPHERAL)
         for i in range(p_count):
-            slave = self.get_slave_at(SlaveType.PERIPHERAL, i)
-            bind_dict[slave.name] = self.get_node_bindings(slave.uname)
+            slave = self.gm.get_slave_at(SlaveType.PERIPHERAL, i)
+            bind_dict[slave.name] = self.gm.get_node_bindings(slave.unique_name)
 
         #Get Memory Slaves
         m_count = self.get_number_of_slaves(SlaveType.MEMORY)
         for i in range(m_count):
-            slave = self.get_slave_at(SlaveType.MEMORY, i)
-            bind_dict[slave.name] = self.get_node_bindings(slave.uname)
+            slave = self.gm.get_slave_at(SlaveType.MEMORY, i)
+            bind_dict[slave.name] = self.gm.get_node_bindings(slave.unique_name)
+
+        return bind_dict
 
     def get_consolodated_master_bind_dict(self):
         """Combine the dictionary from:
