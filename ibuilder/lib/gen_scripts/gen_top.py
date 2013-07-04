@@ -22,7 +22,11 @@ class GenTop(Gen):
   def add_ports_to_wires(self):
     """add all the ports to wires list so that no item adds wires"""
     for name in self.bindings.keys():
-      self.wires.append(self.bindings[name]["port"])
+        #print "self.bindings[name]" % str(self.bindings[name].keys())
+      #print "name: %s" % name
+      #for key in self.bindings[name].keys():
+      #    print "\t%s" % str(key)
+      self.wires.append(self.bindings[name]["loc"])
 
 
   def generate_ports(self):
@@ -31,7 +35,11 @@ class GenTop(Gen):
     blist = self.bindings.keys()
     for i in xrange(len(blist)):
       name = blist[i]
-      port_name = self.bindings[name]["port"]
+      #print "name: %s" % name
+      #for key in self.bindings[name].keys():
+      #    print "\t%s" % str(key)
+
+      port_name = self.bindings[name]["loc"]
       eol = ""
       if i < len(blist) - 1:
         eol = ","
@@ -519,11 +527,13 @@ class GenTop(Gen):
       buf_bind += "\t//Bindings to Ports\n"
       for key in self.bindings.keys():
         if (self.bindings[key]["direction"] == "input"):
-          buf_bind += "\tassign\t{0:<20}=\t{1};\n".format(key, self.bindings[key]["port"])
+
+          buf_bind += "\tassign\t{0:<20}=\t{1};\n".format(key, self.bindings[key]["loc"])
           #buf_bind = buf_bind + "\tassign\t" + key + "\t=\t" + self.bindings[key]["port"] + ";\n"
         elif (self.bindings[key]["direction"] == "output"):
           #buf_bind += "\tassign\t{0:<20}=\t{1};\n".format(key, self.bindings[key]["port"])
-          buf_bind += "\tassign\t{0:<20}=\t{1};\n".format(self.bindings[key]["port"], key)
+
+          buf_bind += "\tassign\t{0:<20}=\t{1};\n".format(self.bindings[key]["loc"], key)
 
 
     if invert_reset:
@@ -723,16 +733,19 @@ class GenTop(Gen):
                 print "comparing %s with %s" % (bname, port)
               if (bname == port):
                 if debug: print "found: " + bkey
-                out_buf += "{0:<20}".format(self.bindings[bkey]["port"])
-                found_binding = True
 
+
+                out_buf += "{0:<20}".format(self.bindings[bkey]["loc"])
+                found_binding = True
 
             else:
               if debug:
                 print "comparing %s with %s_%s" % (bname, name, port)
               if (bname == (name + "_" +  port)):
                 if debug: print "found: " + bkey
-                out_buf += "{0:<20}".format(self.bindings[bkey]["port"])
+
+
+                out_buf += "{0:<20}".format(self.bindings[bkey]["loc"])
                 found_binding = True
 
         if( not found_binding):

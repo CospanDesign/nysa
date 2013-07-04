@@ -314,7 +314,7 @@ class Controller (QObject):
     def refresh_constraint_editor(self, name = None):
         #If a name is present just populate connections for that one item
         #   e.g. the host interface, master, etc...
-        mbd = self.model.get_master_bind_dict()
+        mbd = self.model.get_consolodated_master_bind_dict()
         self.constraint_editor.clear_all()
 
         if name is None or name == "Host Interface":
@@ -325,6 +325,7 @@ class Controller (QObject):
             hib = self.model.get_host_interface_bindings()
             hip = self.model.get_host_interface_ports()
             signals = copy.deepcopy(hip.keys())
+            print "signals: %s" % str(signals)
             for s in hip.keys():
                 if s in no_detect_ports:
                     signals.remove(s)
@@ -337,7 +338,7 @@ class Controller (QObject):
                                                           module_name = "Host Interface",
                                                           port = key,
                                                           direction = ex_bindings[key]["direction"],
-                                                          pin_name = ex_bindings[key]["pin"])
+                                                          pin_name = ex_bindings[key]["loc"])
                 else:
                     indexes = copy.deepcopy(ex_bindings[key].keys())
                     indexes.remove("range")
@@ -349,7 +350,7 @@ class Controller (QObject):
                                                               module_name = "Host Interface",
                                                               port = key,
                                                               direction = ex_bindings[key][i]["direction"],
-                                                              pin_name = ex_bindings[key][i]["pin"],
+                                                              pin_name = ex_bindings[key][i]["loc"],
                                                               index = i)
 
                 #Remove signals from ports list
@@ -396,7 +397,7 @@ class Controller (QObject):
             constraints.extend(utils.get_net_names(f))
 
         #Go through all the connected signals and create a list of constraint that are not used
-        mbd = self.model.get_master_bind_dict()
+        mbd = self.model.get_consolodated_master_bind_dict()
         for key in mbd:
             if key in constraints:
                 constraints.remove(key)

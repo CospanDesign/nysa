@@ -385,7 +385,7 @@ class WishboneController (controller.Controller):
                                                               module_name = name,
                                                               port = key,
                                                               direction = bindings[key]["direction"],
-                                                              pin_name = bindings[key]["pin"])
+                                                              pin_name = bindings[key]["loc"])
                     else:
                         indexes = copy.deepcopy(ex_bindings[key].keys())
                         print "Indexes: %s" % str(indexes)
@@ -399,7 +399,7 @@ class WishboneController (controller.Controller):
                                                                   module_name = name,
                                                                   port = key,
                                                                   direction = ex_bindings[key][i]["direction"],
-                                                                  pin_name = ex_bindings[key][i]["pin"],
+                                                                  pin_name = ex_bindings[key][i]["loc"],
                                                                   index = i)
 
 
@@ -456,7 +456,7 @@ class WishboneController (controller.Controller):
                                                               module_name = name,
                                                               port = key,
                                                               direction = bindings[key]["direction"],
-                                                              pin_name = bindings[key]["pin"])
+                                                              pin_name = bindings[key]["loc"])
                     else:
                         indexes = copy.deepcopy(ex_bindings[key].keys())
                         print "Indexes: %s" % str(indexes)
@@ -470,7 +470,7 @@ class WishboneController (controller.Controller):
                                                                   module_name = name,
                                                                   port = key,
                                                                   direction = ex_bindings[key][i]["direction"],
-                                                                  pin_name = ex_bindings[key][i]["pin"],
+                                                                  pin_name = ex_bindings[key][i]["loc"],
                                                                   index = i)
 
 

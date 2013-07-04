@@ -15,14 +15,14 @@ from lib import constraint_utils as cu
 from ibuilder_error import ModuleNotFound
 from ibuilder_error import SlaveError
 
-from .gui_error import WishboneModelError
+from gui_error import WishboneModelError
 
-from . import graph_manager as gm
+import graph_manager as gm
 
-from .graph_manager import GraphManager
-from .graph_manager import SlaveType
-from .graph_manager import NodeType
-from .graph_manager import get_unique_name
+from graph_manager import GraphManager
+from graph_manager import SlaveType
+from graph_manager import NodeType
+from graph_manager import get_unique_name
 
 import utils
 
@@ -328,7 +328,7 @@ class WishboneModel():
         # Get all the slaves.
         p_count = self.get_number_of_slaves(SlaveType.PERIPHERAL)
         m_count = self.get_number_of_slaves(SlaveType.MEMORY)
-##      bind_dict = self.get_master_bind_dict()
+##      bind_dict = self.get_consolodated_master_bind_dict()
 
         for i in range(0, p_count):
             #print "apply slave tags to project: %d:" % i
@@ -379,7 +379,7 @@ class WishboneModel():
             pt_slave["bind"] = cu.consolodate_constraints(bindings)
             #for p in bindings:
                 #pt_slave["bind"][p] = {}
-                #pt_slave["bind"][p]["port"] = bindings[p]["pin"]
+                #pt_slave["bind"][p]["port"] = bindings[p]["loc"]
                 #pt_slave["bind"][p]["direction"] = bindings[p]["direction"]
 
             # Add filenames.
@@ -432,7 +432,7 @@ class WishboneModel():
             #for p in bindings:
             #    pt_slave["bind"] = cu.consolodate_constraints(bindings)
             #    pt_slave["bind"][p] = {}
-            #    pt_slave["bind"][p]["port"] = bindings[p]["pin"]
+            #    pt_slave["bind"][p]["port"] = bindings[p]["loc"]
             #    pt_slave["bind"][p]["direction"] = bindings[p]["direction"]
 
     def set_project_location(self, location):
@@ -685,11 +685,11 @@ class WishboneModel():
 
         #direction = ports[pn]["direction"]
 
-        bind_dict = self.get_master_bind_dict()
+        bind_dict = self.get_consolodated_master_bind_dict()
 ##       print "bind dict keys: " + str(bind_dict.keys())
         for pname in bind_dict:
 ##       if port_name in bind_dict.keys():
-            if port_name == bind_dict[pname]["pin"]:
+            if port_name == bind_dict[pname]["loc"]:
                 raise SlaveError("port %s is already bound")
 
         # Also check if there is a vector in the binding list and see if I'm in
@@ -772,12 +772,12 @@ class WishboneModel():
     def unbind_all(self, debug=False):
         if debug:
             print ("unbind all")
-        mbd = self.get_master_bind_dict()
+        mbd = self.get_consolodated_master_bind_dict()
         if debug:
             print (("Master Bind Dict: %s" % str(mbd)))
         node_names = self.gm.get_node_names()
         for nn in node_names:
-            nb = self.gm.get_node_bindings(nn)
+            nb = copy.deepcopy(self.gm.get_node_bindings(nn))
             for b in nb:
                 if debug:
                     print (("Unbindig %s" % b))
@@ -1027,3 +1027,28 @@ class WishboneModel():
     def get_graph_manager(self):
         '''Returns the graph manager.'''
         return self.gm
+
+    def get_unique_from_module_name(self, module_name):
+        """Return the unique name associated with the module_name"""
+        #Check the host interface
+        print "Checking host interface"
+        if module_name == "Host Interface":
+            return self.get_host_interface_name()
+        #Check the peripherals slaves
+        print "Checking peripherals"
+        pcount = self.get_number_of_peripheral_slaves()
+        for i in range(pcount):
+            name = self.get_slave_name(SlaveType.PERIPHERAL, i)
+            if module_name == name:
+                return get_unique_name(name, NodeType.SLAVE, SlaveType.PERIPHERAL, i)
+
+        #Check the memory slaves
+        print "Checking memory"
+        mcount = self.get_number_of_memory_slaves()
+        for i in range(mcount):
+            name = self.get_slave_name(SlaveType.MEMORY, i)
+            if module_name == name:
+                return get_unique_name(name, NodeType.SLAVE, SlaveType.MEMORY, i)
+
+
+        raise SlaveError("Module with name %s not found" % module_name)

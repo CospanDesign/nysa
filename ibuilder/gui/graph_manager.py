@@ -157,7 +157,7 @@ class GraphManager:
             node = self.get_node(name)
             node.slave_index = i
 
-    def get_slave_at(self, index, slave_type, debug=False):
+    def get_slave_at(self, slave_type, index, debug=False):
         name = self.get_slave_name_at(slave_type, index, debug)
         return self.get_node(name)
 
