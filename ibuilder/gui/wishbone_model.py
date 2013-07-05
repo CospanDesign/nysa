@@ -667,112 +667,11 @@ class WishboneModel():
         self.gm.bind_port(un, port_name, pin_name, index)
         return
 
-#        ports = self.get_node_ports(un)
-#
-#        
-#
-#        
-#
-#        pn = port_name.partition("[")[0]
-#        if ":" in port_name:
-#            raise SlaveError(
-#                "Sorry I don't support vectors yet :( port_name = %s" %
-#                port_name)
-#
-#        if pn not in ports:
-#            raise SlaveError("port %s is not in node %s" %
-#                (port_name, node.name))
-#
-###       if pin_name not in pt:
-###         raise SlaveError("pin %s is not in the constraints" % (pin_name))
-#
-#        #direction = ports[pn]["direction"]
-#
-#        bind_dict = self.get_consolodated_master_bind_dict()
-###       print "bind dict keys: " + str(bind_dict.keys())
-#        for pname in bind_dict:
-###       if port_name in bind_dict.keys():
-#            if port_name == bind_dict[pname]["loc"]:
-#                raise SlaveError("port %s is already bound")
-#
-#        # Also check if there is a vector in the binding list and see if I'm in
-#        # range of that vector.
-#        for key in bind_dict:
-#            low = -1
-#            high = -1
-#            index = -1
-#            key_index = -1
-#
-#            if pn not in key:
-#                continue
-#
-#            index = port_name.partition("[")[2]
-#            if len(index) > 0:
-#
-#                index = index.partition("]")[0]
-#                if ":" in index:
-#                    raise SlaveError(
-#                        "Sorry I don't support vectors yet :( port_name = %s" %
-#                        port_name)
-#
-#                index = int(index)
-#            else:
-#                index = -1
-#
-###              print "index: " + str(index)
-#
-#            if "[" in key:
-#                key_index = key.partition("[")[2]
-#                key_index = key_index.partition("]")[0]
-#                if ":" in key_index:
-#                    low, nothing, high = key_index.partition(":")
-#                    low = int(low)
-#                    high = int(high)
-#                    key_index = -1
-#                else:
-#                    key_index = int(key_index)
-#
-#            # Either the binding has no [] (index) or it is a range.
-#            if key_index == -1:
-#                # If the index has no [] (no index) or it is a range.
-#                if index == -1:
-#                    # bad
-#                    raise SlaveError(
-#                        "Conflict with the binding %s and the port %s" %
-#                        (key, port_name))
-#
-#                if index >= low and index <= high:
-#                    raise SlaveError(
-#                        "Conflict with the binding %s and the port %s" %
-#                        (key, port_name))
-#
-#                if key_index == index:
-#                    raise SlaveError(
-#                        "Conflict with the binding %s and the port %s" %
-#                        (key, port_name))
-#
-###       bind_dict = node.bindings
-#        self.gm.bind_port(node_name, port_name, pin_name)
-###       bind_dict[port_name] = {}
-###       bind_dict[port_name]["port"] = pin_name
-###       bind_dict[port_name]["direction"] = direction
-###       print "setting up %s to pin %s as an %s" % (port_name,
-###                                                   pin_name,
-###                                                   direction)
-
     def unbind_port(self, node_name, port_name, index=None):
         """Remove a binding with the port name."""
-##      node = self.gm.get_node(node_name)
-##      bind_dict = node.bindings
-##      bind_dict[port_name] = {}
-##      if port_name not in bind_dict.keys():
-##        raise SlaveError(
-##            "port %s is not in the binding dictionary for node %s" %
-##                 (port_name, node.name))
-
         un = self.get_unique_from_module_name(node_name)
         self.gm.unbind_port(un, port_name, index=None)
-##      del bind_dict[port_name]
+        return
 
     def unbind_all(self, debug=False):
         if debug:
