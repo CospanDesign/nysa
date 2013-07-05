@@ -586,12 +586,20 @@ class GraphManager:
             pdict["direction"] = port["direction"]
             pdict["loc"] = loc
 
-    def unbind_port(self, name, port):
+    def unbind_port(self, name, port, index = None):
         node = self.get_node(name)
         if port not in node.bindings:
             raise SlaveError(
               "port %s is not in the binding dictionary for node %s"
               % (port, name))
+        if index is not None:
+            if i in port.keys():
+                del(node.bindings[port][i])
+                if len(node.bindings[port].keys()) == 1:
+                    #Only "Range is left
+                    del(node.bindings[port])
+                    return
+
         del(node.bindings[port])
 
     def get_node_bindings(self, name):

@@ -444,7 +444,8 @@ class Controller (QObject):
 
     def disconnect_signal(self, module_name, signal_name, direction, index, pin_name):
         #Remove signal from model
-        print "Disconnect"
+        print "Controller: Disconnect"
+        self.model.unbind_port(module_name, signal_name, index)
         self.constraint_editor.remove_connection(module_name, signal_name, index)
         self.refresh_constraint_editor()
 

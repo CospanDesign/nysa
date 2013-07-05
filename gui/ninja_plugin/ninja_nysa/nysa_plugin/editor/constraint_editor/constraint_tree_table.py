@@ -66,6 +66,7 @@ class IndexConstraintLeafNode(LeafNode):
         self.constraint_name = constraint_name
 
     def disconnect_clicked(self):
+        print "Disconnecting: %s[%d]" % (self.signal_name, self.signal_index)
         module_name = self.parent.parent.toString()
         self.callback(module_name = module_name,
                       signal_name = self.signal_name,
@@ -237,13 +238,14 @@ class ConstraintLeafNodeNoRange(LeafNode):
         self.constraint_name = constraint_name
         self.callback = callback
 
-        self.delete_button = QPushButton("Disconnect")
-        self.delete_button.connect(self.delete_button, SIGNAL("clicked()"), self.disconnect_clicked)
+        #self.delete_button = QPushButton("Disconnect")
+        #self.delete_button.connect(self.delete_button, SIGNAL("clicked()"), self.disconnect_clicked)
 
     def __len_(self):
         return len(self.signal_name, self.direction, "", self.constraint_name, "delete_button")
 
     def disconnect_clicked(self):
+        print "Disconnecting: %s" % (self.signal_name)
         #print "signal name: %s" % self.signal_name
         module_name = self.parent.toString()
         self.callback(module_name = module_name,
@@ -420,7 +422,7 @@ class ConstraintTreeTableModel(QAbstractItemModel):
 
         #Brush style
         self.brush = QBrush(Qt.gray)
-        self.brush.setStyle(Qt.RadialGradientPattern)
+        #self.brush.setStyle(Qt.RadialGradientPattern)
 
         #Font for delete
         self.font = QFont('White Rabbit')
@@ -641,19 +643,14 @@ class ConstraintTreeTableModel(QAbstractItemModel):
         return self.createIndex(row, column,
                                 branch.childAtRow(row))
 
-    def selection_changed(self, a, b):
-        indexes = a.indexes()
-        for index in indexes:
-            if index.column() == 5:
-                node = self.nodeFromIndex(index)
-                if isinstance(node, IndexConstraintLeafNode):
-                    node.disconnect_clicked()
-                    break
-                if isinstance(node, ConstraintLeafNodeNoRange): 
-                    node.disconnect_clicked()
-                    break
-                break
-        #self.reset()
+        #def selection_changed(self, a, b):
+    def check_pressed(self, index):
+        if index.column() == 5:
+            node = self.nodeFromIndex(index)
+            if isinstance(node, IndexConstraintLeafNode):
+                node.disconnect_clicked()
+            if isinstance(node, ConstraintLeafNodeNoRange): 
+                node.disconnect_clicked()
 
     def parent(self, child):
         #print "Parent called"

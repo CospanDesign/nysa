@@ -760,7 +760,7 @@ class WishboneModel():
 ###                                                   pin_name,
 ###                                                   direction)
 
-    def unbind_port(self, node_name, port_name):
+    def unbind_port(self, node_name, port_name, index=None):
         """Remove a binding with the port name."""
 ##      node = self.gm.get_node(node_name)
 ##      bind_dict = node.bindings
@@ -769,7 +769,9 @@ class WishboneModel():
 ##        raise SlaveError(
 ##            "port %s is not in the binding dictionary for node %s" %
 ##                 (port_name, node.name))
-        self.gm.unbind_port(node_name, port_name)
+
+        un = self.get_unique_from_module_name(node_name)
+        self.gm.unbind_port(un, port_name, index=None)
 ##      del bind_dict[port_name]
 
     def unbind_all(self, debug=False):

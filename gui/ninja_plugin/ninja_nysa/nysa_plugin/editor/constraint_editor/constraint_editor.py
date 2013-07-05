@@ -200,16 +200,13 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
         for signal in signal_index_list:
             print "Signal Location: %d, %d" % (signal.row(), signal.column())
 
-        print "signal location: %d, %d" % (signal_index.row(), signal_index.column())
+        #print "signal location: %d, %d" % (signal_index.row(), signal_index.column())
         pin_row = pin_index_list[0].row()
         signal = self.signal_table.get_signal(signal_index)
         pin_data = self.pin_model.get_row_data(pin_row)
 
-        print "signal: %s" % str(signal)
-        print "pin_data: %s" % str(pin_data)
-        if len(signal) == 0:
-            print "POOOP"
-            return
+        #print "signal: %s" % str(signal)
+        #print "pin_data: %s" % str(pin_data)
 
         module_name = signal[0]
         signal_name = signal[1]
@@ -322,12 +319,14 @@ class ConnectionTable(QTreeView):
 
     def __init__(self, controller, parent = None):
         super(ConnectionTable, self).__init__(parent)
-        self.setSelectionBehavior(QAbstractItemView.SelectRows |
-                                  QAbstractItemView.SingleSelection)
+        #self.setSelectionBehavior(QAbstractItemView.SelectRows | 
+        #                          QAbstractItemView.SingleSelection)
+        #self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setUniformRowHeights(True)
         self.m = ConstraintTreeTableModel(controller, self)
         self.setModel(self.m)
         self.connect(self, SIGNAL("activated(QModelIndex)"), self.activated)
+        self.connect(self, SIGNAL("pressed(QModelIndex)"), self.pressed)
 
     def add_connection(self, color, module_name, name, index, direction, constraint_name):
         return self.m.addRecord(color, module_name, name, index, direction, constraint_name)
@@ -339,12 +338,10 @@ class ConnectionTable(QTreeView):
         print "Actived: %d, %d" % (index.row(), index.column())
         self.emit(SIGNAL("activated"), self.model().asRecord(index))
 
+    def pressed(self, index):
+        print "Pressed: %d, %d" % (index.row(), index.column())
+        self.m.check_pressed(index)
+
     def clear(self):
         self.m.clear()
-
-    def selectionChanged(self, a, b):
-        print "Constraint Table Selection Changed"
-        self.m.selection_changed(a, b)
-        super(ConnectionTable, self).selectionChanged(a, b)
-
 
