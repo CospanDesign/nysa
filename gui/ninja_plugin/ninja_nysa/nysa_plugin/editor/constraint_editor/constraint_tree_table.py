@@ -435,6 +435,7 @@ class ConstraintTreeTableModel(QAbstractItemModel):
 
     def asRecord(self, index):
         leaf = self.nodeFromIndex(index)
+        print "leaf: %s" % str(leaf)
         #Basically only return valid records
         if leaf is None:
             return []
@@ -443,11 +444,11 @@ class ConstraintTreeTableModel(QAbstractItemModel):
         if isinstance(leaf, RootBranch):
             return []
         if isinstance(leaf, ConstraintLeafNodeNoRange): 
-            return leaf.asRecord
+            return leaf.asRecord()
         if isinstance(leaf, ConstraintLeafNodeRange):
             return []
         if isinstance(leaf, IndexConstraintLeafNode): 
-            return leaf.asRecord
+            return leaf.asRecord()
 
     def addRecord(self, color, module_name, signal_name, signal_index, direction, constraint_name, callReset=True):
         old_constraint = None
@@ -651,7 +652,8 @@ class ConstraintTreeTableModel(QAbstractItemModel):
                 if isinstance(node, ConstraintLeafNodeNoRange): 
                     node.disconnect_clicked()
                     break
-        self.reset()
+                break
+        #self.reset()
 
     def parent(self, child):
         #print "Parent called"

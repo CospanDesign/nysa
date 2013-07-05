@@ -493,21 +493,24 @@ def expand_ports(c_ports):
     d = {}
     #Go through all the ports, if there is a range, create a new 
     #setting within the output dictionary
-    for direction in c_ports:
-        dir_ports = c_ports[direction]
-        for port in dir_ports:
-            d[port] = {}
-            #print "port: %s" % port
-            size = dir_ports[port]["size"]
-            if size == 1:
-                d[port]["direction"] = direction
-                d[port]["range"] = False
-            else:
-                min_val = dir_ports[port]["min_val"]
-                d[port]["range"] = True
-                for i in range(min_val, min_val + size):
-                    d[port][i] = {}
-                    d[port][i]["direction"] = direction
+
+    #for direction in c_ports:
+    #    dir_ports = c_ports[direction]
+
+    for port in c_ports:
+        d[port] = {}
+        print "port: %s" % port
+        size = c_ports[port]["size"]
+        direction = c_ports[port]["direction"]
+        if size == 1:
+            d[port]["direction"] = direction
+            d[port]["range"] = False
+        else:
+            min_val = c_ports[port]["min_val"]
+            d[port]["range"] = True
+            for i in range(min_val, min_val + size):
+                d[port][i] = {}
+                d[port][i]["direction"] = direction
     return d
 
 def get_only_signal_ports(ports):

@@ -1,5 +1,6 @@
 import os
 import sys
+import copy
 import networkx as nx
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -8,6 +9,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, 'lib'))
 
 from ibuilder_error import SlaveError
 from ibuilder_error import IBuilderError
+from lib import constraint_utils as cu
 
 
 def enum(*sequential, **named):
@@ -555,13 +557,34 @@ class GraphManager:
         #    node.bindings[p]["loc"] = bindings[p]["loc"]
         #    node.bindings[p]["direction"] = bindings[p]["direction"]
 
-    def bind_port(self, name, port, loc, debug=False):
+    def bind_port(self, name, port_name, loc, index = None, debug=False):
         node = self.get_node(name)
-        ports = node.parameters["ports"]
-        direction = ports[port]["direction"]
-        node.bindings[port] = {}
-        node.bindings[port]["loc"] = loc
-        node.bindings[port]["direction"] = direction
+        ports = copy.deepcopy(node.parameters["ports"])
+        bindings = self.get_node_bindings(name)
+
+        print "ports: %s" % str(ports)
+
+        ports = cu.expand_ports(ports)
+        ports = cu.get_only_signal_ports(ports)
+        port = ports[port_name]
+        if port_name not in bindings.keys():
+            bindings[port_name] = {}
+            
+        pdict = bindings[port_name]
+
+        if "range" not in pdict:
+            pdict["range"] = port["range"]
+
+        if pdict["range"]:
+            print "port: %s" % str(port)
+            if index not in pdict.keys():
+                pdict[index] = {}
+            pdict[index]["direction"] = port[index]["direction"]
+            pdict[index]["loc"] = loc
+
+        else:
+            pdict["direction"] = port["direction"]
+            pdict["loc"] = loc
 
     def unbind_port(self, name, port):
         node = self.get_node(name)

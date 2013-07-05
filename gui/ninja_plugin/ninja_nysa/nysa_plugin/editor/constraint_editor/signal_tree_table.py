@@ -260,9 +260,21 @@ class SignalTreeTableModel(QAbstractItemModel):
 
 
     def asRecord(self, index):
+        #print "Getting slected index at %d, %d" % (index.row(), index.column())
         leaf = self.nodeFromIndex(index)
-        if leaf is not None and isinstance(leaf, IndexSignalLeafNode):
-            return leaf.asRecord()
+        
+        if leaf is not None:
+            if isinstance(leaf, IndexSignalLeafNode):
+                return leaf.asRecord()
+            if isinstance(leaf, SignalLeafNode):
+                #print "Signal Name: %s" % leaf.signal_name
+                if leaf.has_range():
+                    #print "Not connecting up vectors yet"
+                    return []
+                else:
+                    return leaf.asRecord()
+
+        #print "Location returned None"
         return []
 
     def rowCount(self, parent):
@@ -330,6 +342,7 @@ class SignalTreeTableModel(QAbstractItemModel):
 
 
     def index(self, row, column, parent):
+        #print "Getting index: %d, %d" % (row, column)
         assert self.root
         branch = self.nodeFromIndex(parent)
         assert branch is not None
@@ -338,14 +351,32 @@ class SignalTreeTableModel(QAbstractItemModel):
 
 
     def parent(self, child):
+        #print "Finding Parent:"
         node = self.nodeFromIndex(child)
         if node is None:
             return QModelIndex()
         parent = node.parent
         if parent is None:
+            #print "\tParent is none"
             return QModelIndex()
+
+        if isinstance(parent, RootBranch):
+            #print "\tParent is root"
+            return QModelIndex()
+
+        if isinstance(parent, ModuleBranch):
+            #print "\tFinding (Module) for: %s" % str(node.asRecord())
+            row = self.root.rowOfChild(parent)
+            #print "\t\trow: %s" % row
+            assert row != -1
+            return self.createIndex(row, 0, parent)
+
+
+        #print "\tParent type: %s" % str(parent)
+
         grandparent = parent.parent
         if grandparent is None:
+            #print "\tGrandparent is none"
             return QModelIndex()
         row = grandparent.rowOfChild(parent)
         assert row != -1
@@ -356,6 +387,6 @@ class SignalTreeTableModel(QAbstractItemModel):
             if index.isValid() else self.root
 
     def clear(self):
-        self.root = BranchNode("")
+        self.root = RootBranch("")
         self.reset()
 

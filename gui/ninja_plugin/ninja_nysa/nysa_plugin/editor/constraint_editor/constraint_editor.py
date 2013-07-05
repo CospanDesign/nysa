@@ -166,7 +166,7 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
                 self.output.Debug(self, "Removed Signal")
             
     def add_connection(self, color, module_name, port, direction, pin_name, index = None):
-        print "Adding Connection: %s.%s" % (module_name, port)
+        #print "Adding Connection: %s.%s" % (module_name, port)
         self.connection_table.add_connection(color, module_name, port, index, direction, pin_name)
 
     def remove_connection(self, module_name, port, index=None):
@@ -196,22 +196,32 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
             return
 
         #XXX: Only grab the first row
-        signal_row = signal_index_list[0].row()
-        pin_row = pin_index_list[0].row()
-        connection = []
-        signal_data = self.signal_model.get_row_data(signal_row)
-        pin_data = self.pin_model.get_row_data(pin_row)
-        connection.extend(signal_data)
-        connection.extend(pin_data)
-        self.signal_model.removeRow(signal_row)
-        self.pin_model.removeRow(pin_row)
-        self.add_connection(connection[0], connection[1], connection[2], connection[3])
-        if self.connect_callback is not None:
-            self.connect_callback(connection[0], connection[1], conneciton[2], connection[3])
+        signal_index = signal_index_list[-1]
+        for signal in signal_index_list:
+            print "Signal Location: %d, %d" % (signal.row(), signal.column())
 
+        print "signal location: %d, %d" % (signal_index.row(), signal_index.column())
+        pin_row = pin_index_list[0].row()
+        signal = self.signal_table.get_signal(signal_index)
+        pin_data = self.pin_model.get_row_data(pin_row)
+
+        print "signal: %s" % str(signal)
+        print "pin_data: %s" % str(pin_data)
+        if len(signal) == 0:
+            print "POOOP"
+            return
+
+        module_name = signal[0]
+        signal_name = signal[1]
+        index = None
+        if signal[2] != "None":
+            index = int(signal[2])
+        direction = signal[3]
+        loc = pin_data[0]
+        self.controller.connect_signal(module_name, signal_name, direction, index, loc)
 
         #print "Connection: %s" % str(connection)
-        self.output.Info(self, "Connect: %s" % str(connection))
+        #self.output.Info(self, "Connect: %s" % str(connection))
                
 
 class ConstraintModel(QAbstractTableModel):
@@ -292,6 +302,9 @@ class SignalTable(QTreeView):
 
     def remove_signal(self, module_name, name, index=-1):
         self.m.removeRecord(module_name, name)
+
+    def get_signal(self, index):
+        return self.m.asRecord(index)
 
     def activated(self, index):
         print "Actived: %d, %d" % (index.row(), index.column())

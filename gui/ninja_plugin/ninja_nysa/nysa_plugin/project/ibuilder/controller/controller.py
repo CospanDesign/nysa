@@ -412,14 +412,14 @@ class Controller (QObject):
             for signal in module_dict:
                 signal_dict = module_dict[signal]
 
-                print "signal: %s" % str(signal)
+                #print "signal: %s" % str(signal)
                 if signal_dict["range"]:
-                    print "check range"
+                    #print "check range"
                     ikeys = copy.deepcopy(signal_dict.keys())
                     ikeys.remove("range")
                     for i in ikeys:
                         if signal_dict[i]["loc"] in constraints:
-                            print "Checking: %s" % signal_dict[i]["loc"]
+                            #print "Checking: %s" % signal_dict[i]["loc"]
                             constraints.remove(signal_dict[i]["loc"])
                 else:   
                     if signal_dict["loc"] in constraints:
@@ -429,7 +429,7 @@ class Controller (QObject):
             self.constraint_editor.add_pin(c)
 
     def item_is_enabled(self, path):
-        print "VC: Path: %s" % path
+        #print "VC: Path: %s" % path
         return True
 
 
@@ -438,7 +438,9 @@ class Controller (QObject):
         return self.constraint_editor
 
     def connect_signal(self, module_name, signal_name, direction, index, pin_name):
-        print "Connect"
+        #print "Connect"
+        self.model.set_binding(module_name, signal_name, pin_name, index)
+        self.refresh_constraint_editor()
 
     def disconnect_signal(self, module_name, signal_name, direction, index, pin_name):
         #Remove signal from model
