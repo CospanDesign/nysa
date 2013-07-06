@@ -88,7 +88,7 @@ class IBuilder (QObject):
         self.commands["constraint_editor"] = self.open_constraint_editor
 
 
-    def open_constraint_editor(self, view_controller, name = None):
+    def open_constraint_editor(self, view_controller, filename, name = None):
         print "open constraint editor"
         tab_manager = self.editor.get_tab_manager()
         ce = view_controller.get_constraint_editor()
@@ -100,6 +100,7 @@ class IBuilder (QObject):
                                   actions=self.actions,
                                   output=self.output,
                                   controller = view_controller,
+                                  filename = filename,
                                   project_name = view_controller.get_project_name())
 
             name = "%s ce" % view_controller.get_project_name()
@@ -192,9 +193,10 @@ class IBuilder (QObject):
             name = filename.split(os.path.sep)[-1]
             self.designers.remove(filename)
 
-
-
     def load_designers(self):
         tab_manager = self.editor.get_tab_manager()
+
+    def build_project(self, project):
+        print "Build project: %s" % str(project)
 
 

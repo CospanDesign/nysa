@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import os
+import glob
 
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QAction
@@ -13,7 +14,9 @@ from ninja_ide.gui import actions
 #from ninja_ide.core import plugin_interfaces
 from .project.cbuilder import project
 from .project.cbuilder.cbuilder import CBuilder
+from .project.cbuilder.cbuilder import CBUILDER_EXT
 from .project.ibuilder.ibuilder import IBuilder
+from .project.ibuilder.ibuilder import DESIGNER_EXT
 from .project.ibuilder import project as ibuilder_project
 from .misc import nysa_status
 from .preferences import preferences
@@ -70,11 +73,6 @@ class NysaPlugin(plugin.Plugin):
 
 
         self.actions = actions.Actions()
-        self.connect(self.actions, SIGNAL("projectExecuted(QString)"),
-            self.cbuilder.build_core)
-
-        self.connect(self.actions, SIGNAL("fileExecuted(QString)"),
-            self.cbuilder.build_core)
 
         #self.connect(tab_manager, SIGNAL("changeActualTab(QWidget)"),
         #    self.tab_changed)
@@ -90,10 +88,32 @@ class NysaPlugin(plugin.Plugin):
         self.actions.ide._menuFile.connect(self.actions.ide._menuFile.toolbar_items["save-file"], SIGNAL("triggered()"), self.save_file)
         self.actions.ide._menuFile.connect(self.actions.ide._menuFile.toolbar_items["save-as"], SIGNAL("triggered()"), self.save_file_as)
 
+
+        #Steal the build commands
+        #self.actions_execute_file = self.actions.execute_file
+        #self.actions_execute_project = self.actions.execute_project
+
+
+
         #DEMO STUFF
         #self.test_editor()
         self.inject_functions()
         self.actions.update_shortcuts()
+
+        #self.connect(self.actions, SIGNAL("projectExecuted(QString)"),
+        #    self.build_command)
+        #self.cbuilder.build_core)
+
+        self.connect(self.actions.shortRunFile, SIGNAL("activated()"), self.build_file_command)
+        self.actions.disconnect(self.actions.shortRunFile, SIGNAL("activated()"), self.actions.execute_file)
+
+
+        #self.cbuilder.build_core)
+
+        self.actions.connect(self.actions.shortRunProject, SIGNAL("activated()"), self.build_command)
+        self.actions.disconnect(self.actions.shortRunProject, SIGNAL("activated()"), self.actions.execute_project)
+
+
 
 
     def inject_functions(self):
@@ -112,7 +132,95 @@ class NysaPlugin(plugin.Plugin):
         main.open_file = nysa_open_file
         main.save_file = self.save_file
         main.save_file_as = nysa_save_file_as
-        #self.output.Debug(self, "Prev save file: %s, current save file: %s" % (str(main.main_save_file), str(main.save_file)))
+
+    def build_command(self):
+        print "Entering custom build"
+        editor = self.locator.get_service('editor')
+        project = editor.get_project_owner()
+        if project is None or len(project) == 0:
+            filename = ""
+            print "Project is None attempt to find the widget, not editor"
+            tab_manager = editor.get_tab_manager()
+            widget = tab_manager.currentWidget()
+            print "widget: %s" % str(widget)
+            filename = widget.ID
+
+            print "Filename: %s" % str(filename)
+            project_tree = self.explorer_s._explorer.get_project_given_filename(filename)
+            project = project_tree.get_full_path()
+            project = os.path.split(project)[0]
+
+            if project is None:
+                print "Unable to find project name"
+                return
+
+            print "Project: %s" % str(project)
+
+        print "editor: %s" % editor
+        print "project: %s" % project
+
+        cbuilder_project = glob.glob(project + os.path.sep + "*.%s" % CBUILDER_EXT)
+        ibuilder_project = glob.glob(project + os.path.sep + "*.%s" % DESIGNER_EXT)
+        print "cbuilder_project: %s" % str(cbuilder_project)
+        print "ibuilder_project: %s" % str(ibuilder_project)
+
+        if len(cbuilder_project) > 0:
+            print "Build cbuilder project"
+            self.cbuilder.build_core()
+            return
+
+        elif len(ibuilder_project) > 0:
+            print "Build ibuilder project"
+            self.ibuilder.build_project(project)
+            return
+
+        print "Normal build"
+        self.actions.execute_project()
+
+
+    def build_file_command(self):
+        print "Enterring custom file build"
+        editor = self.locator.get_service('editor')
+        project = editor.get_project_owner()
+        if project is None or len(project) == 0:
+            filename = ""
+            print "Project is None attempt to find the widget, not editor"
+            tab_manager = editor.get_tab_manager()
+            widget = tab_manager.currentWidget()
+            print "widget: %s" % str(widget)
+            filename = widget.ID
+
+            print "Filename: %s" % str(filename)
+            project_tree = self.explorer_s._explorer.get_project_given_filename(filename)
+            project = project_tree.get_full_path()
+            project = os.path.split(project)[0]
+
+            if project is None:
+                print "Unable to find project name"
+                return
+
+            print "Project: %s" % str(project)
+
+
+        print "project: %s" % project
+ 
+ 
+        cbuilder_project = glob.glob(project + os.path.sep + "*.%s" % CBUILDER_EXT)
+        ibuilder_project = glob.glob(project + os.path.sep + "*.%s" % DESIGNER_EXT)
+        print "project file: %s" % cbuilder_project
+        if len(cbuilder_project) > 0:
+            print "Build corebuilder file"
+            self.cbuilder.build_core()
+            return
+
+        if len(ibuilder_project) > 0:
+            print "Build ibuilder file"
+            self.ibuilder.build_project(project)
+            return
+           
+
+        print "Normal file build"
+        self.actions.execute_file()
 
 
     def open_file(self, filename):
@@ -141,6 +249,7 @@ class NysaPlugin(plugin.Plugin):
     def file_closed(self, filename):
         self.output.Debug(self, "File close detected")
         return self.ibuilder.file_closed(filename)
+
 
 
     def view_status(self):
@@ -306,3 +415,5 @@ def nysa_save_file_as():
     print "Entering Nysa custom save as"
     #print "I'm 1337 again"
     main.main_save_file_as()
+
+

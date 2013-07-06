@@ -48,14 +48,15 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
 
     output = None
 
-    def __init__(self, parent, actions, output, controller, project_name):
+    def __init__(self, parent, actions, output, controller, filename, project_name):
         QWidget.__init__(self, parent)
         itab_item.ITabItem.__init__(self)
 
         self.actions = actions
-        self.ID = project_name + "_constraints"
+        self.ID = filename
         self.lang = "Constraint Editor"
         self.output = output
+        self.project_name = project_name
         self.controller = controller
         self.connect_callback = None
         self.disconnect_callback = None
@@ -66,6 +67,10 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
 
         #self.initialize_view()
         #self.show()
+
+
+    def get_project(self):
+        return project
 
     def clear_all(self):
         self.signal_table.clear()

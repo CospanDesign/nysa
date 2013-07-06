@@ -96,6 +96,7 @@ class ProjectIbuilder (plugin_interfaces.IProjectTypeHandler, QObject):
         project['license'] = str(ninja_page.cboLicense.currentText())
         designer_ibd = ".%s" % DESIGNER_EXT
         project['supported-extensions'] = ['py', '.json', '.txt', '.v', '.ucf', designer_ibd]
+        project["mainFile"] = name + designer_ibd
         #project['preExecScript'] = ''
         #project['postExecScript'] = ''
         #project['identation'] = ''

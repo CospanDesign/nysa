@@ -150,6 +150,9 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
     def set_project(self, project):
         self.project = project
 
+    def get_project(self, project):
+        return self.project
+
     def set_controller(self, controller):
         self.vc = controller
         self.vc.set_fpga_designer(self)
@@ -341,5 +344,5 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         self.vc.remove_slave(bus, index)
 
     def show_constraint_editor(self, module_name):
-        self.commands["constraint_editor"](self.vc, module_name)
+        self.commands["constraint_editor"](self.vc, self.ID, module_name)
 

@@ -22,6 +22,8 @@ from .wizard import PagePluginProperties
 from .wizard import SLAVE_TYPE
 from .wizard import CoreCustomize
 
+from .cbuilder import CBUILDER_EXT
+
 
 PROJECT_TYPE = "Verilog Core Builder"
 
@@ -40,9 +42,9 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
 from cbuilder_factory import CBuilderFactory
 
 
+
 class ProjectCbuilder(plugin_interfaces.IProjectTypeHandler, QObject):
 
-    EXT = 'cbldr'
     output = None
     path = None
 
@@ -168,7 +170,7 @@ class ProjectCbuilder(plugin_interfaces.IProjectTypeHandler, QObject):
         version = str(page.txtVersion.text())
         plugin['version'] = version
 
-        fileName = os.path.join(path, core_name + "." + self.EXT)
+        fileName = os.path.join(path, core_name + "." + CBUILDER_EXT)
         # Create the .plugin file with metadata
         self.create_file(fileName, plugin)
         # Return the dictionary

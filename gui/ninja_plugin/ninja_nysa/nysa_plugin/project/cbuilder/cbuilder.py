@@ -8,6 +8,7 @@ import glob
 Functions independent of the project used to build/simulate/debug
 '''
 
+CBUILDER_EXT = 'cbldr'
 
 class CBuilder ():
     output = None
