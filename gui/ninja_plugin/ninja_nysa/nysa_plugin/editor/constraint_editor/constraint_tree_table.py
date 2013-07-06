@@ -28,6 +28,7 @@ from tree_table import TreeTableModel
 from tree_table import BranchNode
 from tree_table import LeafNode
 
+
 class IndexConstraintLeafNode(LeafNode):
     def __init__(self, signal_name, signal_index, direction, constraint_name, callback):
         fields = [signal_name, str(signal_index), direction, constraint_name, "delete"]
@@ -347,7 +348,6 @@ class ModuleBranch(BranchNode):
                 node = c[NODE]
 
         if node is None:
-            #print "didn't find child"
             return False
 
         if signal_index is not None:
@@ -356,6 +356,7 @@ class ModuleBranch(BranchNode):
                     self.children.remove(c)
         else:
             self.children.remove(c)
+
         return True
 
     def childWithKey(self, key):
@@ -508,13 +509,8 @@ class ConstraintTreeTableModel(QAbstractItemModel):
             return False
         #print "Found Leaf"
         if isinstance(sl, ConstraintLeafNodeNoRange):
-            #remove this signal from the
-            #print "removing %s" % signal_name.lower()
             module_branch.remove_signal(signal_name.lower())
-            if len(module_branch) == 0:
-                #need to remove this module branch too
-                root.removeChild(module_branch)
-            return True
+
         if isinstance(sl, ConstraintLeafNodeRange):
             module_branch.remove_signal(signal_name.lower(), signal_index)
 
@@ -524,6 +520,7 @@ class ConstraintTreeTableModel(QAbstractItemModel):
         if callReset:
             self.reset()
 
+        return True
 
 
     def rowCount(self, parent):

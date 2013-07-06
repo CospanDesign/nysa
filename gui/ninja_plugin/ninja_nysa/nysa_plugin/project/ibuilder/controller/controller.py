@@ -453,3 +453,6 @@ class Controller (QObject):
     def bus_refresh_constraint_editor(self, name = None):
         raise NotImplementedError("This function should be subclassed")
 
+    def get_model(self):
+        return self.model
+

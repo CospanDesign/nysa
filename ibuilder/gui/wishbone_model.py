@@ -315,6 +315,7 @@ class WishboneModel():
 
         json_string = json.dumps(self.project_tags, sort_keys=True, indent=4)
         try:
+            print "Data to write:\n%s" % json_string
             file_out = open(filename, 'w')
             file_out.write(json_string)
             file_out.close()
@@ -329,6 +330,8 @@ class WishboneModel():
         p_count = self.get_number_of_slaves(SlaveType.PERIPHERAL)
         m_count = self.get_number_of_slaves(SlaveType.MEMORY)
 ##      bind_dict = self.get_consolodated_master_bind_dict()
+        self.project_tags["SLAVES"] = {}
+        self.project_tags["MEMORY"] = {}
 
         for i in range(0, p_count):
             #print "apply slave tags to project: %d:" % i
@@ -337,8 +340,8 @@ class WishboneModel():
             name = sc_slave.name
             if debug:
                 print (("name: %s" % str(name)))
-            if debug:
-                print (("Projct tags: %s" % str(self.project_tags)))
+            #if debug:
+            #    print (("Projct tags: %s" % str(self.project_tags)))
             if name == "DRT":
                 continue
             if name not in list(self.project_tags["SLAVES"].keys()):
@@ -374,8 +377,8 @@ class WishboneModel():
             bindings = self.gm.get_node_bindings(uname)
 ##           bind = sc_slave.bindings
 ##           print "bind id: " + str(id(bindings))
-            if debug:
-                print (("bind contents: %s" % str(bindings)))
+            #if debug:
+            #    print (("bind contents: %s" % str(bindings)))
             pt_slave["bind"] = cu.consolodate_constraints(bindings)
             #for p in bindings:
                 #pt_slave["bind"][p] = {}
@@ -426,14 +429,19 @@ class WishboneModel():
 
             bindings = self.gm.get_node_bindings(uname)
 ##           print "bind id: " + str(id(bindings))
-            if debug:
-                print (("bind contents: %s" % str(bindings)))
+            #if debug:
+            #    print (("bind contents: %s" % str(bindings)))
             pt_slave["bind"] = cu.consolodate_constraints(bindings)
             #for p in bindings:
             #    pt_slave["bind"] = cu.consolodate_constraints(bindings)
             #    pt_slave["bind"][p] = {}
             #    pt_slave["bind"][p]["port"] = bindings[p]["loc"]
             #    pt_slave["bind"][p]["direction"] = bindings[p]["direction"]
+            module = sc_slave.parameters["module"]
+            filename = utils.find_module_filename(module)
+            pt_slave["filename"] = filename
+
+
 
     def set_project_location(self, location):
         """Sets the location of the project to output."""
@@ -888,7 +896,26 @@ class WishboneModel():
 
     def remove_slave(self, slave_type=SlaveType.PERIPHERAL, slave_index=0):
         """Removes slave from specified index."""
-        self.gm.remove_slave(slave_index, slave_type)
+        #Check if there are any bindings to remove
+        name = self.get_slave_name(slave_type, slave_index)
+        bindings = self.get_slave_bindings(slave_type, slave_index)
+        uname = self.get_unique_name(name, NodeType.SLAVE, slave_type, slave_index)
+        bnames = bindings.keys()
+        for bname in bnames:
+            bind = bindings[bname]
+        
+            if bind["range"]:
+                indexes = bind.keys()
+                indexes.remove("range")
+                for index in indexes:
+                    self.gm.unbind_port(uname, bname, index)
+                    
+                break
+            else:
+                self.gm.unbind_port(uname, bname)
+                break
+
+        self.gm.remove_slave(slave_type, slave_index)
         return
 
     def move_slave(self,

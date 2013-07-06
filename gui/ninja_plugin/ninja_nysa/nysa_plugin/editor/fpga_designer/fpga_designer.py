@@ -147,29 +147,10 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         self.vc = None
         #self.setup_controller()
 
+    def set_project(self, project):
+        self.project = project
+
     def set_controller(self, controller):
-        #d = {}
-        #try:
-        #    f = open(self.ID, "r")
-        #    d = json.loads(f.read())
-        #except IOError, err:
-        #    raise FPGADesignerError("IOError: %s" % str(err))
-
-        #except TypeError, err:
-        #    raise FPGADesignerError("JSON Type Error: %s" % str(err))
-
-        ##A Pathetic factory pattern, select the controller based on the bus
-        #if d["TEMPLATE"] == "wishbone_template.json":
-        #    self.vc = WishboneController(self, self.view, self.output, config_dict = d)
-        #elif d["TEMPLATE"] == "axi_template.json":
-        #    self.vc = AxiController(self, self.view, self.output)
-        #else:
-        #    raise FPGADesignerError(    "Bus type (%s) not recognized, view " +
-        #                                "controller cannot be setup, set the " +
-        #                                "TEMPLATE value to either " +
-        #                                "wishbone_template or " +
-        #                                "axi_tmeplate.json" % str(d["TEMPLATE"])
-        #                           )
         self.vc = controller
         self.vc.set_fpga_designer(self)
         self.vc.set_canvas(self.view)

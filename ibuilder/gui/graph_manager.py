@@ -101,7 +101,7 @@ class GraphManager:
 
         return node.unique_name
 
-    def remove_slave(self, slave_index, slave_type):
+    def remove_slave(self, slave_type, slave_index):
         # Can't remove the DRT so if the index is 0 then don't try.
         if slave_type == SlaveType.PERIPHERAL and slave_index == 0:
             raise SlaveError("DRT cannot be removed")
@@ -586,19 +586,30 @@ class GraphManager:
             pdict["direction"] = port["direction"]
             pdict["loc"] = loc
 
-    def unbind_port(self, name, port, index = None):
+    def unbind_port(self, name, port_name, index = None):
         node = self.get_node(name)
-        if port not in node.bindings:
+        if port_name not in node.bindings:
             raise SlaveError(
               "port %s is not in the binding dictionary for node %s"
-              % (port, name))
+              % (port_name, name))
         if index is not None:
-            if i in port.keys():
-                del(node.bindings[port][i])
-                if len(node.bindings[port].keys()) == 1:
+            print "index type: %s : %d" % (str(type(index)), index)
+            port = node.bindings[port_name]
+
+            if index in port.keys():
+
+                if len(port.keys()) == 1:
                     #Only "Range is left
-                    del(node.bindings[port])
+                    del(node.bindings[port_name])
                     return
+                else:
+                    del(port[index])
+                return
+
+            raise SlaveError(
+                    "port %s:%d is not in the binding dictionery for node %s"
+                    %(port_name, index, name))
+
 
         del(node.bindings[port])
 

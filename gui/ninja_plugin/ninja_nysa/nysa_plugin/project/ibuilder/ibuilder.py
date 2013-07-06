@@ -165,7 +165,13 @@ class IBuilder (QObject):
         filename = editor.ID
         ext = file_manager.get_file_extension(filename)
         if ext == DESIGNER_EXT:
+            print "Found fpga_designer extension"
             self.output.Debug(self, "Found designer extension")
+            controller = editor.get_controller()
+            model = controller.get_model()
+            model.apply_slave_tags_to_project(debug = True)
+            model.save_config_file(filename)
+            print "Saved file: %s" % filename
             return True
 
         return False

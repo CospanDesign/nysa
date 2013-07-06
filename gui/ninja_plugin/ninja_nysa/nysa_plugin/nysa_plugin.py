@@ -91,6 +91,7 @@ class NysaPlugin(plugin.Plugin):
 
 
     def inject_functions(self):
+        print "Injecting functions"
         global main
         main = self.editor_s._main
 
@@ -283,10 +284,11 @@ def nysa_open_file(     filename='',
 
 
 def nysa_save_file(     editorWidget=None):
-    print "I'm 1337"
+    print "Entering Nysa customm save"
     nysa_plugin.save_file(editorWidget)
     main.main_save_file(editorWidget)
 
 def nysa_save_file_as():
-    print "I'm 1337 again"
+    print "Entering Nysa custom save as"
+    #print "I'm 1337 again"
     main.main_save_file_as()
