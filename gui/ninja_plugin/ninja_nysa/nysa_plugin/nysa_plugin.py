@@ -66,6 +66,7 @@ class NysaPlugin(plugin.Plugin):
 
         #Add all the toolbar items
         self.tb.add_toolbar_items()
+        tab_manager = self.editor_s.get_tab_manager()
 
 
         self.actions = actions.Actions()
@@ -75,7 +76,12 @@ class NysaPlugin(plugin.Plugin):
         self.connect(self.actions, SIGNAL("fileExecuted(QString)"),
             self.cbuilder.build_core)
 
-        self.connect(self.editor_s._main, SIGNAL("fileClosed(QString)"), self.file_closed)
+        #self.connect(tab_manager, SIGNAL("changeActualTab(QWidget)"),
+        #    self.tab_changed)
+
+        self.connect(self.editor_s._main, SIGNAL("fileClosed(QString)"),
+            self.file_closed)
+
         self.connect(self.actions.shortSave, SIGNAL("activated()"),
             self.save_file)
 
@@ -190,6 +196,14 @@ class NysaPlugin(plugin.Plugin):
         #self.editor_s.get_editor().register_syntax(lang="v", syntax=vdict)
         #print "Editor: %s" % str(dir(self.editor_s.get_editor()))
         self.output.Info(self, "vpath: %s" % vpath)
+
+    #def tab_changed(self, widget):
+    #    print "tab changed"
+    #    tab_manager = self.editor_s.get_tab_manager()
+    #    editor = actualTab.currentWidget()
+    #    if isinstance(editor, ConstraintEditor):
+    #        editor.refresh_tables()
+            
 
     def test_editor(self):
         #This doesn't belong here but when I work on ibuilder then I need to

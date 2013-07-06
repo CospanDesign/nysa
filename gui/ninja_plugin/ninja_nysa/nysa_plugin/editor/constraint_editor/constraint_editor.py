@@ -75,6 +75,9 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
             self.pin_model.removeRow(0)
         self.connection_table.clear()
 
+    def refresh_tables(self):
+        #Refresh all the tables
+        self.controller.refresh_constraint_editor()
 
     def set_connect_callback(self, connect):
         self.connect_callback = connect

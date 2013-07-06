@@ -314,6 +314,10 @@ class Controller (QObject):
     def refresh_constraint_editor(self, name = None):
         #If a name is present just populate connections for that one item
         #   e.g. the host interface, master, etc...
+        if self.constraint_editor is None:
+            print "constraint editor is none"
+            return
+
         mbd = self.model.get_consolodated_master_bind_dict()
         self.constraint_editor.clear_all()
 

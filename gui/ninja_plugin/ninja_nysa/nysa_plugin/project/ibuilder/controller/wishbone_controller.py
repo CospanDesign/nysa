@@ -249,6 +249,7 @@ class WishboneController (controller.Controller):
             self.model.add_slave(name, fn, slave_type, 1)
 
         self.refresh_slaves()
+        self.refresh_constraint_editor()
 
     def move_slave(self, bus, slave_name, to_index):
         if self.dbg: print "VC: Moving Slave"
@@ -285,6 +286,7 @@ class WishboneController (controller.Controller):
             slave_type = SlaveType.MEMORY
         self.model.remove_slave(slave_type, index)
         self.refresh_slaves()
+        self.refresh_constraint_editor()
 
 
     def find_slave_position(self, drop_position):
