@@ -62,8 +62,8 @@ def fix_verilog_paths():
 
 print "Fixing verilog Paths..."
 fix_verilog_paths()
-env.verilog('design.sim', 'temp.txt')
-env.sim('design.vcd', 'design.sim')
+build_retval = env.verilog('design.sim', 'temp.txt')
+env.sim('design.vcd', build_retval)
 
 Default('design.sim')
 
