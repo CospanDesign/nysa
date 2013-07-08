@@ -244,12 +244,7 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         layout.addWidget(self.param_table)
         pt.setLayout(layout)
 
-        self.user_dirs = []
-
         return pt
-
-    def add_user_dir(self, user_dir):
-        self.user_dirs.append(user_dir)
 
     def populate_param_table(self, tags):
         #print "Populating Parameter Table"
@@ -272,8 +267,9 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         self.param_table.setHorizontalHeaderLabels(["Name", "Value"])
 
     def addBox(self, name, color = "black"):
-        fn = utils.find_module_filename(name, self.user_dirs)
-        fn = utils.find_rtl_file_location(fn, self.user_dirs)
+        user_dirs = self.vc.get_user_dirs()
+        fn = utils.find_module_filename(name, user_dirs)
+        fn = utils.find_rtl_file_location(fn, user_dirs)
         mt = utils.get_module_tags(fn)
 
         Box(  position = self.position(),
@@ -313,9 +309,10 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
     def set_output(self, output):
         self.output = output
 
-    def initialize_slave_lists(self, user_paths = []):
+    def initialize_slave_lists(self):
+        user_dirs = self.vc.get_user_dirs()
         slave_list = utils.get_slave_list( bus = self.vc.get_bus(),
-                                          user_cbuilder_paths = user_paths)
+                                          user_cbuilder_paths = user_dirs)
         peripheral_dict = {}
         memory_dict = {}
 

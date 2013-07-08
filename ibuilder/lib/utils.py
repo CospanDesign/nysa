@@ -713,6 +713,7 @@ def get_slave_list(bus = "wishbone", user_cbuilder_paths = [], debug = False):
   slave_list = _get_slave_list(directory, debug=debug)
 
   for path in user_cbuilder_paths:
+    print "utils: Checking: %s" % path
     slave_list += _get_slave_list(path, debug=debug)
 
   return slave_list
@@ -838,7 +839,7 @@ def find_module_filename (module_name, user_cbuilder_paths = [], debug = False):
 
   for path in user_cbuilder_paths:
     try:
-      return _find_module_filename(base, module_name, debug = debug)
+      return _find_module_filename(path, module_name, debug = debug)
     except ModuleNotFound, mnf:
       pass
     finally:

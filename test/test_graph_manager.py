@@ -126,7 +126,7 @@ class Test (unittest.TestCase):
     self.sgm.move_slave(1, 4, gm.SlaveType.PERIPHERAL)
     self.sgm.move_slave(4, 2, gm.SlaveType.PERIPHERAL)
 
-    self.sgm.remove_slave(1, gm.SlaveType.PERIPHERAL)
+    self.sgm.remove_slave(gm.SlaveType.PERIPHERAL, 1)
 
     count = self.sgm.get_number_of_slaves(gm.SlaveType.PERIPHERAL)
 
@@ -159,11 +159,12 @@ class Test (unittest.TestCase):
     self.sgm.move_slave(2, 0, gm.SlaveType.MEMORY)
     self.sgm.move_slave(0, 3, gm.SlaveType.MEMORY)
 
-    self.sgm.remove_slave(2, gm.SlaveType.MEMORY)
+    self.sgm.remove_slave(gm.SlaveType.MEMORY, 2)
 
     count = self.sgm.get_number_of_slaves(gm.SlaveType.MEMORY)
-
+    
     for i in range (0, count):
+      print "i: %d" % i
       slave_name = self.sgm.get_slave_name_at(gm.SlaveType.MEMORY, i)
       node = self.sgm.get_node(slave_name)
       self.assertEqual(i, node.slave_index)
@@ -529,7 +530,7 @@ class Test (unittest.TestCase):
                       gm.SlaveType.PERIPHERAL,
                       debug = self.dbg)
 
-    self.sgm.remove_slave(1, gm.SlaveType.PERIPHERAL)
+    self.sgm.remove_slave(gm.SlaveType.PERIPHERAL, 1)
 
     count = self.sgm.get_number_of_slaves(gm.SlaveType.PERIPHERAL)
     self.assertEqual(count, 2)

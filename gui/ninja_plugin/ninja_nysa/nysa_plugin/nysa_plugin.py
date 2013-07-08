@@ -1,4 +1,28 @@
 # -*- coding: UTF-8 -*-
+
+# Distributed under the MIT licesnse.
+# Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy of
+# this software and associated documentation files (the "Software"), to deal in
+# the Software without restriction, including without limitation the rights to
+# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+# of the Software, and to permit persons to whom the Software is furnished to do
+# so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+
+
 import os
 import glob
 
@@ -12,15 +36,17 @@ from ninja_ide.gui import actions
 
 #from ninja_ide.tools import json_manager
 #from ninja_ide.core import plugin_interfaces
-from .project.cbuilder import project
-from .project.cbuilder.cbuilder import CBuilder
-from .project.cbuilder.cbuilder import CBUILDER_EXT
-from .project.ibuilder.ibuilder import IBuilder
-from .project.ibuilder.ibuilder import DESIGNER_EXT
-from .project.ibuilder import project as ibuilder_project
-from .misc import nysa_status
-from .preferences import preferences
-from .toolbar import toolbar
+from project.cbuilder import project as cbuilder_project
+from project.cbuilder.cbuilder import PROJECT_TYPE as CBUILDER_PROJECT_TYPE
+from project.ibuilder.ibuilder import PROJECT_TYPE as IBUILDER_PROJECT_TYPE
+from project.cbuilder.cbuilder import CBuilder
+from project.cbuilder.cbuilder import CBUILDER_EXT
+from project.ibuilder.ibuilder import IBuilder
+from project.ibuilder.ibuilder import DESIGNER_EXT
+from project.ibuilder import project as ibuilder_project
+from misc import nysa_status
+from preferences import preferences
+from toolbar import toolbar
 
 #This is here only for testing
 from .editor.fpga_designer.fpga_designer import FPGADesigner
@@ -36,9 +62,9 @@ nysa_plugin = None
 
 class NysaPlugin(plugin.Plugin):
 
-    output = None
-    cbuilder = None
-    ibuilder = None
+    #output = None
+    #cbuilder = None
+    #ibuilder = None
 
     def initialize(self):
         # Init your plugin
@@ -215,7 +241,7 @@ class NysaPlugin(plugin.Plugin):
 
         if len(ibuilder_project) > 0:
             print "Build ibuilder file"
-            self.ibuilder.build_project(project)
+            self.ibuilder.generate_project(project)
             return
            
 
@@ -279,12 +305,12 @@ class NysaPlugin(plugin.Plugin):
 
     def load_cbuilder_project(self):
         self.output.Info(self, "Loading cbuilder project")
-        self.explorer_s.set_project_type_handler(project.PROJECT_TYPE,
-        project.ProjectCbuilder(self.output, self.locator))
+        self.explorer_s.set_project_type_handler(CBUILDER_PROJECT_TYPE,
+        cbuilder_project.ProjectCbuilder(self.output, self.locator))
 
     def load_ibuilder_project(self):
         self.output.Info(self, "Loading ibuilder project")
-        self.explorer_s.set_project_type_handler(ibuilder_project.PROJECT_TYPE,
+        self.explorer_s.set_project_type_handler(IBUILDER_PROJECT_TYPE,
         ibuilder_project.ProjectIbuilder(self.output, self.locator))
 
     def open_verilog(self, filename):

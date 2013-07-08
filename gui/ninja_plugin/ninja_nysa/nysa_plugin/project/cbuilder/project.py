@@ -16,16 +16,16 @@ from ninja_ide.core import file_manager
 
 from ninja_ide.tools import json_manager
 
-from .menu import Menu
+from menu import Menu
 
-from .wizard import PagePluginProperties
-from .wizard import SLAVE_TYPE
-from .wizard import CoreCustomize
+from wizard import PagePluginProperties
+from wizard import SLAVE_TYPE
+from wizard import CoreCustomize
 
-from .cbuilder import CBUILDER_EXT
+from cbuilder import CBUILDER_EXT
+from cbuilder import PROJECT_TYPE
 
 
-PROJECT_TYPE = "Verilog Core Builder"
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 
@@ -84,7 +84,6 @@ class ProjectCbuilder(plugin_interfaces.IProjectTypeHandler, QObject):
         return pages
 
     def on_wizard_finish(self, wizard):
-        global PROJECT_TYPE
         ids = wizard.pageIds()
         main_core_page = wizard.page(ids[1])
         core_prop_page = wizard.page(ids[2])

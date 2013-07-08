@@ -480,7 +480,7 @@ def expand_ports(c_ports):
     Description: Expand ports to a format that is easier to modify
 
     Args:
-        c_ports: ports that are consolodated (read directly from module_tags
+        c_ports: ports that are consolodated (read directly from module_tags)
 
     Return:
         Dictionary of ports in an easier readible format
@@ -493,13 +493,38 @@ def expand_ports(c_ports):
     d = {}
     #Go through all the ports, if there is a range, create a new 
     #setting within the output dictionary
+    temp_dict = {}
+    if (("input" in c_ports.keys()) or 
+        ("output" in c_ports.keys()) or 
+        ("inout" in c_ports.keys())):
+        #need to translate this to a useful version
+        temp_dict = copy.deepcopy(c_ports)
+        c_ports = {}
+
+        if "input" in temp_dict.keys():
+            for key in temp_dict["input"]:
+                c_ports[key] = {}
+                c_ports[key] = temp_dict["input"][key]
+                c_ports[key]["direction"] = "input"
+        if "output" in temp_dict.keys():
+            for key in temp_dict["output"]:
+                c_ports[key] = {}
+                c_ports[key] = temp_dict["output"][key]
+                c_ports[key]["direction"] = "output"
+        if "inout" in temp_dict.keys():
+            for key in temp_dict["inout"]:
+                c_ports[key] = {}
+                c_ports[key] = temp_dict["inout"][key]
+                c_ports[key]["direction"] = "inout"
 
     #for direction in c_ports:
     #    dir_ports = c_ports[direction]
 
     for port in c_ports:
+        if "range" in c_ports[port]:
+            return c_ports
         d[port] = {}
-        print "port: %s" % port
+        #print "port: %s" % port
         size = c_ports[port]["size"]
         direction = c_ports[port]["direction"]
         if size == 1:

@@ -199,8 +199,7 @@ class WishboneModelTest (unittest.TestCase):
         self.c.add_slave("SM0", fn, SlaveType.MEMORY)
        
         #try:
-            #self.c.apply_slave_tags_to_project(debug = self.dbg)
-        self.c.apply_slave_tags_to_project(debug = True)
+        self.c.apply_slave_tags_to_project(debug = self.dbg)
         #except:
         #    self.fail("Failed applying slave tags to project")
 
@@ -721,12 +720,55 @@ class WishboneModelTest (unittest.TestCase):
         self.c.initialize_graph(debug = False)
        
         name = self.c.get_slave_name(st.PERIPHERAL, 2)
-        print "looking for: %s" % name
+        #print "looking for: %s" % name
         uname = self.c.get_unique_name(name, nt.SLAVE, st.PERIPHERAL, 2)
         un = self.c.get_unique_from_module_name(name)
-        print "found: %s" % un
+        #print "found: %s" % un
         self.assertEqual(un, uname)
 
+
+    def test_update_module_ports(self):
+        fname = os.path.join( os.path.dirname(__file__),
+                              os.pardir,
+                              "ibuilder",
+                              "example_projects",
+                              "dionysus_default.json")
+
+        self.c.load_config_file(fname)
+        self.c.initialize_graph(debug = False)
+        #Test no change
+        #print "Test no change"
+        uname = self.c.get_unique_from_module_name("gpio1")
+
+        pre = self.c.gm.get_node_bindings(uname)
+        self.c.update_module_ports("wb_gpio")
+        post = self.c.gm.get_node_bindings(uname)
+        self.assertDictEqual(pre, post)
+
+        path = os.path.join( os.path.dirname(__file__), "fake", "wb_gpio_less_ports", "wb_gpio.v") 
+        #print "Test less ports"
+        self.c.update_module_ports("wb_gpio", fn = path)
+        post = self.c.gm.get_node_bindings(uname)
+        #print "post: %s" % str(post)
+        self.assertNotIn("gpio_out", post.keys())
+
+        #print "Test More ports"
+        #path = os.path.join( os.path.dirname(__file__), "fake", "wb_gpio_less_ports", "wb_gpio.v") 
+        self.c.update_module_ports("wb_gpio")
+        self.c.gm.bind_port(uname, "gpio_out", "s3", 3)
+        post = self.c.gm.get_node_bindings(uname)
+        
+        self.assertIn("gpio_out", post.keys())
+
+        #print "Test Different Range"
+
+        path = os.path.join( os.path.dirname(__file__), "fake", "wb_gpio_different_ports", "wb_gpio.v") 
+        self.c.update_module_ports("wb_gpio", fn = path)
+        post = self.c.gm.get_node_bindings(uname)
+        #print "post: %s" % str(post)
+        self.assertIn("gpio_out", post.keys())
+        self.assertIn(32, post["gpio_out"].keys())
+       
 
 
 

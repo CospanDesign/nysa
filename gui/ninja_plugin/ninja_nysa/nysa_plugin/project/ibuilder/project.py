@@ -13,14 +13,14 @@ from ninja_ide.core import file_manager
 
 from ninja_ide.tools import json_manager
 
-from .menu import Menu
+from menu import Menu
 
-from .wizard import PageBoardSelection 
-from .wizard import ImageCustomizeSelection
+from wizard import PageBoardSelection 
+from wizard import ImageCustomizeSelection
 
-from .ibuilder import DESIGNER_EXT
+from ibuilder import DESIGNER_EXT
+from ibuilder import PROJECT_TYPE
 
-PROJECT_TYPE = "FPGA Image Builder"
 
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
@@ -73,7 +73,6 @@ class ProjectIbuilder (plugin_interfaces.IProjectTypeHandler, QObject):
 
     def on_wizard_finish(self, wizard):
         self.output.Info(self, "Wizard Finished")
-        global PROJECT_TYPE
         ids = wizard.pageIds()
         ninja_page = wizard.page(ids[-1])
         board_select_page = wizard.page(ids[0])

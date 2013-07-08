@@ -28,12 +28,25 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
 
 from constraint_editor import ConstraintEditor
 
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                                os.pardir,
+                                "cbuilder"))
 
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                                os.pardir,
+                                os.pardir))
+import nysa_actions
+
+
+                               
+from cbuilder import PROJECT_TYPE as CBUILDER_PROJECT_TYPE
+ 
 '''
 Functions independent of the project used to build/simulate/debug
 '''
 
 DESIGNER_EXT = "ibd"
+PROJECT_TYPE = "FPGA Image Builder"
 
 
 
@@ -41,6 +54,7 @@ class IBuilder (QObject):
     output = None
 
     def __init__(self, output, locator):
+        QObject.__init__(self)
         self.output = output
         self.locator = locator
         self.editor = self.locator.get_service('editor')
@@ -54,6 +68,9 @@ class IBuilder (QObject):
         self.actions = None
         self.commands = {}
         self.setup_commands()
+        self.actions = nysa_actions.NysaActions()
+        self.actions.set_ibuilder(self)
+        self.connect(self.actions, SIGNAL("module_built(QString)"), self.module_built)
 
     def setup_controller(self, filename):
         d = {}
@@ -81,6 +98,7 @@ class IBuilder (QObject):
                                         "axi_tmeplate.json" % str(d["TEMPLATE"])
                                    )
         return controller
+
 
     def setup_commands(self):
         #This is sort of like the actions for the entire IDE but I only need
@@ -113,11 +131,30 @@ class IBuilder (QObject):
 
     def file_open(self, filename):
         ext = file_manager.get_file_extension(filename)
+        projects = self.explorer._explorer.get_opened_projects()
+        
+        print "projects: %s" % str(projects)
         if ext == DESIGNER_EXT:
             self.output.Debug(self, "Found designer extension")
             tab_manager = self.editor.get_tab_manager()
 
             name = filename.split(os.path.sep)[-1]
+
+            user_dirs = []
+            #Look for cbuilder projects
+            #if they exist, add them into the user directories
+
+            #Project Trees
+            for p in projects:
+                print "looking for cbuilder"
+                print "Project path: %s" % p.get_full_path()
+                f = open(p.get_full_path(), "r")
+                j = json.loads(f.read())
+                if j["project-type"] == CBUILDER_PROJECT_TYPE:
+                    path = os.path.split(p.get_full_path())[0]
+                    print "ading: %s" % path
+                    user_dirs.append(path)
+                    
 
             fd = None
             index = -1
@@ -127,6 +164,10 @@ class IBuilder (QObject):
                 fd, index, filename = self.designers[name]
                 #we have a reference to this in the local
                 self.output.Debug(self, "Manager open vaue: %d" % tab_manager.is_open(fd))
+                controller = fd.get_controller()
+                for udir in user_dirs:
+                    controller.add_user_dir(udir)
+
                 #Check to see if the widget is in the tab manager
                 if tab_manager.is_open(fd) == -1:
                     self.output.Debug(self, "Did not find name in opened tabs")
@@ -151,11 +192,15 @@ class IBuilder (QObject):
 
                 #I'm assuming there is no controller set already so create a new one
                 controller = self.setup_controller(filename)
+                for udir in user_dirs:
+                    print "adding %s to user paths" % udir
+                    controller.add_user_dir(udir)
                 fd.set_controller(controller)
 
                 index = tab_manager.add_tab(fd, name)
                 self.designers[name] = (fd, index, filename)
                 controller.initialize_view()
+                print "Initialize slave list"
                 fd.initialize_slave_lists()
 
             return True
@@ -199,4 +244,9 @@ class IBuilder (QObject):
     def build_project(self, project):
         print "Build project: %s" % str(project)
 
+    def generate_project(self, project):
+        print "Generate project: %s" % str(project)
 
+    def module_built(self, module_name):
+        print "ibuilder module built: %s" % module_name
+        #Go through all editors, if they are ibuilder then

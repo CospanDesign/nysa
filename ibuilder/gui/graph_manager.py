@@ -101,12 +101,13 @@ class GraphManager:
 
         return node.unique_name
 
-    def remove_slave(self, slave_type, slave_index):
+    def remove_slave(self, slave_type, slave_index, debug = False):
         # Can't remove the DRT so if the index is 0 then don't try.
         if slave_type == SlaveType.PERIPHERAL and slave_index == 0:
             raise SlaveError("DRT cannot be removed")
 
         count = self.get_number_of_slaves(slave_type)
+        if debug: print "count: %d" % count
         if slave_index >= count:
             if slave_type == SlaveType.PERIPHERAL:
                 raise SlaveError(
@@ -120,9 +121,9 @@ class GraphManager:
         # Move the slave to the end so I can remove it.
         if slave_index < count:
             for index in range(slave_index, count - 1):
-                self.move_slave(index, index + 1, slave_type)
+                self.move_slave(index, index + 1, slave_type, debug = debug)
 
-        slave_name = self.get_slave_name_at(slave_type, count - 1)
+        slave_name = self.get_slave_name_at(slave_type, count - 1, debug = debug)
         self.graph.remove_node(slave_name)
 
     def rename_slave(self, slave_type, slave_index, new_name):
@@ -562,7 +563,7 @@ class GraphManager:
         ports = copy.deepcopy(node.parameters["ports"])
         bindings = self.get_node_bindings(name)
 
-        print "ports: %s" % str(ports)
+        #print "ports: %s" % str(ports)
 
         ports = cu.expand_ports(ports)
         ports = cu.get_only_signal_ports(ports)
@@ -576,7 +577,7 @@ class GraphManager:
             pdict["range"] = port["range"]
 
         if pdict["range"]:
-            print "port: %s" % str(port)
+            #print "port: %s" % str(port)
             if index not in pdict.keys():
                 pdict[index] = {}
             pdict[index]["direction"] = port[index]["direction"]
@@ -611,7 +612,7 @@ class GraphManager:
                     %(port_name, index, name))
 
 
-        del(node.bindings[port])
+        del(node.bindings[port_name])
 
     def get_node_bindings(self, name):
         return self.get_node(name).bindings

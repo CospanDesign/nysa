@@ -87,6 +87,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                               "cbuilder",
                               "drt"))
 
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                              os.pardir,
+                              os.pardir,
+                              os.pardir))
+
+import nysa_actions
+
 
 no_detect_ports = [
     "rst",
@@ -148,6 +155,8 @@ class Controller (QObject):
         self.boxes = {}
         self.user_dirs = []
         self.constraint_editor = None
+        self.actions  = nysa_actions.NysaActions()
+        self.connect(self.actions, SIGNAL("module_built(QString)"), self.module_built)
         #Connect events
         """
         Go through view and connect all relavent events
@@ -436,8 +445,6 @@ class Controller (QObject):
         #print "VC: Path: %s" % path
         return True
 
-
-
     def get_constraint_editor(self):
         return self.constraint_editor
 
@@ -449,7 +456,8 @@ class Controller (QObject):
     def disconnect_signal(self, module_name, signal_name, direction, index, pin_name):
         #Remove signal from model
         print "Controller: Disconnect"
-        self.model.unbind_port(module_name, signal_name, index)
+        uname = self.model.get_unique_from_module_name(module_name)
+        self.model.unbind_port(uname, signal_name, index)
         self.constraint_editor.remove_connection(module_name, signal_name, index)
         self.refresh_constraint_editor()
 
@@ -459,4 +467,10 @@ class Controller (QObject):
 
     def get_model(self):
         return self.model
+
+    def module_built(self, module_name):
+        print "controller module built: %s" % module_name
+        #Go through all editors, if they are ibuilder then
+        self.model.update_module_ports(module_name, self.user_dirs)
+        self.refresh_constraint_editor()
 

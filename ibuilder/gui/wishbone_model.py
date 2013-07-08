@@ -315,7 +315,7 @@ class WishboneModel():
 
         json_string = json.dumps(self.project_tags, sort_keys=True, indent=4)
         try:
-            print "Data to write:\n%s" % json_string
+            #print "Data to write:\n%s" % json_string
             file_out = open(filename, 'w')
             file_out.write(json_string)
             file_out.close()
@@ -677,8 +677,9 @@ class WishboneModel():
 
     def unbind_port(self, node_name, port_name, index=None):
         """Remove a binding with the port name."""
-        un = self.get_unique_from_module_name(node_name)
-        self.gm.unbind_port(un, port_name, index=None)
+        #print "node name: %s" % node_name
+        #un = self.get_unique_from_module_name(node_name)
+        self.gm.unbind_port(node_name, port_name, index=None)
         return
 
     def unbind_all(self, debug=False):
@@ -693,7 +694,7 @@ class WishboneModel():
             for b in nb:
                 if debug:
                     print (("Unbindig %s" % b))
-                self.unbind_port(nn, b)
+                self.gm.unbind_port(nn, b)
 
     def get_host_interface_name(self):
         hi_name = self.get_unique_name("Host Interface",
@@ -983,3 +984,155 @@ class WishboneModel():
 
 
         raise SlaveError("Module with name %s not found" % module_name)
+
+
+    def _update_module_ports(self, uname, module_name, user_paths = [], fn = None):
+        d = self.gm.get_parameters(uname)
+        if fn is None:
+            fn = utils.find_module_filename(module_name, user_paths)
+            fn = utils.find_rtl_file_location(fn, user_paths)
+        new_d = utils.get_module_tags(fn, 'wishbone')
+
+        ports = cu.expand_ports(new_d["ports"])
+        ports = cu.get_only_signal_ports(ports)
+        params = self.gm.get_parameters(uname)
+        
+        bindings = self.gm.get_node_bindings(uname)
+        params["ports"] = new_d["ports"]
+        self.gm.set_parameters(uname, params)
+        #print "\n\n"
+        #print "ports: %s" % str(ports)
+        #print "\n\n"
+        #print "bindings: %s" % str(bindings)
+        #print "\n\n"
+
+        bkeys = bindings.keys()
+        for b in bkeys:
+            #print "Looking at: %s" % b
+            if b not in ports.keys():
+                #print "\t%s not in new ports" % b
+                self.gm.unbind_port(uname, b)
+                continue
+
+            if ports[b]["range"] and not bindings[b]["range"]:
+                #Used to be one now there is a range
+                #print "\tnew port has range, old port doesn't"
+                bind = bindings[b]["loc"]
+                tk = []
+                tk = copy.deepcopy(ports[b].keys())
+                tk.remove("range")
+                tk.sort()
+
+                self.gm.unbind_port(uname, b)
+                self.gm.bind_port(name = uname, 
+                                  port_name = b, 
+                                  loc = bind,
+                                  index = tk[0])
+
+            elif not ports[b]["range"] and bindings[b]["range"]:
+                #print "\tnew port doesn't have range, old port does"
+                #Used to have a range now there is only one
+                tk = []
+                tk = copy.deepcopy(bindings[b].keys())
+                tk.remove("range")
+                tk.sort()
+                print "tk: %s" % str(tk)
+                bind = bindings[b][tk[0]]["loc"]
+
+                self.gm.unbind_port(name = uname, 
+                                    port_name = b)
+                #bind the lowest value to the only value
+                self.gm.bind_port(name = uname,
+                                  port_name = b,
+                                  loc = bind)
+
+            
+            elif ports[b]["range"] and bindings[b]["range"]:
+                #Both have ranges, now I need to adjust
+                #print "check if all the values within bindings range are within the new ports"
+                ok = copy.deepcopy(bindings[b].keys())
+                ok.remove("range")
+                nk = copy.deepcopy(ports[b].keys())
+                nk.remove("range")
+                
+                #print "bindings[d].keys() = %s" % str(ok)
+                #print "ports[d].keys() = %s" % str(nk)
+
+
+                good = True
+                for a in ok:
+                    #print "Checking %s with %s" % (str(a), str(nk))
+                    if a not in nk:
+                        good = False
+
+                if good:
+                    #print "All old items within new items"
+                    continue
+
+                #get all the bindings items in a list
+                td = {}
+                for a in ok:
+                    td[a] = {}
+                    td[a] = bindings[b][a]["loc"]
+                indexes = copy.deepcopy(td.keys())
+                indexes.sort()
+                self.gm.unbind_port(uname, b)
+
+                new_indexes = copy.deepcopy(ports[b].keys())
+                new_indexes.remove("range")
+                new_indexes.sort()
+                lold = len(indexes)
+                #print "Length of old: %d" % lold
+                lnew = len(new_indexes)
+                #print "Length of new: %d" % lnew
+                first = new_indexes[0]
+                length = lold
+                if lnew < lold:
+                    length = lnew
+                fin = length + new_indexes[0]
+                #print "start: %d" % new_indexes[0]
+                #print "length: %d" % fin
+                for i in range (length):
+                    #print "old: %d" % indexes[i]
+                    #print "new index: %d" % new_indexes[i]
+                    self.gm.bind_port(name = uname,
+                                      port_name = b,
+                                      loc = td[indexes[i]],
+                                      index = new_indexes[i])
+
+
+    def update_module_ports(self, module_name, user_paths = [], fn = None):
+        #Go through the host interface first
+        name = "Host Interface"
+        main_dict = self.gm.get_nodes_dict()
+        uname = self.get_unique_name(name, NodeType.HOST_INTERFACE)
+        d = self.gm.get_parameters(uname)
+        #Check if any module in the model has this module name
+        if d["module"] == module_name:
+            #print "Host Interface needs update"
+            #if we do find this name then go through the ports and see if there is any difference
+            self._update_module_ports(uname, module_name, user_paths, fn)
+            return
+
+        pcount = self.get_number_of_peripheral_slaves()
+        for i in range(pcount):
+            name = self.get_slave_name(SlaveType.PERIPHERAL, i)
+            uname = get_unique_name(name, NodeType.SLAVE, SlaveType.PERIPHERAL, i)
+            d = self.gm.get_parameters(uname)
+            if d["module"] == module_name:
+                #print "found: %s" % name
+                #if we do find this name then go through the ports and see if there is any difference
+                self._update_module_ports(uname, module_name, user_paths, fn)
+
+        mcount = self.get_number_of_memory_slaves()
+        for i in range(mcount):
+            name = self.get_slave_name(SlaveType.MEMORY, i)
+            uname = get_unique_name(name, NodeType.SLAVE, SlaveType.MEMORY, i)
+            d = self.gm.get_parameters(uname)
+            if d["module"] == module_name:
+                #print "found: %s" % name
+                #if we do find this name then go through the ports and see if there is any difference
+                self._update_module_ports(uname, module_name, user_paths, fn)
+
+          
+

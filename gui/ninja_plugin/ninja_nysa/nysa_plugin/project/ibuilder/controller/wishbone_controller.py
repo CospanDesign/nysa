@@ -364,6 +364,7 @@ class WishboneController (controller.Controller):
 
 
     def bus_refresh_constraint_editor(self, name = None):
+        self.dbg = True
         if self.dbg: print "Wishbone Specific Constraint editor refresh"
         if name is not None:
             if self.dbg: print "View only one module"
@@ -374,6 +375,7 @@ class WishboneController (controller.Controller):
             for i in range(pcount):
                 name = self.model.get_slave_name(SlaveType.PERIPHERAL, i)
                 ports = self.model.get_slave_ports(SlaveType.PERIPHERAL, i)
+                if self.dbg: print "%s ports: %s" % (name, str(ports))
                 bindings = self.model.get_slave_bindings(SlaveType.PERIPHERAL, i)
                 if self.dbg: print ""
                 signals = ports.keys()
@@ -427,6 +429,7 @@ class WishboneController (controller.Controller):
                     if wishbone_utils.is_wishbone_bus_signal(key):
                         continue
 
+                    print "key: %s" % key
                     if ports[key]["size"] > 1:
                         rng = (ports[key]["max_val"], ports[key]["min_val"])
                         self.constraint_editor.add_signal(PS_COLOR,
@@ -512,6 +515,8 @@ class WishboneController (controller.Controller):
                                                           None,
                                                           ports[key]["direction"])
 
+
+        self.dbg = True
 
 
 
