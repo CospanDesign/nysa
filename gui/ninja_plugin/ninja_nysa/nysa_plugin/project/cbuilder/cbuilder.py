@@ -46,9 +46,15 @@ Log:
 Functions independent of the project used to build/simulate/debug
 '''
 
-CBUILDER_EXT = 'cbldr'
+image_path = os.path.join(os.path.dirname(__file__),
+                          os.pardir,
+                          os.pardir,
+                          "images")
 
+CBUILDER_EXT = 'cbldr'
 PROJECT_TYPE = "Verilog Core Builder"
+
+
 
 class CBuilder (QObject):
     output = None
@@ -309,4 +315,12 @@ class CBuilder (QObject):
         actionMainProject = menu.addAction("Set as Main Project")
         tp.connect(actionMainProject, SIGNAL("triggered()"),
                      lambda: tp.set_default_project(item))
+
+    def get_file_icon(self, filename, extension):
+        if extension == "v":
+            print "verilog file"
+            fd_icon = os.path.join(image_path, "verilog.png")
+            #fd_icon = os.path.join(image_path, "fpga_designer.png")
+            return QIcon(fd_icon)
+        return None
 

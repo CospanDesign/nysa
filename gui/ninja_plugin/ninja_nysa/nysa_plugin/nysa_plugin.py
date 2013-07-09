@@ -26,13 +26,14 @@
 import os
 import glob
 
-from PyQt4.QtCore import SIGNAL
-from PyQt4.QtGui import QAction
-from PyQt4.QtGui import QIcon
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
 
 from ninja_ide.core import plugin
+from ninja_ide.core import file_manager
 from ninja_ide.gui import actions
+from ninja_ide import resources
 
 #from ninja_ide.tools import json_manager
 #from ninja_ide.core import plugin_interfaces
@@ -143,6 +144,7 @@ class NysaPlugin(plugin.Plugin):
 
         #self.dialog_test()
         self.modify_context_menus()
+        self.modify_file_icons()
 
 
     def modify_context_menus(self):
@@ -153,6 +155,29 @@ class NysaPlugin(plugin.Plugin):
         tp._add_context_menu_for_root = self.add_context_menu_for_root
         tp._add_context_menu_for_folders = self.add_context_menu_for_folders
 
+    def modify_file_icons(self):
+        tp = self.editor_s._explorer._treeProjects
+
+        tp._get_file_icon = self.get_file_icon
+        self.images = tp.images
+
+    def get_file_icon(self, filename):
+
+        file_ext = file_manager.get_file_extension(filename)
+        icon = None
+        icon = self.cbuilder.get_file_icon(filename, file_ext)
+        if isinstance(icon, QIcon):
+            return icon
+
+        icon = self.ibuilder.get_file_icon(filename, file_ext)
+        if isinstance(icon, QIcon):
+            return icon
+
+        return QIcon(self.images.get(file_ext, resources.IMAGES['tree-generic']))
+
+
+        #tp.normal_get_file_icon(filename)
+
     def add_context_menu_for_root(self, menu, item):
         #print "Take menu over!"
         #tp = self.editor_s._explorer._treeProjects
@@ -162,7 +187,6 @@ class NysaPlugin(plugin.Plugin):
         if self.cbuilder.is_cbuilder_project(item):
             self.cbuilder.cbuilder_menu(menu, item)
             return
-
 
         self.normal_add_context_menu_for_root(menu, item)
 
