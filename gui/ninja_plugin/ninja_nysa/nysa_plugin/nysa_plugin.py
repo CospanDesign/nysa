@@ -142,8 +142,38 @@ class NysaPlugin(plugin.Plugin):
         self.actions.disconnect(self.actions.shortRunProject, SIGNAL("activated()"), self.actions.execute_project)
 
         #self.dialog_test()
+        self.modify_context_menus()
 
 
+    def modify_context_menus(self):
+        tp = self.editor_s._explorer._treeProjects
+        self.normal_add_context_menu_for_root = tp._add_context_menu_for_root
+        self.normal_add_context_menu_for_folders = tp._add_context_menu_for_folders
+
+        tp._add_context_menu_for_root = self.add_context_menu_for_root
+        tp._add_context_menu_for_folders = self.add_context_menu_for_folders
+
+    def add_context_menu_for_root(self, menu, item):
+        #print "Take menu over!"
+        #tp = self.editor_s._explorer._treeProjects
+        if self.ibuilder.is_ibuilder_project(item):
+            self.ibuilder.ibuilder_menu(menu, item)
+            return
+        if self.cbuilder.is_cbuilder_project(item):
+            self.cbuilder.cbuilder_menu(menu, item)
+            return
+
+
+        self.normal_add_context_menu_for_root(menu, item)
+
+    def add_context_menu_for_folders(self, menu, item):
+        print "contect menu for folders"
+        if self.cbuilder.is_cbuilder_project(item):
+            return
+        if self.ibuilder.is_ibuilder_project(item):
+            return
+
+        self.normal_add_context_menu_for_folders(menu, item)
 
     def inject_functions(self):
         print "Injecting functions"

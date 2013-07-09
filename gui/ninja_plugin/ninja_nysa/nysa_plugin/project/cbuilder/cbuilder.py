@@ -30,6 +30,8 @@ import time
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from ninja_ide import resources
+
 sys.path.append(os.path.join( os.path.dirname(__file__),
                                 os.pardir,
                                 os.pardir))
@@ -57,6 +59,7 @@ class CBuilder (QObject):
         self.locator = locator
         self.explorer = self.locator.get_service('explorer')
         self.builder = self.locator.get_service('misc')._misc
+        self.editor = self.locator.get_service('editor')
         rw = self.builder._runWidget
 
         self.proc = QProcess()
@@ -217,8 +220,8 @@ class CBuilder (QObject):
 
     def waveforms(self, info):
         self.output.Debug (self, "Waveforms")
-        editor = self.locator.get_service('editor')
-        project = editor.get_project_owner()
+        self.editor = self.locator.get_service('editor')
+        project = self.editor.get_project_owner()
         core_path = ""
         core_file = glob.glob(project + os.path.sep + "*.cbldr")
 
@@ -248,8 +251,8 @@ class CBuilder (QObject):
 
     def simulate(self, info):
         self.output.Debug (self, "Simulate")
-        editor = self.locator.get_service('editor')
-        project = editor.get_project_owner()
+        self.editor = self.locator.get_service('editor')
+        project = self.editor.get_project_owner()
         core_path = ""
         core_file = glob.glob(project + os.path.sep + "*.cbldr")
 
@@ -275,10 +278,8 @@ class CBuilder (QObject):
         self.builder.run_application(fileName = 'sim', pythonPath='scons')
         os.chdir(prev_dir)
 
-
-
     def get_makefile_path(self):
-        path = editor.get_project_owner()
+        path = self.editor.get_project_owner()
         if path is None:
             #the current document is not selected, we need to get the project
             #from the tree
@@ -289,3 +290,23 @@ class CBuilder (QObject):
 
         #check to see if this is a cbuilder project
         self.output.Debug(self, "Project Path: %s" % path)
+
+    def is_cbuilder_project(self, item):
+        if item.projectType == PROJECT_TYPE:
+            return True
+        return False
+
+    def cbuilder_menu(self, menu, item):
+        print "Ibuilder project"
+
+        tp = self.editor._explorer._treeProjects
+
+        menu.addSeparator()
+        actionRunProject = menu.addAction(QIcon(
+            resources.IMAGES['play']), "Compile Project")
+        tp.connect(actionRunProject, SIGNAL("triggered()"),
+                     SIGNAL("runProject()"))
+        actionMainProject = menu.addAction("Set as Main Project")
+        tp.connect(actionMainProject, SIGNAL("triggered()"),
+                     lambda: tp.set_default_project(item))
+

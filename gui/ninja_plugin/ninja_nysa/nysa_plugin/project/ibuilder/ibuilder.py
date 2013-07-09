@@ -27,10 +27,11 @@ import os
 import json
 import glob
 
-from PyQt4.QtCore import QObject
-from PyQt4.QtCore import SIGNAL
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
 
 from ninja_ide.core import file_manager
+from ninja_ide import resources
 
 
 sys.path.append(os.path.join( os.path.dirname(__file__),
@@ -273,3 +274,23 @@ class IBuilder (QObject):
     def module_built(self, module_name):
         print "ibuilder module built: %s" % module_name
         #Go through all editors, if they are ibuilder then
+
+    def is_ibuilder_project(self, item):
+        if item.projectType == PROJECT_TYPE:
+            return True
+        return False
+
+    def ibuilder_menu(self, menu, item):
+        print "Ibuilder project"
+
+        tp = self.editor._explorer._treeProjects
+
+        menu.addSeparator()
+        actionRunProject = menu.addAction(QIcon(
+            resources.IMAGES['play']), "Build FPGA Image")
+        tp.connect(actionRunProject, SIGNAL("triggered()"),
+                     SIGNAL("runProject()"))
+        actionMainProject = menu.addAction("Set as Main Project")
+        tp.connect(actionMainProject, SIGNAL("triggered()"),
+                     lambda: tp.set_default_project(item))
+
