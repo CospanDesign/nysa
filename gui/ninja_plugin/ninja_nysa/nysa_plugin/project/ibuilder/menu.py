@@ -4,16 +4,17 @@ import sys
 #import zipfile
 
 from PyQt4.QtGui import QMenu
-#from PyQt4.QtGui import QMessageBox
 from PyQt4.QtCore import SIGNAL
 from PyQt4.QtCore import QProcess
 
-#from ninja_ide import resources
-#from ninja_ide.tools import json_manager
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                                os.pardir,
+                                os.pardir))
+import nysa_actions
+
+
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
-
-#from ninja_nysa.misc.nysa_status import NysaStatus
 
 class Menu(QMenu):
   output = None
@@ -21,9 +22,14 @@ class Menu(QMenu):
     QMenu.__init__(self, 'Nysa')
     self.output = output
     self._proc = QProcess(self)
-    action_test = self.addAction('Test Menu Item')
-    self.connect(action_test, SIGNAL("triggered()"), self.test_action)
+    self.explorer = locator.get_service('explorer')
+    self.nactions = nysa_actions.NysaActions()
+    action_ib_properties = self.addAction('IBuilder Properties')
+    self.connect(action_ib_properties, SIGNAL("triggered()"), self.ib_properties)
 
-  def test_action(self):
+  def ib_properties(self):
+    p_path = self.explorer.get_tree_projects()._get_project_root().path
     self.output.Debug(self, "Menu item selected")
+    self.nactions.ibuilder_properties_triggered(p_path)
+
 

@@ -138,6 +138,7 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         #Add Parameter windows
         pt = self.create_parameter_table()
         self.slave_splitter.addWidget(pt)
+        self.project = project
 
         #My variables
 
@@ -150,7 +151,7 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
     def set_project(self, project):
         self.project = project
 
-    def get_project(self, project):
+    def get_project(self):
         return self.project
 
     def set_controller(self, controller):

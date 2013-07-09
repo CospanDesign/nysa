@@ -52,6 +52,8 @@ from toolbar import toolbar
 from .editor.fpga_designer.fpga_designer import FPGADesigner
 from .editor.constraint_editor.constraint_editor import ConstraintEditor
 
+from project.ibuilder import properties_dialog as ibuilder_dialog
+
 
 LOG_FORMAT = "%(asctime)s %(name)s:%(levelname)-8s %(message)s"
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -139,6 +141,7 @@ class NysaPlugin(plugin.Plugin):
         self.actions.connect(self.actions.shortRunProject, SIGNAL("activated()"), self.build_command)
         self.actions.disconnect(self.actions.shortRunProject, SIGNAL("activated()"), self.actions.execute_project)
 
+        #self.dialog_test()
 
 
 
@@ -412,8 +415,16 @@ class NysaPlugin(plugin.Plugin):
     def toolbar_test(self):
         self.logger.info("Toolbar test triggered")
         self.output.Info(self, "Toolbar test triggered")
+        self.dialog_test()
 
 
+    def dialog_test(self):
+        print "Dialog Test"
+        results = ibuilder_dialog.ibuilder_properites_dialog(os.path.dirname(__file__), True, "out_dir")
+        if results[0]:
+            print "Relative: %s" % results[1]
+        else:
+            print "Absolute: %s" % results[1]
 
 
 

@@ -35,11 +35,15 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
-                              os.pardir,
-                              os.pardir,
-                              os.pardir,
-                              "editor",
-                              "fpga_editor"))
+                             os.pardir))
+import properties_dialog
+
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir,
+                             os.pardir,
+                             "editor",
+                             "fpga_editor"))
 
 from box import Box
 from link import link_type as lt
@@ -155,8 +159,13 @@ class Controller (QObject):
         self.boxes = {}
         self.user_dirs = []
         self.constraint_editor = None
-        self.actions  = nysa_actions.NysaActions()
-        self.connect(self.actions, SIGNAL("module_built(QString)"), self.module_built)
+        self.nactions  = nysa_actions.NysaActions()
+        self.connect(self.nactions,
+                SIGNAL("module_built(QString)"),
+                self.module_built)
+        self.connect(self.nactions,
+                SIGNAL("ibuilder_properties_dialog(QString)"),
+                self.ibuilder_properties_dialog)
         #Connect events
         """
         Go through view and connect all relavent events
@@ -434,10 +443,10 @@ class Controller (QObject):
                         if signal_dict[i]["loc"] in constraints:
                             #print "Checking: %s" % signal_dict[i]["loc"]
                             constraints.remove(signal_dict[i]["loc"])
-                else:   
+                else:
                     if signal_dict["loc"] in constraints:
                         constraints.remove(signal_dict["loc"])
-            
+
         for c in constraints:
             self.constraint_editor.add_pin(c)
 
@@ -461,7 +470,6 @@ class Controller (QObject):
         self.constraint_editor.remove_connection(module_name, signal_name, index)
         self.refresh_constraint_editor()
 
-
     def bus_refresh_constraint_editor(self, name = None):
         raise NotImplementedError("This function should be subclassed")
 
@@ -474,3 +482,44 @@ class Controller (QObject):
         self.model.update_module_ports(module_name, self.user_dirs)
         self.refresh_constraint_editor()
 
+    def ibuilder_properties_dialog(self, project_dir):
+        print "Check to see if this is this project"
+        if self.fd is None:
+            self.output.Error(self, "FPGA Designer is not available")
+            return
+        project = self.fd.get_project()
+        path = project.get_full_path()
+        pdir = os.path.split(path)[0]
+        print "project path: %s" % str(pdir)
+        print "Clicked path: %s" % str(project_dir)
+
+        output_path = self.model.get_project_location()
+        output_path = os.path.expanduser(output_path)
+
+        relative = False
+        if pdir in output_path:
+            relative = True
+            output_path = output_path.partition(pdir)[2].strip(os.path.sep)
+        else:
+            if os.path.isabs(output_path):
+                relative = False
+            else:
+                relative = True
+
+        results = None
+
+        if project_dir == pdir:
+            print "Show dialog"
+            results = properties_dialog.ibuilder_properites_dialog(pdir,
+                                                                   relative,
+                                                                   output_path)
+
+            path = ""
+            if results[0]:
+                #Relative
+                path = pdir + os.path.sep + results[1]
+            else:
+                path = results[1]
+
+            self.model.set_project_location(path)
+            print "New Path: %s" % str(path)
