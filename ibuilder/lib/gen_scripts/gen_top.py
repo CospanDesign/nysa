@@ -857,96 +857,97 @@ class GenTop(Gen):
           wbm_name = master_name + "_" + bus_name
 
           #strobe
-          wire = "o_" + wbm_name + "_stb"
+
+          wire = "o_%s_stb" % wbm_name
           if (not (wire in self.wires)):
-            result +="\twire\t\t\t" + wire + ";\n"
+            result += "{0:<20}{1};\n".format("wire", wire)
             self.wires.append(wire)
           #cycle
-          wire = "o_" + wbm_name + "_cyc"
+          wire = "o_%s_cyc" % wbm_name
           if (not (wire in self.wires)):
-            result +="\twire\t\t\t" + wire + ";\n"
+            result += "{0:<20}{1};\n".format("wire", wire)
             self.wires.append(wire)
           #write enable
-          wire = "o_" + wbm_name + "_we"
+          wire = "o_%s_we" % wbm_name
           if (not (wire in self.wires)):
-            result +="\twire\t\t\t" + wire + ";\n"
+            result += "{0:<20}{1};\n".format("wire", wire)
             self.wires.append(wire)
           #select
-          wire = "o_" + wbm_name + "_sel"
+          wire = "o_%s_sel" % wbm_name
           if (not (wire in self.wires)):
-            result +="\twire\t[3:0]\t" + wire + ";\n"
+            result += "{0:<19}{1};\n".format("wire\t[3:0]", wire)
             self.wires.append(wire)
           #in data
-          wire = "o_" + wbm_name + "_dat"
+          wire = "o_%s_dat" % wbm_name
           if (not (wire in self.wires)):
-            result +="\twire\t[31:0]\t" + wire + ";\n"
+            result += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
             self.wires.append(wire)
           #out data
-          wire = "i_" + wbm_name + "_dat"
+          wire = "i_%s_dat" % wbm_name
           if (not (wire in self.wires)):
-            result +="\twire\t[31:0]\t" + wire + ";\n"
+            result += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
             self.wires.append(wire)
           #address
-          wire = "o_" + wbm_name + "_adr"
+          wire = "o_%s_adr" % wbm_name
           if (not (wire in self.wires)):
-            result +="\twire\t[31:0]\t" + wire + ";\n"
+            result += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
             self.wires.append(wire)
           #acknowledge
-          wire = "i_" + wbm_name + "_ack"
+          wire = "i_%s_ack" % wbm_name
           if (not (wire in self.wires)):
-            result +="\twire\t\t\t" + wire + ";\n"
+            result += "{0:<20}{1};\n".format("wire", wire)
             self.wires.append(wire)
           #interrupt
-          wire = "i_" + wbm_name + "_int"
+          wire = "i_%s_int" % wbm_name
           if (not (wire in self.wires)):
-            result +="\twire\t\t\t" + wire + ";\n"
+            result += "{0:<20}{1};\n".format("wire", wire)
             self.wires.append(wire)
 
       #generate arbitor signals
       #strobe
-      wire = "i_" + arb_name + "_wbs_stb"
+      wire = "i_%s_wbs_stb" % arb_name
       if (not (wire in self.wires)):
-        result +="\twire\t\t\t" + wire + ";\n"
+        result += "{0:<20}{1};\n".format("wire", wire)
         self.wires.append(wire)
       #cycle
-      wire = "i_" + arb_name + "_wbs_cyc"
+      wire = "i_%s_wbs_cyc" % arb_name
       if (not (wire in self.wires)):
-        result +="\twire\t\t\t" + wire + ";\n"
+        result += "{0:<20}{1};\n".format("wire", wire)
         self.wires.append(wire)
       #write enable
-      wire = "i_" + arb_name + "_wbs_we"
+      wire = "i_%s_wbs_we" % arb_name
       if (not (wire in self.wires)):
-        result +="\twire\t\t\t" + wire + ";\n"
+        result += "{0:<20}{1};\n".format("wire", wire)
         self.wires.append(wire)
       #select
-      wire = "i_" + arb_name + "_wbs_sel"
+      wire = "i_%s_wbs_sel" % arb_name
       if (not (wire in self.wires)):
-        result +="\twire\t[3:0]\t" + wire + ";\n"
+        result += "{0:<19}{1};\n".format("wire\t[3:0]", wire)
         self.wires.append(wire)
       #in data
-      wire = "i_" + arb_name + "_wbs_dat"
+      wire = "i_%s_wbs_dat" % arb_name
       if (not (wire in self.wires)):
-        result +="\twire\t[31:0]\t" + wire + ";\n"
+        result += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
         self.wires.append(wire)
       #out data
-      wire = "o_" + arb_name + "_wbs_dat"
+      wire = "o_%s_wbs_dat" % arb_name
       if (not (wire in self.wires)):
-        result +="\twire\t[31:0]\t" + wire + ";\n"
+        result += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
         self.wires.append(wire)
       #address
-      wire = "i_" + arb_name + "_wbs_adr"
+      wire = "i_%s_wbs_adr" % arb_name
       if (not (wire in self.wires)):
-        result +="\twire\t[31:0]\t" + wire + ";\n"
+        result += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
         self.wires.append(wire)
       #acknowledge
-      wire = "o_" + arb_name + "_wbs_ack"
+      wire = "o_%s_wbs_ack" % arb_name
       if (not (wire in self.wires)):
-        result +="\twire\t\t\t" + wire + ";\n"
+        result += "{0:<20}{1};\n".format("wire", wire)
         self.wires.append(wire)
       #interrupt
-      wire = "o_" + arb_name + "_wbs_int"
+      wire = "o_%s_wbs_int" % arb_name
       if (not (wire in self.wires)):
-        result +="\twire\t\t\t" + wire + ";\n"
+        result += "{0:<20}{1};\n".format("wire", wire)
         self.wires.append(wire)
 
       result +="\n\n"
@@ -957,14 +958,14 @@ class GenTop(Gen):
 
       #finished generating the wires
 
-      result += "\t" + arb_module + " " + arb_name + "(\n"
-      result += "\t\t.clk(clk),\n"
+      result += "" + arb_module + " " + arb_name + "(\n"
+      result += "\t.clk\t\t\t\t\t\t\t(clk),\n"
       if invert_reset:
-        result += "\t\t.rst(rst_n),\n"
+        result += "\t.rst\t\t\t\t\t\t\t(rst_n),\n"
       else:
-        result += "\t\t.rst(rst),\n"
+        result += "\t.rst\t\t\t\t\t\t\t(rst),\n"
       result += "\n"
-      result += "\t\t//masters\n"
+      result += "\t//masters\n"
 
       for mi in range (0, master_count):
 
@@ -1002,15 +1003,15 @@ class GenTop(Gen):
                     print "arb slave on mem bus"
                     print "slave index: " + str(mem_inc_index)
                   break
-          result +="\t\t.i_m" + str(mi) + "_we(w_" + wbm_name + "_wbs_we_i),\n"
-          result +="\t\t.i_m" + str(mi) + "_stb(w_" + wbm_name + "_wbs_stb_i),\n"
-          result +="\t\t.i_m" + str(mi) + "_cyc(w_" + wbm_name + "_wbs_cyc_i),\n"
-          result +="\t\t.i_m" + str(mi) + "_sel(w_" + wbm_name + "_wbs_sel_i),\n"
-          result +="\t\t.i_m" + str(mi) + "_dat(w_" + wbm_name + "_wbs_dat_i),\n"
-          result +="\t\t.i_m" + str(mi) + "_adr(w_" + wbm_name + "_wbs_adr_i),\n"
-          result +="\t\t.o_m" + str(mi) + "_dat(w_" + wbm_name + "_wbs_dat_o),\n"
-          result +="\t\t.o_m" + str(mi) + "_ack(w_" + wbm_name + "_wbs_ack_o),\n"
-          result +="\t\t.o_m" + str(mi) + "_int(w_" + wbm_name + "_wbs_int_o),\n"
+          result +="\t.i_m" + str(mi) + "_we\t\t\t\t\t(w_" + wbm_name + "_wbs_we_i),\n"
+          result +="\t.i_m" + str(mi) + "_stb\t\t\t\t\t(w_" + wbm_name + "_wbs_stb_i),\n"
+          result +="\t.i_m" + str(mi) + "_cyc\t\t\t\t\t(w_" + wbm_name + "_wbs_cyc_i),\n"
+          result +="\t.i_m" + str(mi) + "_sel\t\t\t\t\t(w_" + wbm_name + "_wbs_sel_i),\n"
+          result +="\t.i_m" + str(mi) + "_dat\t\t\t\t\t(w_" + wbm_name + "_wbs_dat_i),\n"
+          result +="\t.i_m" + str(mi) + "_adr\t\t\t\t\t(w_" + wbm_name + "_wbs_adr_i),\n"
+          result +="\t.o_m" + str(mi) + "_dat\t\t\t\t\t(w_" + wbm_name + "_wbs_dat_o),\n"
+          result +="\t.o_m" + str(mi) + "_ack\t\t\t\t\t(w_" + wbm_name + "_wbs_ack_o),\n"
+          result +="\t.o_m" + str(mi) + "_int\t\t\t\t\t(w_" + wbm_name + "_wbs_int_o),\n"
           result +="\n\n"
 
 
@@ -1023,28 +1024,28 @@ class GenTop(Gen):
           bus_name = arb_tags[arb_slave][master_name]
           wbm_name = master_name + "_" + bus_name
 
-          result +="\t\t.i_m" + str(mi) + "_we(w_" + wbm_name + "_we_o),\n"
-          result +="\t\t.i_m" + str(mi) + "_stb(w_" + wbm_name + "_stb_o),\n"
-          result +="\t\t.i_m" + str(mi) + "_cyc(w_" + wbm_name + "_cyc_o),\n"
-          result +="\t\t.i_m" + str(mi) + "_sel(w_" + wbm_name + "_sel_o),\n"
-          result +="\t\t.i_m" + str(mi) + "_dat(w_" + wbm_name + "_dat_o),\n"
-          result +="\t\t.i_m" + str(mi) + "_adr(w_" + wbm_name + "_adr_o),\n"
-          result +="\t\t.o_m" + str(mi) + "_dat(w_" + wbm_name + "_dat_i),\n"
-          result +="\t\t.o_m" + str(mi) + "_ack(w_" + wbm_name + "_ack_i),\n"
-          result +="\t\t.o_m" + str(mi) + "_int(w_" + wbm_name + "_int_i),\n"
+          result +="\t.i_m" + str(mi) + "_we\t\t\t\t\t(w_" + wbm_name + "_we_o),\n"
+          result +="\t.i_m" + str(mi) + "_stb\t\t\t\t\t(w_" + wbm_name + "_stb_o),\n"
+          result +="\t.i_m" + str(mi) + "_cyc\t\t\t\t\t(w_" + wbm_name + "_cyc_o),\n"
+          result +="\t.i_m" + str(mi) + "_sel\t\t\t\t\t(w_" + wbm_name + "_sel_o),\n"
+          result +="\t.i_m" + str(mi) + "_dat\t\t\t\t\t(w_" + wbm_name + "_dat_o),\n"
+          result +="\t.i_m" + str(mi) + "_adr\t\t\t\t\t(w_" + wbm_name + "_adr_o),\n"
+          result +="\t.o_m" + str(mi) + "_dat\t\t\t\t\t(w_" + wbm_name + "_dat_i),\n"
+          result +="\t.o_m" + str(mi) + "_ack\t\t\t\t\t(w_" + wbm_name + "_ack_i),\n"
+          result +="\t.o_m" + str(mi) + "_int\t\t\t\t\t(w_" + wbm_name + "_int_i),\n"
           result +="\n\n"
 
 
-      result += "\t\t//slave\n"
-      result += "\t\t.o_s_we(w_" + arb_name + "_wbs_we_i),\n"
-      result += "\t\t.o_s_stb(w_" + arb_name + "_wbs_stb_i),\n"
-      result += "\t\t.o_s_cyc(w_" + arb_name + "_wbs_cyc_i),\n"
-      result += "\t\t.o_s_sel(w_" + arb_name + "_wbs_sel_i),\n"
-      result += "\t\t.o_s_dat(w_" + arb_name + "_wbs_dat_i),\n"
-      result += "\t\t.o_s_adr(w_" + arb_name + "_wbs_adr_i),\n"
-      result += "\t\t.i_s_dat(w_" + arb_name + "_wbs_dat_o),\n"
-      result += "\t\t.i_s_ack(w_" + arb_name + "_wbs_ack_o),\n"
-      result += "\t\t.i_s_int(w_" + arb_name + "_wbs_int_o)\n"
+      result += "\t//slave\n"
+      result += "\t.o_s_we\t\t\t\t\t\t(w_" + arb_name + "_wbs_we_i),\n"
+      result += "\t.o_s_stb\t\t\t\t\t(w_" + arb_name + "_wbs_stb_i),\n"
+      result += "\t.o_s_cyc\t\t\t\t\t(w_" + arb_name + "_wbs_cyc_i),\n"
+      result += "\t.o_s_sel\t\t\t\t\t(w_" + arb_name + "_wbs_sel_i),\n"
+      result += "\t.o_s_dat\t\t\t\t\t(w_" + arb_name + "_wbs_dat_i),\n"
+      result += "\t.o_s_adr\t\t\t\t\t(w_" + arb_name + "_wbs_adr_i),\n"
+      result += "\t.i_s_dat\t\t\t\t\t(w_" + arb_name + "_wbs_dat_o),\n"
+      result += "\t.i_s_ack\t\t\t\t\t(w_" + arb_name + "_wbs_ack_o),\n"
+      result += "\t.i_s_int\t\t\t\t\t(w_" + arb_name + "_wbs_int_o)\n"
 
       result += ");\n"
 
