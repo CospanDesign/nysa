@@ -65,6 +65,17 @@ import nysa_actions
 
 from cbuilder import PROJECT_TYPE as CBUILDER_PROJECT_TYPE
 
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              "ibuilder"))
+import lib.ibuilder as ib
+
+
 '''
 Functions independent of the project used to build/simulate/debug
 '''
@@ -274,6 +285,19 @@ class IBuilder (QObject):
 
     def generate_project(self, project):
         print "Generate project: %s" % str(project)
+        ninja_project = glob.glob(project + os.path.sep + "*.nja")
+        if len(ninja_project) == 0:
+            print "Couldn't find project"
+            return None
+        pfile = ninja_project[0]
+
+
+        f = open(pfile, "r")
+        j = json.load(f)
+        f.close()
+        main_file = os.path.join(project, j["mainFile"])
+        ib.generate_project(main_file, dbg=True)
+
 
     def module_built(self, module_name):
         print "ibuilder module built: %s" % module_name
