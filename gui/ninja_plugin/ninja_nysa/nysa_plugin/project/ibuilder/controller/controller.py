@@ -160,16 +160,18 @@ class Controller (QObject):
         self.user_dirs = []
         self.constraint_editor = None
         self.nactions  = nysa_actions.NysaActions()
-        self.connect(self.nactions,
-                SIGNAL("module_built(QString)"),
-                self.module_built)
-        self.connect(self.nactions,
-                SIGNAL("ibuilder_properties_dialog(QString)"),
-                self.ibuilder_properties_dialog)
-        #Connect events
         """
         Go through view and connect all relavent events
         """
+        self.connect(self.nactions,
+                SIGNAL("module_built(QString)"),
+                self.module_built)
+        #self.connect(self.nactions,
+        #        SIGNAL("ibuilder_properties_dialog(QString)"),
+        #        self.ibuilder_properties_dialog)
+
+        #Connect events
+
 
 
     def set_canvas(self, canvas):
@@ -484,22 +486,15 @@ class Controller (QObject):
 
     def ibuilder_properties_dialog(self, project_dir):
         print "Check to see if this is this project"
-        if self.fd is None:
-            self.output.Error(self, "FPGA Designer is not available")
-            return
-        project = self.fd.get_project()
-        path = project.get_full_path()
-        pdir = os.path.split(path)[0]
-        print "project path: %s" % str(pdir)
         print "Clicked path: %s" % str(project_dir)
 
         output_path = self.model.get_project_location()
         output_path = os.path.expanduser(output_path)
 
         relative = False
-        if pdir in output_path:
+        if project_dir in output_path:
             relative = True
-            output_path = output_path.partition(pdir)[2].strip(os.path.sep)
+            output_path = output_path.partition(project_dir)[2].strip(os.path.sep)
         else:
             if os.path.isabs(output_path):
                 relative = False
@@ -508,18 +503,17 @@ class Controller (QObject):
 
         results = None
 
-        if project_dir == pdir:
-            print "Show dialog"
-            results = properties_dialog.ibuilder_properites_dialog(pdir,
-                                                                   relative,
-                                                                   output_path)
+        print "Show dialog"
+        results = properties_dialog.ibuilder_properites_dialog(project_dir,
+                                                               relative,
+                                                               output_path)
 
-            path = ""
-            if results[0]:
-                #Relative
-                path = pdir + os.path.sep + results[1]
-            else:
-                path = results[1]
+        path = ""
+        if results[0]:
+            #Relative
+            path = project_dir + os.path.sep + results[1]
+        else:
+            path = results[1]
 
-            self.model.set_project_location(path)
-            print "New Path: %s" % str(path)
+        self.model.set_project_location(path)
+        print "New Path: %s" % str(path)

@@ -94,12 +94,11 @@ class IBuilder (QObject):
         self.designers = {}
         self.load_designers()
         self.controller = None
-        self.actions = None
         self.commands = {}
         self.setup_commands()
-        self.actions = nysa_actions.NysaActions()
-        self.actions.set_ibuilder(self)
-        self.connect(self.actions, SIGNAL("module_built(QString)"), self.module_built)
+        self.nactions = nysa_actions.NysaActions()
+        self.nactions.set_ibuilder(self)
+        self.connect(self.nactions, SIGNAL("module_built(QString)"), self.module_built)
 
     def setup_controller(self, filename):
         d = {}
@@ -144,7 +143,7 @@ class IBuilder (QObject):
             if ce is not None:
                 self.output.Debug(self, "There is a bogus constraint editor in the controller")
             ce = ConstraintEditor(parent=tab_manager,
-                                  actions=self.actions,
+                                  actions=self.nactions,
                                   output=self.output,
                                   controller = view_controller,
                                   filename = filename,
@@ -212,7 +211,7 @@ class IBuilder (QObject):
                 self.output.Debug(self, "Open up a new tab")
                 project = self.explorer._explorer.get_project_given_filename(filename)
                 #Not Opened
-                fd = FPGADesigner(actions=self.actions,
+                fd = FPGADesigner(actions=self.nactions,
                                   commands = self.commands,
                                   filename = filename,
                                   project=project,
@@ -297,7 +296,50 @@ class IBuilder (QObject):
                      SIGNAL("runProject()"))
         actionMainProject = menu.addAction("Set as Main Project")
         tp.connect(actionMainProject, SIGNAL("triggered()"),
-                     lambda: tp.set_default_project(item))
+                lambda: tp.set_default_project(item))
+        actionProjectPreferences = menu.addAction(QIcon(
+            resources.IMAGES['pref']), "Project Properties")
+
+        project_dir = os.path.split(item.get_full_path())[0]
+        self.nactions.connect(actionProjectPreferences, SIGNAL("triggered()"),
+                lambda: self.ibuilder_properties_triggered(project_dir))
+        
+
+
+    def ibuilder_properties_triggered(self, project_dir):
+        editor = self.locator.get_service('editor')
+        tm = self.editor.get_tab_manager()
+        wcount = len(tm)
+        print "There are %d widgets" % wcount
+        widget = None
+        for i in range (wcount):
+            #Check to see if a controller is already opened by looking
+            #through the current editors
+            w = tm.widget(i)
+            if isinstance(w, FPGADesigner):
+                if project_dir in w.ID:
+                    print "Found open FPGA Designer"
+                    #if it is opened then call that controller
+                    c = w.get_controller()
+                    c.ibuilder_properties_dialog(project_dir)
+                    return
+        #otherwise open up a controller for a moment to execute this function
+
+        #Get the main file from the project
+        ninja_project = glob.glob(project_dir + os.path.sep + "*.nja")
+        if len(ninja_project) == 0:
+            print "Couldn't find project"
+            return None
+        pfile = ninja_project[0]
+
+        f = open(pfile, "r")
+        j = json.load(f)
+        f.close()
+        main_file = os.path.join(project_dir, j["mainFile"])
+        c = self.setup_controller(main_file)
+        c.ibuilder_properties_dialog(project_dir)
+        c.get_model().save_config_file(main_file)
+
 
     def get_file_icon(self, filename, extension):
         if extension == DESIGNER_EXT:
