@@ -250,14 +250,22 @@ class ModuleProcessor:
         print "found the generation script"
         print "run generation script: " + file_dict["gen_script"]
       #open up the new gen module
-      cl = __import__("lib.gen_scripts.gen", fromlist=["lib.gen_scripts"])
+      ms = sys.modules.keys()
+      gs = ""
+      for m in ms:
+          if m.endswith("gen_scripts"):
+              gs = m
+      #print "gs: %s" % gs 
+
+      
+      cl = __import__("%s.gen" % gs, fromlist=[gs])
       #cl = importlib.import_module("gen_scripts", "gen")
       #if debug:
       #  print "cl: " + str(cl)
       Gen = getattr(gen, "Gen")
       if debug:
         print "Gen: " + str(Gen)
-      self.gen_module = __import__("lib.gen_scripts.%s" % file_dict["gen_script"], fromlist=["lib.gen_scipts"])
+      self.gen_module = __import__("%s.%s" % (gs, file_dict["gen_script"]), fromlist=[gs])
       gen_success_flag = False
 
       #find the script and dynamically add it
@@ -408,6 +416,7 @@ class ModuleProcessor:
         print "the file is not a full path, searching RTL... ",
       #didn't find with full path, search for it
       try:
+        #print "self.user_paths: %s" % (self.user_paths)
         filepath = utils.find_rtl_file_location(filename, self.user_paths)
 
         filein = open(filepath)

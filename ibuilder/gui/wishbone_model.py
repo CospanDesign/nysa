@@ -972,7 +972,7 @@ class WishboneModel():
         """Generates the output project that
         can be used to create a bit image."""
         self.save_config_file(self.filename)
-        ibuilder.generate_project(self.filename, self.get_user_paths)
+        ibuilder.generate_project(self.filename, self.get_user_paths())
 
     def get_graph_manager(self):
         '''Returns the graph manager.'''

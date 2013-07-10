@@ -26,58 +26,38 @@ SOFTWARE.
 `timescale 1 ns/1 ps
 
 module ${ARBITOR_NAME} (
-  clk,
-  rst,
+  //control signals
+  input           clk,
+  input           rst,
 
-  //master ports
+  //wishbone master ports
 ${PORTS}
-
-  //slave port
-    s_we_o,
-    s_cyc_o,
-    s_stb_o,
-    s_sel_o,
-    s_ack_i,
-    s_dat_o,
-    s_dat_i,
-    s_adr_o,
-    s_int_i
-
+  //wishbone slave signals
+  output          o_s_we,
+  output          o_s_stb,
+  output          o_s_cyc,
+  output  [3:0]   o_s_sel,
+  output  [31:0]  o_s_adr,
+  output  [31:0]  o_s_dat,
+  input   [31:0]  i_s_dat,
+  input           i_s_ack,
+  input           i_s_int
 );
 
-
-//control signals
-input               clk;
-input               rst;
-
-//wishbone slave signals
-output              s_we_o;
-output              s_stb_o;
-output              s_cyc_o;
-output  [3:0]       s_sel_o;
-output  [31:0]      s_adr_o;
-output  [31:0]      s_dat_o;
-
-input   [31:0]      s_dat_i;
-input               s_ack_i;
-input               s_int_i;
-
-parameter           MASTER_COUNT = ${NUM_MASTERS};
-//wishbone master signals
-${PORT_DEFINES}
+localparam        MASTER_COUNT = ${NUM_MASTERS};
 
 //registers/wires
 //this should be parameterized
-reg [7:0]           master_select;
-reg [7:0]           priority_select;
+reg [7:0]         master_select;
+reg [7:0]         priority_select;
 
 
-wire                master_we_o  [MASTER_COUNT:0];
-wire                master_stb_o [MASTER_COUNT:0];
-wire                master_cyc_o [MASTER_COUNT:0];
-wire  [3:0]         master_sel_o [MASTER_COUNT:0];
-wire  [31:0]        master_adr_o [MASTER_COUNT:0];
-wire  [31:0]        master_dat_o [MASTER_COUNT:0];
+wire              o_master_we  [MASTER_COUNT:0];
+wire              o_master_stb [MASTER_COUNT:0];
+wire              o_master_cyc [MASTER_COUNT:0];
+wire  [3:0]       o_master_sel [MASTER_COUNT:0];
+wire  [31:0]      o_master_adr [MASTER_COUNT:0];
+wire  [31:0]      o_master_dat [MASTER_COUNT:0];
 
 
 ${MASTER_SELECT}
@@ -88,12 +68,12 @@ ${PRIORITY_SELECT}
 
 
 //slave assignments
-assign  s_we_o  = (master_select != MASTER_NO_SEL) ? master_we_o[master_select]  : 0;
-assign  s_stb_o = (master_select != MASTER_NO_SEL) ? master_stb_o[master_select] : 0;
-assign  s_cyc_o = (master_select != MASTER_NO_SEL) ? master_cyc_o[master_select] : 0;
-assign  s_sel_o = (master_select != MASTER_NO_SEL) ? master_sel_o[master_select] : 0;
-assign  s_adr_o = (master_select != MASTER_NO_SEL) ? master_adr_o[master_select] : 0;
-assign  s_dat_o = (master_select != MASTER_NO_SEL) ? master_dat_o[master_select] : 0;
+assign  o_s_we  = (master_select != MASTER_NO_SEL) ? o_master_we[master_select]  : 0;
+assign  o_s_stb = (master_select != MASTER_NO_SEL) ? o_master_stb[master_select] : 0;
+assign  o_s_cyc = (master_select != MASTER_NO_SEL) ? o_master_cyc[master_select] : 0;
+assign  o_s_sel = (master_select != MASTER_NO_SEL) ? o_master_sel[master_select] : 0;
+assign  o_s_adr = (master_select != MASTER_NO_SEL) ? o_master_adr[master_select] : 0;
+assign  o_s_dat = (master_select != MASTER_NO_SEL) ? o_master_dat[master_select] : 0;
 
 
 ${WRITE}

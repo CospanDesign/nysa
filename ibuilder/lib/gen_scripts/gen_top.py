@@ -1122,3 +1122,4 @@ class GenTop(Gen):
 
   def get_name (self):
     print "generate top!"
+

@@ -20,6 +20,7 @@
 #SOFTWARE.
 
 import os
+import string
 from string import Template
 import utils
 
@@ -235,11 +236,11 @@ def generate_arbitor_buffer(master_count, debug = False):
   if master_count <= 1:
     raise ArbitorError("master_count must be > 1")
 
-  filename = os.path.join(  utils.get_nysa_base(), 
-                            "cbuilder", 
-                            "verilog", 
-                            "wishbone", 
-                            "arbitor", 
+  filename = os.path.join(  utils.get_nysa_base(),
+                            "cbuilder",
+                            "verilog",
+                            "wishbone",
+                            "arbitor",
                             "wishbone_arbitor.v")
   filein = open(filename)
   buf = filein.read()
@@ -249,7 +250,6 @@ def generate_arbitor_buffer(master_count, debug = False):
   template = Template(buf)
 
   port_buf = ""
-  port_def_buf = ""
   master_count_buf = ""
   master_sel_buf = ""
   priority_sel_buf = ""
@@ -264,45 +264,28 @@ def generate_arbitor_buffer(master_count, debug = False):
   #generate the ports
   for i in range (master_count):
     #add the ports
-    port_buf = port_buf + "\tm" + str(i) + "_we_i,\n"
-    port_buf = port_buf + "\tm" + str(i) + "_cyc_i,\n"
-    port_buf = port_buf + "\tm" + str(i) + "_stb_i,\n"
-    port_buf = port_buf + "\tm" + str(i) + "_sel_i,\n"
-    port_buf = port_buf + "\tm" + str(i) + "_ack_o,\n"
-    port_buf = port_buf + "\tm" + str(i) + "_dat_i,\n"
-    port_buf = port_buf + "\tm" + str(i) + "_dat_o,\n"
-    port_buf = port_buf + "\tm" + str(i) + "_adr_i,\n"
-    port_buf = port_buf + "\tm" + str(i) + "_int_o"
-    port_buf = port_buf + ",\n"
+    port_buf += "  input           i_m%d_we,\n" % i
+    port_buf += "  input           i_m%d_cyc,\n" % i
+    port_buf += "  input           i_m%d_stb,\n" % i
+    port_buf += "  input   [3:0]   i_m%d_sel,\n" % i
+    port_buf += "  output          o_m%d_ack,\n" % i
+    port_buf += "  input           i_m%d_dat,\n" % i
+    port_buf += "  output          o_m%d_dat,\n" % i
+    port_buf += "  input           i_m%d_adr,\n" % i
+    port_buf += "  output          o_m%d_int,\n" % i
 
-    port_buf = port_buf + "\n\n"
+    port_buf = port_buf + "\n"
 
   if (debug):
     print "port_buf: " + port_buf
-
-  #generate the port defines
-  for i in range (master_count):
-    port_def_buf = port_def_buf + "input\t\t\tm" + str(i) + "_we_i;\n"
-    port_def_buf = port_def_buf + "input\t\t\tm" + str(i) + "_cyc_i;\n"
-    port_def_buf = port_def_buf + "input\t\t\tm" + str(i) + "_stb_i;\n"
-    port_def_buf = port_def_buf + "input\t[3:0]\tm" + str(i) + "_sel_i;\n"
-    port_def_buf = port_def_buf + "input\t[31:0]\tm" + str(i) + "_adr_i;\n"
-    port_def_buf = port_def_buf + "input\t[31:0]\tm" + str(i) + "_dat_i;\n"
-    port_def_buf = port_def_buf + "output\t[31:0]\tm" + str(i) + "_dat_o;\n"
-    port_def_buf = port_def_buf + "output\t\t\tm" + str(i) + "_ack_o;\n"
-    port_def_buf = port_def_buf + "output\t\t\tm" + str(i) + "_int_o;\n"
-    port_def_buf = port_def_buf + "\n\n"
-
-  if (debug):
-    print "port define buf: \n\n" + port_def_buf
 
   master_count_buf = str(master_count);
 
   #generate the master_select logic
   master_sel_buf = "//master select block\n"
-  master_sel_buf += "parameter MASTER_NO_SEL = 8'hFF;\n"
+  master_sel_buf += "localparam        MASTER_NO_SEL   = 8'hFF;\n"
   for i in range(master_count):
-    master_sel_buf += "parameter MASTER_" + str(i) + " = " + str(i) + ";\n"
+    master_sel_buf += "localparam        MASTER_%d     = %d;\n" % (i, i)
 
   master_sel_buf += "\n\n"
 
@@ -322,8 +305,8 @@ def generate_arbitor_buffer(master_count, debug = False):
   master_sel_buf += "\t\tcase (master_select)\n"
 
   for i in range(master_count):
-    master_sel_buf += "\t\t\tMASTER_" + str(i) + ": begin\n"
-    master_sel_buf += "\t\t\t\tif (~m" + str(i) + "_cyc_i && ~s_ack_i) begin\n"
+    master_sel_buf += "\t\t\tMASTER_%d: begin\n" % i
+    master_sel_buf += "\t\t\t\tif (~i_m%d_cyc && ~i_s_ack) begin\n" % i
     master_sel_buf += "\t\t\t\t\tmaster_select <= MASTER_NO_SEL;\n"
     master_sel_buf += "\t\t\t\tend\n"
     master_sel_buf += "\t\t\tend\n"
@@ -335,11 +318,11 @@ def generate_arbitor_buffer(master_count, debug = False):
   for i in range(master_count):
     if (first_if_flag):
       first_if_flag = False
-      master_sel_buf += "\t\t\t\tif (m" + str(i) + "_cyc_i) begin\n"
+      master_sel_buf += "\t\t\t\tif (i_m%d_cyc) begin\n" % i
     else:
-      master_sel_buf += "\t\t\t\telse if (m" + str(i) + "_cyc_i) begin\n"
+      master_sel_buf += "\t\t\t\telse if (i_m%d_cyc) begin\n" %i
 
-    master_sel_buf += "\t\t\t\t\tmaster_select <= MASTER_" + str(i) + ";\n"
+    master_sel_buf += "\t\t\t\t\tmaster_select <= MASTER_%d;\n" %i
     master_sel_buf += "\t\t\t\tend\n"
   master_sel_buf += "\t\t\tend\n"
   master_sel_buf += "\t\tendcase\n"
@@ -369,10 +352,10 @@ def generate_arbitor_buffer(master_count, debug = False):
   prirotiy_sel_buf = "//priority select block"
 
   priority_sel_buf += "\n\n"
-  #priority_sel_buf += "parameter PRIORITY_NO_SEL = 8'hFF;\n"
+  #priority_sel_buf += "localparam PRIORITY_NO_SEL = 8'hFF;\n"
   #first_if_fag = True
   #for i in range (master_count):
-  #  priority_sel_buf += "parameter PRIORITY_" + str(i) + " = " + str(i) + ";\n"
+  #  priority_sel_buf += "localparam PRIORITY_" + str(i) + " = " + str(i) + ";\n"
 
   priority_sel_buf += "\n\n"
   #priority_sel_buf += "always @(rst or master_select or priority_select "
@@ -393,12 +376,12 @@ def generate_arbitor_buffer(master_count, debug = False):
   for i in range (master_count):
     if first_if_flag:
       first_if_flag = False
-      priority_sel_buf += "\t\tif (m" + str(i) + "_cyc_i) begin\n"
+      priority_sel_buf += "\t\tif (i_m%d_cyc) begin\n" % i
     else:
-      priority_sel_buf += "\t\telse if (m" + str(i) + "_cyc_i) begin\n"
+      priority_sel_buf += "\t\telse if (i_m%d_cyc) begin\n" % i
 
     #priority_sel_buf += "\t\t\tpriority_select  <= PRIORITY_" + str(i) + ";\n"
-    priority_sel_buf += "\t\t\tpriority_select  <= MASTER_" + str(i) + ";\n"
+    priority_sel_buf += "\t\t\tpriority_select  <= MASTER_%d;\n" % i
     priority_sel_buf += "\t\tend\n"
 
   priority_sel_buf += "\t\telse begin\n"
@@ -417,61 +400,60 @@ def generate_arbitor_buffer(master_count, debug = False):
   write_buf = "//write select block\n"
   #write_buf += "assign master_we_o[MASTER_NO_SEL] = 0;\n"
   for i in range (master_count):
-    write_buf += "assign master_we_o[MASTER_%d] = m%d_we_i;\n" % (i, i)
+    write_buf += "assign master_we_o[MASTER_%d] = i_m%d_we;\n" % (i, i)
   write_buf += "\n"
 
   #generate the strobe logic
   strobe_buf = "//strobe select block\n"
   #strobe_buf += "assign master_stb_o[MASTER_NO_SEL] = 0;\n"
   for i in range (master_count):
-    strobe_buf += "assign master_stb_o[MASTER_%d] = m%d_stb_i;\n" % (i, i)
+    strobe_buf += "assign master_stb_o[MASTER_%d] = i_m%d_stb;\n" % (i, i)
   strobe_buf += "\n"
 
   #generate the cycle logic
   cycle_buf = "//cycle select block\n"
   #cycle_buf += "assign master_cyc_o[MASTER_NO_SEL] = 0;\n"
   for i in range (master_count):
-    cycle_buf += "assign master_cyc_o[MASTER_%d] = m%d_cyc_i;\n" % (i, i)
+    cycle_buf += "assign master_cyc_o[MASTER_%d] = i_m%d_cyc;\n" % (i, i)
   cycle_buf += "\n"
 
   #generate the select logic
   select_buf = "//select select block\n"
   #select_buf += "assign master_sel_o[MASTER_NO_SEL] = 0;\n"
   for i in range (master_count):
-    select_buf += "assign master_sel_o[MASTER_%d] = m%d_sel_i;\n" % (i, i)
+    select_buf += "assign master_sel_o[MASTER_%d] = i_m%d_sel;\n" % (i, i)
   select_buf += "\n"
 
   #generate the address_logic
   address_buf = "//address seelct block\n"
   #address_buf += "assign master_adr_o[MASTER_NO_SEL] = 0;\n"
   for i in range (master_count):
-    address_buf += "assign master_adr_o[MASTER_%d] = m%d_adr_i;\n" % (i, i)
+    address_buf += "assign master_adr_o[MASTER_%d] = i_m%d_adr;\n" % (i, i)
   address_buf += "\n"
 
   #generate the data logic
   data_buf = "//data select block\n"
   #data_buf += "assign master_dat_o[MASTER_NO_SEL] = 0;\n"
   for i in range (master_count):
-    data_buf += "assign master_dat_o[MASTER_%d] = m%d_dat_i;\n" % (i, i)
+    data_buf += "assign master_dat_o[MASTER_%d] = i_m%d_dat;\n" % (i, i)
   data_buf += "\n\n"
 
 
   #generate the assigns
   assign_buf = "//assign block\n"
   for i in range(master_count):
-    assign_buf += "assign m" + str(i) + "_ack_o = (master_select == MASTER_" + str(i) + ") ? s_ack_i : 0;\n"
+    assign_buf += "assign o_m%d_ack = (master_select == MASTER_%d) ? i_s_ack : 0;\n" % (i, i)
     #assign_buf += "assign m" + str(i) + "_dat_o = (master_select == MASTER_" + str(i) + ") ? s_dat_i : 0;\n"
 #XXX: This is a little messy
-    assign_buf += "assign m" + str(i) + "_dat_o = s_dat_i;\n"
-    assign_buf += "assign m" + str(i) + "_int_o = (master_select == MASTER_" + str(i) + ") ? s_int_i : 0;\n"
+    assign_buf += "assign o_m%d_dat = i_s_dat;\n" % i
+    assign_buf += "assign o_m%d_int = (master_select == MASTER_%d) ? i_s_int : 0;\n" % (i, i)
     assign_buf += "\n"
 
-  arbitor_name = "arbitor_" + str(master_count) + "_masters"
+  arbitor_name = "arbitor_%d_masters" % master_count
 
   buf = template.substitute ( ARBITOR_NAME=arbitor_name,
                 PORTS=port_buf,
                 NUM_MASTERS=master_count_buf,
-                PORT_DEFINES=port_def_buf,
                 PRIORITY_SELECT=priority_sel_buf,
                 MASTER_SELECT=master_sel_buf,
                 WRITE=write_buf,
@@ -481,7 +463,8 @@ def generate_arbitor_buffer(master_count, debug = False):
                 ADDRESS=address_buf,
                 DATA=data_buf,
                 ASSIGN=assign_buf);
-  return buf
+
+  return string.expandtabs(buf, 2)
 
 
 
