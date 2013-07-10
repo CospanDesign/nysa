@@ -40,6 +40,8 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 import os
 import glob
 import sys
+import importlib
+
 from inspect import isclass
 from ibuilder_error import ModuleNotFound
 from ibuilder_error import ModuleFactoryError
@@ -65,9 +67,10 @@ class ModuleProcessor:
   or simply copying a file
   """
 
-  def __init__ (self):
+  def __init__ (self, user_paths = []):
 #    print "SAPLIB_BASE: " + os.environ["SAPLIB_BASE"]
 #    print "Path: " + str(sys.path)
+    self.user_paths = user_paths
     self.gen_module = None
     self.gen = None
     self.buf = ""
@@ -216,7 +219,8 @@ class ModuleProcessor:
         if debug:
           print "searching for file...",
         try:
-          absfilename = utils.find_rtl_file_location(filename)
+          absfilename = utils.find_rtl_file_location(filename, self.user_paths)
+
           filein = open(absfilename)
           self.buf = filein.read()
           filein.close()
@@ -246,13 +250,14 @@ class ModuleProcessor:
         print "found the generation script"
         print "run generation script: " + file_dict["gen_script"]
       #open up the new gen module
-      cl = __import__("gen")
+      cl = __import__("lib.gen_scripts.gen", fromlist=["lib.gen_scripts"])
+      #cl = importlib.import_module("gen_scripts", "gen")
       #if debug:
       #  print "cl: " + str(cl)
       Gen = getattr(gen, "Gen")
       if debug:
         print "Gen: " + str(Gen)
-      self.gen_module = __import__(file_dict["gen_script"])
+      self.gen_module = __import__("lib.gen_scripts.%s" % file_dict["gen_script"], fromlist=["lib.gen_scipts"])
       gen_success_flag = False
 
       #find the script and dynamically add it
@@ -274,7 +279,8 @@ class ModuleProcessor:
           self.gen = obj()
           if debug:
             print "obj = " + str(self.gen)
-          self.buf = self.gen.gen_script(tags = self.tags, buf = self.buf)
+
+          self.buf = self.gen.gen_script(tags = self.tags, buf = self.buf, user_paths = self.user_paths)
           gen_success_flag = True
 
       if not gen_success_flag:
@@ -294,11 +300,11 @@ class ModuleProcessor:
       deps = self.get_list_of_dependencies(filename)
       for d in deps:
         try:
-          result = utils.find_module_filename(d)
+          result = utils.find_module_filename(d, self.user_paths)
           if (len(result) == 0):
             print "Error: couldn't find dependency filename"
             continue
-          f = utils.find_module_filename(d)
+          f = utils.find_module_filename(d, self.user_paths)
           if (f not in self.verilog_dependency_list and
             f not in self.verilog_file_list):
             if debug:
@@ -337,7 +343,7 @@ class ModuleProcessor:
       deps = self.get_list_of_dependencies(filename, debug = ldebug)
       for d in deps:
         try:
-          dep_filename = utils.find_module_filename(d, debug = ldebug)
+          dep_filename = utils.find_module_filename(d, self.user_paths, debug = ldebug)
         except ModuleNotFound as ex:
           print "Dependency Warning: %s" % (str(ex))
           print "Module Name: %s" % (d)
@@ -402,7 +408,8 @@ class ModuleProcessor:
         print "the file is not a full path, searching RTL... ",
       #didn't find with full path, search for it
       try:
-        filepath = utils.find_rtl_file_location(filename)
+        filepath = utils.find_rtl_file_location(filename, self.user_paths)
+
         filein = open(filepath)
         fbuf = filein.read()
         filein.close()
@@ -466,7 +473,8 @@ class ModuleProcessor:
       #  print "the file is not a full path... searching RTL"
       #didn't find with full path, search for it
       try:
-        filepath = utils.find_rtl_file_location(filename)
+        filepath = utils.find_rtl_file_location(filename, self.user_paths)
+
         filein = open(filepath)
         fbuf = filein.read()
         filein.close()

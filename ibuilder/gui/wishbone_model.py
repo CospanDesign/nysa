@@ -32,6 +32,7 @@ class WishboneModel():
         self.project_tags = {}
         self.new_design()
         self.filename = ""
+        self.user_paths = []
 
         # Add some variable functions for dependency injection.
         self.get_board_config = utils.get_board_config
@@ -46,6 +47,17 @@ class WishboneModel():
         else:
             #initialize an empty tags
             self.initialize_graph()
+
+    def add_user_path(self, path):
+        if path not in self.user_paths:
+            self.user_paths.append(path)
+
+    def get_user_paths(self):
+        return self.user_paths
+
+    def remove_user_paths(self, path):
+        if path in self.user_paths:
+            self.user_paths.remove(path)
 
     def set_default_board_project(self, board_name):
         self.set_board_name(board_name.lower())
@@ -135,14 +147,15 @@ class WishboneModel():
 
         # Get module data for the DRT.
         try:
-            filename = utils.find_rtl_file_location("device_rom_table.v")
+            filename = utils.find_rtl_file_location("device_rom_table.v", self.get_user_paths())
         except ModuleNotFound:
             if debug:
                 print ("device_rom_table.v not found")
             raise WishboneModelError("DRT module was not found")
 
         parameters = utils.get_module_tags(filename=filename,
-                                           bus=self.get_bus_type())
+                                           bus=self.get_bus_type(),
+                                           user_paths = self.get_user_paths())
         self.gm.set_parameters(drt_name, parameters)
 
         # Attempt to load data from the tags.
@@ -160,7 +173,7 @@ class WishboneModel():
                     filename = None
 
                 if filename is not None:
-                    filename = utils.find_rtl_file_location(filename)
+                    filename = utils.find_rtl_file_location(filename, self.get_user_paths())
 
                 uname = self.add_slave(slave_name,
                                        filename,
@@ -191,7 +204,7 @@ class WishboneModel():
             for slave_name in self.project_tags["MEMORY"]:
 
                 filename = self.project_tags["MEMORY"][slave_name]["filename"]
-                filename = utils.find_rtl_file_location(filename)
+                filename = utils.find_rtl_file_location(filename, self.get_user_paths())
                 uname = self.add_slave(slave_name,
                                         filename,
                                         SlaveType.MEMORY,
@@ -209,11 +222,13 @@ class WishboneModel():
         # Check if there is a host interface defined.
         if "INTERFACE" in self.project_tags:
             filename = utils.find_rtl_file_location(
-                            self.project_tags["INTERFACE"]["filename"])
+                            self.project_tags["INTERFACE"]["filename"],
+                            self.get_user_paths())
             if debug:
                 print (("Loading interface: %s" % filename))
-            parameters = utils.get_module_tags(
-                            filename=filename, bus=self.get_bus_type())
+            parameters = utils.get_module_tags(filename=filename,
+                                               bus=self.get_bus_type(),
+                                               user_paths = self.get_user_paths())
             self.set_host_interface(parameters["module"])
             if "bind" in list(self.project_tags["INTERFACE"].keys()):
                 c_bindings = self.project_tags["INTERFACE"]["bind"]
@@ -387,7 +402,7 @@ class WishboneModel():
 
             # Add filenames.
             module = sc_slave.parameters["module"]
-            filename = utils.find_module_filename(module)
+            filename = utils.find_module_filename(module, self.get_user_paths())
             pt_slave["filename"] = filename
 
       # Memory BUS
@@ -438,7 +453,7 @@ class WishboneModel():
             #    pt_slave["bind"][p]["port"] = bindings[p]["loc"]
             #    pt_slave["bind"][p]["direction"] = bindings[p]["direction"]
             module = sc_slave.parameters["module"]
-            filename = utils.find_module_filename(module)
+            filename = utils.find_module_filename(module, self.get_user_paths())
             pt_slave["filename"] = filename
 
 
@@ -555,16 +570,17 @@ class WishboneModel():
             self.gm.add_node("Host Interface", NodeType.HOST_INTERFACE)
 
         # Check if the host interface is valid.
-        filename = utils.find_module_filename(host_interface_name)
+        filename = utils.find_module_filename(host_interface_name, self.get_user_paths())
 
         #XXX: Should this be the full file name??
         self.project_tags["INTERFACE"]["filename"] = filename
-        filename = utils.find_rtl_file_location(filename)
+        filename = utils.find_rtl_file_location(filename, self.get_user_paths())
 
         #print "hi project tags: %s" % str(self.project_tags["INTERFACE"])
         # If the host interface is valid then get all the tags ...
         parameters = utils.get_module_tags(filename=filename,
-                                              bus=self.get_bus_type())
+                                           bus=self.get_bus_type(),
+                                           user_paths = self.get_user_paths())
         # ... and set them up.
         self.gm.set_parameters(hi_name, parameters, debug=debug)
         return True
@@ -868,7 +884,9 @@ class WishboneModel():
         if filename is not None:
 ##           print "filename: " + filename
             if len(filename) > 0:
-                parameters = utils.get_module_tags(filename, self.bus_type)
+                parameters = utils.get_module_tags(filename = filename,
+                                                   bus = self.bus_type,
+                                                   user_paths = self.get_user_paths())
                 self.gm.set_parameters(uname, parameters)
 
                 # Check if there are already some parameter declarations
@@ -946,15 +964,15 @@ class WishboneModel():
 
         # moving to the other bus, need to sever connections.
         self.remove_slave(from_slave_type, from_slave_index)
-        filename = utils.find_module_filename(tags["module"])
-        filename = utils.find_rtl_file_location(filename)
+        filename = utils.find_module_filename(tags["module"], self.get_user_paths())
+        filename = utils.find_rtl_file_location(filename, self.get_user_paths())
         self.add_slave(slave_name, filename, to_slave_type, to_slave_index)
 
     def generate_project(self):
         """Generates the output project that
         can be used to create a bit image."""
         self.save_config_file(self.filename)
-        ibuilder.generate_project(self.filename)
+        ibuilder.generate_project(self.filename, self.get_user_paths)
 
     def get_graph_manager(self):
         '''Returns the graph manager.'''
@@ -989,9 +1007,11 @@ class WishboneModel():
     def _update_module_ports(self, uname, module_name, user_paths = [], fn = None):
         d = self.gm.get_parameters(uname)
         if fn is None:
-            fn = utils.find_module_filename(module_name, user_paths)
-            fn = utils.find_rtl_file_location(fn, user_paths)
-        new_d = utils.get_module_tags(fn, 'wishbone')
+            fn = utils.find_module_filename(module_name, self.get_user_paths())
+            fn = utils.find_rtl_file_location(fn, self.get_user_paths())
+        new_d = utils.get_module_tags(filename = fn,
+                                      bus='wishbone',
+                                      user_paths = self.get_user_paths())
 
         ports = cu.expand_ports(new_d["ports"])
         ports = cu.get_only_signal_ports(ports)

@@ -6,7 +6,7 @@ class Gen:
   def __init__(self):
     self.tags = {}
 
-  def gen_script (self, tags = {}, buf = ""):
+  def gen_script (self, tags = {}, user_paths = [], buf = ""):
     """This function is made for overriding, tags = input tags that modify the
     file, buf is the file buffer itself, its easier to modify a buffer than a
     file"""

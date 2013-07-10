@@ -101,9 +101,12 @@ import wishbone_model
 
 class WishboneController (controller.Controller):
 
-    def __init__(self, output, config_dict):
+    def __init__(self, output, config_dict, user_paths):
         self.dbg = False
         self.model = wishbone_model.WishboneModel()
+        for up in user_paths:
+            self.model.add_user_path(up)
+
         super(WishboneController, self).__init__(self.model, output)
         self.output.Debug(self, "Wishbone controller started")
         self.bus = "wishbone"

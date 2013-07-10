@@ -45,8 +45,9 @@ from ibuilder_error import ModuleFactoryError
 class ProjectGenerator:
   """Generates IBuilder Projects"""
 
-  def __init__(self):
-    self.filegen = module_processor.ModuleProcessor()
+  def __init__(self, user_paths = []):
+    self.user_paths = user_paths
+    self.filegen = module_processor.ModuleProcessor(user_paths = self.user_paths)
     self.project_tags = {}
     self.template_tags = {}
     return
@@ -317,7 +318,13 @@ class ProjectGenerator:
       #print "found dir"
 #      if (key == "arbitors" and ("ARBITORS" in self.project_tags.keys() ) and (len(self.project_tags["ARBITORS"].keys()) > 0)):
 #        return True
-      utils.create_dir(parent_dir + "/" + key)
+      new_dir = os.path.join(parent_dir, key)
+      if os.path.exists(new_dir) and parent_dir is not self.project_tags["BASE_DIR"]:
+          #if we are not the base directory and the directory exists, remove it so we are clean
+          #there is a check for the base directory because the user might put the project
+          #in a pre-existing directory that would be obliterated
+          shutil.rmtree(new_dir)
+      utils.create_dir(parent_dir + os.path.sep + key)
       if (parent_dict[key].has_key("files")):
         for sub_key in parent_dict[key]["files"]:
           #print "sub item :" + sub_key

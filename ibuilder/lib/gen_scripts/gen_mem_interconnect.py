@@ -20,8 +20,8 @@ class GenMemInterconnect(Gen):
     #print "in GenInterconnect"
     return
 
-  def gen_script (self, tags = {}, buf = "", debug=False):
-    buf = wic.generate_wb_mem_interconnect(tags = tags, debug = debug)
+  def gen_script (self, tags = {}, buf = "", user_paths = [], debug=False):
+    buf = wic.generate_wb_mem_interconnect(tags = tags, user_paths = user_paths, debug = debug)
     return buf
 
   def get_name (self):

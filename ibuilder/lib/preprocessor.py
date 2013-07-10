@@ -38,7 +38,7 @@ import sys
 import string
 from ibuilder_error import PreProcessorError
 
-def generate_define_table(filestring="", debug = False):
+def generate_define_table(filestring="", user_paths = [], debug = False):
   """Reads in a module as a buffer and returns a dictionary of defines
 
   Generates a table of defines that can be used to resolve values.
@@ -73,7 +73,7 @@ def generate_define_table(filestring="", debug = False):
       item = item.partition("`include")[2]
       item = item.strip()
       item = item.strip("\"")
-      inc_file = utils.find_rtl_file_location(item)
+      inc_file = utils.find_rtl_file_location(item, user_paths)
       if debug: print "include file location: " + inc_file
 
       #try and open the include file
@@ -89,7 +89,7 @@ def generate_define_table(filestring="", debug = False):
       try:
         if debug:
           print "got the new file string"
-        include_defines = generate_define_table(fs)
+        include_defines = generate_define_table(fs, user_paths)
         if debug:
           print "after include_define"
           print "length of include defines: " + str(len(include_defines.keys()))

@@ -55,10 +55,11 @@ class GenTop(Gen):
     return string.expandtabs(port_buf, 2)
 
 
-  def gen_script (self, tags = {}, buf = "", debug = False):
+  def gen_script (self, tags = {}, buf = "", user_paths = [], debug = False):
     """Generate the Top Module"""
     #debug = True
     #if debug: print "Tags: %s" % str(tags)
+    self.user_paths = user_paths
     board_dict = utils.get_board_config(tags["board"])
     #if debug: print "Board Dictionary: %s" % str(board_dict)
     invert_reset = board_dict["invert_reset"]
@@ -302,8 +303,10 @@ class GenTop(Gen):
     #generate the IO handler
     io_filename = tags["INTERFACE"]["filename"]
     if debug: print "io_filename: %s" % io_filename
-    absfilepath = utils.find_rtl_file_location(io_filename)
-    io_tags = utils.get_module_tags(filename = absfilepath, bus = "wishbone")
+    absfilepath = utils.find_rtl_file_location(io_filename, self.user_paths)
+    io_tags = utils.get_module_tags(filename = absfilepath,
+                                    bus = "wishbone",
+                                    user_paths = self.user_paths)
 
     io_buf = self.generate_buffer(name = "io", module_tags = io_tags, io_module = True)
 
@@ -480,8 +483,10 @@ class GenTop(Gen):
     #Slaves
     slave_index = 0
     slave_buffer_list = []
-    absfilename = utils.find_rtl_file_location("device_rom_table.v")
-    slave_tags = utils.get_module_tags(filename = absfilename, bus="wishbone")
+    absfilename = utils.find_rtl_file_location("device_rom_table.v", self.user_paths)
+    slave_tags = utils.get_module_tags(filename = absfilename,
+                                       bus="wishbone",
+                                       user_paths = self.user_paths)
     slave_buf = self.generate_buffer(name="drt", index=0, module_tags = slave_tags)
     slave_buffer_list.append(slave_buf)
 
@@ -490,8 +495,10 @@ class GenTop(Gen):
       slave = tags["SLAVES"][slave_name]["filename"]
       if debug:
         print "Slave name: " + slave
-      absfilename = utils.find_rtl_file_location(slave)
-      slave_tags = utils.get_module_tags(filename = absfilename, bus="wishbone")
+      absfilename = utils.find_rtl_file_location(slave, self.user_paths)
+      slave_tags = utils.get_module_tags(filename = absfilename,
+                                         bus="wishbone",
+                                         user_paths = self.user_paths)
       slave_buf = self.generate_buffer(name = slave_name, index = i + 1, module_tags = slave_tags)
       slave_buffer_list.append(slave_buf)
 
@@ -508,8 +515,10 @@ class GenTop(Gen):
         filename = tags["MEMORY"][mem_name]["filename"]
         if debug:
           print "Mem device: " + mem_name + ", mem file: " + filename
-        absfilename = utils.find_rtl_file_location(filename)
-        mem_tags = utils.get_module_tags(filename = absfilename, bus="wishbone")
+        absfilename = utils.find_rtl_file_location(filename, self.user_paths)
+        mem_tags = utils.get_module_tags(filename = absfilename,
+                                         bus="wishbone",
+                                         user_paths = self.user_paths)
         mem_buf = self.generate_buffer(name = mem_name, index = i, module_tags = mem_tags, mem_slave = True)
         mem_buffer_list.append(mem_buf)
 

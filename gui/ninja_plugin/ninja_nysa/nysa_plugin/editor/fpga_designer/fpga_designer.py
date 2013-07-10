@@ -271,7 +271,7 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         user_dirs = self.vc.get_user_dirs()
         fn = utils.find_module_filename(name, user_dirs)
         fn = utils.find_rtl_file_location(fn, user_dirs)
-        mt = utils.get_module_tags(fn)
+        mt = utils.get_module_tags(filename = fn, user_paths = user_dirs)
 
         Box(  position = self.position(),
               scene = self.scene,
@@ -320,7 +320,8 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         for slave in slave_list:
             tags = utils.get_module_tags(   filename = slave,
                                             keywords=["DRT_FLAGS"],
-                                            bus = self.vc.get_bus())
+                                            bus = self.vc.get_bus(),
+                                            user_paths = user_dirs)
             #print "Tags: %s" % str(tags)
             flag = int(tags["keywords"]["DRT_FLAGS"])
             if drt.is_memory_core(flag):

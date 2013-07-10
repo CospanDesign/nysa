@@ -111,7 +111,7 @@ class IBuilder (QObject):
         self.nactions.set_ibuilder(self)
         self.connect(self.nactions, SIGNAL("module_built(QString)"), self.module_built)
 
-    def setup_controller(self, filename):
+    def setup_controller(self, filename, user_paths=[]):
         d = {}
         controller = None
         #try:
@@ -126,7 +126,7 @@ class IBuilder (QObject):
         #A Pathetic factory pattern, select the controller based on the bus
         print "Getting Wishbone Controller"
         if d["TEMPLATE"] == "wishbone_template.json":
-            controller = WishboneController(output = self.output, config_dict = d)
+            controller = WishboneController(output = self.output, config_dict = d, user_paths = user_paths)
         elif d["TEMPLATE"] == "axi_template.json":
             controller = AxiController(self, self.output)
         else:
@@ -230,10 +230,10 @@ class IBuilder (QObject):
                                   output=self.output)
 
                 #I'm assuming there is no controller set already so create a new one
-                controller = self.setup_controller(filename)
-                for udir in user_dirs:
-                    print "adding %s to user paths" % udir
-                    controller.add_user_dir(udir)
+                controller = self.setup_controller(filename, user_paths = user_dirs)
+                #for udir in user_dirs:
+                #    print "adding %s to user paths" % udir
+                #    controller.add_user_dir(udir)
                 fd.set_controller(controller)
 
                 index = tab_manager.add_tab(fd, name)
@@ -254,7 +254,7 @@ class IBuilder (QObject):
             self.output.Debug(self, "Found designer extension")
             controller = editor.get_controller()
             model = controller.get_model()
-            model.apply_slave_tags_to_project(debug = True)
+            model.apply_slave_tags_to_project()
             model.save_config_file(filename)
             print "Saved file: %s" % filename
             return True
@@ -283,7 +283,7 @@ class IBuilder (QObject):
     def build_project(self, project):
         print "Build project: %s" % str(project)
 
-    def generate_project(self, project):
+    def generate_project(self, project, user_paths):
         print "Generate project: %s" % str(project)
         ninja_project = glob.glob(project + os.path.sep + "*.nja")
         if len(ninja_project) == 0:
@@ -296,7 +296,13 @@ class IBuilder (QObject):
         j = json.load(f)
         f.close()
         main_file = os.path.join(project, j["mainFile"])
-        ib.generate_project(main_file, dbg=True)
+        ib.generate_project(main_file, user_paths, dbg=True)
+        tp = self.editor._explorer._treeProjects
+        
+        #tp.loading_project(ninja_project)
+        p = tp.get_project_by_name(j["name"])
+        tp._refresh_project(p)
+
 
 
     def module_built(self, module_name):
@@ -304,7 +310,7 @@ class IBuilder (QObject):
         #Go through all editors, if they are ibuilder then
 
     def is_ibuilder_project(self, item):
-        if item.projectType == PROJECT_TYPE:
+        if item.isProject and item.projectType == PROJECT_TYPE:
             return True
         return False
 

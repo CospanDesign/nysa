@@ -19,7 +19,7 @@ class GenXilnx(Gen):
 		#print "in GenXilnx"
 		return
 
-	def gen_script(self, tags = {}, buf = "", debug = False):
+	def gen_script(self, tags = {}, buf = "", user_paths = [], debug = False):
 		"""
 		Need to do a replace, but due to the {} in the script file it
 		doesn't make sense to use the template

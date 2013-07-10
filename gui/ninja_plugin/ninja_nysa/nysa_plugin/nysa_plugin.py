@@ -264,30 +264,28 @@ class NysaPlugin(plugin.Plugin):
     def build_file_command(self):
         print "Enterring custom file build"
         editor = self.locator.get_service('editor')
-        project = editor.get_project_owner()
-        if project is None or len(project) == 0:
-            filename = ""
-            print "Project is None attempt to find the widget, not editor"
-            tab_manager = editor.get_tab_manager()
-            widget = tab_manager.currentWidget()
-            print "widget: %s" % str(widget)
-            filename = widget.ID
+        #project = editor.get_project_owner()
+        #user_paths = []
+        #if project is None or len(project) == 0:
+        filename = ""
+        print "Project is None attempt to find the widget, not editor"
+        tab_manager = editor.get_tab_manager()
+        widget = tab_manager.currentWidget()
+        print "widget: %s" % str(widget)
+        filename = widget.ID
 
-            print "Filename: %s" % str(filename)
-            project_tree = self.explorer_s._explorer.get_project_given_filename(filename)
-            project = project_tree.get_full_path()
-            project = os.path.split(project)[0]
+        print "Filename: %s" % str(filename)
+        project_tree = self.explorer_s._explorer.get_project_given_filename(filename)
+        project = project_tree.get_full_path()
+        project = os.path.split(project)[0]
 
-            if project is None:
-                print "Unable to find project name"
-                return
+        if project is None:
+            print "Unable to find project name"
+            return
 
-            print "Project: %s" % str(project)
+        print "Project: %s" % str(project)
 
 
-        print "project: %s" % project
- 
- 
         cbuilder_project = glob.glob(project + os.path.sep + "*.%s" % CBUILDER_EXT)
         ibuilder_project = glob.glob(project + os.path.sep + "*.%s" % DESIGNER_EXT)
         print "project file: %s" % cbuilder_project
@@ -298,7 +296,8 @@ class NysaPlugin(plugin.Plugin):
 
         if len(ibuilder_project) > 0:
             print "Build ibuilder file"
-            self.ibuilder.generate_project(project)
+            user_paths = widget.get_controller().get_user_dirs()
+            self.ibuilder.generate_project(project, user_paths)
             return
            
 

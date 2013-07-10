@@ -11,7 +11,7 @@ class GenXilinxBuildScript(Gen):
 	def gen_name(self):
 		print "generates the buildscript for a Xilinx based project"
 
-	def gen_script(self, tags = {}, buf = "", debug = False):
+	def gen_script(self, tags = {}, buf = "", user_paths = [], debug = False):
 		#determine if the user has specified the .sycamore config
 		#file in the home directory
 

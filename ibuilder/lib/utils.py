@@ -195,7 +195,7 @@ def find_rtl_file_location(filename="", user_cbuilder_paths = [], debug=False):
 #XXX: This should probably return none, and not an empty string upon failure
 #XXX:   perhaps even raise an error
 
-def get_module_tags(filename="", bus="", keywords = [], debug=False):
+def get_module_tags(filename="", bus="", keywords = [], user_paths = [], debug=False):
   """Gets the tags for the module within the specified filename
 
   Given a module within a filename search through the module and
@@ -322,7 +322,7 @@ def get_module_tags(filename="", bus="", keywords = [], debug=False):
     return
 
   ldebug = debug
-  define_dict = preprocessor.generate_define_table(filestring, ldebug)
+  define_dict = preprocessor.generate_define_table(filestring, user_paths, ldebug)
 
   #find all the IO's
   for io in ports:

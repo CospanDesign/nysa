@@ -95,7 +95,7 @@ def get_output_dir(filename, dbg = False):
 
 
 
-def generate_project(filename, dbg=False):
+def generate_project(filename, user_paths = [], dbg=False):
   """Generate a FPGA project
   
   The type of phroject is specific to the vendor called. For example, if the 
@@ -104,6 +104,7 @@ def generate_project(filename, dbg=False):
 
   Args:
     filename: Name of the configuration file to be read
+    user_paths: Paths used to search for modules
 
   Returns:
     A result of success or fail
@@ -113,6 +114,7 @@ def generate_project(filename, dbg=False):
   Raises:
     IOError: An error in project generation has occured
   """
-  pg = project_generator.ProjectGenerator()
+  print "IBULIDER User paths: %s" % str(user_paths)
+  pg = project_generator.ProjectGenerator(user_paths)
   result = pg.generate_project(filename, debug = dbg)
   return result

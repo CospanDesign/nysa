@@ -18,7 +18,7 @@ class GenInterconnect(Gen):
     #print "in GenInterconnect"
     return
 
-  def gen_script (self, tags = {}, buf = "", debug=False):
+  def gen_script (self, tags = {}, buf = "", user_paths = [], debug=False):
     num_slaves = len(tags["SLAVES"].keys())
     buf = wic.generate_wb_interconnect(num_slaves = num_slaves)
     return buf

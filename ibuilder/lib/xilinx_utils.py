@@ -119,7 +119,7 @@ def locate_xilinx_sim_files(xilinx_base=None, debug=False):
   Returns:
     (string) A directory of the simulation base to search for sim files
   """
-  debug = True
+  #debug = True
   if xilinx_base is None:
     xilinx_base = locate_xilinx_base()
 

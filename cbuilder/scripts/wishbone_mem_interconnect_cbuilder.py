@@ -12,7 +12,7 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
 
 import utils
 
-def generate_wb_mem_interconnect(tags = {}, debug = False):
+def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
 
   num_slaves = len(tags["MEMORY"].keys())
   if debug: print "Number of slaves: %d" % num_slaves
@@ -69,7 +69,7 @@ def generate_wb_mem_interconnect(tags = {}, debug = False):
   #generate the parameters
   for i in range(0, num_mems):
     key = tags["MEMORY"].keys()[i]
-    absfilename = utils.find_rtl_file_location(tags["MEMORY"][key]["filename"])
+    absfilename = utils.find_rtl_file_location(tags["MEMORY"][key]["filename"], user_paths)
     slave_tags = utils.get_module_tags(filename = absfilename, bus = "wishbone", keywords = slave_keywords)
     #if debug:
     #  print "slave tags: " + str(slave_tags)

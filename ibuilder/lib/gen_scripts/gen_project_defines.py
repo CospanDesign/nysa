@@ -11,7 +11,7 @@ class GenProjectDefines(Gen):
 		#print "in GenProjectDefines"
 		return
 
-	def gen_script (self, tags={}, buf="", debug = False):
+	def gen_script (self, tags={}, buf="", user_paths = [], debug = False):
 		"""Generate the project_defines.v"""
 	
 		if debug:

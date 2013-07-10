@@ -157,7 +157,6 @@ class Controller (QObject):
         self.canvas = None
         self.output = output
         self.boxes = {}
-        self.user_dirs = []
         self.constraint_editor = None
         self.nactions  = nysa_actions.NysaActions()
         """
@@ -182,13 +181,13 @@ class Controller (QObject):
         self.fd = fd
 
     def add_user_dir(self, user_dir):
-        self.user_dirs.append(user_dir)
+        self.model.add_user_path(user_dir)
 
     def remove_user_dir(self, user_dir):
-        self.user_dirs.remove(user_dir)
+        self.model.remove_user_path(user_dir)
 
     def get_user_dirs(self):
-        return self.user_dirs
+        return self.model.get_user_paths()
 
     def drag_enter(self, event):
         """
@@ -222,8 +221,8 @@ class Controller (QObject):
         """Add a box to the canvas"""
         scene = self.canvas.scene()
         if box_type == BoxType.SLAVE:
-            fn = utils.find_module_filename(name, self.user_dirs)
-            fn = utils.find_rtl_file_location(fn, self.user_dirs)
+            fn = utils.find_module_filename(name, self.get_user_dirs())
+            fn = utils.find_rtl_file_location(fn, self.get_user_dirs())
 
         if self.model is None:
             raise DesignControlError("Bus type is not set up corretly," +
@@ -481,7 +480,7 @@ class Controller (QObject):
     def module_built(self, module_name):
         print "controller module built: %s" % module_name
         #Go through all editors, if they are ibuilder then
-        self.model.update_module_ports(module_name, self.user_dirs)
+        self.model.update_module_ports(module_name, self.get_user_dirs())
         self.refresh_constraint_editor()
 
     def ibuilder_properties_dialog(self, project_dir):
