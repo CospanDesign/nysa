@@ -114,7 +114,7 @@ def generate_project(filename, user_paths = [], dbg=False):
   Raises:
     IOError: An error in project generation has occured
   """
-  print "IBULIDER User paths: %s" % str(user_paths)
+  #print "IBUILDER User paths: %s" % str(user_paths)
   pg = project_generator.ProjectGenerator(user_paths)
   result = pg.generate_project(filename, debug = dbg)
   return result
