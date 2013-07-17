@@ -115,7 +115,7 @@ class ProjectGenerator:
 
         #Fix all paths to be compatible with the OS and
         #Replace all "${NYSA}" with a 
-        print "Replace NYSA name with real paths"
+        #print "Replace NYSA name with real paths"
         utils.recursive_dict_name_fix(self.template_tags)
 
         

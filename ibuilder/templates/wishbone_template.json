@@ -5,15 +5,16 @@
 			"SConstruct":{
         "location":"${NYSA}/ibuilder/xilinx_builder"
       },
+      "config.json":{
+        "location":"${NYSA}/ibuilder/xilinx_builder",
+        "gen_script":"gen_project_config"
+      },
 			"constraints":{
         "dir":true
 			},
       "cores":{
         "dir":true,
         "files":{
-          "README":{
-            "location":"${NYSA}/ibuilder/xilinx_builder/cores"
-          }
         }
       },
       "site_scons":{

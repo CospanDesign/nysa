@@ -271,7 +271,7 @@ class WishboneModelTest (unittest.TestCase):
     def test_get_fpga_part_number(self):
         self.c.set_board_name("dionysus")
         pn = self.c.get_fpga_part_number()
-        self.assertEqual("xc6slx9tqg144-3", pn)
+        self.assertEqual("xc6slx9-tqg144-3", pn)
 
     def test_set_bus_type(self):
         bt = "axi"
