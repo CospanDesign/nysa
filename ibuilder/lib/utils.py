@@ -24,23 +24,27 @@
 """
 Changes:
 12/06/2011
-  -Modified the clock_read function so that the ucf file can have
-  quotation marks
+    -Modified the clock_read function so that the ucf file can have
+    quotation marks
 04/22/2012
-  -Added the get_slave_list function that returns a list of the
-  available slave filenames
+    -Added the get_slave_list function that returns a list of the
+    available slave filenames
 05/05/2012 (Cinqo de mayo, Woot!)
-  -Added get_net_names to get all the names within a constraint file
+    -Added get_net_names to get all the names within a constraint file
 05/10/2012
-  -Added get_board_config to get all the configuration for a specified board
+    -Added get_board_config to get all the configuration for a specified board
 05/12/2012
-  -Added get_board_names to get all the board names
+    -Added get_board_names to get all the board names
 06/07/2012
-  -Added documentation and licsense
+    -Added documentation and licsense
 06/11/2012
-  -Moved two functions from sapfile to saputils
-    is_module_in_file
-    find_module_filename_
+    -Moved two functions from sapfile to saputils
+        is_module_in_file
+        find_module_filename_
+07/17/2013
+    -Added two new functions:
+        create_native_path
+        recursive_dict_name_fix
 """
 
 
