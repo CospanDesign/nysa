@@ -81,22 +81,10 @@ def create_dir(dirname, debug=False):
 
   if dirname.startswith("~"):
     dirname = os.path.expanduser(dirname)
-  if debug:
-    print "Directory to create: ", dirname
-
-  if  (not os.path.exists(dirname)):
-    if debug:
-      print ("Directory doesn't exist attempting to create...")
-#XXX: this error should be raised for the user
-    try:
-      os.makedirs(dirname)
-    except os.error:
-      if debug:
-        print "Error: failed to create the directory"
-  else:
-    if debug:
-      print ("Found the directory")
-  return True
+  if os.path.exists(dirname):
+    return
+  os.makedirs(dirname)
+  return
 
 #XXX: Is there a native function within Python that does this?
 def resolve_path(filename):
@@ -861,3 +849,63 @@ def _get_file_recursively(directory):
         file_list.append(f)
 
   return file_list
+
+
+def recursive_dict_name_fix(d):
+    """
+    In order to indicate that we are referencing a path from the Nysa base
+    directory the string ${NYSA} is inserted, this was in hopes of using the
+    string template function but that doesn't work really well for
+    dictionaries so just go through all the dictionary entries and replace
+    all the dictionary items with a reference to the base
+
+    Args:
+        d: (Dictionary) dictionary or string to fix
+
+    Returns:
+        Nothing: (all changes are done in place)
+
+    Raises:
+        Nothing
+    """
+    for key in d:
+        #print "key: %s" % key
+        #print "type: %s" % str(type(d[key]))
+        if isinstance(d[key], str) or isinstance(d[key], unicode):
+            #print "key is string"
+            path = d[key]
+            #print "path: %s" % path
+            if "${NYSA}" in path:
+                #print "Initial Path: %s" % path
+                p = path.partition("${NYSA}")[2]
+                p = create_native_path(p)
+                p = os.path.join(get_nysa_base(), p)
+                d[key] = p
+                #print "Final Path: %s" % p
+            else:
+                d[key] = create_native_path(path)
+        elif isinstance(d[key], dict):
+            #print "working on a dictionary"
+            recursive_dict_name_fix(d[key])
+
+
+def create_native_path(path):
+    """
+    All nysa paths are stored in a *nix style, but Nysa may be run on a
+    different OS, so Take any path that is pulled in and send it out as a
+    native path for this OS
+
+    Args:
+        path (string): path to change
+
+    Return:
+        (string): native path
+
+    Raises:
+        Nothing
+    """
+    out_path = ""
+    units = path.split("/")
+    for unit in units:
+        out_path = os.path.join(out_path, unit)
+    return out_path
