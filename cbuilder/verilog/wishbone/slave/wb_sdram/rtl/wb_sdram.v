@@ -62,20 +62,20 @@ module wb_sdram (
   output  reg         o_wbs_int,
 
   //SDRAM signals
-  output              o_sdram_clk;
-  output              o_sdram_cke;
-  output              o_sdram_cs_n;
-  output              o_sdram_ras;
-  output              o_sdram_cas;
-  output              o_sdram_we;
+  output              o_sdram_clk,
+  output              o_sdram_cke,
+  output              o_sdram_cs_n,
+  output              o_sdram_ras,
+  output              o_sdram_cas,
+  output              o_sdram_we,
 
-  output    [11:0]    o_sdram_addr;
-  output    [1:0]     o_sdram_bank;
-  inout     [15:0]    io_sdram_data;
-  output    [1:0]     o_sdram_data_mask;
-  output              o_sdram_ready;
+  output    [11:0]    o_sdram_addr,
+  output    [1:0]     o_sdram_bank,
+  inout     [15:0]    io_sdram_data,
+  output    [1:0]     o_sdram_data_mask,
+  output              o_sdram_ready,
 
-  output              o_ext_sdram_clk;
+  output              o_ext_sdram_clk
 
 
 );
