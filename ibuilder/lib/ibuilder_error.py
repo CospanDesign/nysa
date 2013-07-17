@@ -107,3 +107,18 @@ class ConstraintError(Exception):
         self.value = value
     def __str__(self):
         return repr(self.value)
+
+class ProjectGeneratorError(Exception):
+    """Project Generator Error
+
+    Raised when:
+        Errors loading project tags
+        Errors loading template tags
+        Errors created output project structure
+    """
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+
