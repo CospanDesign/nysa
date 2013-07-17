@@ -1,0 +1,22 @@
+{
+"-a"                     :{ "description":"Add PADs to Top-Level Port Signals", "value" :""},
+"-aul"                   :{ "description":"Allow Unmatched LOCs",               "value" :"_true"},
+"-aut"                   :{ "description":"Allow Unmatched Timegroups",         "value" :""},
+"-bm"                    :{ "description":"Specify BMM Files",                  "value" :""},
+"-dd"                    :{ "description":"Destination Directory",              "value" :""},
+"-f"                     :{ "description":"Execute Commands File",              "value" :""},
+"-i"                     :{ "description":"Ignore UCF File",                    "value" :""},
+"-insert_keep_hierarchy" :{ "description":"Insert KEEP_HIERARCHY constraint",   "value" :""},
+"-intstyle"              :{ "description":"Integration Style",                  "value" :""},
+"-filter"                :{ "description":"Filter File",                        "value" :""},
+"-l"                     :{ "description":"Libraries to Search",                "value" :""},
+"-nt"                    :{ "description":"Netlist Translation Type",           "value" :"timestamp"},
+"-p"                     :{ "description":"Part Number",                        "value" :""},
+"-quiet"                 :{ "description":"Quiet",                              "value" :""},
+"-r"                     :{ "description":"Ignore LOC Constraints",             "value" :""},
+"-sd"                    :{ "description":"Search Specified Directory",         "value" :""},
+"-u"                     :{ "description":"Allow Unexpanded Blocks",            "value" :""},
+"-uc"                    :{ "description":"User Constraints File",              "value" :""},
+"-ur"                    :{ "description":"Read User Rules File",               "value" :""},
+"-verbose"               :{ "description":"Report All Messages",                "value" :""}
+}

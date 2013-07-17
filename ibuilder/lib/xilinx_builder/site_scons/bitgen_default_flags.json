@@ -1,0 +1,13 @@
+{
+  "-b"        :{ "description":"Create Rawbits File",            "value" :""},
+  "-bd"       :{ "description":"Update Block Rams",              "value" :""},
+  "-d"        :{ "description":"Do Not Run DRC",                 "value" :""},
+  "-f"        :{ "description":"Execute Commands File",          "value" :""},
+  "-intstyle" :{ "description":"Integration Style",              "value" :""},
+  "-j"        :{ "description":"No BIT File",                    "value" :""},
+  "-l"        :{ "description":"Create a Logic Allocation File", "value" :""},
+  "-m"        :{ "description":"Generate a Mask File",           "value" :""},
+  "-r"        :{ "description":"Create a Partial Bit File",      "value" :""},
+  "-w"        :{ "description":"Overwrite Existing Output File", "value" :"_true"},
+  "-g"        :{ "description":"Set Configuration",              "value" :""}
+}

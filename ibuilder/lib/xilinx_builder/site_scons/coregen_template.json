@@ -1,0 +1,15 @@
+{
+  "addpads": "false",
+  "asysymbol": "true",
+  "busformat": "BusFormatAngleBracketNotRipped",
+  "createndf": "false",
+  "flowvendor": "Other",
+  "formalverification": "false",
+  "foundationsym": "false",
+  "implementationfiletype": "Ngc",
+  "removerpms": "false",
+  "simulationfiles": "Behavioral",
+  "verilogsim": "true",
+  "designentry": "Verilog",
+  "vhdlsim": "false"
+}

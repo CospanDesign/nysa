@@ -1,0 +1,10 @@
+Core folder
+
+Description:
+
+Put .xco files in here and run 'scons core' from the base directory to generate
+all the cores.
+
+The generated cores will be stored in the <build dir>/cores directory This way
+the cores do not have to be regenerated each time a new bit file is generated
+

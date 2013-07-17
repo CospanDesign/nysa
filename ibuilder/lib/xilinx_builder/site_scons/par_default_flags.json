@@ -1,0 +1,22 @@
+{
+  "-activityfile"  :{ "description":"Activity File",                "value" :""},
+  "-clock_regions" :{ "description":"Generate Clock Region Report", "value" :""},
+  "-f"             :{ "description":"Execute Commands File",        "value" :""},
+  "-intstyle"      :{ "description":"Integration Style",            "value" :""},
+  "-filter"        :{ "description":"Filter File",                  "value" :""},
+  "-k"             :{ "description":"Re-Entrant Routing",           "value" :""},
+  "-mt"            :{ "description":"Multi-Threading",              "value" :"off"},
+  "-nopad"         :{ "description":"No Pad",                       "value" :""},
+  "-ntd"           :{ "description":"Non Timing Driven",            "value" :""},
+  "-ol"            :{ "description":"Overall Effort Level",         "value" :"high"},
+  "-p"             :{ "description":"No Placement",                 "value" :""},
+  "-pl"            :{ "description":"Placer Effort Level",          "value" :""},
+  "-power"         :{ "description":"Power Aware PAR",              "value" :""},
+  "-r"             :{ "description":"No Routing",                   "value" :""},
+  "-rl"            :{ "description":"Router Effort Level",          "value" :""},
+  "-smartguide"    :{ "description":"SmartGuide",                   "value" :""},
+  "-t"             :{ "description":"Starting Placer Cost Table",   "value" :""},
+  "-w"             :{ "description":"Overwrite Existing Files",     "value" :"_true"},
+  "-x"             :{ "description":"Performance Evaluation Mode",  "value" :""},
+  "-xe"            :{ "description":"Extra Effort Level",           "value" :"c"}
+}

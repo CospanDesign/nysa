@@ -1,0 +1,21 @@
+{
+  "-a"           :{ "description":"Advanced Analysis",                                  "value" :""},
+  "-e"           :{ "description":"Generate an Error Report",                           "value" :""},
+  "-f"           :{ "description":"Execute Commands File",                              "value" :""},
+  "-fastpaths"   :{ "description":"Report Fastest Paths",                               "value" :"_true"},
+  "-intstyle"    :{ "description":"Integration Style",                                  "value" :""},
+  "-filter"      :{ "description":"Filter File",                                        "value" :""},
+  "-l"           :{ "description":"Limit Timing Report",                                "value" :""},
+  "-n"           :{ "description":"Report Paths Per Endpoint",                          "value" :"3"},
+  "-nodatasheet" :{ "description":"No Data Sheet",                                      "value" :""},
+  "-noflight"    :{ "description":"No Flight Delay",                                    "value" :""},
+  "-o"           :{ "description":"Output Timing Report File Name",                     "value" :""},
+  "-s"           :{ "description":"Change Speed",                                       "value" :""},
+  "-stamp"       :{ "description":"Generates STAMP timing model files",                 "value" :""},
+  "-timegroups"  :{ "description":"Create a Table of Timegroups",                       "value" :""},
+  "-tsi"         :{ "description":"Generate a Timing Specification Interaction Report", "value" :""},
+  "-u"           :{ "description":"Report Uncovered Paths",                             "value" :""},
+  "-ucf"         :{ "description":"UCF File",                                           "value" :""},
+  "-v"           :{ "description":"Generate a Verbose Report",                          "value" :"3"},
+  "-xml"         :{ "description":"XML Output File Name",                               "value" :""}
+}

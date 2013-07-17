@@ -1,0 +1,230 @@
+Developer Notes:
+
+I am new to sCons so if you have any insite please feel free to
+email me @ dave.mccoy@cospandesign.com
+
+This sCons build tool is based off of the page
+
+scons.org/wiki/ToolsForFools
+
+Thank you so much for this page, it helped a lot!
+
+
+
+Adding support for a new tool (eg Data2Mem, hint hint future Dave):
+
+Here are the steps that I found works
+
+1. Create an entry in the config.json that will house configuration
+   data for the new tool.
+
+   something like:
+    "tool_name":{
+      "flags":{
+      }
+    }
+
+    It's okay if it's blank, this is a place where users can override
+    default behaviors of flags
+
+
+2. Create a default flag directory that will populate the flags
+   of the command line tool when building unless the user overrides
+   them. I've been using a .json file because of the ease of use with
+   Python. Here is the format
+    {
+      "-flag_name":{"description":"Description of flag", "value":""}
+    }
+    
+    The value, if left blank will be removed, if set to "_true" then
+    will be left as a stand alone flag without any value, otherwise
+    the value set will be put on the command line
+
+    -If the user specifies a flag in the configuration file then let
+    it override the default. (All of the current utilities follow this
+    pattern.
+
+3. Create a tool_name_utils.py module in this directory. This is where
+   you can use Python to debug a lot of your work. Create an associated
+   test for the new utility in test directory. You don't even have to
+   have asserts in the test, just something to exercise your code. Unit
+   tests are designed to checkout the most basic level of code and 
+   these utility functions are pretty simple.
+
+   The utility file should have functions for:
+
+   -Create output directories in the build folder
+   -(Optional) Create a script that will be fed into the build tool
+   -Getting filenames of the sources that are required to build
+   -Getting filenames of the targets that the tool will emit
+   -Creating a dictionary of tools that can be overridden by the user 
+    configuration files
+   -If you are not using a script, a function to generate a string of
+    flags from the dictionary of flags
+
+   Basically look at the other ??_utils.py modules as a reference
+
+4. Create a tool module in the site_tools directory.
+   This is the new tool interface to the sCons build environment.
+   It's trickier to debug than the utils module created in step 3 but
+   sCons will use this.
+
+   Here are the constructs that need to be created
+
+   1. An emitter, this can initially return the target, source files
+   entered but when the tools dependencies change (for example in
+   the xst tool and adding support for cores) the emitter is what tells
+   sCons that this tool requires more files than what was originally
+   expected.
+
+   format:
+    def _tool_emitter(target, source, env):
+      return target, source
+    
+
+   2. Define a builder, although we are using sCons in a slightly different
+   way than it normally is (we intercept the call to the builder to inject
+   our own functionality) the builder is important because the sCons
+   evironment handles all the heavy lifting of executing the commands and
+   handling the fallout of the results, we will call the builder directly
+   within our own pseudo-builder function (defined below)
+
+   format:
+    _tool_builder = SCons.Builder.Builder(
+      action = SCons.Action.Action('$TOOL_COM', '$TOOL_COMSTR'),
+      suffix = '.target_suffix',
+      src_suffix = '.source_suffix,
+      emitter = _tool_emitter)
+
+
+   3. Define some Warnings and Errors: These are called when something goes
+   wrong and basically says "Hey look in this module for the problem"
+
+   format:
+    class TOOLBuilderWarning(SCons.Warnings.Warning):
+      pass
+
+    class TOOLBuilderError(TOOLBuilderWarning):
+      pass
+
+   4. Create a _detect method: Although detection could be done in the 'exists'
+   function _detect is called from multiple places so it's good to be separate.
+
+   This function determines if the tool exists and where it is:
+
+   format:
+
+   def _detect(env):
+    try:
+      return env['TOOL_COMMAND']
+    except KeyError:
+      pass
+    #Have not previously detected the tool
+
+    #replace 'build tool name here!' with your tool
+    # Like 'xst' or 'fortune'
+    tool_command = env.WhereIs("bulid tool name here!")
+    if tool_command:
+      return tool_command
+
+    #Tell the user we didn't find the tool
+    raise SCons.Errors.StopError(
+      TOOLBuilderError,
+      "Couldn't find \"buld tool name here!\"")
+
+    return None
+
+
+   5. Create a generator function that adds the tool to the sCons build
+   environment. I found that if I call my utility functions in here, as
+   apposed to within the psuedo-builder function, things seem to build
+   better, I haven't explored this much but just because I have all utility
+   calls in here doesn't mean it's right.
+
+   Set up the tool here by creating the output build directories (made in
+   the utils function in step 2) create any scripts and find out what your
+   source and target names are.
+
+   setup the default behavior of the tools with the env.SetDefault function
+
+   Add the new tool as a method (not a builder) to the environment.
+
+   format:
+
+   def generate(env):
+    #Detect and setup the tool
+    env['TOOL_COMMAND'] = _detect(env)
+
+    config = utils.read_config(env)
+    tool_utils.create_output_directory(config)
+    output_file = tool_utils.get_output_filename(config)
+
+    env.SetDefault(
+      TOOL_OUTPUT_FILE = output_file,
+
+      #Define youre build string
+      TOOL_COM = '$TOOL_COMMAND -flag '$TOOL_SOMETHING' -another_flag",
+      TOOL_COMSTR = ""
+    )
+
+    #Create a method reference within the sCons environment 
+    env.AddMethod(TOOL, 'tool')
+
+
+   6. Create an exists function, this is part of the sCons new tool contract
+   all tools need to declare this method and the generate method and just
+   returns a none None method when the tool is found
+
+   format:
+
+   def exists(env):
+    return _detect(env)
+
+
+   7. Create the actual pseudo-builder method, this method is what is called
+   when the environment actually attempts to use your tool. This is where
+   normally the sCons tool would call the builder on it's own but in this
+   function you can intercept that build request and do additional functions
+   here
+
+   format:
+   
+   def TOOL(env, target, source):
+    #you can replace the target or source here
+    _tool_builder.__call__(env, target, source)
+    #you can return anything you want here, this is what will be fed into
+    # the next tool's source
+    return target
+
+5. Modify the xilinx.py file to return the files that this tool will generate
+   add a new 'get_tool_targets' function that will return the targets that this tool
+   will generate
+
+   format:
+
+   def get_tool_targets(env):
+    config = utils.read_config(env)
+    return tool_utils.get_target_files(config)
+
+
+6. Adjust the SConstruct file at the base directory to use the tool by creating
+   an Alias to the tool name that will return the target files to generate and
+   then add a dependency that will tell sCons what this tool takes as source
+   and what it generates as targets
+
+   format:
+   ...
+   env.Alias("tool", xilinx.get_tool_targets(env))
+   ...
+   #Replace FILES_NEEDED_FOR_BUILD with the source files required to build
+   tool_files = env.tool(xilinx.get_tool_targets(env), FILES_NEEDED_FOR_BUILD)
+
+
+
+
+The tools are quite forgiving and they will indicate where errors are there is
+not much support for debug as of yet but throwing in print statements all over
+help out a lot
+
+
+Good luck and please expand these build tools

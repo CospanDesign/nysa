@@ -1,0 +1,17 @@
+
+Scripts:
+
+utils:
+Helper functions used by many scripts they include functions to:
+
+Find the base of the project
+Read and parse the project configuration file
+Get the possible tooltypes to process the project
+Check if the operating system is 32 or 64 bits
+On Windows find out what drive letters (C:, D:, E:, etc) exists
+Find the base of the xilinx toolpath, this is different whether the user is
+  using windows or linux
+
+
+
+
