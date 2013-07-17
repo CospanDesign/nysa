@@ -48,8 +48,7 @@ module wishbone_interconnect (
   input       [31:0]  i_m_dat,
   output reg  [31:0]  o_m_dat,
   output reg          o_m_ack,
-  output              o_m_int
-
+  output              o_m_int,
 
 ${PORTS}
 
