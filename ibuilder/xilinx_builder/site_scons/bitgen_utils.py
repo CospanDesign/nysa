@@ -52,7 +52,7 @@ def get_flags(config):
         if "flags" in config["bitgen"].keys():
             user_flags = config["bitgen"]["flags"]
         if "config" in config["bitgen"].keys():
-            bg_config = config["bitgen"]["flags"]
+            bg_config = config["bitgen"]["config"]
 
     fn = os.path.join(os.path.dirname(__file__), BITGEN_DEFAULT_FLAG_FILE)
     cfg_fn = os.path.join(os.path.dirname(__file__), BITGEN_CONFIG_FILE)
