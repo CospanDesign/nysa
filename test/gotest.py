@@ -49,15 +49,15 @@ EPILOG = "\n" \
 "Examples:\n" + \
 "\n" + \
 "Run all tests:\n" + \
-"\ttester.py\n" + \
+"\tgotest.py\n" + \
 "\n" + \
 "List the available tests:\n" + \
-"\ttester.py -l\n" + \
+"\tgotest.py -l\n" + \
 "\n" + \
 "Run a specific test:\n" + \
-"\ttester.py <test name>\n" + \
+"\tgotest.py <test name>\n" + \
 "Run a specific/all tests with lots of debug info\n" + \
-"\ttester.py -d [test name]"
+"\tgotest.py -d [test name]"
 
 
 debug = False
