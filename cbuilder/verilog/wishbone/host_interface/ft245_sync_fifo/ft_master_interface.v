@@ -317,19 +317,19 @@ always @ (posedge clk ) begin
         end
       end
       READ_COMMAND: begin
-        if (o_in_command[3:0] == PING) begin
+        if (o_in_command[3:0] == `COMMAND_PING) begin
           $display("Reading PING command");
           input_handler_state <=  NOTIFY_MASTER;
         end
-        else if (o_in_command[3:0] == RESET) begin
+        else if (o_in_command[3:0] == `COMMAND_RESET) begin
           $display("Reading RESET command");
           input_handler_state <=  IDLE;
         end
-        else if (o_in_command[3:0] == READ) begin
+        else if (o_in_command[3:0] == `COMMAND_READ) begin
           $display("Reading READ command");
           input_handler_state <=  WAIT_FOR_ADDRESS;
         end
-        else if (o_in_command[3:0] == WRITE) begin
+        else if (o_in_command[3:0] == `COMMAND_WRITE) begin
           $display("Reading WRITE command");
           input_handler_state <=  WAIT_FOR_ADDRESS;
         end
@@ -368,7 +368,7 @@ always @ (posedge clk ) begin
       NOTIFY_MASTER: begin
         if (i_master_ready) begin
           o_ih_ready              <=  1;
-          if (o_in_command[3:0] == WRITE && local_data_count > 0) begin
+          if (o_in_command[3:0] == `COMMAND_WRITE && local_data_count > 0) begin
             input_handler_state <=  WAIT_FOR_DATA;
           end
           else begin
