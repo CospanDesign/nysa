@@ -1,5 +1,5 @@
 {
-	"BASE_DIR":"~/projects/sycamore_projects",
+	"BASE_DIR":"~/projects/ibuilder_project",
 	"board":"dionysus",
 	"PROJECT_NAME":"example_project",
 	"TEMPLATE":"wishbone_template.json",
