@@ -88,7 +88,7 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
   mem_select_buf =  "reg [31:0] mem_select;\n"
 
   mem_select_buf += "\n"
-  mem_select_buf += "always @(rst or m_adr_i or mem_select) begin\n"
+  mem_select_buf += "always @(rst or i_m_adr or mem_select) begin\n"
   mem_select_buf += "\tif (rst) begin\n"
   mem_select_buf += "\t\t//nothing selected\n"
   mem_select_buf += "\t\tmem_select <= 32'hFFFFFFFF;\n"
@@ -100,7 +100,7 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
     else:
       mem_select_buf += "\t\telse if "
 
-    mem_select_buf += "((m_adr_i >= MEM_OFFSET_%d) && (m_adr_i < (MEM_OFFSET_%d + MEM_SIZE_%d))) begin\n" % (i, i, i)
+    mem_select_buf += "((i_m_adr >= MEM_OFFSET_%d) && (i_m_adr < (MEM_OFFSET_%d + MEM_SIZE_%d))) begin\n" % (i, i, i)
     mem_select_buf += "\t\t\tmem_select <= MEM_SEL_%d;\n" % i
     mem_select_buf += "\t\tend\n"
 
@@ -153,8 +153,8 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
 
   data_block_buf += ") begin\n\tcase (mem_select)\n"
   for i in range (0, num_mems):
-    data_block_buf += "\t\tMEM_SEL_%d: begin\n\t\t\tm_dat_o <= i_s%d_dat;\n\t\tend\n" % (i, i)
-  data_block_buf += "\t\tdefault: begin\n\t\t\tm_dat_o <= 32\'h0000;\n\t\tend\n\tendcase\nend\n\n"
+    data_block_buf += "\t\tMEM_SEL_%d: begin\n\t\t\to_m_dat <= i_s%d_dat;\n\t\tend\n" % (i, i)
+  data_block_buf += "\t\tdefault: begin\n\t\t\to_m_dat <= 32\'h0000;\n\t\tend\n\tendcase\nend\n\n"
 
   #ack in block
   ack_block_buf = "//ack in from mem slave\n"
@@ -163,8 +163,8 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
     ack_block_buf += " or i_s%d_ack" % i
   ack_block_buf += ") begin\n\tcase (mem_select)\n"
   for i in range (0, num_mems):
-    ack_block_buf += "\t\tMEM_SEL_%d: begin\n\t\t\tm_ack_o <= i_s%d_ack;\n\t\tend\n" % (i, i)
-  ack_block_buf += "\t\tdefault: begin\n\t\t\tm_ack_o <= 1\'h0;\n\t\tend\n\tendcase\nend\n\n"
+    ack_block_buf += "\t\tMEM_SEL_%d: begin\n\t\t\to_m_ack <= i_s%d_ack;\n\t\tend\n" % (i, i)
+  ack_block_buf += "\t\tdefault: begin\n\t\t\to_m_ack <= 1\'h0;\n\t\tend\n\tendcase\nend\n\n"
 
 
   #int in block
@@ -174,8 +174,8 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
     int_block_buf += " or i_s%d_int" % (i)
   int_block_buf += ") begin\n\tcase (mem_select)\n"
   for i in range (0, num_mems):
-    int_block_buf += "\t\tMEM_SEL_%d: begin\n\t\t\tm_int_o <= i_s%d_int_i;\n\t\tend\n" % (i, i)
-  int_block_buf += "\t\tdefault: begin\n\t\t\tm_int_o <= 1\'h0;\n\t\tend\n\tendcase\nend\n\n"
+    int_block_buf += "\t\tMEM_SEL_%d: begin\n\t\t\to_m_int <= i_s%d_int;\n\t\tend\n" % (i, i)
+  int_block_buf += "\t\tdefault: begin\n\t\t\to_m_int <= 1\'h0;\n\t\tend\n\tendcase\nend\n\n"
 
   buf = template.substitute(  PORTS=port_buf,
                 MEM_SELECT=mem_select_buf,

@@ -42,7 +42,7 @@ module wishbone_mem_interconnect (
   input  		  [31:0]	i_m_dat,
   output reg	[31:0]	o_m_dat,
   output reg			    o_m_ack,
-  output reg			    o_m_int
+  output reg			    o_m_int,
 
 ${PORTS}
 );
