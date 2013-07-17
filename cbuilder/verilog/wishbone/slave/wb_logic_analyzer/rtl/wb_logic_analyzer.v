@@ -286,14 +286,14 @@ always @ (posedge clk) begin
 
     wb_data_read_strobe     <=  0;
     //when the master acks our ack, then put our ack down
-    if (i_wbs_ack & ~wbs_stb)begin
+    if (o_wbs_ack & ~i_wbs_stb)begin
       o_wbs_ack <= 0;
       if (data_read_count == 0) begin
         data_read_en        <=  0;
       end
     end
 
-    if (i_wbs_stb & wbs_cyc & ~wbs_ack) begin
+    if (i_wbs_stb & i_wbs_cyc & ~o_wbs_ack) begin
       //master is requesting somethign
       if (i_wbs_we) begin
         //write request
