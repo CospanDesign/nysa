@@ -2,32 +2,31 @@
 	"PROJECT_TEMPLATE":{
 		"dir":true,
 		"files": {
-			"Makefile":{
-        "location":"${NYSA}/ibuilder/lib/tool_scripts"
+			"SConstruct":{
+        "location":"${NYSA}/ibuilder/xilinx_builder"
       },
-			"README":{
+			"constraints":{
+        "dir":true
+			},
+      "cores":{
+        "dir":true,
+        "files":{
+          "README":{
+            "location":"${NYSA}/ibuilder/xilinx_builder/cores"
+          }
+        }
+      },
+      "site_scons":{
+        "dir":true,
+        "recursive_copy":"${NYSA}/ibuilder/xilinx_builder/site_scons"
+      },
+      "README.md":{
+        "location":"${NYSA}/ibuilder/xilinx_builder"
+      },
+			"NYSA_README":{
         "location":"${NYSA}/ibuilder/bus", 
         "tags":true
       },
-			"cbuilder_defines.v":{
-        "location":"${NYSA}/cbuilder/verilog"
-      },
-			"project_gen.tcl":{
-        "location":"${NYSA}/ibuilder/lib/tool_scripts/xilinx", 
-        "gen_script":"gen_xilinx"
-      },
-			"project_defines.v":{
-        "location":"${NYSA}/ibuilder/bus", 
-        "gen_script":"gen_project_defines"
-      },
-			"build_scripts":{
-        "dir":true,
-				"files":{
-					"xilinx_utils.py":{
-            "location":"${NYSA}/ibuilder/lib"
-          }
-				}
-			},
 			"sim_scripts":{
         "dir":true,
 				"files":{
@@ -36,15 +35,19 @@
           }
 				}
 			},
-			"constraints":{
-        "dir":true
-			},
-			"dependencies":{
-        "dir":true
-      },
 			"rtl":{ 
         "dir":true,
 				"files":{
+					"project_defines.v":{
+            "location":"${NYSA}/ibuilder/bus", 
+            "gen_script":"gen_project_defines"
+          },
+			    "cbuilder_defines.v":{
+            "location":"${NYSA}/cbuilder/verilog"
+          },
+    			"dependencies":{
+            "dir":true
+          },
 					"top.v":{
             "location":"${NYSA}/cbuilder/template/top", 
             "gen_script":"gen_top"
@@ -52,6 +55,7 @@
 					"bus":{
             "dir":true,
 						"files":{
+
 							"master":{
                 "dir":true,
 								"files":{
