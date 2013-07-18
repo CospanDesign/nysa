@@ -140,7 +140,8 @@ def read_config(env):
             #if this is a file just append it to vpath
             if os.path.isfile(path):
                 #print "Found a file: %s" % path
-                vpath.append(path)
+                if path not in vpaths:
+                    vpaths.append(path)
 
             #this is a directory so now I need to see if this is a recursive
             #directory
@@ -148,7 +149,9 @@ def read_config(env):
                 #print "Recursively retreiving files"
                 vfs = _get_vfiles(path)
                 #print "List of verilog files: %s" % str(vfs)
-                vpaths.extend(vfs)
+                for vf in vfs:
+                    if vf not in vpaths:
+                        vpaths.append(vf)
             else:
                 #print "Found a directory: %s" % path
                 search_pattern = os.path.join(path, "*.v")
