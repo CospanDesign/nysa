@@ -241,7 +241,7 @@ class GenTop(Gen):
             self.wires.append(wr_name)
 
             wr_name = "w_s%d_i_wbs_sel" % i
-            wr_buf +=  "{0:<19}{1};\n".format("wire\t[31:0]", wr_name)
+            wr_buf +=  "{0:<19}{1};\n".format("wire\t[3:0]", wr_name)
             self.wires.append(wr_name)
 
             wr_name = "w_s%d_o_wbs_ack" % i
@@ -399,15 +399,15 @@ class GenTop(Gen):
 
             for i in range (0, num_mems):
                 wmi_buf += "\t//mem slave %d\n" % i
-                wmi_buf += "\t.o_s%d_we\t\t\t\t(w_sm%d_wbs_we_i),\n" % (i, i)
-                wmi_buf += "\t.o_s%d_cyc\t\t\t\t(w_sm%d_wbs_cyc_i),\n" % (i, i)
-                wmi_buf += "\t.o_s%d_stb\t\t\t\t(w_sm%d_wbs_stb_i),\n" % (i, i)
-                wmi_buf += "\t.o_s%d_sel\t\t\t\t(w_sm%d_wbs_sel_i),\n" % (i, i)
-                wmi_buf += "\t.i_s%d_ack\t\t\t\t(w_sm%d_wbs_ack_o),\n" % (i, i)
-                wmi_buf += "\t.o_s%d_dat\t\t\t\t(w_sm%d_wbs_dat_i),\n" % (i, i)
-                wmi_buf += "\t.i_s%d_dat\t\t\t\t(w_sm%d_wbs_dat_o),\n" % (i, i)
-                wmi_buf += "\t.o_s%d_adr\t\t\t\t(w_sm%d_wbs_adr_i),\n" % (i, i)
-                wmi_buf += "\t.i_s%d_int\t\t\t\t(w_sm%d_wbs_int_o)" % (i, i)
+                wmi_buf += "\t.o_s%d_we\t\t\t\t(w_sm%d_i_wbs_we),\n" % (i, i)
+                wmi_buf += "\t.o_s%d_cyc\t\t\t\t(w_sm%d_i_wbs_cyc),\n" % (i, i)
+                wmi_buf += "\t.o_s%d_stb\t\t\t\t(w_sm%d_i_wbs_stb),\n" % (i, i)
+                wmi_buf += "\t.o_s%d_sel\t\t\t\t(w_sm%d_i_wbs_sel),\n" % (i, i)
+                wmi_buf += "\t.i_s%d_ack\t\t\t\t(w_sm%d_o_wbs_ack),\n" % (i, i)
+                wmi_buf += "\t.o_s%d_dat\t\t\t\t(w_sm%d_i_wbs_dat),\n" % (i, i)
+                wmi_buf += "\t.i_s%d_dat\t\t\t\t(w_sm%d_o_wbs_dat),\n" % (i, i)
+                wmi_buf += "\t.o_s%d_adr\t\t\t\t(w_sm%d_i_wbs_adr),\n" % (i, i)
+                wmi_buf += "\t.i_s%d_int\t\t\t\t(w_sm%d_o_wbs_int)" % (i, i)
 
 
                 if ((num_mems > 0) and (i < num_mems - 1)):
