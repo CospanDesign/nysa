@@ -41,11 +41,11 @@ def generate_wb_interconnect(num_slaves = 1, add_drt = True, debug=False):
     port_buf += "\toutput\t\t\t\t\t\t\to_s%d_cyc,\n" % i
     port_buf += "\toutput\t\t\t\t\t\t\to_s%d_stb,\n" % i
     port_buf += "\toutput\t\t[3:0]\t\t\to_s%d_sel,\n" % i
-    port_buf += "\toutput\t\t\t\t\t\t\ti_s%d_ack,\n" % i
+    port_buf += "\tinput\t\t\t\t\t\t\t\ti_s%d_ack,\n" % i
     port_buf += "\toutput\t\t[31:0]\t\to_s%d_dat,\n" % i
-    port_buf += "\toutput\t\t[31:0]\t\ti_s%d_dat,\n" % i
+    port_buf += "\tinput\t\t\t[31:0]\t\ti_s%d_dat,\n" % i
     port_buf += "\toutput\t\t[31:0]\t\to_s%d_adr,\n" % i
-    port_buf += "\toutput\t\t\t\t\t\t\ti_s%d_int" % i
+    port_buf += "\tinput\t\t\t\t\t\t\t\ti_s%d_int" % i
 
     #if this isn't the last slave add a comma
     if (i < num_slaves - 1):
