@@ -41,10 +41,10 @@ def generate_wb_interconnect(num_slaves = 1, add_drt = True, debug=False):
     port_buf += "\toutput\t\t\t\t\t\t\to_s%d_cyc,\n" % i
     port_buf += "\toutput\t\t\t\t\t\t\to_s%d_stb,\n" % i
     port_buf += "\toutput\t\t[3:0]\t\t\to_s%d_sel,\n" % i
-    port_buf += "\toutput\t\t[31:0]\t\ti_s%d_ack,\n" % i
+    port_buf += "\toutput\t\t\t\t\t\t\ti_s%d_ack,\n" % i
     port_buf += "\toutput\t\t[31:0]\t\to_s%d_dat,\n" % i
-    port_buf += "\toutput\t\t\t\t\t\t\ti_s%d_dat,\n" % i
-    port_buf += "\toutput\t\t\t\t\t\t\to_s%d_adr,\n" % i
+    port_buf += "\toutput\t\t[31:0]\t\ti_s%d_dat,\n" % i
+    port_buf += "\toutput\t\t[31:0]\t\to_s%d_adr,\n" % i
     port_buf += "\toutput\t\t\t\t\t\t\ti_s%d_int" % i
 
     #if this isn't the last slave add a comma
@@ -59,12 +59,12 @@ def generate_wb_interconnect(num_slaves = 1, add_drt = True, debug=False):
   
   #assign defines
   for i in range (0, num_slaves):
-    assign_buf +="assign o_s%d_we   =\t(slave_select == ADDR_%d) ? i_m_we: 0;\n"  % (i, i)
-    assign_buf +="assign o_s%d_stb  =\t(slave_select == ADDR_%d) ? i_m_stb: 0;\n" % (i, i)
-    assign_buf +="assign o_s%d_sel  =\t(slave_select == ADDR_%d) ? i_m_sel: 0;\n" % (i, i)
-    assign_buf +="assign o_s%d_cyc  =\t(slave_select == ADDR_%d) ? i_m_cyc: 0;\n" % (i, i)
-    assign_buf +="assign o_s%d_adr  =\t(slave_select == ADDR_%d) ? {8\'h0, i_m_adr[23:0]}: 0;\n"  % (i, i)
-    assign_buf +="assign o_s%d_dat  =\t(slave_select == ADDR_%d) ? i_m_dat: 0;\n" % (i, i)
+    assign_buf +="assign o_s%d_we   =\t(slave_select == ADDR_%d) ? i_m_we: 1\'b0;\n"  % (i, i)
+    assign_buf +="assign o_s%d_stb  =\t(slave_select == ADDR_%d) ? i_m_stb: 1\'b0;\n" % (i, i)
+    assign_buf +="assign o_s%d_sel  =\t(slave_select == ADDR_%d) ? i_m_sel: 4\'h0;\n" % (i, i)
+    assign_buf +="assign o_s%d_cyc  =\t(slave_select == ADDR_%d) ? i_m_cyc: 1\'b0;\n" % (i, i)
+    assign_buf +="assign o_s%d_adr  =\t(slave_select == ADDR_%d) ? {8\'h0, i_m_adr[23:0]}: 32\'h0;\n"  % (i, i)
+    assign_buf +="assign o_s%d_dat  =\t(slave_select == ADDR_%d) ? i_m_dat: 32\'h0;\n" % (i, i)
     assign_buf +="\n"
 
   #data in block
