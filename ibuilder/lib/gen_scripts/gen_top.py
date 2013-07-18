@@ -432,7 +432,7 @@ class GenTop(Gen):
 
     wm_buf += "\t//input handler signals\n"
     wm_buf += "\t.i_ready\t\t\t\t(w_ih_ready),\n"
-    wm_buf += "\t.i_reset\t\t\t\t(w_ih_reset),\n"
+    wm_buf += "\t.i_ih_rst\t\t\t\t(w_ih_reset),\n"
     wm_buf += "\t.i_command\t\t\t(w_in_command),\n"
     wm_buf += "\t.i_address\t\t\t(w_in_address),\n"
     wm_buf += "\t.i_data\t\t\t\t\t(w_in_data),\n"
@@ -448,16 +448,16 @@ class GenTop(Gen):
     wm_buf += "\t.o_master_ready\t(w_master_ready),\n\n"
 
     wm_buf += "\t//interconnect signals\n"
-    wm_buf += "\t.o_wb_we\t\t\t\t(w_wbm_we_o),\n"
-    wm_buf += "\t.o_wb_adr\t\t\t\t(w_wbm_adr_o),\n"
-    wm_buf += "\t.o_wb_dat\t\t\t\t(w_wbm_dat_o),\n"
-    wm_buf += "\t.i_wb_dat\t\t\t\t(w_wbm_dat_i),\n"
-    wm_buf += "\t.o_wb_stb\t\t\t\t(w_wbm_stb_o),\n"
-    wm_buf += "\t.o_wb_cyc\t\t\t\t(w_wbm_cyc_o),\n"
-    wm_buf += "\t.o_wb_msk\t\t\t\t(w_wbm_msk_o),\n"
-    wm_buf += "\t.o_wb_sel\t\t\t\t(w_wbm_sel_o),\n"
-    wm_buf += "\t.i_wb_ack\t\t\t\t(w_wbm_ack_i),\n"
-    wm_buf += "\t.i_wb_int\t\t\t\t(w_wbm_int_i),\n\n"
+    wm_buf += "\t.o_per_we\t\t\t\t(w_wbm_we_o),\n"
+    wm_buf += "\t.o_per_adr\t\t\t(w_wbm_adr_o),\n"
+    wm_buf += "\t.o_per_dat\t\t\t(w_wbm_dat_o),\n"
+    wm_buf += "\t.i_per_dat\t\t\t(w_wbm_dat_i),\n"
+    wm_buf += "\t.o_per_stb\t\t\t(w_wbm_stb_o),\n"
+    wm_buf += "\t.o_per_cyc\t\t\t(w_wbm_cyc_o),\n"
+    wm_buf += "\t.o_per_msk\t\t\t(w_wbm_msk_o),\n"
+    wm_buf += "\t.o_per_sel\t\t\t(w_wbm_sel_o),\n"
+    wm_buf += "\t.i_per_ack\t\t\t(w_wbm_ack_i),\n"
+    wm_buf += "\t.i_per_int\t\t\t(w_wbm_int_i),\n\n"
 
     wm_buf += "\t//memory interconnect signals\n"
     wm_buf += "\t.o_mem_we\t\t\t\t(w_mem_we_o),\n"
@@ -471,7 +471,7 @@ class GenTop(Gen):
     wm_buf += "\t.i_mem_ack\t\t\t(w_mem_ack_i),\n"
     wm_buf += "\t.i_mem_int\t\t\t(w_mem_int_i),\n\n"
 
-    wm_buf += "\t.debug_out\t\t\t(wbm_debug_out)\n\n";
+    wm_buf += "\t.o_debug\t\t\t\t(wbm_debug_out)\n\n";
     wm_buf += ");"
 
     if debug:
