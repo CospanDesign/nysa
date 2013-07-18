@@ -1,11 +1,9 @@
-NET "clk"     LOC = P51 | IOSTANDARD = LVCMOS33 ;
-NET "clk" PERIOD = 20 HIGH 50%;   # 200 MHZ
-NET "clk_IBUFG"               TNM="SYS_CLK";
-
+NET "clk"     LOC = P51;
+TIMESPEC "ts_clk" = PERIOD "clk" 20 ns HIGH 50%;
 
 #BOARD LED's
-NET LED<0>     LOC = P134 | IOSTANDARD  = LVTTL    | SLEW    = SLOW                            | DRIVE                    = 4;
-NET LED<1>     LOC = P137 | IOSTANDARD  = LVTTL    | SLEW    = SLOW                            | DRIVE                    = 4;
+NET LED<0>     LOC = P134 | IOSTANDARD  = LVTTL  | SLEW = SLOW | DRIVE  = 4;
+NET LED<1>     LOC = P137 | IOSTANDARD  = LVTTL  | SLEW = SLOW | DRIVE  = 4;
 
 #Button
 NET BUTTON<0>  LOC = P138 | IOSTANDARD = LVTTL ;
