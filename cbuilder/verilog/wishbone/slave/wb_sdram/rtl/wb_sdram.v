@@ -133,7 +133,7 @@ sdram ram (
 
   .sdram_write_enable (writing            ),
   .sdram_read_enable  (reading            ),
-  .o_sdram_ready      (o_sdram_ready      ),
+  .sdram_ready        (o_sdram_ready      ),
   //.app_address      (i_wbs_adr[23:2]    ),
   .app_address        (ram_address        ),
 
