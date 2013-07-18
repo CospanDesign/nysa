@@ -38,7 +38,7 @@
 				"loc":"siwua",
 				"direction":"output"
 			},
-			"o_ftdi_suspend_n":{
+			"i_ftdi_suspend_n":{
 				"loc":"suspend_n",
 				"direction":"input"
 			}

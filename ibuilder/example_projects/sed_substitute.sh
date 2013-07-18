@@ -9,7 +9,7 @@ sed -i 's/\"ftdi_rde_n/\"i_ftdi_rde_n/g' *.json
 sed -i 's/\"ftdi_rd_n/\"o_ftdi_rd_n/g' *.json
 sed -i 's/\"ftdi_oe_n/\"o_ftdi_oe_n/g' *.json
 sed -i 's/\"ftdi_siwu/\"o_ftdi_siwu/g' *.json
-sed -i 's/\"ftdi_suspend_n/\"o_ftdi_suspend_n/g' *.json
+sed -i 's/\"o_ftdi_suspend_n/\"i_ftdi_suspend_n/g' *.json
 
 
 echo "Changing UART Interface"
