@@ -53,7 +53,7 @@ module logic_analyzer #(
   data_out_read_size,
   data_out
 );
-parameter FIFO_WIDTH = (1 << CAPTURE_DEPTH);
+localparam FIFO_WIDTH = (1 << CAPTURE_DEPTH);
 
 input           rst;
 input           clk;
@@ -83,18 +83,18 @@ output  [31:0]  data_out_read_size;
 output  [31:0]  data_out;
 
 
-//parameters
+//localparams
 
 //capture states
-parameter       IDLE      = 0;
-parameter       SETUP     = 1;
-parameter       CONT_READ = 2;
-parameter       CAPTURE   = 3;
-parameter       FINISHED  = 4;
+localparam       IDLE      = 0;
+localparam       SETUP     = 1;
+localparam       CONT_READ = 2;
+localparam       CAPTURE   = 3;
+localparam       FINISHED  = 4;
 
 
 //read states
-parameter       READ      = 1;
+localparam       READ      = 1;
 
 
 //reg/wires
@@ -137,7 +137,7 @@ dual_port_bram #(
   .a_din(prev_cap),
 
   .b_clk(clk),
-  .b_wr(0),
+  .b_wr(1'b0),
   .b_addr(out_pointer),
   .b_din(0),
   .b_dout(data_out)
