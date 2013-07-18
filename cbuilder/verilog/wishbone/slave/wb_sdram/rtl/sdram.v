@@ -221,7 +221,7 @@ sdram_write write_path (
   .fifo_ready(if_read_ready),
   .fifo_activate(if_read_activate),
   .fifo_size(if_read_count),
-  .fifo_inactive(if_inactive)
+  .fifo_inactive(if_inactive && if_read_ready)
 
 );
 
