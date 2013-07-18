@@ -69,7 +69,7 @@ module ft_master_interface (
   output              o_ftdi_siwu,
   
   //debug
-  output  [15:0]      debug
+  output  [15:0]      o_ftdi_debug
   
 
 );
@@ -135,7 +135,8 @@ wire    [15:0]      ftdi_debug;
 wire    [15:0]      wdebug;
 //reg     [15:0]      rdebug;
 //assign  debug       = wdebug;
-assign  debug     = ftdi_debug;
+assign  o_ftdi_debug = ftdi_debug;
+
 
 wire    [7:0]       out_d;
 assign              out_d = out_packet[position];
@@ -170,7 +171,7 @@ ft_fifo_interface ft (
   .ftdi_rd_n            (o_ftdi_rd_n         ),
   .ftdi_rde_n           (i_ftdi_rde_n        ),
   .ftdi_oe_n            (o_ftdi_oe_n         ),
-  .ftdi_suspend_n       (i_ftdi_suspend_n    ),
+  .ftdi_suspend_n       (o_ftdi_suspend_n    ),
   .ftdi_siwu            (o_ftdi_siwu         ),
 
   .debug                (ftdi_debug          )
