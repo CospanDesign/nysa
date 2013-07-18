@@ -125,9 +125,9 @@ class GenTop(Gen):
 
         #declare the wires
         wr_buf +=  "//input handler signals\n"
-        wr_buf +=  "{0:<20}{1};\n".format("wire","clk")
+        #wr_buf +=  "{0:<20}{1};\n".format("wire","clk")
         self.wires.append("clk")
-        wr_buf +=  "{0:<20}{1};\n".format("wire","rst")
+        #wr_buf +=  "{0:<20}{1};\n".format("wire","rst")
         self.wires.append("rst")
         if invert_reset:
             #print "found invert reset!"
@@ -351,7 +351,7 @@ class GenTop(Gen):
             wi_buf += "\t.o_s%d_we\t\t\t\t(w_s%d_i_wbs_we),\n" % (i, i)
             wi_buf += "\t.o_s%d_cyc\t\t\t\t(w_s%d_i_wbs_cyc),\n" % (i, i)
             wi_buf += "\t.o_s%d_stb\t\t\t\t(w_s%d_i_wbs_stb),\n" % (i, i)
-            wi_buf += "\t.o_s%d_sel\t\t\t\t(w_s%d_o_wbs_sel),\n" % (i, i)
+            wi_buf += "\t.o_s%d_sel\t\t\t\t(w_s%d_i_wbs_sel),\n" % (i, i)
             wi_buf += "\t.i_s%d_ack\t\t\t\t(w_s%d_o_wbs_ack),\n" % (i, i)
             wi_buf += "\t.o_s%d_dat\t\t\t\t(w_s%d_i_wbs_dat),\n" % (i, i)
             wi_buf += "\t.i_s%d_dat\t\t\t\t(w_s%d_o_wbs_dat),\n" % (i, i)
