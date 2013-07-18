@@ -123,11 +123,11 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
     port_buf += "\toutput\t\t\t\t\t\t\to_s%d_cyc,\n" % i
     port_buf += "\toutput\t\t\t\t\t\t\to_s%d_stb,\n" % i
     port_buf += "\toutput\t\t[3:0]\t\t\to_s%d_sel,\n" % i
-    port_buf += "\toutput\t\t[31:0]\t\ti_s%d_ack,\n" % i
+    port_buf += "\tinput\t\t\t\t\t\t\t\ti_s%d_ack,\n" % i
     port_buf += "\toutput\t\t[31:0]\t\to_s%d_dat,\n" % i
-    port_buf += "\toutput\t\t\t\t\t\t\ti_s%d_dat,\n" % i
-    port_buf += "\toutput\t\t\t\t\t\t\to_s%d_adr,\n" % i
-    port_buf += "\toutput\t\t\t\t\t\t\ti_s%d_int" % i
+    port_buf += "\tinput\t\t\t[31:0]\t\ti_s%d_dat,\n" % i
+    port_buf += "\toutput\t\t[31:0]\t\to_s%d_adr,\n" % i
+    port_buf += "\tinput\t\t\t\t\t\t\t\ti_s%d_int" % i
 
     #if this isn't the last slave add a comma
     if (i < num_slaves - 1):
@@ -137,12 +137,12 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
 
   #assign defines
   for i in range (0, num_mems):
-    assign_buf += "assign o_s%d_we   =\t(mem_select == MEM_SEL_%d) ? i_m_we: 0;\n" % (i, i)
-    assign_buf += "assign o_s%d_stb  =\t(mem_select == MEM_SEL_%d) ? i_m_stb: 0;\n" % (i, i)
-    assign_buf += "assign o_s%d_sel  =\t(mem_select == MEM_SEL_%d) ? i_m_sel: 0;\n" % (i, i)
-    assign_buf += "assign o_s%d_cyc  =\t(mem_select == MEM_SEL_%d) ? i_m_cyc: 0;\n" % (i, i)
-    assign_buf += "assign o_s%d_adr  =\t(mem_select == MEM_SEL_%d) ? i_m_adr: 0;\n" % (i, i)
-    assign_buf += "assign o_s%d_dat  =\t(mem_select == MEM_SEL_%d) ? i_m_dat: 0;\n" % (i, i)
+    assign_buf += "assign o_s%d_we   =\t(mem_select == MEM_SEL_%d) ? i_m_we: 1'b0;\n" % (i, i)
+    assign_buf += "assign o_s%d_stb  =\t(mem_select == MEM_SEL_%d) ? i_m_stb: 1'b0;\n" % (i, i)
+    assign_buf += "assign o_s%d_sel  =\t(mem_select == MEM_SEL_%d) ? i_m_sel: 4'b0;\n" % (i, i)
+    assign_buf += "assign o_s%d_cyc  =\t(mem_select == MEM_SEL_%d) ? i_m_cyc: 1'b0;\n" % (i, i)
+    assign_buf += "assign o_s%d_adr  =\t(mem_select == MEM_SEL_%d) ? i_m_adr: 32'h0;\n" % (i, i)
+    assign_buf += "assign o_s%d_dat  =\t(mem_select == MEM_SEL_%d) ? i_m_dat: 32'h0;\n" % (i, i)
     assign_buf +="\n"
 
   #data in block
