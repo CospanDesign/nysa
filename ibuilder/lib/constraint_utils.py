@@ -149,10 +149,18 @@ def read_clock_rate(constraint_filename, debug = False):
               for line in clock_lines:
                 print "line: " + line
 
-            if (clock_lines[1] == "mhz"):
-                clock_rate = clock_lines[0] + "000000"
-            if (clock_lines[1] == "khz"):
-                clock_rate = clock_lines[0] + "000"
+            if "ns" in line:
+                #Working with a period not a frequency
+                period = int(line.partition("ns")[0].strip())
+                clock_rate = 1000000000 / period
+                clock_rate = str(clock_rate)
+
+
+            else:
+                if (clock_lines[1] == "mhz"):
+                    clock_rate = clock_lines[0] + "000000"
+                if (clock_lines[1] == "khz"):
+                    clock_rate = clock_lines[0] + "000"
 
 
     #if that didn't work search for the PERIOD keyword, this is an older version
