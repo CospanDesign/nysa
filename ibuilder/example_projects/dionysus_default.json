@@ -113,11 +113,11 @@
 					"loc":"dq[15:0]",
 					"direction":"inout"
 				},
-				"io_sdram_data_mask[1]":{
+				"o_sdram_data_mask[1]":{
 					"loc":"dqmh",
 					"direction":"output"
 				},
-				"io_sdram_data_mask[0]":{
+				"o_sdram_data_mask[0]":{
 					"loc":"dqml",
 					"direction":"output"
 				}
@@ -126,28 +126,28 @@
 		}
 	},
   "internal_bind":{
-    "lax1_la_clk" : {
-      "signal":"mem1_ext_sdram_clk"
+    "lax1_i_la_clk" : {
+      "signal":"mem1_o_ext_sdram_clk"
     },
-    "lax1_la_data[0]":{
+    "lax1_i_la_data[0]":{
       "signal":"ras"
     },
-    "lax1_la_data[1]":{
+    "lax1_i_la_data[1]":{
       "signal":"cas"
     },
-    "lax1_la_data[2]":{
+    "lax1_i_la_data[2]":{
       "signal":"we"
     },
-    "lax1_la_data[13:3]":{
+    "lax1_i_la_data[13:3]":{
       "signal":"a[10:0]"
     },
-    "lax1_la_data[15:14]":{
+    "lax1_i_la_data[15:14]":{
       "signal":"ba[1:0]"
     },
-    "lax1_la_data[31:16]":{
+    "lax1_i_la_data[31:16]":{
       "signal":"dq[15:0]"
     },
-    "lax1_la_ext_trig":{
+    "lax1_i_la_ext_trig":{
       "signal":"0"
     }
   },
