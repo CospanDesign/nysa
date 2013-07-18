@@ -74,19 +74,19 @@ output      [31:0]    default_clock_div;
 
 
 //RX state machine
-parameter RX_IDLE               = 0;
-parameter RX_CHECK_START        = 1;
-parameter RX_READ_BITS          = 2;
-parameter RX_CHECK_STOP         = 3;
-parameter RX_DELAY_RESTART      = 4;
-parameter RX_ERROR              = 5;
-parameter RX_RECEIVED           = 6;
+localparam RX_IDLE               = 0;
+localparam RX_CHECK_START        = 1;
+localparam RX_READ_BITS          = 2;
+localparam RX_CHECK_STOP         = 3;
+localparam RX_DELAY_RESTART      = 4;
+localparam RX_ERROR              = 5;
+localparam RX_RECEIVED           = 6;
 
 
 //TX state machine
-parameter TX_IDLE               = 0;
-parameter TX_SENDING            = 1;
-parameter TX_DELAY_RESTART      = 2;  
+localparam TX_IDLE               = 0;
+localparam TX_SENDING            = 1;
+localparam TX_DELAY_RESTART      = 2;  
 
 
 //Registers/Wires
