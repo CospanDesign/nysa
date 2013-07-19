@@ -181,18 +181,11 @@ ppfifo#(
   .read_ready(if_read_ready),
   .read_activate(if_read_activate),
   .read_count(if_read_count),
-  .read_data(if_read_data)
+  .read_data(if_read_data),
+
+  .inactive(if_inactive)
 
 );
-
-cross_clock_enable cce (
-  .rst     (rst),
-  .in_en   (if_write_ready == 2'b11),
-
-  .out_clk (sdram_clk),
-  .out_en  (if_inactive)
-);
-
 
 
 sdram_write write_path (
@@ -221,7 +214,7 @@ sdram_write write_path (
   .fifo_ready(if_read_ready),
   .fifo_activate(if_read_activate),
   .fifo_size(if_read_count),
-  .fifo_inactive(if_inactive && if_read_ready)
+  .fifo_inactive(if_inactive)
 
 );
 
