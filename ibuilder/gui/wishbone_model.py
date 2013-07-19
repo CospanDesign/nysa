@@ -652,9 +652,10 @@ class WishboneModel():
         bind_dict = {}
 
         # Get project bindings.
+        print "TODO: Need to visualize the board level binds like CLOCK and RESET!"
         bind = self.project_tags["bind"]
-        for k, v in bind:
-            bind_dict[k] = v
+        for k in bind:
+            bind_dict[k] = bind[k]
 
         # Get host interface bindings.
         hi_name = self.get_unique_name("Host Interface",
