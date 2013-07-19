@@ -318,7 +318,7 @@ class CBuilder (QObject):
 
     def get_file_icon(self, filename, extension):
         if extension == "v":
-            print "verilog file"
+            #print "verilog file"
             fd_icon = os.path.join(image_path, "verilog.png")
             #fd_icon = os.path.join(image_path, "fpga_designer.png")
             return QIcon(fd_icon)

@@ -254,7 +254,8 @@ class NysaPlugin(plugin.Plugin):
 
         elif len(ibuilder_project) > 0:
             print "Build ibuilder project"
-            self.ibuilder.build_project(project)
+            controller = widget.get_controller()
+            self.ibuilder.build_project(project, controller)
             return
 
         print "Normal build"

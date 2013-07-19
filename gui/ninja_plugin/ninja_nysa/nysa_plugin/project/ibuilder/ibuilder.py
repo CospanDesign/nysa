@@ -33,6 +33,8 @@ from PyQt4.QtCore import *
 from ninja_ide.core import file_manager
 from ninja_ide import resources
 
+from console import Console
+
 
 sys.path.append(os.path.join( os.path.dirname(__file__),
                                 os.pardir,
@@ -110,6 +112,7 @@ class IBuilder (QObject):
         self.nactions = nysa_actions.NysaActions()
         self.nactions.set_ibuilder(self)
         self.connect(self.nactions, SIGNAL("module_built(QString)"), self.module_built)
+        self.console = Console(locator)
 
     def setup_controller(self, filename, user_paths=[]):
         d = {}
@@ -280,8 +283,14 @@ class IBuilder (QObject):
     def load_designers(self):
         tab_manager = self.editor.get_tab_manager()
 
-    def build_project(self, project):
-        print "Build project: %s" % str(project)
+    def build_project(self, project, controller):
+        #print "Build project: %s" % str(project)
+        user_paths = controller.get_user_dirs()
+        self.generate_project(project, user_paths)
+        loc = controller.get_project_location()
+        #Now I have the path to a build
+        self.console.run_command(loc, "scons", [])
+
 
     def generate_project(self, project, user_paths):
         print "Generate project: %s" % str(project)
@@ -377,4 +386,5 @@ class IBuilder (QObject):
             return QIcon(fd_icon)
 
         return None
+
 

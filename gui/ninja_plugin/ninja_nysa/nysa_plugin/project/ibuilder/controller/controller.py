@@ -483,6 +483,9 @@ class Controller (QObject):
         self.model.update_module_ports(module_name, self.get_user_dirs())
         self.refresh_constraint_editor()
 
+    def get_project_location(self):
+        return self.model.get_project_location()
+
     def ibuilder_properties_dialog(self, project_dir):
         print "Check to see if this is this project"
         print "Clicked path: %s" % str(project_dir)
