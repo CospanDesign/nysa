@@ -171,7 +171,7 @@ module wishbone_master (
   wire                pos_edge_reset;
 
   // assigns
-  assign              o_data_count    = ((state == READ) || (state == DUMP_CORE)) ? local_data_count : 0;
+  assign              o_data_count      = ((state == READ) || (state == DUMP_CORE)) ? local_data_count : 0;
   assign              command_flags     = i_command[31:16];
   assign              real_command      = i_command[15:0];
 
