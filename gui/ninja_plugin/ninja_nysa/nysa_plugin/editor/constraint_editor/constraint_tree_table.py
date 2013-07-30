@@ -18,11 +18,21 @@ as such this file uses the GNU copyright
 by: Mark Summerfield
 
 """
+
+import sys
+import os
+
 import bisect
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 KEY, NODE = range(2)
+
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir,
+                             "common",
+                             "tree_table"))
 
 from tree_table import TreeTableModel
 from tree_table import BranchNode

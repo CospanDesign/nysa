@@ -18,11 +18,21 @@ as such this file uses the GNU copyright
 by: Mark Summerfield
 
 """
+
+import sys
+import os
+
 import bisect
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 KEY, NODE = range(2)
+
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir,
+                             "common",
+                             "tree_table"))
 
 from tree_table import TreeTableModel
 from tree_table import BranchNode
@@ -35,7 +45,6 @@ class IndexSignalLeafNode(LeafNode):
         self.signal_name = signal_name
         self.signal_index = signal_index
         self.direction = direction
-
 
     def field(self, column):
         if column == 0:
@@ -50,7 +59,6 @@ class IndexSignalLeafNode(LeafNode):
         if column == 3:
             #print "Get column 3"
             return self.direction
-
 
     def asRecord(self):
         record = []
