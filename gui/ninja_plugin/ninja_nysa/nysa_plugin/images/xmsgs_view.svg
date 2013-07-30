@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg3071"
+   version="1.1"
+   inkscape:version="0.48.3.1 r9886"
+   width="32"
+   height="32"
+   sodipodi:docname="xmsgs_view.png">
+  <metadata
+     id="metadata3077">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs3075" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1596"
+     inkscape:window-height="877"
+     id="namedview3073"
+     showgrid="false"
+     inkscape:zoom="15.469154"
+     inkscape:cx="7.505791"
+     inkscape:cy="24.490635"
+     inkscape:window-x="0"
+     inkscape:window-y="19"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer2"
+     showguides="true"
+     inkscape:guide-bbox="true" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer1"
+     inkscape:label="Bottom"
+     sodipodi:insensitive="true">
+    <rect
+       style="fill:#666666;fill-opacity:1;stroke:#ffffff;stroke-width:0.39360946;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect3102"
+       width="27.606388"
+       height="21.60639"
+       x="2.1968048"
+       y="5.1968055" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="Mid">
+    <rect
+       style="fill:#cccccc;fill-opacity:1;stroke:#cccccc;stroke-width:0.42539144;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect3105"
+       width="25.57461"
+       height="2.5746086"
+       x="3.2126958"
+       y="6.2126956" />
+    <rect
+       style="fill:#ececec;fill-opacity:1;stroke:#cccccc;stroke-width:1.01440287;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect3105-9"
+       width="24.985598"
+       height="14.985597"
+       x="3.5072014"
+       y="10.507201" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Top">
+    <rect
+       style="fill:#00ff00;fill-opacity:1;stroke:#000000;stroke-width:0.11045137;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect3028"
+       width="7.8746142"
+       height="1.8751485"
+       x="3.5624988"
+       y="6.5623531" />
+    <rect
+       style="fill:#ffff00;fill-opacity:1;stroke:#000000;stroke-width:0.11045137;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect3028-8"
+       width="7.8746142"
+       height="1.8751485"
+       x="12.0625"
+       y="6.5623512" />
+    <rect
+       style="fill:#ff0000;fill-opacity:1;stroke:#000000;stroke-width:0.11045137;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="rect3028-8-5"
+       width="7.8746142"
+       height="1.8751485"
+       x="20.5625"
+       y="6.5623512" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.9784646px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"
+       x="8.3557892"
+       y="19.502829"
+       id="text3066"
+       sodipodi:linespacing="125%"
+       transform="scale(1.0030341,0.99697507)"><tspan
+         sodipodi:role="line"
+         id="tspan3068"
+         x="8.3557892"
+         y="19.502829">XMSGS</tspan></text>
+  </g>
+</svg>
