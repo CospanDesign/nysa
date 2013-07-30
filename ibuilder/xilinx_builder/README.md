@@ -22,7 +22,7 @@
       - flags: Flags that can be set for the synthesizer, any flag specified
         by the user will override the default values set in
         site_scons/xst_default_flags.json
-  * ngd: Settings for ngdbuild translator
+  * ngdbuild: Settings for ngdbuild translator
       - flags: Flags that can be set for the translator, any flag specified
         by the user will override the default values set in
         site_scons/ngd_default_flags.json
@@ -34,7 +34,7 @@
       - flags: Flags that can be set for the translator, any flag specified
         by the user will override the default values set in
         site_scons/par_default_flags.json
-  * trace: Settings for trace timing analysis
+  * trce: Settings for trace timing analysis
       - flags: Flags that can be set for the translator, any flag specified
         by the user will override the default values set in
         site_scons/trace_default_flags.json

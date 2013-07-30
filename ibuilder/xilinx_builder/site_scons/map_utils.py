@@ -101,10 +101,15 @@ def get_map_flags(config):
     default_flags = json.load(open(fn, "r"))
     default_flags["-p"]["value"] = config["device"]
     default_flags["-o"]["value"] = get_map_filename(config, absolute = True)
-    if smartguide_available(config):
-        default_flags["-smartguide"]["value"] = get_smartguide_filename(config, True)
-    else:
-        default_flags["-timing"]["value"] = "_true"
+    if "-smartguide" in user_flags.keys():
+        #The user must explicitly declare smartguide to use it (set to true)
+        if user_flags["-smartguide"] == "_true":
+           del user_flags["-smartguide"]
+
+        if smartguide_available(config):
+            default_flags["-smartguide"]["value"] = get_smartguide_filename(config, True)
+        else:
+            default_flags["-timing"]["value"] = "_true"
 
     for key in default_flags:
         flags[key] = default_flags[key]
