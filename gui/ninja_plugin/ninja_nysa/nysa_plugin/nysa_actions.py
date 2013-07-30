@@ -51,3 +51,6 @@ class _NysaActions(QObject):
     def ibuilder_properties_triggered(self, directory):
         self.emit(SIGNAL("ibuilder_properties_dialog(QString)"), directory)
 
+    def ibuilder_project_opened(self, project_path):
+        self.emit(SIGNAL("ibuilder_project_opened(QString)"), project_path)
+
