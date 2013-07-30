@@ -33,8 +33,6 @@ from PyQt4.QtCore import *
 from ninja_ide.core import file_manager
 from ninja_ide import resources
 
-from console import Console
-
 
 sys.path.append(os.path.join( os.path.dirname(__file__),
                                 os.pardir,
@@ -51,21 +49,23 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
                                 os.pardir,
                                 "editor",
                                 "constraint_editor"))
-
 from constraint_editor import ConstraintEditor
 
 sys.path.append(os.path.join( os.path.dirname(__file__),
                                 os.pardir,
                                 "cbuilder"))
+from cbuilder import PROJECT_TYPE as CBUILDER_PROJECT_TYPE
 
 sys.path.append(os.path.join( os.path.dirname(__file__),
                                 os.pardir,
                                 os.pardir))
 import nysa_actions
 
-
-
-from cbuilder import PROJECT_TYPE as CBUILDER_PROJECT_TYPE
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                                os.pardir,
+                                os.pardir,
+                                "gui_utils"))
+import console
 
 sys.path.append(os.path.join( os.path.dirname(__file__),
                               os.pardir,
@@ -112,7 +112,7 @@ class IBuilder (QObject):
         self.nactions = nysa_actions.NysaActions()
         self.nactions.set_ibuilder(self)
         self.connect(self.nactions, SIGNAL("module_built(QString)"), self.module_built)
-        self.console = Console(locator)
+        self.console = console.Console(locator)
 
     def setup_controller(self, filename, user_paths=[]):
         d = {}
