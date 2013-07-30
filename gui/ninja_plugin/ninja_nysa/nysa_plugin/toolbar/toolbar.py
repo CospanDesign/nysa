@@ -49,7 +49,6 @@ class Toolbar():
         action.triggered.connect(function)
         self.actions.append(action)
 
-      
     def create_status_icon(self, function):
         self.output.Debug(self, "Creating status focus icon")
         tipath = os.path.join(self.images, "test.png")
@@ -58,4 +57,11 @@ class Toolbar():
         action.triggered.connect(function)
         self.actions.append(action)
 
+    def create_build_view_icon(self, function):
+        self.output.Debug(self, "Creating build view")
+        bvpath = os.path.join(self.images, "build_view.png")
+        action = QAction(QIcon(bvpath), "Build View", self.toolbar)
+        action.setShortcut('Ctrl+,')
+        action.triggered.connect(function)
+        self.actions.append(action)
 

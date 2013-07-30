@@ -1,25 +1,25 @@
 # -*- coding: UTF-8 -*-
 
-# Distributed under the MIT licesnse.
-# Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
+#Distributed under the MIT licesnse.
+#Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy of
-# this software and associated documentation files (the "Software"), to deal in
-# the Software without restriction, including without limitation the rights to
-# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-# of the Software, and to permit persons to whom the Software is furnished to do
-# so, subject to the following conditions:
+#Permission is hereby granted, free of charge, to any person obtaining a copy of
+#this software and associated documentation files (the "Software"), to deal in
+#the Software without restriction, including without limitation the rights to
+#use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+#of the Software, and to permit persons to whom the Software is furnished to do
+#so, subject to the following conditions:
 #
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
+#The above copyright notice and this permission notice shall be included in all
+#copies or substantial portions of the Software.
 #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#SOFTWARE.
 
 
 
@@ -56,6 +56,11 @@ from .editor.constraint_editor.constraint_editor import ConstraintEditor
 from project.ibuilder import properties_dialog as ibuilder_dialog
 
 
+#TEST ITEMS
+from .editor.build_viewer.build_viewer import BuildViewer
+from .misc import xmsg_viewer
+
+
 LOG_FORMAT = "%(asctime)s %(name)s:%(levelname)-8s %(message)s"
 TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
@@ -64,10 +69,6 @@ main = None
 nysa_plugin = None
 
 class NysaPlugin(plugin.Plugin):
-
-    #output = None
-    #cbuilder = None
-    #ibuilder = None
 
     def initialize(self):
         # Init your plugin
@@ -82,6 +83,8 @@ class NysaPlugin(plugin.Plugin):
         self.explorer_s = self.locator.get_service('explorer')
 
         self.load_status()
+        self.load_xmsg_viewer()
+        self.build_viewer = BuildViewer(self.xmsgs_viewer, self.locator)
 
         self.output.Info(self, "Started Nysa Plugin")
 
@@ -95,6 +98,8 @@ class NysaPlugin(plugin.Plugin):
         self.tb.create_status_icon(self.view_status)
         self.tb.create_wave_icon(self.cbuilder.waveforms)
         self.tb.create_sim_icon(self.cbuilder.simulate)
+        self.tb.create_build_view_icon(self.show_build_viewer)
+        #self.tb.create_xmsgs_view_icon(self.show_xmsgs_viewer)
 
         #Add all the toolbar items
         self.tb.add_toolbar_items()
@@ -114,8 +119,12 @@ class NysaPlugin(plugin.Plugin):
 
 
         #Really big hack to make the 'save' from the menu work
-        self.actions.ide._menuFile.connect(self.actions.ide._menuFile.toolbar_items["save-file"], SIGNAL("triggered()"), self.save_file)
-        self.actions.ide._menuFile.connect(self.actions.ide._menuFile.toolbar_items["save-as"], SIGNAL("triggered()"), self.save_file_as)
+        self.actions.ide._menuFile.connect(
+                self.actions.ide._menuFile.toolbar_items["save-file"],
+                SIGNAL("triggered()"), self.save_file)
+        self.actions.ide._menuFile.connect(
+                self.actions.ide._menuFile.toolbar_items["save-as"],
+                SIGNAL("triggered()"), self.save_file_as)
 
 
         #Steal the build commands
@@ -124,27 +133,27 @@ class NysaPlugin(plugin.Plugin):
 
 
 
-        #DEMO STUFF
-        #self.test_editor()
         self.inject_functions()
         self.actions.update_shortcuts()
 
-        #self.connect(self.actions, SIGNAL("projectExecuted(QString)"),
-        #    self.build_command)
-        #self.cbuilder.build_core)
+        self.connect(self.actions.shortRunFile,
+                     SIGNAL("activated()"),
+                     self.build_file_command)
+        self.actions.disconnect(self.actions.shortRunFile,
+                                SIGNAL("activated()"),
+                                self.actions.execute_file)
 
-        self.connect(self.actions.shortRunFile, SIGNAL("activated()"), self.build_file_command)
-        self.actions.disconnect(self.actions.shortRunFile, SIGNAL("activated()"), self.actions.execute_file)
+        self.actions.connect(self.actions.shortRunProject,
+                             SIGNAL("activated()"),
+                             self.build_command)
+        self.actions.disconnect(self.actions.shortRunProject,
+                                SIGNAL("activated()"),
+                                self.actions.execute_project)
 
-
-        #self.cbuilder.build_core)
-
-        self.actions.connect(self.actions.shortRunProject, SIGNAL("activated()"), self.build_command)
-        self.actions.disconnect(self.actions.shortRunProject, SIGNAL("activated()"), self.actions.execute_project)
-
-        #self.dialog_test()
         self.modify_context_menus()
         self.modify_file_icons()
+
+        #self.show_build_viewer()
 
 
     def modify_context_menus(self):
@@ -300,7 +309,7 @@ class NysaPlugin(plugin.Plugin):
             user_paths = widget.get_controller().get_user_dirs()
             self.ibuilder.generate_project(project, user_paths)
             return
-           
+
 
         print "Normal file build"
         self.actions.execute_file()
@@ -346,6 +355,17 @@ class NysaPlugin(plugin.Plugin):
     def get_preferences_widget(self):
         # Return a widget for customize your plugin
         return preferences.NysaPreferences(self.locator, self.output)
+
+    def load_xmsg_viewer(self):
+        self.xmsgs_viewer_index = self.misc_s._misc.stack.count()
+        self.xmsgs_viewer = xmsg_viewer.XmsgViewer(None)
+        icon_path = os.path.join(os.path.dirname(__file__),
+                                "images",
+                                "xmsgs_view.png")
+        self.misc_s.add_widget(self.xmsgs_viewer,
+                               icon_path,
+                               "Displays Messages Associated With Xilinx Builds")
+
 
     def load_status(self):
         self.status_index = self.misc_s._misc.stack.count()
@@ -395,9 +415,17 @@ class NysaPlugin(plugin.Plugin):
     #    editor = actualTab.currentWidget()
     #    if isinstance(editor, ConstraintEditor):
     #        editor.refresh_tables()
-            
 
-    def test_editor(self):
+    def show_build_viewer(self):
+        if self.build_viewer is None:
+            self.build_viewer = BuildViewer(self.xmsgs_viewer, self.locator)
+        tab_manager = self.editor_s.get_tab_manager()
+        if tab_manager.is_open(self.build_viewer) == -1:
+            tab_manager.add_tab(self.build_viewer, self.tr("Build View"))
+        else:
+            tab_manager.move_to_open(self.build_viewer)
+
+    def test_fpga_editor(self):
         #This doesn't belong here but when I work on ibuilder then I need to
         #implement this
         tab_manager = self.editor_s.get_tab_manager()
@@ -434,25 +462,25 @@ class NysaPlugin(plugin.Plugin):
         #Add Connections
         print "Adding connections"
         constraintEditor.add_connection(color = "green",
-                                        module_name = "ModuleB", 
-                                        port = "PortC", 
-                                        direction = "output", 
+                                        module_name = "ModuleB",
+                                        port = "PortC",
+                                        direction = "output",
                                         pin_name = "PIN_NAME_ALSO")
         constraintEditor.add_connection(color = "blue",
-                                        module_name = "ModuleC", 
-                                        port = "PortC", 
-                                        direction = "output", 
-                                        pin_name = "PIN_NAME_ALSO", 
+                                        module_name = "ModuleC",
+                                        port = "PortC",
+                                        direction = "output",
+                                        pin_name = "PIN_NAME_ALSO",
                                         index = 0)
         constraintEditor.add_connection(color = "orange",
-                                        module_name = "ModuleD", 
-                                        port = "PortC", 
-                                        direction = "output", 
+                                        module_name = "ModuleD",
+                                        port = "PortC",
+                                        direction = "output",
                                         pin_name = "PIN_NAME_ALSO")
         constraintEditor.add_connection(color = "red",
-                                        module_name = "ModuleA", 
-                                        port = "PortB", 
-                                        direction = "inout", 
+                                        module_name = "ModuleA",
+                                        port = "PortB",
+                                        direction = "inout",
                                         pin_name = "PIN_NAME",
                                         index = 2)
         print "Added connections"
@@ -479,7 +507,6 @@ class NysaPlugin(plugin.Plugin):
             print "Relative: %s" % results[1]
         else:
             print "Absolute: %s" % results[1]
-
 
 
 def nysa_open_file(     filename='',
