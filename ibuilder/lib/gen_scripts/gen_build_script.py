@@ -52,7 +52,7 @@ class GenXilinxBuildScript(Gen):
 				break
 
 		first_flag = True
-		data = os.walk(base_location + "/Xilnx")
+		data = os.walk(base_location + "/Xilinx")
 		versions = []
 		for root, dirs, files in os.walk(base_location + "/Xilinx"):
 			if first_flag == False:
