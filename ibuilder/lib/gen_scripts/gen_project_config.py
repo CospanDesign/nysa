@@ -55,6 +55,9 @@ class GenProjectConfig(Gen):
 
         #Specify the part  
         config["device"] = board_config["fpga_part_number"]
+        config["board"] = board_config["board_name"]
+        #if "image" in board_config.keys():
+            #config["board_image"] = board_config["image"]
 
         #Specify the top module
         config["top_module"] = "top"
