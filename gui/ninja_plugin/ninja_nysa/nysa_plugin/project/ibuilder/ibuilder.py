@@ -157,7 +157,7 @@ class IBuilder (QObject):
             if ce is not None:
                 self.output.Debug(self, "There is a bogus constraint editor in the controller")
             ce = ConstraintEditor(parent=tab_manager,
-                                  actions=self.nactions,
+                                  nactions=self.nactions,
                                   output=self.output,
                                   controller = view_controller,
                                   filename = filename,

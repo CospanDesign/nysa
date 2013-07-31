@@ -38,6 +38,7 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from ninja_ide.gui import actions
 from ninja_ide.gui.main_panel import itab_item
 from ninja_ide.gui.editor.editor import Editor
 
@@ -48,11 +49,12 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
 
     output = None
 
-    def __init__(self, parent, actions, output, controller, filename, project_name):
+    def __init__(self, parent, nactions, output, controller, filename, project_name):
         QWidget.__init__(self, parent)
         itab_item.ITabItem.__init__(self)
 
-        self.actions = actions
+        self.actions = actions.Actions()
+        self.nactions = nactions
         self.ID = filename
         self.lang = "Constraint Editor"
         self.output = output
@@ -67,7 +69,15 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
 
         #self.initialize_view()
         #self.show()
+        mc = self.actions.ide.mainContainer
+        self.connect(mc,
+                     SIGNAL("currentTabChanged(QString)"),
+                     self.tab_changed)
 
+    def tab_changed(self, tab_name):
+        print "Tab Changed to %s" % tab_name
+        if tab_name == self.ID:
+            self.refresh_tables()
 
     def get_project(self):
         return project
@@ -98,7 +108,7 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
 
         splitter = QSplitter(Qt.Horizontal)
         connect = QPushButton("Connect")
-        connect.clicked.connect(self.connect)
+        connect.clicked.connect(self.signal_connect)
 
         unconnected_panel = QWidget(self)
         pin_panel = QWidget(self)
@@ -191,7 +201,7 @@ class ConstraintEditor (QWidget, itab_item.ITabItem):
         if self.disconnect_callback is not None:
             self.disconnect_callback(row_data[0], row_data[1], row_data[2], row_data[3])
 
-    def connect(self):
+    def signal_connect(self):
         print "Connect"
         signal_index_list = self.signal_table.selectedIndexes()
         pin_index_list = self.pin_table.selectedIndexes()
