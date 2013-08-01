@@ -39,37 +39,41 @@ class XmsgViewer(QWidget):
 
     def __init__(self, xmodel):
         super (XmsgViewer, self).__init__()
-        self.table = QTableView()
+        self.table = QTreeView()
         self.set_model(xmodel)
+        self.init_ui()
+
 
 
     def set_model(self, model):
         if model is None:
             self.xmodel = xmsgs_tree_model.XmsgsTreeModel()
+            print "XmsgViewer: Setting default model"
         else:
             self.xmodel = model
-        self.table = QTableView()
-        self.init_ui()
+            print "XmsgViewer: Setting custom model"
+
+        self.table.setModel(self.xmodel)
+
 
     def init_ui(self):
         self.setWindowTitle("Xilinx xmsg viewer")
-        self.table.setModel(self.xmodel)
         self.setMinimumSize(400, 300)
 
         #Hide the grids
-        self.table.setShowGrid(False)
+        #self.table.setShowGrid(False)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         #Hide Vertical Header
-        vh = self.table.verticalHeader()
-        vh.setVisible(False)
+        #vh = self.table.verticalHeader()
+        #vh.setVisible(False)
 
         #Set Horizontal Header Properties
-        hh = self.table.horizontalHeader()
-        hh.setStretchLastSection(True)
+        #hh = self.table.horizontalHeader()
+        #hh.setStretchLastSection(True)
 
         #Set Column width to fit contents
-        self.table.resizeColumnsToContents()
+        #self.table.resizeColumnsToContents()
 
         layout = QVBoxLayout()
         layout.addWidget(self.table)

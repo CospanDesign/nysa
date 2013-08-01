@@ -121,7 +121,7 @@ class XilinxBuilder(object):
             if "</messages>" in msg:
                 self.finished_parsing = True
                 self.file_reference = None
-                print "Found end of parsering message"
+                #print "Found end of parsering message"
                 return True
 
             if "<msg" not in msg:

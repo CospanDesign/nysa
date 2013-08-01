@@ -163,6 +163,7 @@ class TreeTableModel(QAbstractItemModel):
 
     def rowCount(self, parent):
         node = self.nodeFromIndex(parent)
+        #print "Row Count: %s = %d" % (str(node), len(node))
         if node is None or isinstance(node, LeafNode):
             return 0
         return len(node)
@@ -193,14 +194,15 @@ class TreeTableModel(QAbstractItemModel):
             return self.headers[section]
 
     def index(self, row, column, parent):
+        print "base index"
         assert self.root
         branch = self.nodeFromIndex(parent)
         assert branch is not None
         return self.createIndex(row, column,
                                 branch.childAtRow(row))
 
-    def parent(self, child): 
-        node = self.nodeFromIndex(child)
+    def parent(self, index): 
+        node = self.nodeFromIndex(index)
         if node is None:
             return QModelIndex()
         if isinstance(node, tuple):
@@ -217,8 +219,12 @@ class TreeTableModel(QAbstractItemModel):
         return self.createIndex(row, 0, parent)
 
     def nodeFromIndex(self, index):
+        #print "node from index: (%d, %d) " % (index.row(), index.column()),
         if index.isValid():
+            node = index.internalPointer()
+            #print "valid: %s" % node.name
             return index.internalPointer()
+        #print "not valid"
         return self.root
 
     def clear(self):

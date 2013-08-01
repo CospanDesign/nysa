@@ -80,7 +80,7 @@ class XilinxXmsgsParser(object):
         self.watch_path(path)
 
     def watch_path(self, path):
-        print "XML Path: %s" % path
+        #print "XML Path: %s" % path
         if not os.path.isdir(path):
             raise XilinxXmsgsParserError("Path %s is not a directory")
         self.path = path
@@ -109,7 +109,8 @@ class XilinxXmsgsParser(object):
                       file_added_cb = self.file_added)
 
     def directory_changed(self, path):
-        print "Directory Changed"
+        #print "Directory Changed"
+        pass
 
     def file_changed(self, path):
         #print "File Changed"
@@ -127,7 +128,7 @@ class XilinxXmsgsParser(object):
             file_reference = open(path, "r")
             self.builders[name] = XilinxBuilder(name)
         else:
-            print "Update: %s" % name
+            #print "Update: %s" % name
             if self.builders[name].finished():
                 #New messages
                 file_reference = open(path, "r")
@@ -138,7 +139,7 @@ class XilinxXmsgsParser(object):
         data = file_reference.read()
         self.builders[name].new_xmsgs_data(data, ftime, file_reference)
         if self.builders[name].finished():
-            print "%s is finished" % name
+            #print "%s is finished" % name
             file_reference.close()
         #print "Parsing: %s" % name
 
@@ -146,11 +147,12 @@ class XilinxXmsgsParser(object):
             self.changed_cb(name)
 
     def file_added(self, paths):
-        print "File Added"
+        #print "File Added"
         for path in paths:
             self.file_changed(path)
         
-    def get_messages(self, builder,
+    def get_messages(self, 
+                    builder,
                     type_filters = [],
                     only_new_messages = False):
         if builder not in self.builders:
