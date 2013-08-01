@@ -34,6 +34,7 @@ import glob
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from ninja_ide.gui import actions
 from ninja_ide.gui.main_panel import itab_item
 from ninja_ide.gui.editor.editor import Editor
 
@@ -84,11 +85,13 @@ class BuildViewerError(Exception):
 
 
 class BuildViewer(QWidget, itab_item.ITabItem):
+
     def __init__(self, xmsgs_viewer, locator):
         QWidget.__init__(self)
         itab_item.ITabItem.__init__(self)
         self.ID = ID
 
+        self.actions = actions.Actions()
         self.nactions = nysa_actions.NysaActions()
 
         self.config = {}
@@ -110,7 +113,16 @@ class BuildViewer(QWidget, itab_item.ITabItem):
         self.ibuilder_project = None
         self.builder_dir = None
 
+        mc = self.actions.ide.mainContainer
+        self.connect(mc,
+                     SIGNAL("currentTabChanged(QString)"),
+                     self.tab_changed)
         self.scan_for_ibuilder_projects()
+
+    def tab_changed(self, tab_name):
+        print "Tab Changed to %s" % tab_name
+        if tab_name == self.ID:
+            self.scan_for_ibuilder_projects()
 
     def scan_for_ibuilder_projects(self):
         print "Scanning for ibuilder projects"
