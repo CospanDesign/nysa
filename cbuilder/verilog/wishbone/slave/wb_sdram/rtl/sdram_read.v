@@ -30,65 +30,44 @@ SOFTWARE.
 `define THRESHOLD 4
 
 module sdram_read (
-  rst,
-  clk,
 
-  command,
-  address,
-  bank,
-  data_in,
-
-  enable,
-  idle,
-  auto_refresh,
-  wait_for_refresh,
-
-  app_address,
-
-  fifo_reset,
-  fifo_data,
-  fifo_write,
-  fifo_ready,
-  fifo_activate,
-  fifo_size,
-  starved
-);
-
-input               rst;
-input               clk;
+input               rst,
+input               clk,
 
 //RAM control
-output  reg [2:0]   command;
-output  reg [11:0]  address;
-output  reg [1:0]   bank;
-input       [15:0]  data_in;
+output  reg [2:0]   command,
+output  reg [11:0]  address,
+output  reg [1:0]   bank,
+input       [15:0]  data_in,
 
 
-input               enable;
-output              idle;
-input               auto_refresh;
-output  reg         wait_for_refresh;
+input               enable,
+output              idle,
+input               auto_refresh,
+output  reg         wait_for_refresh,
 
-input       [21:0]  app_address;
+input       [21:0]  app_address,
 
 //FIFO
-output  reg         fifo_reset;
-output  reg [31:0]  fifo_data;
-output  reg         fifo_write;
-input       [1:0]   fifo_ready;
-output  reg [1:0]   fifo_activate;
-input       [23:0]  fifo_size;
-input               starved;
+output  reg         fifo_reset,
+output  reg [31:0]  fifo_data,
+output  reg         fifo_write,
+input       [1:0]   fifo_ready,
+output  reg [1:0]   fifo_activate,
+input       [23:0]  fifo_size,
+input               starved
+
+);
 
 
-parameter           IDLE            = 4'h0;
-parameter           ACTIVATE        = 4'h1;
-parameter           READ_COMMAND    = 4'h2;
-parameter           READ_TOP        = 4'h3;
-parameter           READ_BOTTOM     = 4'h4;
-parameter           BURST_TERMINATE = 4'h5;
-parameter           PRECHARGE       = 4'h6;
-parameter           WAIT            = 4'h7;
+localparam           IDLE            = 4'h0;
+localparam           ACTIVATE        = 4'h1;
+localparam           READ_COMMAND    = 4'h2;
+localparam           READ_TOP        = 4'h3;
+localparam           READ_BOTTOM     = 4'h4;
+localparam           BURST_TERMINATE = 4'h5;
+localparam           PRECHARGE       = 4'h6;
+localparam           WAIT            = 4'h7;
 
 reg         [3:0]   state = IDLE;
 reg         [15:0]  delay;
@@ -109,14 +88,14 @@ wire                neg_edge_enable;
 reg                 prev_enable;
 
 //assign      bank    = read_address[21:20];
-assign      row     = read_address[19:8];
-assign      column  = read_address[7:0];
+assign              row     = read_address[19:8];
+assign              column  = read_address[7:0];
 
 //assign idle
-assign      idle    = ((delay == 0) && ((state == IDLE) || (state == WAIT)));
+assign              idle    = ((delay == 0) && ((state == IDLE) || (state == WAIT)));
 assign              neg_edge_enable = !enable & prev_enable;
 
-assign      read_threshold  = ((fifo_count + `THRESHOLD) <= fifo_size);
+assign              read_threshold  = ((fifo_count + `THRESHOLD) <= fifo_size);
 
 reg         [31:0]  ram_data;
 
@@ -144,9 +123,9 @@ always @ (posedge clk) begin
     fifo_reset          <=  0;
     wait_for_refresh    <=  0;
 
-    if (neg_edge_enable) begin
-      fifo_reset        <=  1;
-    end
+    //if (neg_edge_enable) begin
+    //  fifo_reset        <=  1;
+    //end
 
     //read the data
     if (read_top) begin
@@ -186,6 +165,9 @@ always @ (posedge clk) begin
             else begin
               fifo_activate[1]  <=  1;
             end
+          end
+          else if (!enable) begin
+            fifo_reset          <=  1;
           end
           wait_for_refresh      <=  1;
         end

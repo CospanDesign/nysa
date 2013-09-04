@@ -118,7 +118,7 @@ sdram ram (
   //write path
   .if_write_strobe    (if_write_strobe    ),
   .if_write_data      (i_wbs_dat          ),
-  .if_write_mask      (~i_wbs_sel         ),
+  .if_write_mask      (4'b0000            ),
   .if_write_ready     (if_write_ready     ),
   .if_write_activate  (if_write_activate  ),
   .if_write_fifo_size (if_write_fifo_size ),
@@ -172,6 +172,7 @@ always @ (posedge clk) begin
     o_wbs_dat                         <= 0;
   end
   else begin
+    //Strobe
     if_write_strobe                   <= 0;
     of_read_strobe                    <= 0;
 
@@ -203,7 +204,7 @@ always @ (posedge clk) begin
         if (if_write_activate == 0) begin
           //try and get a FIFO
           if (if_write_ready > 0) begin
-            if_count                  <= if_write_fifo_size - 1;
+            if_count                  <= 0;
             if (if_write_ready[0]) begin
               $display ("Getting FIFO 0");
               if_write_activate[0]    <=  1;
@@ -218,11 +219,11 @@ always @ (posedge clk) begin
           $display ("Writing");
           //write request
           if (~o_wbs_ack) begin
-            if (if_count > 0) begin
+            if (if_count < (if_write_fifo_size - 1)) begin
               $display("user wrote %h to address %h", i_wbs_dat, i_wbs_adr);
               o_wbs_ack               <= 1;
               if_write_strobe         <= 1;
-              if_count                <= if_count - 1;
+              if_count                <= if_count + 1;
 
             end
             else begin
@@ -234,6 +235,7 @@ always @ (posedge clk) begin
 
       //Reading
       else if (~writing) begin
+        if_write_activate             <=  0;
         reading                       <=  1;
         if (of_read_ready && !of_read_activate) begin
           of_count                    <=  of_read_count;

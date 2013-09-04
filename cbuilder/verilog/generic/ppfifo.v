@@ -27,452 +27,568 @@ SOFTWARE.
 
 
 module ppfifo
-  #(parameter   DATA_WIDTH    = 8,
+#(parameter     DATA_WIDTH    = 8,
                 ADDRESS_WIDTH = 4
 )(
 
-  reset,
+  //universal input
+  input                             reset,
 
-  //write
-  write_clock,
-  write_ready,
-  write_activate,
-  write_fifo_size,
-  write_strobe,
-  write_data,
+  //write side
+  input                             write_clock,
+  output reg  [1:0]                 write_ready,
+  input       [1:0]                 write_activate,
+  output      [23:0]                write_fifo_size,
+  input                             write_strobe,
+  input       [DATA_WIDTH - 1: 0]   write_data,
+  output                            starved,
 
+  //read side
+  input                             read_clock,
+  input                             read_strobe,
+  output reg                        read_ready,
+  input                             read_activate,
+  output reg  [23:0]                read_count,
+  output      [DATA_WIDTH - 1: 0]   read_data,
 
-  //read
-  read_clock,
-  read_strobe,
-  read_ready,
-  read_activate,
-  read_count,
-  read_data,
+  output                            inactive
 
-  //general status
-  starved,
-  inactive
 );
 
-parameter FIFO_DEPTH = (1 << ADDRESS_WIDTH);
-//universal input
-input                       reset;
-
-//write side
-input                       write_clock;
-output [1:0]                write_ready;
-input  [1:0]                write_activate;
-output wire [23:0]          write_fifo_size;
-input                       write_strobe;
-input [DATA_WIDTH - 1: 0]   write_data;
-output                      starved;
-
-//read side
-input                       read_clock;
-input                       read_strobe;
-output reg                  read_ready;
-input                       read_activate;
-output reg [23:0]           read_count;
-output [DATA_WIDTH - 1: 0]  read_data;
-
-output                      inactive;
-
+localparam FIFO_DEPTH = (1 << ADDRESS_WIDTH);
 
 //Local Registers/Wires
-reg    [23:0]               fifo0_write_count;
-reg    [23:0]               fifo1_write_count;
+assign  write_fifo_size     = FIFO_DEPTH;
 
-wire  [DATA_WIDTH - 1: 0]   fifo0_read_data;
-wire                        fifo0_read_strobe;
-wire                        fifo0_empty;
+//Write Side
+wire                        ppfifo_ready;  // The write side only needs to
+                                           // know were ready if we don't
+                                           // write anything read won't start
+wire  [ADDRESS_WIDTH: 0]    addr_in;       // Actual address to the BRAM
+reg   [ADDRESS_WIDTH - 1: 0]write_address;
+reg                         r_wselect;      // Select the FIFO to work with
+reg                         write_enable;  // Enable a write to the BRAM
 
-wire  [DATA_WIDTH - 1: 0]   fifo0_write_data;
-wire                        fifo0_write_strobe;
-wire                        fifo0_full;
+reg   [1:0]                 wcc_read_ready;// Tell read side a FIFO is ready
+wire  [1:0]                 wcc_read_done;
+                                            // write status of the read
+                                            // available
+reg                         wcc_tie_select; //because it's possible if the read
+                                            //side is slower than the write
+                                            //side it might be unknown which
+                                            //side was selected first, so use
+                                            //this signal to break ties
 
+reg   [23:0]                w_count[1:0];   // save the write count for the read
+                                            // side
+reg                         w_empty[1:0];
+reg                         w_reset;        //write side reset
+reg   [4:0]                 w_reset_timeout;
+wire                        ready;
 
-wire  [DATA_WIDTH - 1: 0]   fifo1_read_data;
-wire                        fifo1_read_strobe;
-wire                        fifo1_empty;
+//assign  r_wselect           = (write_activate == 2'b00) ? 1'b0 :
+//                              (write_activate == 2'b01) ? 1'b0 :
+//                              (write_activate == 2'b10) ? 1'b1 :
+//                              reset ?                     1'b0 :
+//                              r_wselect;
+//                            //I know this can be shortened down but it's more
+//                            //readible thi way
 
-wire  [DATA_WIDTH - 1: 0]   fifo1_write_data;
-wire                        fifo1_write_strobe;
-wire                        fifo1_full;
+assign  addr_in             = {r_wselect, write_address};
+//assign  write_enable        = (write_activate > 0) && write_strobe;
+assign  ppfifo_ready        = !(w_reset || r_reset);
+assign  ready               = ppfifo_ready;
 
-reg   [1:0]                 read_fifo_select;
+//assign  wcc_tie_select      = (wcc_read_ready == 2'b00) ? 1'b0 :
+//                              (wcc_read_ready == 2'b01) ? 1'b0 :
+//                              (wcc_read_ready == 2'b10) ? 1'b1 :
+//                              wcc_tie_select;
+                                            // If the first FIFO is ready,
+                                            // then both FIFOs are ready then
+                                            // keep the first FIFO
 
-reg   [DATA_WIDTH - 1: 0]   last_read_data;
-reg                         pre_read_strobe0;
-reg                         pre_read_strobe1;
-
-//Cross Clock Reset
+//Read Side
+wire  [ADDRESS_WIDTH: 0]    addr_out;     //Actual address to the BRAM
 reg                         r_reset;
-reg                         w_reset;
-wire                        both_reset;
-reg                         r_reset_ack;
-reg                         w_reset_ack;
+reg   [4:0]                 r_reset_timeout;
 
-reg   [1:0]                 waiting;
+reg   [ADDRESS_WIDTH - 1: 0]r_address;    //Address to access a bank
+reg                         r_rselect;     //Select a bank (Select a FIFO)
 
-reg   [1:0]                 read_pre_select;
+wire  [1:0]                 rcc_read_ready;
+                                          // Write side says X is ready
+reg   [1:0]                 rcc_read_done;// Tell write side X is ready
+wire                        rcc_tie_select;
+                                          //If there is a tie, then this will
+                                          //break it
 
-wire                        read_pre_select0;
-wire                        read_pre_select1;
+reg   [23:0]                r_size[1:0];  // Size of FX read
 
-//Cross clock status
-reg   [1:0]                 fifo0_ready_history;
-wire                        fifo0_ready;
-reg   [1:0]                 fifo1_ready_history;
-wire                        fifo1_ready;
+reg   [1:0]                 r_ready;      //FIFO is ready
+reg   [1:0]                 r_wait;       //Waiting for write side to send data
+reg   [1:0]                 r_activate;   //Controls which FIFO is activated
 
+reg                         r_next_fifo;  //If both FIFOs are availalbe use this
 
-wire                        write_clock_pulse_empty0_valid;
-reg   [2:0]                 write_clock_pulse_empty0_valid_sync;
+reg   [1:0]                 r_pre_activate; //Used to delay the clock cycle by
+                                            //one when the user activates the
+                                            //FIFO
 
-wire                        write_clock_pulse_empty1_valid;
-reg   [2:0]                 write_clock_pulse_empty1_valid_sync;
+reg                         r_pre_strobe;
+reg                         r_pre_read_wait;//Wait an extra cycle so the registered data has a chance to set
+                                            //the data to be registered
+wire  [DATA_WIDTH - 1: 0]   w_read_data;    //data from the read FIFO
+reg   [DATA_WIDTH - 1: 0]   r_read_data;    //data from the read FIFO
 
-wire                        pos_edge_fifo0_ready;
-wire                        pos_edge_fifo1_ready;
-
-reg                         prev_fifo0_ready;
-reg                         prev_fifo1_ready;
+assign  addr_out            = {r_rselect, r_address};
 
 
+//Debug
+wire  [23:0]                debug_f0_w_count;
+wire  [23:0]                debug_f1_w_count;
 
-afifo
-  #(
+wire  [23:0]                debug_f0_r_size;
+wire  [23:0]                debug_f1_r_size;
+
+//wire  [23:0]                debug_f0_r_count;
+//wire  [23:0]                debug_f1_r_count;
+
+assign  debug_f0_w_count    = w_count[0];
+assign  debug_f1_w_count    = w_count[1];
+
+assign  debug_f0_r_size     = r_size[0];
+assign  debug_f1_r_size     = r_size[1];
+
+assign  inactive            = (w_count[0] == 0) &&
+                              (w_count[1] == 0) &&
+                              (write_ready == 2'b11) &&
+                              (!write_strobe);
+
+
+assign  read_data           = (r_pre_strobe) ? w_read_data : r_read_data;
+
+
+//Submodules
+blk_mem #(
   .DATA_WIDTH(DATA_WIDTH),
-  .ADDRESS_WIDTH(ADDRESS_WIDTH)
-  )
-  fifo0(
-    .rst(r_reset | w_reset),
+  .ADDRESS_WIDTH(ADDRESS_WIDTH + 1)
+) fifo0 (
+  //Write
+  .clka     (write_clock        ),
+  .wea      (write_enable       ), //This may just be replaced with write activate
+  .dina     (write_data         ),
+  .addra    (addr_in            ),
 
-    //read
-    .dout_clk(read_clock),
-    .data_out(fifo0_read_data),
-    .rd_en(fifo0_read_strobe),
-    .empty(fifo0_empty),
-
-    //write
-    .din_clk(write_clock),
-    .data_in(fifo0_write_data),
-    .wr_en(fifo0_write_strobe),
-    .full(fifo0_full)
+  .clkb     (read_clock         ),
+  .doutb    (w_read_data        ),
+  .addrb    (addr_out           )
 );
 
-afifo #(
-  .DATA_WIDTH(DATA_WIDTH),
-  .ADDRESS_WIDTH(ADDRESS_WIDTH)
-  )
-  fifo1(
-    .rst(r_reset | w_reset),
+//W - R FIFO 0
+cross_clock_enable ccwf0 (
+  .rst      (reset              ),
+  .in_en    (wcc_read_ready[0]  ),
 
-    //read
-    .dout_clk(read_clock),
-    .data_out(fifo1_read_data),
-    .rd_en(fifo1_read_strobe),
-    .empty(fifo1_empty),
-
-    //write
-    .din_clk(write_clock),
-    .data_in(fifo1_write_data),
-    .wr_en(fifo1_write_strobe),
-    .full(fifo1_full)
+  .out_clk  (read_clock         ),
+  .out_en   (rcc_read_ready[0]  )
 );
+//W - R FIFO 1
+cross_clock_enable ccwf1 (
+  .rst      (reset              ),
+  .in_en    (wcc_read_ready[1]  ),
+
+  .out_clk  (read_clock         ),
+  .out_en   (rcc_read_ready[1]  )
+
+);
+
+//W - R Tie Select
+cross_clock_enable ccts (
+  .rst      (reset              ),
+  .in_en    (wcc_tie_select     ),
+
+  .out_clk  (read_clock         ),
+  .out_en   (rcc_tie_select     )
+);
+
+//R - W FIFO 0
+cross_clock_enable ccrf0 (
+  .rst      (reset              ),
+  .in_en    (rcc_read_done[0]   ),
+
+  .out_clk  (read_clock         ),
+  .out_en   (wcc_read_done[0]   )
+);
+//R - W FIFO 1
+cross_clock_enable ccrf1 (
+  .rst      (reset              ),
+  .in_en    (rcc_read_done[1]   ),
+
+  .out_clk  (read_clock         ),
+  .out_en   (wcc_read_done[1]   )
+);
+
+//R - W Reset
+cross_clock_enable cc_starved(
+  .rst      (reset                         ),
+  .in_en    (!read_ready && !read_activate ),
+
+  .out_clk  (write_clock                   ),
+  .out_en   (starved                       )
+);
+
+
+
 
 //asynchronous logic
-assign  write_fifo_size                 = FIFO_DEPTH;
+always @ (*) begin
+  case (wcc_read_ready)
+    2'b00: begin
+      wcc_tie_select  = 1'b0;
+    end
+    2'b01: begin
+      wcc_tie_select  = 1'b0;
+    end
+    2'b10: begin
+      wcc_tie_select  = 1'b1;
+    end
+    default: begin
+      wcc_tie_select  = 1'b0;
+    end
+  endcase
+end
+always @ (*) begin
+  case (write_activate)
+    2'b00: begin
+      r_wselect   = 1'b0;
+    end
+    2'b01: begin
+      r_wselect   = 1'b0;
+    end
+    2'b10: begin
+      r_wselect   = 1'b1;
+    end
+    default: begin
+      r_wselect   = 1'b0;
+    end
+  endcase
+end
 
-assign fifo0_write_data                 = (write_activate[0]) ? write_data : 0;
-assign fifo1_write_data                 = (write_activate[1]) ? write_data : 0;
-
-assign fifo0_write_strobe               = (write_activate[0]) ? write_strobe : 0;
-assign fifo1_write_strobe               = (write_activate[1]) ? write_strobe : 0;
-
-assign write_ready                      = (w_reset | r_reset) ? 2'b00 :
-                                          {fifo1_empty && (fifo1_write_count == 0) , fifo0_empty && (fifo0_write_count == 0)};
-
-assign starved                          = ((write_activate[0] == 1) && fifo1_empty) ||
-                                          ((write_activate[1] == 1) && fifo0_empty) ||
-                                          (fifo0_empty && fifo1_empty);
-
-
-//assign the read output
-assign read_data                        = (read_fifo_select[0] == 1) ? fifo0_read_data :
-                                          (read_fifo_select[1] == 1) ? fifo1_read_data :
-                                          last_read_data;
-
-assign fifo0_read_strobe                = ((read_fifo_select[0] == 1) ? read_strobe : 0) | pre_read_strobe0;
-assign fifo1_read_strobe                = ((read_fifo_select[1] == 1) ? read_strobe : 0) | pre_read_strobe1;
-
-assign both_reset                       = r_reset & w_reset;
-
-
-assign inactive                            = fifo0_empty &&
-                                          fifo1_empty &&
-                                          (write_activate == 0) &&
-                                          !read_activate &&
-                                          !fifo0_ready &&
-                                          !fifo1_ready;
-
-//Cross Clock Domain Signals
-assign  write_clock_pulse_empty0_valid  = (~write_clock_pulse_empty0_valid_sync[2] && write_clock_pulse_empty0_valid_sync[1]);
-assign  write_clock_pulse_empty1_valid  = (~write_clock_pulse_empty1_valid_sync[2] && write_clock_pulse_empty1_valid_sync[1]);
-
-
-//Read side synchronization of write side status
-assign  fifo0_ready = (fifo0_ready_history[1] & fifo0_ready_history[0]);
-assign  fifo1_ready = (fifo1_ready_history[1] & fifo1_ready_history[0]);
-
-assign  pos_edge_fifo0_ready  = fifo0_ready & ~prev_fifo0_ready;
-assign  pos_edge_fifo1_ready  = fifo1_ready & ~prev_fifo1_ready;
-
-
-
-
-
+always @ (*) begin
+  if (write_activate > 0 && write_strobe) begin
+    write_enable  = 1'b1;
+  end
+  else begin
+    write_enable  = 1'b0;
+  end
+end
 //synchronous logic
 
-//Cross Clock Domain Reset
-always @(posedge read_clock or posedge reset) begin
+//Reset Logic
+always @ (posedge write_clock) begin
   if (reset) begin
-    r_reset             <=  1;
-    r_reset_ack         <=  0;
+    w_reset         <=  1;
+    w_reset_timeout <=  0;
   end
   else begin
-    if (w_reset && !both_reset && !r_reset_ack) begin
-      r_reset           <=  1;
-      r_reset_ack       <=  0;
-    end
-    if (both_reset) begin
-      r_reset_ack       <=  1;
-    end
-    if (r_reset &&  w_reset_ack) begin
-      r_reset           <=  0;
-    end
-    if (!r_reset && !w_reset) begin
-      r_reset_ack       <=  0;
-    end
-  end
-end
-always @(posedge write_clock or posedge reset) begin
-  if (reset) begin
-    w_reset             <=  1;
-    w_reset_ack         <=  0;
-  end
-  else begin
-    if (r_reset && !both_reset && !w_reset_ack) begin
-      w_reset           <=  1;
-      w_reset_ack       <=  0;
-    end
-    if (both_reset) begin
-      w_reset_ack       <=  1;
-    end
-    if (w_reset && r_reset_ack) begin
-      w_reset           <=  0;
-    end
-    if (!w_reset && !r_reset) begin
-      w_reset_ack       <=  0;
-    end
-  end
-end
-
-always @(posedge write_clock or posedge reset) begin
-  if (reset) begin
-    write_clock_pulse_empty0_valid_sync <=  0;
-    write_clock_pulse_empty1_valid_sync <=  0;
-  end
-  else begin
-    if (!waiting[0]) begin
-      write_clock_pulse_empty0_valid_sync <=  {write_clock_pulse_empty0_valid_sync[1:0], fifo0_empty};
-    end
-    if (!waiting[1]) begin
-      write_clock_pulse_empty1_valid_sync <=  {write_clock_pulse_empty1_valid_sync[1:0], fifo1_empty};
-    end
-  end
-end
-
-//FIFO write counts
-always @ (posedge write_clock or posedge reset) begin
-  if (reset) begin
-    fifo0_write_count   <=  0;
-  end
-  else begin
-    if (write_clock_pulse_empty0_valid && ~write_activate[0]) begin
-      fifo0_write_count <=  0;
-    end
-    if (fifo0_write_strobe) begin
-      fifo0_write_count <=  fifo0_write_count + 1;
-    end
-  end
-end
-
-//FIFO1 write counts
-always @ (posedge write_clock or posedge reset) begin
-  if (reset) begin
-    fifo1_write_count   <=  0;
-  end
-  else begin
-    if (write_clock_pulse_empty1_valid && ~write_activate[1]) begin
-      fifo1_write_count <=  0;
-    end
-    if (fifo1_write_strobe) begin
-      fifo1_write_count <=  fifo1_write_count + 1;
-    end
-  end
-end
-
-
-always @ (posedge read_clock or posedge reset) begin
-  if (reset) begin
-    fifo0_ready_history <=  0;
-    fifo1_ready_history <=  0;
-  end
-  else begin
-    //if (fifo0_empty && !single_read[0]) begin
-    if (fifo0_empty && !waiting[0]) begin
-    //if (fifo0_empty) begin
-      fifo0_ready_history <=  0;
+    if (w_reset && (w_reset_timeout < 4'h4)) begin
+      w_reset_timeout <=  w_reset_timeout + 1;
     end
     else begin
-      fifo0_ready_history[1] <=  fifo0_ready_history[0];
-      fifo0_ready_history[0] <= (!write_activate[0] && (fifo0_write_count != 0));
+      w_reset       <=  0;
     end
-
-    //if (fifo1_empty && !single_read[1]) begin
-    if (fifo1_empty && !waiting[1]) begin
-    //if (fifo1_empty) begin
-      fifo1_ready_history <=  0;
-    end
-    else begin
-      fifo1_ready_history[1] <=  fifo1_ready_history[0];
-      fifo1_ready_history[0] <= (!write_activate[1] && (fifo1_write_count != 0));
-    end
-
-    prev_fifo0_ready         <=  fifo0_ready;
-    prev_fifo1_ready         <=  fifo1_ready;
-
   end
 end
 
-//selecting and activating read side data
-always @ (posedge read_clock or posedge reset) begin
+always @ (posedge read_clock) begin
   if (reset) begin
-    read_ready              <=  0;
-    read_count              <=  0;
-    read_fifo_select        <=  0;
-    last_read_data          <=  0;
-    pre_read_strobe0        <=  0;
-    pre_read_strobe1        <=  0;
-    read_pre_select         <=  0;
-//    single_read             <=  0;
-    waiting                 <=  0;
+    r_reset           <=  1;
+    r_reset_timeout   <=  0;
   end
   else begin
-    pre_read_strobe0        <=  0;
-    pre_read_strobe1        <=  0;
-    if ((read_fifo_select == 0) && !read_activate) begin
-      //if there is data in the other FIFO allow that FIFO to have priority
-      if (read_pre_select[0] && fifo0_ready) begin
-          read_count          <=  fifo0_write_count;
-          read_ready          <=  1;
-          read_fifo_select[0] <=  1;
-          read_pre_select     <=  0;
-      end
-      else if (read_pre_select[1] && fifo1_ready) begin
-          read_count          <=  fifo1_write_count;
-          read_ready          <=  1;
-          read_fifo_select[1] <=  1;
-          read_pre_select     <=  0;
-      end
-      else begin
-        //read_pre_select     <=  0;
-        if (fifo0_ready) begin
-          //although this signal is asynchronous due to the synchronization of fifo0_redy I know that
-          //the fifoX_write_count is stable
-          read_count          <=  fifo0_write_count;
-          read_ready          <=  1;
-          read_fifo_select[0] <=  1;
-          read_pre_select     <=  0;
-        end
-        else if (fifo1_ready) begin
-          read_count          <=  fifo1_write_count;
-          read_ready          <=  1;
-          read_fifo_select[1] <=  1;
-          read_pre_select     <=  0;
-        end
-        else begin
-          read_ready          <=  0;
-          read_count          <=  0;
-        end
-      end
+    if (r_reset && (r_reset_timeout < 4'h4)) begin
+      r_reset_timeout <= r_reset_timeout + 1;
     end
-
-    //this takes care of the edge case when only one item goes into the PPFIFO
-    /*
-    if (read_fifo_select[0] && read_strobe) begin
-      single_read[0]          <=  0;
-    end
-    if (read_fifo_select[1] && read_strobe) begin
-      single_read[1]          <=  0;
-    end
-    */
-    if (pos_edge_fifo0_ready) begin
-      waiting[0]              <=  1;
-      pre_read_strobe0        <=  1;
-/*
-      if (fifo0_write_count == 1) begin
-        single_read[0]          <=  1;
-      end
-*/
-    end
-
-    if (pos_edge_fifo1_ready) begin
-      waiting[1]              <=  1;
-      pre_read_strobe1        <=  1;
-/*
-      if (fifo1_write_count == 1) begin
-        single_read[1]          <=  1;
-      end
-*/
-    end
-
-    if (read_activate && read_ready) begin
-      read_ready            <=  0;
-    end
-
-    //keep the last peice of data around
-    if (read_fifo_select[0]) begin
-      waiting[0]              <=  0;
-      last_read_data          <=  fifo0_read_data;
-    end
-    if (read_fifo_select[1]) begin
-      waiting[1]              <=  0;
-      last_read_data          <=  fifo1_read_data;
-    end
-
-    //reset select
-//XXX: This will not allow single reads
-//XXX: Need a way to allow single reads
-    //reset FIFO 0 select
-    if (read_fifo_select[0] && fifo0_empty && !read_ready) begin
-    //if (read_fifo_select[0] && !single_read[0] && fifo0_empty) begin
-      read_fifo_select[0]     <=  0;
-      //gives the other buffer priority (this is useful for very slow read clocks)
-      //fifo0 can be re-filled before the block can select the other FIFO
-      read_pre_select[1]      <=  1;
-    end
-
-    //reset FIFO 1 select
-    if (read_fifo_select[1] && fifo1_empty && !read_ready) begin
-    //if (read_fifo_select[1] && !single_read[1] && fifo1_empty) begin
-      read_fifo_select[1]     <=  0;
-      //gives the other buffer priroity (this is useful for very slow read clocks)
-      read_pre_select[0]      <=  1;
+    else begin
+      r_reset         <=  0;
     end
   end
 end
+
+//---------------Write Side---------------
+initial begin
+  write_address     = 0;
+
+  wcc_read_ready    = 2'b00;
+  write_ready       = 2'b00;
+  w_reset           = 1;
+  w_reset_timeout   = 0;
+  write_enable      = 0;
+  r_wselect         = 0;
+  wcc_tie_select    = 0;
+end
+
+always @ (posedge write_clock) begin
+  if (reset) begin
+    write_ready     <=  0;
+  end
+  else if (ready) begin
+    //Logic for the Write Enable
+    if (write_activate[0] && write_strobe) begin
+      write_ready[0] <=  1'b0;
+    end
+    if (write_activate[1] && write_strobe) begin
+      write_ready[1] <=  1'b0;
+    end
+
+    if (!write_activate[0] && (w_count[0] == 0) && wcc_read_done[0]) begin
+      //FIFO 0 is not accessed by the read side, and user has not activated
+      write_ready[0]  <=  1;
+    end
+    if (!write_activate[1] && (w_count[1] == 0) && wcc_read_done[1]) begin
+      //FIFO 1 is not accessed by the read side, and user has not activated
+      write_ready[1]  <=  1;
+    end
+
+    //When the user is finished reading the ready signal might go high
+    //I SHOULD MAKE A CONDITION WHERE THE WRITE COUND MUST BE 0
+  end
+end
+
+always @ (posedge write_clock) begin
+  if (reset) begin  //Asynchronous Reset
+    wcc_read_ready  <=  2'b00;
+    write_address   <=  0;
+    w_count[0]      <=  24'h0;
+    w_count[1]      <=  24'h0;
+  end
+  else begin
+    if (write_activate > 0 && write_strobe) begin
+      write_address <=  write_address + 1;
+      if (write_activate[0]) begin
+        w_count[0]  <=  w_count[0] + 1;
+      end
+      if (write_activate[1]) begin
+        w_count[1]  <=  w_count[1] + 1;
+      end
+    end
+    if (write_activate == 0) begin
+      write_address     <=  0;
+      if (w_count[0] > 0) begin
+        wcc_read_ready[0]  <=  1;
+      end
+      if (w_count[1] > 0) begin
+        wcc_read_ready[1]  <=  1;
+      end
+    end
+    //I can't reset the w_count until the read side has indicated that it
+    //is done but that may be mistriggered when the write side finishes
+    //a write. So how do
+
+    //Only reset the write count when the done signal has been de-asserted
+
+    //Deassert w_readX_ready when we see the read has de-asserted r_readX_done
+    if (!wcc_read_done[0]) begin
+      //Only reset write count when the read side has said it's busy so it
+      //must be done reading
+      w_count[0]        <=  0;
+      wcc_read_ready[0] <=  0;
+    end
+    if (!wcc_read_done[1]) begin
+      w_count[1]        <=  0;
+      wcc_read_ready[1] <=  0;
+    end
+  end
+end
+
+
+//---------------Read Side---------------
+initial begin
+  r_rselect       = 0;
+  r_address       = 0;
+
+  rcc_read_done   = 2'b00;
+
+  r_size[0]       = 24'h0;
+  r_size[1]       = 24'h0;
+
+  r_wait          = 2'b11;
+  r_ready         = 2'b00;
+  r_activate      = 2'b00;
+  r_pre_activate  = 0;
+
+  r_next_fifo     = 0;
+  r_reset         = 1;
+  r_reset_timeout = 0;
+  read_ready      = 0;
+  r_read_data     = 32'h0;
+  r_pre_read_wait = 0;
+end
+
+always @ (posedge read_clock) begin
+  if (reset) begin  //Asynchronous Reset
+    r_rselect                       <=  0;
+    r_address                       <=  0;
+    rcc_read_done                   <=  2'b11;
+    read_count                      <=  0;
+    r_activate                      <=  2'b00;
+    r_pre_activate                  <=  2'b00;
+    r_pre_read_wait                 <=  0;
+
+    r_size[0]                       <=  24'h0;
+    r_size[1]                       <=  24'h0;
+
+    //are these signals redundant?? can I just use the done?
+    r_wait                          <=  2'b11;
+
+    r_ready                         <=  2'b00;
+
+    r_next_fifo                     <=  0;
+    r_read_data                     <=  0;
+
+  end
+  else begin
+    r_pre_strobe                    <=  read_strobe;
+    //Handle user enable and ready
+    if (!read_activate && !r_pre_activate) begin
+      //User has not activated the read side
+
+      //Prepare the read side
+      //Reset the address
+      if (r_activate == 0) begin
+        read_count                      <=  0;
+        r_address                       <=  0;
+        r_pre_read_wait                 <=  0;
+        if (r_ready > 0) begin
+          //This goes to one instead of activate
+          //Output select
+          //read_ready                  <=  1;
+
+          if (r_ready[0] && r_ready[1]) begin
+            //$display ("Tie");
+            //Tie
+            r_rselect                   <=  r_next_fifo;
+            r_pre_activate[r_next_fifo] <=  1;
+            r_pre_activate[~r_next_fifo]<=  0;
+            r_next_fifo                 <=  ~r_next_fifo;
+            read_count                  <=  r_size[r_next_fifo];
+          end
+          else begin
+            //Only one side is ready
+            if (r_ready[0]) begin
+              //$display ("select 0");
+              r_rselect                 <=  0;
+              r_pre_activate[0]         <=  1;
+              r_pre_activate[1]         <=  0;
+              r_next_fifo               <=  1;
+              read_count                <=  r_size[0];
+            end
+            else begin
+              //$display ("select 1");
+              r_rselect                 <=  1;
+              r_pre_activate[0]         <=  0;
+              r_pre_activate[1]         <=  1;
+              r_next_fifo               <=  0;
+              read_count                <=  r_size[1];
+            end
+          end
+        end
+      end
+      //User has finished reading something
+      else if (r_activate[r_rselect] && !r_ready[r_rselect]) begin
+        r_activate[r_rselect]          <=  0;
+        rcc_read_done[r_rselect]       <=  1;
+      end
+    end
+    else begin
+      if ((r_pre_activate > 0) && r_pre_read_wait) begin
+        read_ready                      <=  1;
+      end
+
+
+      if (r_activate) begin
+        read_ready                    <=  0;
+        //User is requesting an accss
+        //Handle read strobes
+        //Only handle strobes when we are enabled
+        r_ready[r_rselect]            <=  0;
+      end
+
+      //XXX: There should be a better way to handle these edge conditions
+      if (!r_activate && r_pre_read_wait) begin
+        r_read_data                     <=  w_read_data;
+        r_address                       <=  r_address + 1;
+        r_activate                      <=  r_pre_activate;
+        r_pre_activate                  <=  0;
+      end
+      else if (!r_pre_read_wait) begin
+        r_pre_read_wait                 <=  1;
+      end
+
+      if (read_strobe && (r_address < (r_size[r_rselect] + 1))) begin
+        //Increment the address
+        r_read_data                     <=  w_read_data;
+        r_address                       <=  r_address + 1;
+      end
+      if (r_pre_strobe && !read_strobe) begin
+        r_read_data                     <=  w_read_data;
+      end
+    end
+    if (!rcc_read_ready[0] && !r_ready[0] && !r_activate[0]) begin
+      r_wait[0]                       <=  1;
+    end
+    if (!rcc_read_ready[1] && !r_ready[1] && !r_activate[1]) begin
+      r_wait[1]                       <=  1;
+    end
+
+
+    //Check if the write side has sent over some data
+    if (rcc_read_ready > 0) begin
+      if ((r_wait == 2'b11) && (rcc_read_ready == 2'b11) && (w_count[0] > 0) && (w_count[1] > 0)) begin
+        //An ambiguous sitution that can arrise if the read side is much
+        //slower than the write side, both sides can arrise seemingly at the
+        //same time, so there needs to be a tie breaker
+        //$display ("Combo breaker goes to: %h", rcc_tie_select);
+        r_next_fifo         <= rcc_tie_select;
+      end
+
+
+
+
+      if (r_wait[0] && rcc_read_ready[0]) begin
+        //$display ("write has send over data t othe 0 side");
+        //Normally it would not be cool to transfer data over a clock domain
+        //but the w_count[x] is stable before the write side sends over a write
+        //strobe
+        if (w_count[0] > 0) begin
+          //Only enable when count > 0
+          if ((r_activate == 0) && (!rcc_read_ready[1])) begin
+              //$display ("select 0");
+              r_next_fifo   <=  0;
+          end
+          r_size[0]         <=  w_count[0];
+          r_ready[0]        <=  1;
+          r_wait[0]         <=  0;
+          rcc_read_done[0]  <=  0;
+        end
+      end
+
+      if (r_wait[1] && rcc_read_ready[1]) begin
+        //$display ("write has send over data t othe 1 side");
+        //Write side has sent some data over
+        if (w_count[1] > 0) begin
+         if ((r_activate == 0) && (!rcc_read_ready[0])) begin
+              //$display ("select 1");
+              r_next_fifo   <=  1;
+          end
+          r_size[1]         <=  w_count[1];
+          r_ready[1]        <=  1;
+          r_wait[1]         <=  0;
+          rcc_read_done[1]  <=  0;
+        end
+      end
+    end
+  end
+end
+
 endmodule
-

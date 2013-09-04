@@ -3,21 +3,21 @@ Distributed under the MIT license.
 Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all 
+The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
@@ -26,64 +26,42 @@ SOFTWARE.
 `include "sdram_include.v"
 
 module sdram_write (
-  rst,
-  clk,
+input               rst,
+input               clk,
 
-  command,  
-  address,
-  bank,
-  data_out,
-  data_mask,
+//RAM control
+output  reg [2:0]   command,
+output  reg [11:0]  address,
+output  reg [1:0]   bank,
+output  reg [15:0]  data_out,
+output  reg [1:0]   data_mask,
 
-  idle,
-  enable,
-  auto_refresh,
-  wait_for_refresh,
-  
-  app_address,
+//sdram controller
+output              idle,
+input               enable,
+input       [21:0]  app_address,
+input               auto_refresh,
+output  reg         wait_for_refresh,
 
-  fifo_data,
-  fifo_read,
-  fifo_ready,
-  fifo_activate,
-  fifo_size,
-  fifo_inactive
+//FIFO
+input       [35:0]  fifo_data,
+output  reg         fifo_read,
+input               fifo_ready,
+output  reg         fifo_activate,
+input       [23:0]  fifo_size,
+input               fifo_inactive
+
 
 );
 
-input               rst;
-input               clk;
-
-//RAM control
-output  reg [2:0]   command;
-output  reg [11:0]  address;
-output  reg [1:0]   bank;
-output  reg [15:0]  data_out;
-output  reg [1:0]   data_mask;
-
-//sdram controller
-output              idle;
-input               enable;
-input       [21:0]  app_address;
-input               auto_refresh;
-output  reg         wait_for_refresh;
-
-//FIFO
-input       [35:0]  fifo_data;
-output  reg         fifo_read;
-input               fifo_ready;
-output  reg         fifo_activate;
-input       [23:0]  fifo_size;
-input               fifo_inactive;
-
-parameter           IDLE            = 4'h0;
-parameter           WAIT            = 4'h1;
-parameter           ACTIVATE        = 4'h2;
-parameter           WRITE_COMMAND   = 4'h3;
-parameter           WRITE_TOP       = 4'h4;
-parameter           WRITE_BOTTOM    = 4'h5;
-parameter           BURST_TERMINATE = 4'h6;
-parameter           PRECHARGE       = 4'h7;
+localparam           IDLE            = 4'h0;
+localparam           WAIT            = 4'h1;
+localparam           ACTIVATE        = 4'h2;
+localparam           WRITE_COMMAND   = 4'h3;
+localparam           WRITE_TOP       = 4'h4;
+localparam           WRITE_BOTTOM    = 4'h5;
+localparam           BURST_TERMINATE = 4'h6;
+localparam           PRECHARGE       = 4'h7;
 
 reg                 empty;
 
@@ -97,6 +75,10 @@ wire    [11:0]      row;
 wire    [7:0]       column;
 wire                continue_writing;
 reg     [23:0]      fifo_count;
+reg     [15:0]      top_data;
+reg     [1:0]       top_mask;
+reg     [15:0]      bottom_data;
+reg     [1:0]       bottom_mask;
 
 //assign  bank    =   write_address[21:20];
 assign  row     =   write_address[19:8];
@@ -124,6 +106,10 @@ always @(posedge clk) begin
     empty             <=  0;
     fifo_count        <=  0;
     fifo_activate     <=  0;
+    top_data          <=  0;
+    top_mask          <=  0;
+    bottom_data       <=  0;
+    bottom_mask       <=  0;
 
   end
   else begin
@@ -153,7 +139,7 @@ always @(posedge clk) begin
               if (fifo_ready) begin
                 //A FIFO is ready
                 fifo_activate <=  1;
-                fifo_count    <=  fifo_size;
+                fifo_count    <=  0;
               end
               else if (fifo_inactive && !enable) begin
                 //DONE!
@@ -162,7 +148,7 @@ always @(posedge clk) begin
             end
             else begin
               //we have an enabled FIFO
-              if (fifo_count == 0) begin
+              if (fifo_count >= fifo_size) begin
                 //there is no data in this FIFO
                 fifo_activate <=  0;
                 delay         <=  1;
@@ -170,8 +156,14 @@ always @(posedge clk) begin
               else begin
                 //everything is good to go
                 state         <=  ACTIVATE;
-                //fifo_read     <=  1;
-                fifo_count    <=  fifo_count - 1;
+                fifo_count    <=  fifo_count + 1;
+                top_data      <=  fifo_data[31:16];
+                bottom_data   <=  fifo_data[15:0];
+                top_mask      <=  fifo_data[35:34];
+                bottom_mask   <=  fifo_data[33:32];
+                if (fifo_count < fifo_size) begin
+                  fifo_read   <=  1;
+                end
               end
             end
           end
@@ -189,39 +181,46 @@ always @(posedge clk) begin
           empty         <=  0;
           command       <=  `SDRAM_CMD_WRITE;
           address       <=  {4'b0000, column};
-          data_out      <=  fifo_data[31:16];     
-          data_mask     <=  fifo_data[35:34];
+          data_out      <=  top_data;
+          data_mask     <=  top_mask;
           state         <=  WRITE_BOTTOM;
           write_address <=  write_address + 2;
         end
         WRITE_TOP: begin
           empty         <=  0;
           command       <=  `SDRAM_CMD_NOP;
-          data_out      <=  fifo_data[31:16];     
-          data_mask     <=  fifo_data[35:34];
+          data_out      <=  top_data;
+          data_mask     <=  top_mask;
           state         <=  WRITE_BOTTOM;
           write_address <=  write_address + 2;
+          fifo_count    <=  fifo_count + 1;
         end
         WRITE_BOTTOM: begin
           command       <=  `SDRAM_CMD_NOP;
-          data_out      <=  fifo_data[15:0];
-          data_mask     <=  fifo_data[33:32];
+          data_out      <=  bottom_data;
+          data_mask     <=  bottom_mask;
           //if there is more data to write then continue on with the write
           //and issue a command to the AFIFO to grab more data
-          fifo_read     <=  1;
-          if (fifo_count == 0) begin
+          if (fifo_count >= fifo_size) begin
             //we could have reached the end of a row here
-            //fifo_read     <=  1;
             state         <=  BURST_TERMINATE;
           end
           else if ((column == 8'h00) || auto_refresh) begin
             //the fifo count != 0 so get the next peice of data
-            //fifo_read     <=  1;
             state         <=  BURST_TERMINATE;
           end
           else begin
             state         <=  WRITE_TOP;
-            //fifo_read     <=  1;
+            if (fifo_count < fifo_size) begin
+                fifo_count    <=  fifo_count + 1;
+                top_data      <=  fifo_data[31:16];
+                bottom_data   <=  fifo_data[15:0];
+                top_mask      <=  fifo_data[35:34];
+                bottom_mask   <=  fifo_data[33:32];
+                if (fifo_count < fifo_size - 1) begin
+                  fifo_read   <=  1;
+                end
+            end
           end
         end
         BURST_TERMINATE: begin

@@ -3,21 +3,21 @@ Distributed under the MIT license.
 Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all 
+The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
@@ -26,82 +26,44 @@ SOFTWARE.
 
 
 module sdram (
-  clk,
-  rst,
 
-  //write path
-  if_write_strobe,
-  if_write_data,
-  if_write_mask,
-  if_write_ready,
-  if_write_activate,
-  if_write_fifo_size,
-  if_starved,
+input               clk,
+input               rst,
 
-  //read path
-  of_read_strobe,
-  of_read_ready,
-  of_read_activate,
-  of_read_count,
-  of_read_data,
+input               if_write_strobe,
+input       [31:0]  if_write_data,
+input       [3:0]   if_write_mask,
+output      [1:0]   if_write_ready,
+input       [1:0]   if_write_activate,
+output      [23:0]  if_write_fifo_size,
+output              if_starved,
 
-  //Wishbone command
-  sdram_ready,
+input               of_read_strobe,
+output              of_read_ready,
+input               of_read_activate,
+output      [23:0]  of_read_count,
+output      [31:0]  of_read_data,
 
-  sdram_write_enable,
-  sdram_read_enable,
-  app_address,
+input               sdram_write_enable,
+input               sdram_read_enable,
 
-  sd_clk,
-  cs_n,
-  cke,
-  ras,
-  cas,
-  we,
+input       [21:0]  app_address,
+output reg          sdram_ready,
 
-  address,
-  bank,
-  data,
-  data_mask,
+output              sd_clk,
+output reg          cke,
+output reg          cs_n,
+output              ras,
+output              cas,
+output              we,
 
-  ext_sdram_clk
+output      [11:0]  address,
+output      [1:0]   bank,
+inout       [15:0]  data,
+output      [1:0]   data_mask,
+output              ext_sdram_clk
+
 );
-
-input               clk;
-input               rst;
-
-input               if_write_strobe;
-input       [31:0]  if_write_data;
-input       [3:0]   if_write_mask;
-output      [1:0]   if_write_ready;
-input       [1:0]   if_write_activate;
-output      [23:0]  if_write_fifo_size;
-output              if_starved;
-
-input               of_read_strobe;
-output              of_read_ready;
-input               of_read_activate;
-output      [23:0]  of_read_count;
-output      [31:0]  of_read_data;
-
-input               sdram_write_enable;
-input               sdram_read_enable;
-
-input       [21:0]  app_address;
-output reg          sdram_ready;
-
-output              sd_clk;
-output reg          cke;
-output reg          cs_n;
-output              ras;
-output              cas;
-output              we;
-
-output      [11:0]  address;
-output      [1:0]   bank;
-inout       [15:0]  data;
-output      [1:0]   data_mask;
-output              ext_sdram_clk;
 
 
 wire                sdram_clock_ready;
@@ -163,58 +125,58 @@ ppfifo#(
   .DATA_WIDTH(36),
   .ADDRESS_WIDTH(9)
 )ppfifo_wr (
-  .reset(rst || ~sdram_ready),
+  .reset                     (rst || ~sdram_ready            ),
 
   //Write
-  .write_clock(clk),
-  .write_ready(if_write_ready),
-  .write_activate(if_write_activate),
-  .write_fifo_size(if_write_fifo_size),
-  .write_strobe(if_write_strobe),
-  .write_data({if_write_mask, if_write_data}),
+  .write_clock               (clk                            ),
+  .write_ready               (if_write_ready                 ),
+  .write_activate            (if_write_activate              ),
+  .write_fifo_size           (if_write_fifo_size             ),
+  .write_strobe              (if_write_strobe                ),
+  .write_data                ({if_write_mask, if_write_data} ),
 
-  .starved(if_starved),
+  .starved                   (if_starved                     ),
 
   //Read
-  .read_clock(sdram_clk),
-  .read_strobe(if_read_strobe),
-  .read_ready(if_read_ready),
-  .read_activate(if_read_activate),
-  .read_count(if_read_count),
-  .read_data(if_read_data),
+  .read_clock                (sdram_clk                      ),
+  .read_strobe               (if_read_strobe                 ),
+  .read_ready                (if_read_ready                  ),
+  .read_activate             (if_read_activate               ),
+  .read_count                (if_read_count                  ),
+  .read_data                 (if_read_data                   ),
 
-  .inactive(if_inactive)
+  .inactive                  (if_inactive                    )
 
 );
 
 
 sdram_write write_path (
-  .rst(rst || ~sdram_ready),
-  .clk(sdram_clk),
+  .rst                       (rst || ~sdram_ready            ),
+  .clk                       (sdram_clk                      ),
 
   //Write Path SDRAM Control
-  .command(write_command),
-  .address(write_address),
-  .bank(write_bank),
-  .data_out(data_out),
-  .data_mask(write_data_mask),
+  .command                   (write_command                  ),
+  .address                   (write_address                  ),
+  .bank                      (write_bank                     ),
+  .data_out                  (data_out                       ),
+  .data_mask                 (write_data_mask                ),
 
   //Control
-  .idle(write_idle),
-  .enable(sdram_write_enable),
-  .auto_refresh(refresh),
-  .wait_for_refresh(wwfr),
-  
+  .idle                      (write_idle                     ),
+  .enable                    (sdram_write_enable             ),
+  .auto_refresh              (refresh                        ),
+  .wait_for_refresh          (wwfr                           ),
+
   //Application address
-  .app_address(app_address),
+  .app_address               (app_address                    ),
 
   //Data Out Path
-  .fifo_data(if_read_data),
-  .fifo_read(if_read_strobe),
-  .fifo_ready(if_read_ready),
-  .fifo_activate(if_read_activate),
-  .fifo_size(if_read_count),
-  .fifo_inactive(if_inactive)
+  .fifo_data                 (if_read_data                   ),
+  .fifo_read                 (if_read_strobe                 ),
+  .fifo_ready                (if_read_ready                  ),
+  .fifo_activate             (if_read_activate               ),
+  .fifo_size                 (if_read_count                  ),
+  .fifo_inactive             (if_inactive                    )
 
 );
 
@@ -257,7 +219,7 @@ ppfifo#(
   .write_fifo_size(of_write_fifo_size),
   .write_strobe(of_write_strobe),
   .write_data(of_write_data),
-  
+
   .starved(of_starved),
 
   //Read
@@ -267,7 +229,6 @@ ppfifo#(
   .read_activate(of_read_activate),
   .read_count(of_read_count),
   .read_data(of_read_data)
-
 );
 
 //Read Path
@@ -317,11 +278,10 @@ assign cas  = command[1];
 assign we   = command[0];
 
 //XXX: Disable Data mask for testing
-assign data_mask = ~write_idle ? write_data_mask : 2'b00; 
+assign data_mask = ~write_idle ? write_data_mask : 2'b00;
 //assign data_mask = 2'b00;
 
 //Attach the tristate Data to an in and out
-
 assign        data = writing ? data_out : 16'hZZZZ;
 
 parameter     START               = 4'h0;
@@ -361,7 +321,7 @@ always @(posedge sdram_clk) begin
 
   end
   else begin
-    
+
     if (delay > 0) begin
       init_command          <=  `SDRAM_CMD_NOP;
       delay                 <=  delay - 1;
@@ -377,7 +337,7 @@ always @(posedge sdram_clk) begin
         PRECHARGE: begin
           //$display ("SDRAM_INIT: PRECHARGE");
           cs_n              <=  0;
-          init_command      <=  `SDRAM_CMD_PRE; 
+          init_command      <=  `SDRAM_CMD_PRE;
           init_address[10]  <=  1;
           delay             <=  `T_RP;
           state             <=  AUTO_REFRESH1;
@@ -416,7 +376,7 @@ always @(posedge sdram_clk) begin
 //          init_command    <= `SDRAM_CMD_PRE;
 //          init_address[10]<=  1;
 //          state           <= AUTO_REFRESH;
-//          delay           <= `T_RP; 
+//          delay           <= `T_RP;
 //        end
         AUTO_REFRESH: begin
           init_command    <= `SDRAM_CMD_AR;
