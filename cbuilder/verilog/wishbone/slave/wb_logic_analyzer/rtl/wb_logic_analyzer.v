@@ -2,23 +2,23 @@
 /*
 Distributed under the GNU GPL
 Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
-                                                            
+
 Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all 
+The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
@@ -167,7 +167,7 @@ uart_la_interface ulac (
   .data(w_la_data_out),
 
   .phy_rx(i_la_uart_rx),
-  .phy_tx(i_la_uart_tx)
+  .phy_tx(o_la_uart_tx)
 );
 
 logic_analyzer #(
@@ -176,7 +176,7 @@ logic_analyzer #(
 )la (
   .clk(clk),
   .rst(reset),
-  
+
   .cap_clk(i_la_clk),
   .cap_external_trigger(i_la_ext_trig),
   .cap_data(i_la_data),
@@ -297,7 +297,7 @@ always @ (posedge clk) begin
       //master is requesting somethign
       if (i_wbs_we) begin
         //write request
-        case (i_wbs_adr) 
+        case (i_wbs_adr)
           CONTROL: begin
             control         <=  i_wbs_dat;
             disable_uart    <=  1;
@@ -334,7 +334,7 @@ always @ (posedge clk) begin
         endcase
       end
 
-      else begin 
+      else begin
         if (data_read_en) begin
           if (sleep > 0) begin
             sleep <=  sleep - 1;
