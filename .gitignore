@@ -6,6 +6,8 @@
 *.swo
 
 #Simulation Things
+.sconsign.dblite
+temp.txt
 *.sim
 *.vcd
 
