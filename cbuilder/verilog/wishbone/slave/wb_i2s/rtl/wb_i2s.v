@@ -50,10 +50,10 @@ SOFTWARE.
 `define DEFAULT_CLOCK_DIVISOR (`CLOCK_RATE / (`AUDIO_RATE * `AUDIO_BITS * `AUDIO_CHANNELS)) / 2
 
 module wb_i2s (
-  
+
   input               clk,
   input               rst,
-  
+
   //wishbone slave signals
   input               i_wbs_we,
   input               i_wbs_stb,
@@ -64,21 +64,21 @@ module wb_i2s (
   output reg  [31:0]  o_wbs_dat,
   output reg          o_wbs_ack,
   output reg          o_wbs_int,
-  
+
   //master control signal for memory arbitration
-  output reg          o_mem_we,
-  output reg          o_mem_stb,
-  output reg          o_mem_cyc,
-  output reg  [3:0]   o_mem_sel,
-  output reg  [31:0]  o_mem_adr,
-  output reg  [31:0]  o_mem_dat,
-  input       [31:0]  i_mem_dat,
-  input               i_mem_ack,
-  input               i_mem_int,
-  
+  output reg          mem_o_we,
+  output reg          mem_o_stb,
+  output reg          mem_o_cyc,
+  output reg  [3:0]   mem_o_sel,
+  output reg  [31:0]  mem_o_adr,
+  output reg  [31:0]  mem_o_dat,
+  input       [31:0]  mem_i_dat,
+  input               mem_i_ack,
+  input               mem_i_int,
+
   //status
   output              writer_starved,
-  
+
   //i2s signals
   output              phy_mclock,
   output              phy_clock,
@@ -187,7 +187,7 @@ i2s_controller controller (
 
 
 //Asynchronous Logic
-//assign        memory_data           = i_mem_dat;
+//assign        memory_data           = mem_i_dat;
 
 assign        enable                = control[`CONTROL_ENABLE];
 assign        enable_interrupt      = control[`CONTROL_ENABLE_INTERRUPT];
@@ -202,7 +202,7 @@ assign        status[`STATUS_MEMORY_1_EMPTY]  = memory_1_empty;
 assign        status[31:2]          = 0;
 
 assign        request_data_pos_edge = request_data && ~prev_request_data;
-assign        mem_ack_pos_edge      = i_mem_ack && ~prev_mem_ack;
+assign        mem_ack_pos_edge      = mem_i_ack && ~prev_mem_ack;
 
 assign        memory_count[0]       = memory_0_size - memory_pointer[0];
 assign        memory_count[1]       = memory_1_size - memory_pointer[1];
@@ -330,7 +330,7 @@ always @ (posedge clk) begin
   end
   else begin
     prev_request_data   <=  request_data;
-    prev_mem_ack        <=  i_mem_ack;
+    prev_mem_ack        <=  mem_i_ack;
   end
 end
 
@@ -338,12 +338,12 @@ end
 //wishbone master module
 always @ (posedge clk) begin
   if (rst) begin
-    o_mem_we            <=  0;
-    o_mem_stb           <=  0;
-    o_mem_cyc           <=  0;
-    o_mem_sel           <=  4'h0;
-    o_mem_adr           <=  32'h00000000;
-    o_mem_dat           <=  32'h00000000;
+    mem_o_we            <=  0;
+    mem_o_stb           <=  0;
+    mem_o_cyc           <=  0;
+    mem_o_sel           <=  4'h0;
+    mem_o_adr           <=  32'h00000000;
+    mem_o_dat           <=  32'h00000000;
 
     //strobe for the i2s memory controller
     memory_data_strobe  <=  0;
@@ -390,36 +390,36 @@ always @ (posedge clk) begin
     if (mem_ack_pos_edge) begin
       $display ("got an ack!");
       if (request_count == 1) begin
-        o_mem_cyc                   <=  0;
+        mem_o_cyc                   <=  0;
       end
-      memory_data                   <=  i_mem_dat;
+      memory_data                   <=  mem_i_dat;
       enable_strobe                 <=  1;
       request_count                 <=  request_count - 1;
       memory_pointer[active_block]  <=  memory_pointer[active_block] + 4;
-      o_mem_stb                       <=  0;
+      mem_o_stb                       <=  0;
     end
     if (memory_ready) begin
-      if ((request_count > 0) && (memory_count[active_block] > 0) && ~o_mem_stb && ~i_mem_ack) begin
+      if ((request_count > 0) && (memory_count[active_block] > 0) && ~mem_o_stb && ~mem_i_ack) begin
         //need to request data from the memory
         $display("get some data from the memory");
-        o_mem_cyc                     <=  1;
-        o_mem_stb                     <=  1;
-        o_mem_sel                     <=  4'b1111;
-        o_mem_we                      <=  0;
-        o_mem_dat                     <=  0;
-        o_mem_adr                     <=  memory_base[active_block] + memory_pointer[active_block];
+        mem_o_cyc                     <=  1;
+        mem_o_stb                     <=  1;
+        mem_o_sel                     <=  4'b1111;
+        mem_o_we                      <=  0;
+        mem_o_dat                     <=  0;
+        mem_o_adr                     <=  memory_base[active_block] + memory_pointer[active_block];
       end
     end
     else begin
       //the memory is not ready
-      o_mem_stb                       <=  0;
-      o_mem_cyc                       <=  0;
+      mem_o_stb                       <=  0;
+      mem_o_cyc                       <=  0;
     end
 /*
     if (request_count == 0) begin
       //finished filling up the internal buffer
-      o_mem_stb                       <=  0;
-      o_mem_cyc                       <=  0;
+      mem_o_stb                       <=  0;
+      mem_o_cyc                       <=  0;
     end
 */
   end

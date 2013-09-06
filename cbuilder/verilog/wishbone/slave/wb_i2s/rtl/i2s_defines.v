@@ -6,7 +6,7 @@
 //Initially 2MB data chunk
 `define DEFAULT_MEM_0_BASE        32'h00000000
 //`ifndef SIMULATION
-`define DEFAULT_MEM_1_BASE        32'h001F0000
+`define DEFAULT_MEM_1_BASE        32'h00200000
 //`else
 //  `define DEFAULT_MEM_1_BASE        32'h00000008
 //`endif

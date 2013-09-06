@@ -326,7 +326,7 @@ def generate_arbitor_buffer(master_count, debug = False):
     master_sel_buf += "\t\t\t\tend\n"
   master_sel_buf += "\t\t\tend\n"
   master_sel_buf += "\t\tendcase\n"
-  master_sel_buf += "\t\tif ((master_select != MASTER_NO_SEL) && (priority_select < master_select) && (!s_stb_o && !s_ack_i))begin\n"
+  master_sel_buf += "\t\tif ((master_select != MASTER_NO_SEL) && (priority_select < master_select) && (!o_s_stb && !i_s_ack))begin\n"
   master_sel_buf += "\t\t\tmaster_select  <=  MASTER_NO_SEL;\n"
 
   #first_if_flag = True
@@ -400,42 +400,42 @@ def generate_arbitor_buffer(master_count, debug = False):
   write_buf = "//write select block\n"
   #write_buf += "assign master_we_o[MASTER_NO_SEL] = 0;\n"
   for i in range (master_count):
-    write_buf += "assign master_we_o[MASTER_%d] = i_m%d_we;\n" % (i, i)
+    write_buf += "assign o_master_we[MASTER_%d] = i_m%d_we;\n" % (i, i)
   write_buf += "\n"
 
   #generate the strobe logic
   strobe_buf = "//strobe select block\n"
-  #strobe_buf += "assign master_stb_o[MASTER_NO_SEL] = 0;\n"
+  #strobe_buf += "assign o_master_stb[MASTER_NO_SEL] = 0;\n"
   for i in range (master_count):
-    strobe_buf += "assign master_stb_o[MASTER_%d] = i_m%d_stb;\n" % (i, i)
+    strobe_buf += "assign o_master_stb[MASTER_%d] = i_m%d_stb;\n" % (i, i)
   strobe_buf += "\n"
 
   #generate the cycle logic
   cycle_buf = "//cycle select block\n"
   #cycle_buf += "assign master_cyc_o[MASTER_NO_SEL] = 0;\n"
   for i in range (master_count):
-    cycle_buf += "assign master_cyc_o[MASTER_%d] = i_m%d_cyc;\n" % (i, i)
+    cycle_buf += "assign o_master_cyc[MASTER_%d] = i_m%d_cyc;\n" % (i, i)
   cycle_buf += "\n"
 
   #generate the select logic
   select_buf = "//select select block\n"
   #select_buf += "assign master_sel_o[MASTER_NO_SEL] = 0;\n"
   for i in range (master_count):
-    select_buf += "assign master_sel_o[MASTER_%d] = i_m%d_sel;\n" % (i, i)
+    select_buf += "assign o_master_sel[MASTER_%d] = i_m%d_sel;\n" % (i, i)
   select_buf += "\n"
 
   #generate the address_logic
   address_buf = "//address seelct block\n"
   #address_buf += "assign master_adr_o[MASTER_NO_SEL] = 0;\n"
   for i in range (master_count):
-    address_buf += "assign master_adr_o[MASTER_%d] = i_m%d_adr;\n" % (i, i)
+    address_buf += "assign o_master_adr[MASTER_%d] = i_m%d_adr;\n" % (i, i)
   address_buf += "\n"
 
   #generate the data logic
   data_buf = "//data select block\n"
   #data_buf += "assign master_dat_o[MASTER_NO_SEL] = 0;\n"
   for i in range (master_count):
-    data_buf += "assign master_dat_o[MASTER_%d] = i_m%d_dat;\n" % (i, i)
+    data_buf += "assign o_master_dat[MASTER_%d] = i_m%d_dat;\n" % (i, i)
   data_buf += "\n\n"
 
 
