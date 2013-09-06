@@ -3,21 +3,21 @@ Distributed under the MIT licesnse.
 Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
-this start_of_frametware and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
+this start_of_frametware and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all 
+The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
@@ -38,25 +38,25 @@ module ft_master_interface (
   //boilerplate
   input               rst,
   input               clk,
-  
+
   //master interface
   input               i_master_ready,
   output              o_ih_reset,
   output reg          o_ih_ready,
-  
+
   output  reg [31:0]  o_in_command,
   output  reg [31:0]  o_in_address,
   output  reg [31:0]  o_in_data,
   output  reg [27:0]  o_in_data_count,
-  
+
   output  reg         o_oh_ready,
   input               i_oh_en,
-  
+
   input   [31:0]      i_out_status,
   input   [31:0]      i_out_address,
   input   [31:0]      i_out_data,
   input   [27:0]      i_out_data_count,
-  
+
   //FTDI interface
   input               i_ftdi_clk,
   inout   [7:0]       io_ftdi_data,
@@ -67,10 +67,10 @@ module ft_master_interface (
   output              o_ftdi_rd_n,
   input               i_ftdi_suspend_n,
   output              o_ftdi_siwu,
-  
+
   //debug
   output  [15:0]      o_ftdi_debug
-  
+
 
 );
 
@@ -213,7 +213,7 @@ always @ (posedge clk ) begin
       IDLE: begin
         //get a FIFO
         if (in_fifo_ready) begin
-          read_count        <=  in_fifo_count - 1; 
+          read_count        <=  in_fifo_count - 1;
           in_fifo_activate  <=  1;
           in_fifo_read      <=  1;
 
@@ -228,7 +228,7 @@ always @ (posedge clk ) begin
       WAIT_FOR_ID_BYTE: begin
         packet_count          <=  0;
         if (start_of_frame && in_fifo_data == 8'hCD) begin
-          //found it! 
+          //found it!
           found_id_byte       <=  1;
           assembler_state     <=  PROCESS_DATA;
           in_fifo_read        <=  1;
@@ -347,7 +347,7 @@ always @ (posedge clk ) begin
         end
       end
       READ_ADDRESS: begin
-        if (  (o_in_command[3:0]  ==  `COMMAND_WRITE)        || 
+        if (  (o_in_command[3:0]  ==  `COMMAND_WRITE)        ||
               (o_in_command[3:0]  ==  `COMMAND_MASTER_ADDR)  ||
               (o_in_command[3:0]  ==  `COMMAND_CORE_DUMP)) begin
           input_handler_state <=  WAIT_FOR_DATA;
@@ -399,7 +399,7 @@ assign  wdebug[15]          = i_oh_en;
 
 //assign  wdebug[15:8]        = in_fifo_data;
 
-integer i; 
+integer i;
 
 //state machine to read data from the master and send it to the out FIFO
 always @ (posedge clk ) begin
@@ -414,7 +414,7 @@ always @ (posedge clk ) begin
   out_fifo_data                 <=  0;
   out_fifo_write                <=  0;
   out_packet_count              <=  0;
-  
+
   for (i = 0; i < 13; i = i + 1) begin
     out_packet[i]               <=  0;
   end
@@ -438,7 +438,7 @@ always @ (posedge clk ) begin
             out_fifo_activate[1]  <=  1;
           end
           out_fifo_count        <=  out_fifo_write_size - 1;
-          if ((     (oh_status == `READ_RESP) || 
+          if ((     (oh_status == `READ_RESP) ||
                     (oh_status == `CORE_DUMP_RESP)
              ) && (data_count > 0)) begin
 
@@ -460,9 +460,9 @@ always @ (posedge clk ) begin
           out_packet[0]         <=  8'hDC;
           out_packet[1]         <=  i_out_status[7:0];
           oh_status             <=  i_out_status[3:0];
-          if (  (oh_status == `READ_RESP)        || 
-                (oh_status == `WRITE_RESP)       || 
-                (oh_status == `MASTER_ADDR_RESP) || 
+          if (  (oh_status == `READ_RESP)        ||
+                (oh_status == `WRITE_RESP)       ||
+                (oh_status == `MASTER_ADDR_RESP) ||
                 (oh_status == `CORE_DUMP_RESP) ) begin
 
             out_packet[2]       <=  i_out_data_count[23:16];
