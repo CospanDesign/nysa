@@ -240,7 +240,7 @@ wishbone_master wm (
 );
 
 //slave 1
-wb_spi s1 (
+wb_i2s s1 (
 
   .clk        (clk                  ),
   .rst        (rst                  ),
@@ -253,7 +253,7 @@ wb_spi s1 (
   .o_wbs_dat  (w_wbs1_dat_o         ),
   .i_wbs_adr  (w_wbs1_adr           ),
   .o_wbs_int  (w_wbs1_int           ),
-                                    
+
   .ss_pad_o   (ss_pad_o             ),
   .sclk_pad_o (sclk_pad_o           ),
   .mosi_pad_o (mosi_pad_o           ),
@@ -294,7 +294,7 @@ wishbone_interconnect wi (
 );
 
 
-mt48lc4m16 
+mt48lc4m16
 //#(
 //  tdevice_TRCD = 10
 //)
@@ -342,14 +342,12 @@ ram (
 );
 
 
-
-
 //mem 0
 wb_sdram m0 (
 
   .clk(clk),
   .rst(rst),
-  
+
   .wbs_we_i(arb_we_o),
   .wbs_cyc_i(arb_cyc_o),
   .wbs_dat_i(arb_dat_o),
@@ -711,5 +709,48 @@ always @ (posedge clk) begin
     prev_sclk   <=  sclk_pad_o;
   end
 end
+
+
+
+arbitor_2_masters arb0(
+  .clk              (clk),
+  .rst              (rst_n),
+
+  //masters
+  .i_m0_we          (i2s_mem_o_we),
+  .i_m0_stb         (i2s_mem_o_stb),
+  .i_m0_cyc         (i2s_mem_o_cyc),
+  .i_m0_sel         (i2s_mem_o_sel),
+  .i_m0_dat         (i2s_mem_o_dat),
+  .i_m0_adr         (i2s_mem_o_adr),
+  .o_m0_dat         (i2s_mem_i_dat),
+  .o_m0_ack         (i2s_mem_i_ack),
+  .o_m0_int         (i2s_mem_i_int),
+
+
+  .i_m1_we          (w_sm0_i_wbs_we),
+  .i_m1_stb         (w_sm0_i_wbs_stb),
+  .i_m1_cyc         (w_sm0_i_wbs_cyc),
+  .i_m1_sel         (w_sm0_i_wbs_sel),
+  .i_m1_dat         (w_sm0_i_wbs_dat),
+  .i_m1_adr         (w_sm0_i_wbs_adr),
+  .o_m1_dat         (w_sm0_o_wbs_dat),
+  .o_m1_ack         (w_sm0_o_wbs_ack),
+  .o_m1_int         (w_sm0_o_wbs_int),
+
+
+  //slave
+  .o_s_we           (w_arb0_i_wbs_we),
+  .o_s_stb          (w_arb0_i_wbs_stb),
+  .o_s_cyc          (w_arb0_i_wbs_cyc),
+  .o_s_sel          (w_arb0_i_wbs_sel),
+  .o_s_dat          (w_arb0_i_wbs_dat),
+  .o_s_adr          (w_arb0_i_wbs_adr),
+  .i_s_dat          (w_arb0_o_wbs_dat),
+  .i_s_ack          (w_arb0_o_wbs_ack),
+  .i_s_int          (w_arb0_o_wbs_int)
+);
+
+
 
 endmodule
