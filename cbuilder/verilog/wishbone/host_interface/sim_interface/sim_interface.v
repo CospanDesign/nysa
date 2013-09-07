@@ -73,22 +73,22 @@ module sim_interface (
 //Registers/Wires
 //Submodules
 //Asynchronous Logic
-assign  o_sim_master_ready   = i_master_ready;
-assign  i_sim_in_reset       = o_ih_reset;
-assign  i_sim_in_ready       = o_ih_ready;
-                                                
-assign  i_sim_in_command     = o_in_command;
-assign  i_sim_in_address     = o_in_address;
-assign  i_sim_in_data        = o_in_data;
-assign  i_sim_in_data_count  = o_in_data_count;
-                                                
-assign  i_sim_out_ready      = o_oh_ready;
-assign  o_sim_out_en         = i_oh_en;
-                                                
-assign  o_sim_out_status     = i_out_status;
-assign  o_sim_out_address    = i_out_address;
-assign  o_sim_out_data       = i_out_data;
-assign  o_sim_out_data_count = i_out_data_count;
+assign  o_sim_master_ready    = i_master_ready;
+assign  o_ih_reset            = i_sim_in_reset;
+assign  o_ih_ready            = i_sim_in_ready;
+                                                 
+assign  o_in_command          = i_sim_in_command;
+assign  o_in_addresss         = i_sim_in_address;
+assign  o_in_data             = i_sim_in_data;
+assign  o_in_data             = i_sim_in_data_count;
+                              
+assign  o_oh_ready            = i_sim_out_ready;
+assign  o_sim_out_en          = i_oh_en;
+                                                 
+assign  o_sim_out_status      = i_out_status;
+assign  o_sim_out_address     = i_out_address;
+assign  o_sim_out_data        = i_out_data;
+assign  o_sim_out_data_count  = i_out_data_count;
 
 //Synchronous Logic
 endmodule

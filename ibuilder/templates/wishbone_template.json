@@ -28,14 +28,6 @@
         "location":"${NYSA}/ibuilder/bus", 
         "tags":true
       },
-			"sim_scripts":{
-        "dir":true,
-				"files":{
-					"sim_interface.py":{
-            "location":"${NYSA}/ibuilder/lib/sim_scripts"
-          }
-				}
-			},
 			"rtl":{ 
         "dir":true,
 				"files":{
@@ -104,6 +96,10 @@
 				"files":{
 					"interface":{
             "dir":true
+          },
+          "top.v":{
+            "location":"${NYSA}/cbuilder/template/top",
+            "gen_script":"gen_sim_top"
           }
 				}
 			},

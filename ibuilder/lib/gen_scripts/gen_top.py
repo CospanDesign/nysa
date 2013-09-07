@@ -3,6 +3,7 @@ from gen import Gen
 import sys
 import os
 import string
+import copy
 from string import Template
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -22,6 +23,7 @@ class GenTop(Gen):
     def add_ports_to_wires(self):
         """add all the ports to wires list so that no item adds wires"""
         for name in self.bindings.keys():
+            #print "name: %s" % name
             self.wires.append(self.bindings[name]["loc"])
 
 
@@ -54,6 +56,7 @@ class GenTop(Gen):
     def gen_script (self, tags = {}, buf = "", user_paths = [], debug = False):
         """Generate the Top Module"""
         #debug = True
+        tags = copy.deepcopy(tags)
         #if debug: print "Tags: %s" % str(tags)
         self.user_paths = user_paths
         board_dict = utils.get_board_config(tags["board"])
@@ -82,6 +85,7 @@ class GenTop(Gen):
         #add the interface bindings directly
         if "bind" in self.tags["INTERFACE"]:
             for if_name in self.tags["INTERFACE"]["bind"]:
+                #print "if name: %s" % if_name
                 self.bindings[if_name] = self.tags["INTERFACE"]["bind"][if_name]
 
         #add each of the slave items to the binding
