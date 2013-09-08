@@ -36,31 +36,31 @@ module sim_interface (
   input               i_sim_in_reset,
   input               i_sim_in_ready,
 
-  input       [31:0]  i_sim_in_command,
-  input       [31:0]  i_sim_in_address,
-  input       [31:0]  i_sim_in_data,
-  input       [27:0]  i_sim_in_data_count,
-
+  input   [31:0]      i_sim_in_command,
+  input   [31:0]      i_sim_in_address,
+  input   [31:0]      i_sim_in_data,
+  input   [31:0]      i_sim_in_data_count,
+                      
   input               i_sim_out_ready,
   output              o_sim_out_en,
-
-  output      [31:0]  o_sim_out_status,
-  output      [31:0]  o_sim_out_address,
-  output      [31:0]  o_sim_out_data,
-  output      [27:0]  o_sim_out_data_count,
+                      
+  output  [31:0]      o_sim_out_status,
+  output  [31:0]      o_sim_out_address,
+  output  [31:0]      o_sim_out_data,
+  output  [27:0]      o_sim_out_data_count,
 
 
   //master interface
   input               i_master_ready,
   output              o_ih_reset,
-  output reg          o_ih_ready,
+  output              o_ih_ready,
 
-  output  reg [31:0]  o_in_command,
-  output  reg [31:0]  o_in_address,
-  output  reg [31:0]  o_in_data,
-  output  reg [27:0]  o_in_data_count,
+  output  [31:0]      o_in_command,
+  output  [31:0]      o_in_address,
+  output  [31:0]      o_in_data,
+  output  [27:0]      o_in_data_count,
 
-  output  reg         o_oh_ready,
+  output              o_oh_ready,
   input               i_oh_en,
 
   input   [31:0]      i_out_status,
@@ -80,7 +80,7 @@ assign  o_ih_ready            = i_sim_in_ready;
 assign  o_in_command          = i_sim_in_command;
 assign  o_in_addresss         = i_sim_in_address;
 assign  o_in_data             = i_sim_in_data;
-assign  o_in_data             = i_sim_in_data_count;
+assign  o_in_data_count       = i_sim_in_data_count;
                               
 assign  o_oh_ready            = i_sim_out_ready;
 assign  o_sim_out_en          = i_oh_en;

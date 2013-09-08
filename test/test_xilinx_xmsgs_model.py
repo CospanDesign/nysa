@@ -47,7 +47,7 @@ class Test (unittest.TestCase):
 
         #Test only a builder
     def test_full_messages(self):
-        xb = xilinx_builder.XilinxBuilder()
+        xb = xilinx_builder.XilinxBuilder("test")
         ftime = os.path.getctime("gotest.py")
         #print "ftime: %s" % str(ftime)
         xb.new_xmsgs_data(full_message, ftime)
@@ -56,7 +56,7 @@ class Test (unittest.TestCase):
         self.assertTrue(result)
 
     def test_partial_message(self):
-        xb = xilinx_builder.XilinxBuilder()
+        xb = xilinx_builder.XilinxBuilder("test")
         ftime = os.path.getctime("gotest.py")
         xb.new_xmsgs_data(partial_message_with_start, ftime)
         result = xb.finished()

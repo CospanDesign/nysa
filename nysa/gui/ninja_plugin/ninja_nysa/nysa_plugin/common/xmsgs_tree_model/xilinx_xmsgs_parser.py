@@ -68,7 +68,7 @@ class XilinxXmsgsParserError(Exception):
 
 
 class XilinxXmsgsParser(object):
-    def __init__(self, changed_cb):
+    def __init__(self, changed_cb = None):
         super(XilinxXmsgsParser, self).__init__()
         self.path = ""
         self.tree = None

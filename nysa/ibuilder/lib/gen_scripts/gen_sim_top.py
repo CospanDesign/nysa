@@ -25,57 +25,71 @@ class GenSimTop(Gen):
         #print "tags:\n%s" % str(tags)
         #print "\n"
         #print "bindings tags:\n%s" % str(tags["bind"])
-        sim_tag = copy.deepcopy(tags)
-        sim_tag["INTERFACE"] = {}
-        sim_tag["INTERFACE"]["filename"] = "sim_interface.v"
-        sim_tag["INTERFACE"]["bind"] = {}
 
-        sim_tag["INTERFACE"]["bind"]["o_sim_master_ready"] = {
+        self.tags = copy.deepcopy(tags)
+        self.tags["INTERFACE"] = {}
+        self.tags["INTERFACE"]["filename"] = "sim_interface.v"
+        self.tags["INTERFACE"]["bind"] = {}
+
+        self.tags["INTERFACE"]["bind"]["o_sim_master_ready"] = {
                 "loc":"sim_master_ready",
                 "direction":"output"}
-        sim_tag["INTERFACE"]["bind"]["i_sim_in_reset"] = {
+        self.tags["INTERFACE"]["bind"]["i_sim_in_reset"] = {
                 "loc":"sim_in_reset",
                 "direction":"input"}
-        sim_tag["INTERFACE"]["bind"]["i_sim_in_ready"] = {
+        self.tags["INTERFACE"]["bind"]["i_sim_in_ready"] = {
                 "loc":"sim_in_ready",
                 "direction":"input"}
 
-        sim_tag["INTERFACE"]["bind"]["i_sim_in_command"] = {
+        self.tags["INTERFACE"]["bind"]["i_sim_in_command"] = {
                 "loc":"sim_in_command[31:0]",
                 "direction":"input"}
-        sim_tag["INTERFACE"]["bind"]["i_sim_in_address"] = {
+        self.tags["INTERFACE"]["bind"]["i_sim_in_address"] = {
                 "loc":"sim_in_address[31:0]",
                 "direction":"input"}
-        sim_tag["INTERFACE"]["bind"]["i_sim_in_data"] = {
+        self.tags["INTERFACE"]["bind"]["i_sim_in_data"] = {
                 "loc":"sim_in_data[31:0]",
                 "direction":"input"}
-        sim_tag["INTERFACE"]["bind"]["i_sim_in_data_count"] = {
-                "loc":"sim_in_data_count[27:0]",
+        self.tags["INTERFACE"]["bind"]["i_sim_in_data_count"] = {
+                "loc":"sim_in_data_count[31:0]",
                 "direction":"input"}
   
-        sim_tag["INTERFACE"]["bind"]["i_sim_out_ready"] = {
+        self.tags["INTERFACE"]["bind"]["i_sim_out_ready"] = {
                 "loc":"sim_out_ready",
                 "direction":"input"}
-        sim_tag["INTERFACE"]["bind"]["o_sim_out_en"] = {
+        self.tags["INTERFACE"]["bind"]["o_sim_out_en"] = {
                 "loc":"sim_out_en",
                 "direction":"output"}
 
-        sim_tag["INTERFACE"]["bind"]["o_sim_out_status"] = {
+        self.tags["INTERFACE"]["bind"]["o_sim_out_status"] = {
                 "loc":"sim_out_status[31:0]",
                 "direction":"output"}
-        sim_tag["INTERFACE"]["bind"]["o_sim_out_address"] = {
+        self.tags["INTERFACE"]["bind"]["o_sim_out_address"] = {
                 "loc":"sim_out_address[31:0]",
                 "direction":"output"}
-        sim_tag["INTERFACE"]["bind"]["o_sim_out_data"] = {
+        self.tags["INTERFACE"]["bind"]["o_sim_out_data"] = {
                 "loc":"sim_out_data[31:0]",
                 "direction":"output"}
-        sim_tag["INTERFACE"]["bind"]["o_sim_out_data_count"] = {
+        self.tags["INTERFACE"]["bind"]["o_sim_out_data_count"] = {
                 "loc":"sim_out_data_count[27:0]",
                 "direction":"output"}
 
 
         top = gen_top.GenTop()
-        buf = top.gen_script(sim_tag, buf, user_paths, debug)
+        buf = top.gen_script(self.tags, buf, user_paths, debug)
+
+        #Add the waveform file
+        waveform_init_string = ("\n" +
+            "initial begin\n"
+            "  $dumpfile (\"waveform.vcd\");\n" +
+            "  $dumpvars (0, top);\n" +
+            "end\n\n")
+
+
+        #put this in right before the 'endmodule'
+        pre_end = buf.partition("endmodule")[0]
+        buf = pre_end + waveform_init_string + "endmodule\n\n"
+
         return buf
 
 

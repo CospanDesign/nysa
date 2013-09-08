@@ -2,10 +2,10 @@
 
 from distutils.core import setup
 
-setup(  name='Nysa',
+setup(  name='nysa',
         version='0.0.1',
         description='FPGA core/image generator and FPGA communication',
         author='Dave McCoy',
         author_email='dave.mccoy@cospandesign.com',
-        packages=['']
+        packages=['.']
 )
