@@ -6,6 +6,7 @@ import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
+                             "nysa",
                              "gui",
                              "ninja_plugin",
                              "ninja_nysa",

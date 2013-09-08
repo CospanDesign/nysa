@@ -63,7 +63,8 @@ EPILOG = "\n" \
 debug = False
 
 base = os.path.join( os.path.dirname(__file__),
-                     os.pardir)
+                     os.pardir,
+                     "nysa")
 nysa_base = os.path.abspath(base)
 
 
