@@ -542,6 +542,10 @@ class GenTop(Gen):
         if (len(self.bindings.keys()) > 0):
             buf_bind += "\t//Bindings to Ports\n"
             for key in self.bindings.keys():
+                if key == self.bindings[key]["loc"]:
+                    #Don't need to assign a signal to itself
+                    continue
+
                 if (self.bindings[key]["direction"] == "input"):
 
                     buf_bind += "\tassign\t{0:<20}=\t{1};\n".format(key, self.bindings[key]["loc"])
