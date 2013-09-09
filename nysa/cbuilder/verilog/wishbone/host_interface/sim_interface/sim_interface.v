@@ -52,15 +52,15 @@ module sim_interface (
 
   //master interface
   input               i_master_ready,
-  output              o_ih_reset,
-  output              o_ih_ready,
+  output  reg         o_ih_reset,
+  output  reg         o_ih_ready,
 
-  output  [31:0]      o_in_command,
-  output  [31:0]      o_in_address,
-  output  [31:0]      o_in_data,
-  output  [27:0]      o_in_data_count,
+  output  reg [31:0]  o_in_command,
+  output  reg [31:0]  o_in_address,
+  output  reg [31:0]  o_in_data,
+  output  reg [27:0]  o_in_data_count,
 
-  output              o_oh_ready,
+  output  reg         o_oh_ready,
   input               i_oh_en,
 
   input   [31:0]      i_out_status,
@@ -74,21 +74,39 @@ module sim_interface (
 //Submodules
 //Asynchronous Logic
 assign  o_sim_master_ready    = i_master_ready;
-assign  o_ih_reset            = i_sim_in_reset;
-assign  o_ih_ready            = i_sim_in_ready;
-                                                 
-assign  o_in_command          = i_sim_in_command;
-assign  o_in_addresss         = i_sim_in_address;
-assign  o_in_data             = i_sim_in_data;
-assign  o_in_data_count       = i_sim_in_data_count;
-                              
-assign  o_oh_ready            = i_sim_out_ready;
 assign  o_sim_out_en          = i_oh_en;
-                                                 
 assign  o_sim_out_status      = i_out_status;
 assign  o_sim_out_address     = i_out_address;
 assign  o_sim_out_data        = i_out_data;
 assign  o_sim_out_data_count  = i_out_data_count;
 
+
+
 //Synchronous Logic
+always @ (posedge clk) begin
+  if (rst) begin
+    o_ih_reset            <=  0;
+    o_ih_ready            <=  0;
+                                             
+    o_in_command          <=  0;
+    o_in_address          <=  0;
+    o_in_data             <=  0;
+    o_in_data_count       <=  0;
+                          
+    o_oh_ready            <=  0;
+ 
+  end
+  else begin
+    o_ih_reset            <= i_sim_in_reset;
+    o_ih_ready            <= i_sim_in_ready;
+                                             
+    o_in_command          <= i_sim_in_command;
+    o_in_address          <= i_sim_in_address;
+    o_in_data             <= i_sim_in_data;
+    o_in_data_count       <= i_sim_in_data_count;
+                          
+    o_oh_ready            <= i_sim_out_ready;
+  end
+end
+                                                 
 endmodule
