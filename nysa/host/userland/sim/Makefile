@@ -38,6 +38,7 @@ TOPLEVEL=top
 PWD=$(shell pwd)
 COMPILE_ARGS=-y$(XILINX_PATH)/ISE/verilog/src/unisims
 COMPILE_ARGS+=-I$(PWD)/../rtl/dependencies -I$(PWD)/../rtl
+COMPILE_ARGS+=-I$(PWD)/../rtl/bus/slave
 
 
 VERILOG_SOURCES = $(XILINX_PATH)/ISE/verilog/src/glbl.v

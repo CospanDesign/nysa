@@ -56,7 +56,7 @@ class NysaCommError(Exception):
         return repr(self.value)
 
 
-class Nysa:
+class Nysa(object):
     """Nysa
 
     Abstract class and must be overriden by a class that will implement
