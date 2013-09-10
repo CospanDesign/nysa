@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
-#
+# Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
+
 # This file is part of Nysa (http://ninja-ide.org).
 #
 # Nysa is free software; you can redistribute it and/or modify
@@ -16,6 +16,7 @@
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
 
+# -*- coding: utf-8 -*-
 
 """ nysa
 
