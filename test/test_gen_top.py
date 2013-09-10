@@ -6,7 +6,9 @@ import sys
 from inspect import isclass
 import json
 
-sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                os.pardir),
+                "nysa")
 
 from ibuilder.lib import utils
 from ibuilder.lib.gen_scripts.gen import Gen
@@ -15,11 +17,12 @@ from ibuilder.lib.gen_scripts import gen_top
 
 import utils
 class Test (unittest.TestCase):
-  """Unit test for the gen_top.v"""
+  """Unit test for the gen_top.py"""
 
   def setUp(self):
     base = os.path.join( os.path.dirname(__file__),
-                         os.pardir)
+                         os.pardir,
+                         "nysa")
     self.nysa_base = os.path.abspath(base)
     self.dbg = False
     self.gen = gen_top.GenTop()

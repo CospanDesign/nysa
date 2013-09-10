@@ -1,31 +1,31 @@
-# Distributed under the MIT licesnse.
 # Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
 
-# Permission is hereby granted, free of charge, to any person obtaining a copy of
-# this software and associated documentation files (the "Software"), to deal in
-# the Software without restriction, including without limitation the rights to
-# use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-# of the Software, and to permit persons to whom the Software is furnished to do
-# so, subject to the following conditions:
+# This file is part of Nysa (http://ninja-ide.org).
 #
-# The above copyright notice and this permission notice shall be included in all
-# copies or substantial portions of the Software.
+# Nysa is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# any later version.
 #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
+# Nysa is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
-
-"""Utilities used in detecting and generating wishbone cores"""
+"""Utilities used in detecting and generating wishbone cores
+   and generating top.v files for images
+"""
 
 """
 Log:
 06/25/2013
     -Initial Commit
+09/10/2013
+    -Adding WishboneTopGenerator
+    -Changed License to GPL V3
 """
 
 __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
@@ -33,6 +33,18 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 import os
 import sys
 import re
+from string import Template
+
+PATH_TO_TOP = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                              os.pardir,
+                              os.pardir,
+                              "cbuilder",
+                              "template",
+                              "top",
+                              "top.v"))
+
+
+#Nysa imports
 
 
 def is_wishbone_bus_signal(signal):
@@ -56,7 +68,6 @@ def is_wishbone_bus_signal(signal):
     if re.search("o_wbs_int", signal) is not None:
         return True
 
-
     #Look for a wishbone master signal
     if re.search("o_.*_we$", signal) is not None:
         return True
@@ -78,3 +89,63 @@ def is_wishbone_bus_signal(signal):
         return True
     return False
 
+
+class WishboneTopGenerator(object):
+    def __init__(self):
+        f = open(PATH_TO_TOP, "r")
+        self.buf = f.read()
+        self.port_buf = ""
+        self.arb_buf = ""
+        self.wr_buf = ""
+        self.wi_buf = ""
+        self.wmi_buf = ""
+        self.wm_buf = ""
+
+    def generate_top(self):
+        pass
+
+    def generate_sim_top(self):
+        pass
+
+    def generate_ports(self):
+        pass
+
+    def add_ports_to_wires(self):
+        pass
+
+    def generate_wishbone_peripheral_slave(self,
+                                name = "",
+                                index = -1,
+                                module_tags = {},
+                                debug = False):
+        pass
+
+                                
+    def generate_wishbone_memory_slave(self,
+                                name = "",
+                                index = -1,
+                                module_tags = {},
+                                debug = False):
+        pass
+
+    def generate_host_interface_buffer(self,
+                                debug = False):
+        pass
+
+    def generate_wishbone_buffer(self,
+                                 name="",
+                                 index=-1,
+                                 module_tags = {},
+                                 mem_slave=False,
+                                 io_module=False,
+                                 debug=False):
+        pass
+
+    def generate_arbitor_buffer(self, debug = False):
+        pass
+
+    def generate_parameters(self, name="", module_tags={}, debug = False):
+        pass
+
+    def generate_assigns(self, debug=False):
+        pass
