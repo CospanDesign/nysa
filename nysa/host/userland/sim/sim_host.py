@@ -23,6 +23,8 @@ from cocotb.triggers import Timer, Join, RisingEdge, ReadOnly, ReadWrite, ClockC
 from cocotb.clock import Clock
 from cocotb.result import ReturnValue, TestFailure
 from cocotb.binary import BinaryValue
+from cocotb import bus
+import cocotb.monitors
 
 from nysa.host.userland.host import Nysa
 from nysa.host.userland.host import NysaCommError
@@ -53,7 +55,6 @@ class NysaSim (Nysa):
     
         #@cocotb.coroutine
         #def setup(self):
-
 
         self.rst            = self.dut.rst
         self.rst            <= 1
@@ -86,12 +87,57 @@ class NysaSim (Nysa):
         #yield ClockCycles(self.dut.clk, 10)
 
         self.dut.log.info("Clock Started")
-
     
     @cocotb.coroutine
     def read(self, device_id, address, length = 1, mem_device = False):
         self.dut.log.info("reading")
-        yield Join(cocotb.fork(self._read(device_id, address, length, mem_device)))
+        data_index = 0
+        self.in_ready       <= 0 
+        self.out_ready      <= 1
+        yield ClockCycles(self.dut.clk, 100)
+
+        self.response = Array('B')
+
+        if (mem_device):
+            self.in_command <= 0x00010002
+            self.address    <= address
+        else:
+            self.in_command <= 0x00000002
+            self.in_address <= (((0x0F & device_id) << 24) | address)
+
+        self.in_data_count  <= length
+        self.in_data        <= 0
+
+        yield ClockCycles(self.dut.clk, 1)
+        self.in_ready       <= 1
+        while data_index < length:
+            timeout_count   =  0
+            while timeout_count < self.timeout:
+                yield RisingEdge(self.dut.clk)
+                timeout_count   += 1
+                yield ReadOnly()
+                if self.out_en.value.get_value() == 0:
+                    continue
+                else:
+                    break
+
+            if timeout_count == self.timeout:
+                self.dut.log.error("Timed out while waiting for master to be respond")
+                return
+
+            data_index += 1
+            #yield RisingEdge(self.dut.clk)
+            #yield ReadOnly()
+            value = self.out_data.value.get_value()
+            print "%d Received: 0x%08X" % (data_index, value)
+            self.response.append(0xFF & (value >> 24))
+            self.response.append(0xFF & (value >> 16))
+            self.response.append(0xFF & (value >> 8))
+            self.response.append(0xFF & value)
+
+        self.out_ready      <= 0
+ 
+        raise ReturnValue(self.response)
 
     @cocotb.coroutine
     def _read(self, device_id, address, length = 1, mem_device = False):
@@ -134,12 +180,13 @@ class NysaSim (Nysa):
             yield ReadOnly()
             value = self.out_data.value.get_value()
             print "Received: 0x%08X" % value
-            self.response.append(0x0F & (value >> 24))
-            self.response.append(0x0F & (value >> 16))
-            self.response.append(0x0F & (value >> 8))
-            self.response.append(0x0F & value)
+            self.response.append(0xFF & (value >> 24))
+            self.response.append(0xFF & (value >> 16))
+            self.response.append(0xFF & (value >> 8))
+            self.response.append(0xFF & value)
 
         self.out_ready      <= 0
+        
 
     @cocotb.coroutine
     def write(self, device_id, address, data = None, mem_device = False):
