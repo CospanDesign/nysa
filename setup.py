@@ -10,6 +10,7 @@ setup(
     author='Cospan Design',
     author_email='dave.mccoy@cospandesign.com',
     packages=find_packages('.'),
+    data_files=[("nysa/cbuilder/drt", ["nysa/cbuilder/drt/drt.json"])],
     long_description="""\
             Nysa is an FPGA development toolset that is split into three
             branches:\n
