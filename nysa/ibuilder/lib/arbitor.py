@@ -269,9 +269,9 @@ def generate_arbitor_buffer(master_count, debug = False):
     port_buf += "  input           i_m%d_stb,\n" % i
     port_buf += "  input   [3:0]   i_m%d_sel,\n" % i
     port_buf += "  output          o_m%d_ack,\n" % i
-    port_buf += "  input           i_m%d_dat,\n" % i
-    port_buf += "  output          o_m%d_dat,\n" % i
-    port_buf += "  input           i_m%d_adr,\n" % i
+    port_buf += "  input   [31:0]  i_m%d_dat,\n" % i
+    port_buf += "  output  [31:0]  o_m%d_dat,\n" % i
+    port_buf += "  input   [31:0]  i_m%d_adr,\n" % i
     port_buf += "  output          o_m%d_int,\n" % i
 
     port_buf = port_buf + "\n"

@@ -52,12 +52,12 @@ reg [7:0]         master_select;
 reg [7:0]         priority_select;
 
 
-wire              o_master_we  [MASTER_COUNT:0];
-wire              o_master_stb [MASTER_COUNT:0];
-wire              o_master_cyc [MASTER_COUNT:0];
-wire  [3:0]       o_master_sel [MASTER_COUNT:0];
-wire  [31:0]      o_master_adr [MASTER_COUNT:0];
-wire  [31:0]      o_master_dat [MASTER_COUNT:0];
+wire              o_master_we  [MASTER_COUNT - 1:0];
+wire              o_master_stb [MASTER_COUNT - 1:0];
+wire              o_master_cyc [MASTER_COUNT - 1:0];
+wire  [3:0]       o_master_sel [MASTER_COUNT - 1:0];
+wire  [31:0]      o_master_adr [MASTER_COUNT - 1:0];
+wire  [31:0]      o_master_dat [MASTER_COUNT - 1:0];
 
 
 ${MASTER_SELECT}

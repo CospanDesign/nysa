@@ -237,21 +237,21 @@ def generate_master_buffer(invert_reset):
         buf += "\t.{0:20}({1:20}),\n\n".format("rst", "rst")
 
     buf += "\t//input handler signals\n"
-    buf += "\t.{0:20}({1:20}),\n".format("i_ready", "w_ih_ready")
-    buf += "\t.{0:20}({1:20}),\n".format("i_ih_rst", "w_ih_reset")
-    buf += "\t.{0:20}({1:20}),\n".format("i_command", "w_in_command")
-    buf += "\t.{0:20}({1:20}),\n".format("i_address", "w_in_address")
-    buf += "\t.{0:20}({1:20}),\n".format("i_data", "w_in_data")
-    buf += "\t.{0:20}({1:20}),\n\n".format("i_data_count", "w_in_data_count")
+    buf += "\t.{0:20}({1:20}),\n".format("i_ready", "ih_ready")
+    buf += "\t.{0:20}({1:20}),\n".format("i_ih_rst", "ih_reset")
+    buf += "\t.{0:20}({1:20}),\n".format("i_command", "in_command")
+    buf += "\t.{0:20}({1:20}),\n".format("i_address", "in_address")
+    buf += "\t.{0:20}({1:20}),\n".format("i_data", "in_data")
+    buf += "\t.{0:20}({1:20}),\n\n".format("i_data_count", "in_data_count")
 
     buf += "\t//output handler signals\n"
-    buf += "\t.{0:20}({1:20}),\n".format("i_out_ready", "w_oh_ready")
-    buf += "\t.{0:20}({1:20}),\n".format("o_en", "w_oh_en")
-    buf += "\t.{0:20}({1:20}),\n".format("o_status", "w_out_status")
-    buf += "\t.{0:20}({1:20}),\n".format("o_address", "w_out_address")
-    buf += "\t.{0:20}({1:20}),\n".format("o_data", "w_out_data")
-    buf += "\t.{0:20}({1:20}),\n".format("o_data_count", "w_out_data_count")
-    buf += "\t.{0:20}({1:20}),\n\n".format("o_master_ready", "w_master_ready")
+    buf += "\t.{0:20}({1:20}),\n".format("i_out_ready", "oh_ready")
+    buf += "\t.{0:20}({1:20}),\n".format("o_en", "oh_en")
+    buf += "\t.{0:20}({1:20}),\n".format("o_status", "out_status")
+    buf += "\t.{0:20}({1:20}),\n".format("o_address", "out_address")
+    buf += "\t.{0:20}({1:20}),\n".format("o_data", "out_data")
+    buf += "\t.{0:20}({1:20}),\n".format("o_data_count", "out_data_count")
+    buf += "\t.{0:20}({1:20}),\n\n".format("o_master_ready", "master_ready")
 
     buf += "\t//interconnect signals\n"
     buf += "\t.{0:20}({1:20}),\n".format("o_per_we", "w_wbm_we_o")
@@ -307,14 +307,6 @@ class WishboneTopGenerator(object):
         f = open(PATH_TO_TOP, "r")
         self.user_paths = []
         self.buf = f.read()
-        self.port_buf = ""
-        self.arb_buf = ""
-        self.wr_buf = ""
-        self.wi_buf = ""
-        self.wmi_buf = ""
-        self.wm_buf = ""
-        self.bind_buf = ""
-        self.ibind_buf = ""
         self.internal_bindings = {}
         self.bindings = {}
         self.enable_mem_bus = False
@@ -383,11 +375,9 @@ class WishboneTopGenerator(object):
 
         #Remove all ports from the possible wires
         self.add_ports_to_wires()
-        template = Template(self.buf)
 
         #Setting up ports
-        self.port_buf = self.generate_ports()
-        self.arb_buf = self.generate_arbitor_buffer()
+        arb_buf = self.generate_arbitor_buffer(debug = debug)
         num_slaves = len(self.tags["SLAVES"]) + 1
         num_mem_slaves = 0
         if "MEMORY" in self.tags:
@@ -472,7 +462,7 @@ class WishboneTopGenerator(object):
         buf += generate_memory_wishbone_interconnect_buffer(num_mem_slaves, board_dict["invert_reset"])
         buf += "\n\n"
         #Add an aritor if there is any
-        buf += self.generate_arbitor_buffer(debug = debug)
+        buf += arb_buf
         buf += "\n\n"
         for slave_buf in slave_buffer_list:
             buf += slave_buf
@@ -499,8 +489,8 @@ class WishboneTopGenerator(object):
         board_dict = utils.get_board_config(self.tags["board"])
 
         buf =  "//General Signals\n"
-        buf +=  "{0:<20}{1};\n".format("wire", "clk")
-        buf +=  "{0:<20}{1};\n".format("wire", "rst")
+        #buf +=  "{0:<20}{1};\n".format("wire", "clk")
+        #buf +=  "{0:<20}{1};\n".format("wire", "rst")
 
         self.wires.append("clk")
         self.wires.append("rst")
@@ -511,32 +501,32 @@ class WishboneTopGenerator(object):
 
         buf += "\n"
         buf +=  "//input handler signals\n"
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_in_command")
-        self.wires.append("w_in_command")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_in_address");
-        self.wires.append("w_in_address")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_in_data");
-        self.wires.append("w_in_data")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_in_data_count");
-        self.wires.append("w_in_data_count")
-        buf +=  "{0:<20}{1};\n".format("wire","w_ih_ready")
-        self.wires.append("w_ih_ready")
-        buf +=  "{0:<20}{1};\n".format("wire","w_ih_reset")
-        self.wires.append("w_ih_reset")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","in_command")
+        self.wires.append("in_command")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","in_address");
+        self.wires.append("in_address")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","in_data");
+        self.wires.append("in_data")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","in_data_count");
+        self.wires.append("in_data_count")
+        buf +=  "{0:<20}{1};\n".format("wire","ih_ready")
+        self.wires.append("ih_ready")
+        buf +=  "{0:<20}{1};\n".format("wire","ih_reset")
+        self.wires.append("ih_reset")
         buf += "\n"
 
         buf +=  "//output handler signals\n"
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_out_status")
-        self.wires.append("w_out_status")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_out_address")
-        self.wires.append("w_out_address")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_out_data")
-        self.wires.append("w_out_data")
-        buf +=  "{0:<19}{1};\n".format("wire\t[27:0]","w_out_data_count")
-        self.wires.append("w_out_data_count")
-        buf +=  "{0:<20}{1};\n".format("wire","w_oh_ready")
-        self.wires.append("w_oh_ready")
-        buf +=  "{0:<20}{1};\n".format("wire","w_oh_en")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","out_status")
+        self.wires.append("out_status")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","out_address")
+        self.wires.append("out_address")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","out_data")
+        self.wires.append("out_data")
+        buf +=  "{0:<19}{1};\n".format("wire\t[27:0]","out_data_count")
+        self.wires.append("out_data_count")
+        buf +=  "{0:<20}{1};\n".format("wire","oh_ready")
+        self.wires.append("oh_ready")
+        buf +=  "{0:<20}{1};\n".format("wire","oh_en")
         buf += "\n"
 
         buf +=  "//master signals\n"
@@ -763,18 +753,18 @@ class WishboneTopGenerator(object):
             wire = ""
             for w in IF_WIRES:
                 if w.endswith(port[2:]):
-                    wire = "w_%s" % w[2:]
+                    wire = "%s" % w[2:]
                     break
 
             #Not Pre-defines
             if len(wire) == 0:
                 if is_wishbone_slave_signal(port):
-                    wire = "%s%s" % (wishbone_prename, port)
+                    wire = "w_%s%s" % (wishbone_prename, port)
                 else:
                     if len(instance_name) > 0:
                         wire = "%s_%s" % (instance_name, port)
                     else:
-                        wire = port
+                        wire = "%s" % port
 
             line = "\t.{0:<20}({1:<20})".format(port, wire)
             if port_count == port_max:
@@ -790,18 +780,18 @@ class WishboneTopGenerator(object):
             wire = ""
             for w in IF_WIRES:
                 if w.endswith(port[2:]):
-                    wire = "w_%s" % w[2:]
+                    wire = "%s" % w[2:]
                     break
 
             #Not Pre-defines
             if len(wire) == 0:
                 if is_wishbone_slave_signal(port):
-                    wire = "%s%s" % (wishbone_prename, port)
+                    wire = "w_%s%s" % (wishbone_prename, port)
                 else:
                     if len(instance_name) > 0:
                         wire = "%s_%s" % (instance_name, port)
                     else:
-                        wire = port
+                        wire = "%s" % port
 
             line = "\t.{0:<20}({1:<20})".format(port, wire)
             if port_count == port_max:
@@ -901,14 +891,14 @@ class WishboneTopGenerator(object):
         #Generate wires
         pre_name = ""
         if (arb_index != -1):
-            pre_name = "w_arb%d_" % arb_index
+            pre_name = "arb%d_" % arb_index
         else:
             if debug: print "no arbitor"
 
             if mem_slave:
-                pre_name = "w_sm%d_" % index
+                pre_name = "sm%d_" % index
             else:
-                pre_name = "w_s%d_" % index
+                pre_name = "s%d_" % index
 
             if debug: print "pre name: %s" % pre_name
 
@@ -995,52 +985,53 @@ class WishboneTopGenerator(object):
 
                 master_name = arb_tags[arb_slave].keys()[mi - 1]
                 bus_name = arb_tags[arb_slave][master_name]
-                wbm_name = "w_%s_%s" % (master_name, bus_name)
+                wbm_name = "%s_%s" % (master_name, bus_name)
 
                 #Wishbone bus signals
                 #strobe
-                wire = "%s_i_stb" % wbm_name
-                if (not (wire in self.wires)):
+                wire = "%s_o_stb" % wbm_name
+                #print "Checking if %s is in %s" % (wire, self.wires)
+                if not (wire in self.wires):
                     buf += "{0:<20}{1};\n".format("wire", wire)
                     self.wires.append(wire)
                 #cycle
-                wire = "%s_i_cyc" % wbm_name
-                if (not (wire in self.wires)):
+                wire = "%s_o_cyc" % wbm_name
+                if not (wire in self.wires):
                     buf += "{0:<20}{1};\n".format("wire", wire)
                     self.wires.append(wire)
                 #write enable
-                wire = "%s_i_we" % wbm_name
-                if (not (wire in self.wires)):
+                wire = "%s_o_we" % wbm_name
+                if not (wire in self.wires):
                     buf += "{0:<20}{1};\n".format("wire", wire)
                     self.wires.append(wire)
                 #select
-                wire = "%s_i_sel" % wbm_name
-                if (not (wire in self.wires)):
+                wire = "%s_o_sel" % wbm_name
+                if not (wire in self.wires):
                     buf += "{0:<19}{1};\n".format("wire\t[3:0]", wire)
                     self.wires.append(wire)
                 #in data
-                wire = "%s_i_dat" % wbm_name
-                if (not (wire in self.wires)):
+                wire = "%s_o_dat" % wbm_name
+                if not (wire in self.wires):
                     buf += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
                     self.wires.append(wire)
                 #address
-                wire = "%s_i_adr" % wbm_name
-                if (not (wire in self.wires)):
+                wire = "%s_o_adr" % wbm_name
+                if not (wire in self.wires):
                     buf += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
                     self.wires.append(wire)
                 #out data
-                wire = "%s_o_dat" % wbm_name
-                if (not (wire in self.wires)):
+                wire = "%s_i_dat" % wbm_name
+                if not (wire in self.wires):
                     buf += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
                     self.wires.append(wire)
                 #acknowledge
-                wire = "%s_o_ack" % wbm_name
-                if (not (wire in self.wires)):
+                wire = "%s_i_ack" % wbm_name
+                if not (wire in self.wires):
                     buf += "{0:<20}{1};\n".format("wire", wire)
                     self.wires.append(wire)
                 #interrupt
-                wire = "%s_o_int" % wbm_name
-                if (not (wire in self.wires)):
+                wire = "%s_i_int" % wbm_name
+                if not (wire in self.wires):
                     buf += "{0:<20}{1};\n".format("wire", wire)
                     self.wires.append(wire)
 
@@ -1048,47 +1039,47 @@ class WishboneTopGenerator(object):
             #generate arbitor signals
             #strobe
             wire = "w_%s_i_wbs_stb" % arb_name
-            if (not (wire in self.wires)):
+            if not (wire in self.wires):
                 buf += "{0:<20}{1};\n".format("wire", wire)
                 self.wires.append(wire)
             #cycle
             wire = "w_%s_i_wbs_cyc" % arb_name
-            if (not (wire in self.wires)):
+            if not (wire in self.wires):
                 buf += "{0:<20}{1};\n".format("wire", wire)
                 self.wires.append(wire)
             #write enable
             wire = "w_%s_i_wbs_we" % arb_name
-            if (not (wire in self.wires)):
+            if not (wire in self.wires):
                 buf += "{0:<20}{1};\n".format("wire", wire)
                 self.wires.append(wire)
             #select
             wire = "w_%s_i_wbs_sel" % arb_name
-            if (not (wire in self.wires)):
+            if not (wire in self.wires):
                 buf += "{0:<19}{1};\n".format("wire\t[3:0]", wire)
                 self.wires.append(wire)
             #in data
             wire = "w_%s_i_wbs_dat" % arb_name
-            if (not (wire in self.wires)):
+            if not (wire in self.wires):
                 buf += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
                 self.wires.append(wire)
             #out data
             wire = "w_%s_o_wbs_dat" % arb_name
-            if (not (wire in self.wires)):
+            if not (wire in self.wires):
                 buf += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
                 self.wires.append(wire)
             #address
             wire = "w_%s_i_wbs_adr" % arb_name
-            if (not (wire in self.wires)):
+            if not (wire in self.wires):
                 buf += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
                 self.wires.append(wire)
             #acknowledge
             wire = "w_%s_o_wbs_ack" % arb_name
-            if (not (wire in self.wires)):
+            if not (wire in self.wires):
                 buf += "{0:<20}{1};\n".format("wire", wire)
                 self.wires.append(wire)
             #interrupt
             wire = "w_%s_o_wbs_int" % arb_name
-            if (not (wire in self.wires)):
+            if not (wire in self.wires):
                 buf += "{0:<20}{1};\n".format("wire", wire)
                 self.wires.append(wire)
 
@@ -1141,7 +1132,7 @@ class WishboneTopGenerator(object):
                                             print "slave index: %d" % mem_inc_index
                                         break
 
-                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_we" % mi, "w_%s_i_wbs_we" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_we"  % mi, "w_%s_i_wbs_we" % wbm_name)
                     buf +="\t.{0:20}({1:20}),\n".format("i_m%d_stb" % mi, "w_%s_i_wbs_stb" % wbm_name)
                     buf +="\t.{0:20}({1:20}),\n".format("i_m%d_cyc" % mi, "w_%s_i_wbs_cyc" % wbm_name)
                     buf +="\t.{0:20}({1:20}),\n".format("i_m%d_sel" % mi, "w_%s_i_wbs_sel" % wbm_name)
@@ -1158,15 +1149,15 @@ class WishboneTopGenerator(object):
                     bus_name = arb_tags[arb_slave][master_name]
                     wbm_name = "%s_%s" % (master_name, bus_name)
 
-                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_we" % mi, "w_%s_i_wbs_we" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_stb" % mi, "w_%s_i_wbs_stb" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_cyc" % mi, "w_%s_i_wbs_cyc" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_sel" % mi, "w_%s_i_wbs_sel" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_dat" % mi, "w_%s_i_wbs_dat" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_adr" % mi, "w_%s_i_wbs_adr" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_dat" % mi, "w_%s_o_wbs_dat" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_ack" % mi, "w_%s_o_wbs_ack" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_int" % mi, "w_%s_o_wbs_int" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_we" % mi,  "%s_o_we" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_stb" % mi, "%s_o_stb" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_cyc" % mi, "%s_o_cyc" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_sel" % mi, "%s_o_sel" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_dat" % mi, "%s_o_dat" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_adr" % mi, "%s_o_adr" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_dat" % mi, "%s_i_dat" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_ack" % mi, "%s_i_ack" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_int" % mi, "%s_i_int" % wbm_name)
                     buf +="\n\n"
 
 
