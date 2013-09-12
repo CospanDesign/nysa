@@ -33,6 +33,8 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 import os
 import sys
 import re
+import copy
+import string
 from string import Template
 
 PATH_TO_TOP = os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -43,8 +45,53 @@ PATH_TO_TOP = os.path.abspath(os.path.join(os.path.dirname(__file__),
                               "top",
                               "top.v"))
 
-
 #Nysa imports
+import utils
+import arbitor
+
+
+IF_WIRES = [
+    "i_master_ready",
+    "o_ih_ready",
+    "o_ih_reset",
+    "o_in_command",
+    "o_in_address",
+    "o_in_data",
+    "o_in_data_count",
+    "i_oh_en",
+    "o_oh_ready",
+    "i_out_status",
+    "i_out_address",
+    "i_out_data",
+    "i_out_data_count"]
+
+IO_TYPES = [
+    "input",
+    "output",
+    "inout"]
+
+def is_wishbone_slave_signal(signal):
+    #Look for a wishbone slave signal
+    if re.search("i_wbs_we", signal) is not None:
+        return True
+    if re.search("i_wbs_stb", signal) is not None:
+        return True
+    if re.search("i_wbs_cyc", signal) is not None:
+        return True
+    if re.search("i_wbs_sel", signal) is not None:
+        return True
+    if re.search("i_wbs_adr", signal) is not None:
+        return True
+    if re.search("i_wbs_dat", signal) is not None:
+        return True
+    if re.search("o_wbs_dat", signal) is not None:
+        return True
+    if re.search("o_wbs_ack", signal) is not None:
+        return True
+    if re.search("o_wbs_int", signal) is not None:
+        return True
+    return False
+
 
 
 def is_wishbone_bus_signal(signal):
@@ -90,9 +137,175 @@ def is_wishbone_bus_signal(signal):
     return False
 
 
+
+def generate_peripheral_wishbone_interconnect_buffer(num_slaves, invert_reset):
+    buf = "//Wishbone Memory Interconnect\n\n"
+    buf += "wishbone_interconnect wi (\n"
+    buf += "\t.{0:20}({1:20}),\n".format("clk", "clk")
+    if invert_reset:
+        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst_n")
+    else:
+        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst")
+    buf += "\n"
+
+    buf += "\t//master\n"
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_we",  "w_wbm_we_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_cyc", "w_wbm_cyc_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_stb", "w_wbm_stb_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_sel", "w_wbm_sel_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_m_ack", "w_wbm_ack_i")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_dat", "w_wbm_dat_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_m_dat", "w_wbm_dat_i")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_adr", "w_wbm_adr_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_m_int", "w_wbm_int_i")
+    buf += "\n"
+
+    for i in range (0, num_slaves):
+        buf += "\t//slave %d\n" % i
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_we" % i,  "w_s%d_i_wbs_we" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_cyc" % i, "w_s%d_i_wbs_cyc" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_stb" % i, "w_s%d_i_wbs_stb" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_sel" % i, "w_s%d_i_wbs_sel" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("i_s%d_ack" % i, "w_s%d_o_wbs_ack" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_dat" % i, "w_s%d_i_wbs_dat" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("i_s%d_dat" % i, "w_s%d_o_wbs_dat" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_adr" % i, "w_s%d_i_wbs_adr" % i)
+        buf += "\t.{0:20}({1:20})".format("i_s%d_int" % i, "w_s%d_o_wbs_int" % i)
+
+        if (i < num_slaves - 1):
+            buf += ",\n"
+
+        buf += "\n"
+
+    buf += ");"
+    return string.expandtabs(buf, 2)
+
+
+def generate_memory_wishbone_interconnect_buffer(num_mem_slaves, invert_reset):
+    if num_mem_slaves == 0:
+        return ""
+
+    buf =  "//Wishbone Memory Interconnect\n\n"
+    buf += "wishbone_mem_interconnect wmi (\n"
+    buf += "\t.{0:20}({1:20}),\n".format("clk", "clk")
+    if invert_reset:
+        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst_n")
+    else:
+        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst")
+    buf += "\n"
+
+    buf += "\t//master\n"
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_we",  "w_mem_we_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_cyc", "w_mem_cyc_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_stb", "w_mem_stb_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_sel", "w_mem_sel_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_m_ack", "w_mem_ack_i")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_dat", "w_mem_dat_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_m_dat", "w_mem_dat_i")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_adr", "w_mem_adr_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_m_int", "w_mem_int_i")
+    buf += "\n\n"
+
+    for i in range (num_mem_slaves):
+        buf += "\t//slave %d\n" % i
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_we" % i,  "w_sm%d_i_wbs_we" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_cyc" % i, "w_sm%d_i_wbs_cyc" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_stb" % i, "w_sm%d_i_wbs_stb" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_sel" % i, "w_sm%d_i_wbs_sel" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("i_s%d_ack" % i, "w_sm%d_o_wbs_ack" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_dat" % i, "w_sm%d_i_wbs_dat" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("i_s%d_dat" % i, "w_sm%d_o_wbs_dat" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_adr" % i, "w_sm%d_i_wbs_adr" % i)
+        buf += "\t.{0:20}({1:20})".format("i_s%d_int" % i, "w_sm%d_o_wbs_int" % i)
+
+        if (i < num_mem_slaves - 1):
+            buf += ",\n"
+
+        buf += "\n"
+
+    buf += ");"
+    return string.expandtabs(buf, 2)
+
+def generate_master_buffer(invert_reset):
+    buf = "//Wishbone Master\n\n"
+    buf += "wishbone_master wm (\n"
+    buf += "\t.{0:20}({1:20}),\n".format("clk","clk")
+
+    if invert_reset:
+        buf += "\t.{0:20}({1:20}),\n\n".format("rst", "rst_n")
+    else:
+        buf += "\t.{0:20}({1:20}),\n\n".format("rst", "rst")
+
+    buf += "\t//input handler signals\n"
+    buf += "\t.{0:20}({1:20}),\n".format("i_ready", "w_ih_ready")
+    buf += "\t.{0:20}({1:20}),\n".format("i_ih_rst", "w_ih_reset")
+    buf += "\t.{0:20}({1:20}),\n".format("i_command", "w_in_command")
+    buf += "\t.{0:20}({1:20}),\n".format("i_address", "w_in_address")
+    buf += "\t.{0:20}({1:20}),\n".format("i_data", "w_in_data")
+    buf += "\t.{0:20}({1:20}),\n\n".format("i_data_count", "w_in_data_count")
+
+    buf += "\t//output handler signals\n"
+    buf += "\t.{0:20}({1:20}),\n".format("i_out_ready", "w_oh_ready")
+    buf += "\t.{0:20}({1:20}),\n".format("o_en", "w_oh_en")
+    buf += "\t.{0:20}({1:20}),\n".format("o_status", "w_out_status")
+    buf += "\t.{0:20}({1:20}),\n".format("o_address", "w_out_address")
+    buf += "\t.{0:20}({1:20}),\n".format("o_data", "w_out_data")
+    buf += "\t.{0:20}({1:20}),\n".format("o_data_count", "w_out_data_count")
+    buf += "\t.{0:20}({1:20}),\n\n".format("o_master_ready", "w_master_ready")
+
+    buf += "\t//interconnect signals\n"
+    buf += "\t.{0:20}({1:20}),\n".format("o_per_we", "w_wbm_we_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_per_adr", "w_wbm_adr_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_per_dat", "w_wbm_dat_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_per_dat", "w_wbm_dat_i")
+    buf += "\t.{0:20}({1:20}),\n".format("o_per_stb", "w_wbm_stb_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_per_cyc", "w_wbm_cyc_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_per_msk", "w_wbm_msk_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_per_sel", "w_wbm_sel_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_per_ack", "w_wbm_ack_i")
+    buf += "\t.{0:20}({1:20}),\n\n".format("i_per_int", "w_wbm_int_i")
+
+    buf += "\t//memory interconnect signals\n"
+    buf += "\t.{0:20}({1:20}),\n".format("o_mem_we", "w_mem_we_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_mem_adr", "w_mem_adr_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_mem_dat", "w_mem_dat_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_mem_dat", "w_mem_dat_i")
+    buf += "\t.{0:20}({1:20}),\n".format("o_mem_stb", "w_mem_stb_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_mem_cyc", "w_mem_cyc_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_mem_msk", "w_mem_msk_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_mem_sel", "w_mem_sel_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_mem_ack", "w_mem_ack_i")
+    buf += "\t.{0:20}({1:20}),\n\n".format("i_mem_int", "w_mem_int_i")
+
+    buf += "\t.{0:20}({1:20})\n\n".format("o_debug", "wbm_debug_out")
+    buf += ");"
+    return string.expandtabs(buf, 2)
+
+def create_wire_buf(name, size, max_val, min_val):
+        line = ""
+        if size > 1:
+            size_range = "[%d:%d]" % (max_val, min_val)
+            line = "wire\t{0:15}{1};\n".format(size_range, name)
+        else:
+            line = "wire\t{0:15}{1};\n".format("", name)
+        return string.expandtabs(line, 2)
+
+def get_port_count(module_tags = {}):
+    port_count = 0
+    if "inout" in module_tags["ports"]:
+        port_count += len(module_tags["ports"]["inout"])
+    if "output" in module_tags["ports"]:
+        port_count += len(module_tags["ports"]["output"])
+    if "input" in module_tags["ports"]:
+        port_count += len(module_tags["ports"]["input"])
+    return port_count
+
+
+
 class WishboneTopGenerator(object):
     def __init__(self):
         f = open(PATH_TO_TOP, "r")
+        self.user_paths = []
         self.buf = f.read()
         self.port_buf = ""
         self.arb_buf = ""
@@ -100,52 +313,946 @@ class WishboneTopGenerator(object):
         self.wi_buf = ""
         self.wmi_buf = ""
         self.wm_buf = ""
+        self.bind_buf = ""
+        self.ibind_buf = ""
+        self.internal_bindings = {}
+        self.bindings = {}
+        self.enable_mem_bus = False
+        self.invert_reset = False
+        self.slave_list = {}
+        self.tags = {}
+        self.num_slaves = 0
+        self.wires = []
 
-    def generate_top(self):
-        pass
+    def generate_simple_top(self,
+                            project_tags = {},
+                            user_paths = [],
+                            debug = False):
+        self.tags = copy.deepcopy(project_tags)
 
-    def generate_sim_top(self):
-        pass
+        #Setup values
+        self.user_paths = user_paths
+        board_dict = utils.get_board_config(self.tags["board"])
+        self.invert_reset = board_dict["invert_reset"]
+        self.enable_mem_bus = False
+        self.slave_list = self.tags["SLAVES"]
 
-    def generate_ports(self):
-        pass
+        if debug:
+            print "Found %s slaves" % str(len(self.slave_list))
+            for slave in self.slave_list:
+                print "\t%s" % slave
+
+
+        if "MEMORY" in self.tags:
+            if len(self.tags["MEMORY"]) > 0:
+                    if debug: print "Found %d Memory Devices" % len(self.tags["MEMORY"])
+                    for mem in self.tags["MEMORY"]:
+                        if debug: print "\t%s" % mem
+
+
+                    enable_memory_bus = True
+        self.num_slaves = len(self.slave_list) + 1
+
+        if "internal_bind" in self.tags:
+            self.internal_bindings = self.tags["internal_bind"]
+
+        #Add Global Bindings
+        if "bind" in self.tags:
+            self.bindings = self.tags["bind"]
+
+        #Add the Host Interface Bindings
+        if "bind" in self.tags["INTERFACE"]:
+            for name in self.tags["INTERFACE"]["bind"]:
+                self.bindings[name] = self.tags["INTERFACE"]["bind"][name]
+
+        #Add all the slave bindings
+        for name in self.tags["SLAVES"]:
+            if "bind" in self.tags["SLAVES"][name]:
+                for bind_name in self.tags["SLAVES"][name]["bind"]:
+                    bname = "%s_%s" % (name, bind_name)
+                    self.bindings[bname] = self.tags["SLAVES"][name]["bind"][bind_name]
+
+        #Add all the memory bindings
+        if "MEMORY" in self.tags:
+            for name in self.tags["MEMORY"]:
+                if "bind" in self.tags["MEMORY"][name]:
+                    for bind_name in self.tags["MEMORY"][name]["bind"]:
+                        bname = "%s_%s" % (name, bind_name)
+                        self.bindings[bname] = self.tags["MEMORY"][name]["bind"][bind_name]
+
+
+        #Remove all ports from the possible wires
+        self.add_ports_to_wires()
+        template = Template(self.buf)
+
+        #Setting up ports
+        self.port_buf = self.generate_ports()
+        self.arb_buf = self.generate_arbitor_buffer()
+        num_slaves = len(self.tags["SLAVES"]) + 1
+        num_mem_slaves = 0
+        if "MEMORY" in self.tags:
+            if len(self.tags["MEMORY"]) > 0:
+                num_mem_slaves = len(self.tags["MEMORY"])
+
+        bp_buf  = self.generate_boilerplate_wires(board_dict["invert_reset"],
+                                                  num_slaves,
+                                                  num_mem_slaves,
+                                                  debug = debug)
+        hi_buf = self.generate_host_interface_buffer(debug = debug)
+        slave_buffer_list = []
+
+        #Add DRT
+        slave_index = 0
+        absfilename = utils.find_rtl_file_location("device_rom_table.v", self.user_paths)
+        slave_tags = utils.get_module_tags(filename = absfilename,
+                                           bus = "wishbone",
+                                           user_paths = self.user_paths)
+        slave_buf = self.generate_wishbone_buffer(name = "drt",
+                                                  index = 0,
+                                                  slave_tags = {},
+                                                  module_tags = slave_tags)
+        slave_buffer_list.append(slave_buf)
+
+
+        #Add the rest of the slaves
+        for i in range (len(self.tags["SLAVES"])):
+            slave_name = self.tags["SLAVES"].keys()[i]
+            slave = self.tags["SLAVES"][slave_name]["filename"]
+            if debug: "slave name: %s" % slave_name
+            absfilename = utils.find_rtl_file_location(slave, self.user_paths)
+            slave_tags = utils.get_module_tags(filename = absfilename,
+                                               bus = "wishbone",
+                                               user_paths = self.user_paths)
+
+            slave_buf = self.generate_wishbone_buffer(slave_name,
+                                                      index = i + 1,
+                                                      slave_tags = self.tags["SLAVES"][slave_name],
+                                                      module_tags = slave_tags,
+                                                      mem_slave = False)
+            slave_buffer_list.append(slave_buf)
+
+        #If there are memory slaves add them
+        mem_buffer_list = []
+        num_mem_slaves = 0
+        if "MEMORY" in self.tags:
+            num_mem_slaves = len(self.tags["MEMORY"])
+            mem_index = 0
+            for i in range(len(self.tags["MEMORY"])):
+                mem_name = self.tags["MEMORY"].keys()[i] 
+                filename = self.tags["MEMORY"][mem_name]["filename"]
+                if debug: print "Mem device: %s, mem file: %s" % (mem_name, filename)
+                absfilename = utils.find_rtl_file_location(filename)
+                mem_tags = utils.get_module_tags(filename = absfilename,
+                                                 bus = "wishbone",
+                                                 user_paths = self.user_paths)
+                mem_buf = self.generate_wishbone_buffer(mem_name,
+                                                        index = i,
+                                                        slave_tags = self.tags["MEMORY"][name],
+                                                        module_tags = mem_tags,
+                                                        mem_slave = True)
+                mem_buffer_list.append(mem_buf)
+
+
+        #Add the ports
+        buf =  self.generate_ports(debug = debug)
+        buf += "\n\n"
+        #Add the boiler plate register/wires
+        buf += bp_buf
+        buf += "\n\n"
+        #Add the master
+        buf += generate_master_buffer(board_dict["invert_reset"])
+        buf += "\n\n"
+        #Add the host interface
+        buf += hi_buf
+        buf += "\n\n"
+        #Add the peripheral interconnect
+        buf += generate_peripheral_wishbone_interconnect_buffer(num_slaves, board_dict["invert_reset"])
+        buf += "\n\n"
+        #Add The memory interconnect
+        buf += generate_memory_wishbone_interconnect_buffer(num_mem_slaves, board_dict["invert_reset"])
+        buf += "\n\n"
+        #Add an aritor if there is any
+        buf += self.generate_arbitor_buffer(debug = debug)
+        buf += "\n\n"
+        for slave_buf in slave_buffer_list:
+            buf += slave_buf
+            buf += "\n\n"
+        for mem_buf in mem_buffer_list:
+            buf += mem_buf
+            buf += "\n\n"
+
+        #Add assign statements
+        buf += self.generate_assigns_buffer(debug = debug)
+        buf += "\n\n"
+
+        buf += "endmodule"
+
+        return string.expandtabs(buf, 2)
+
 
     def add_ports_to_wires(self):
-        pass
+        """Add all the ports to wires list so that no item adds extra wires"""
+        for name in self.bindings:
+            self.wires.append(self.bindings[name]["loc"])
 
-    def generate_wishbone_peripheral_slave(self,
-                                name = "",
-                                index = -1,
-                                module_tags = {},
-                                debug = False):
-        pass
+    def generate_boilerplate_wires(self, invert_rst, num_slaves, num_mem_slaves, debug = False):
+        board_dict = utils.get_board_config(self.tags["board"])
 
-                                
-    def generate_wishbone_memory_slave(self,
-                                name = "",
-                                index = -1,
-                                module_tags = {},
-                                debug = False):
-        pass
+        buf =  "//General Signals\n"
+        buf +=  "{0:<20}{1};\n".format("wire", "clk")
+        buf +=  "{0:<20}{1};\n".format("wire", "rst")
 
-    def generate_host_interface_buffer(self,
-                                debug = False):
-        pass
+        self.wires.append("clk")
+        self.wires.append("rst")
+
+        if invert_rst:
+            buf += "{0:<20}{1};\n".format("wire", "rst_n")
+            self.wires.append("rst_n")
+
+        buf += "\n"
+        buf +=  "//input handler signals\n"
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_in_command")
+        self.wires.append("w_in_command")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_in_address");
+        self.wires.append("w_in_address")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_in_data");
+        self.wires.append("w_in_data")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_in_data_count");
+        self.wires.append("w_in_data_count")
+        buf +=  "{0:<20}{1};\n".format("wire","w_ih_ready")
+        self.wires.append("w_ih_ready")
+        buf +=  "{0:<20}{1};\n".format("wire","w_ih_reset")
+        self.wires.append("w_ih_reset")
+        buf += "\n"
+
+        buf +=  "//output handler signals\n"
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_out_status")
+        self.wires.append("w_out_status")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_out_address")
+        self.wires.append("w_out_address")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_out_data")
+        self.wires.append("w_out_data")
+        buf +=  "{0:<19}{1};\n".format("wire\t[27:0]","w_out_data_count")
+        self.wires.append("w_out_data_count")
+        buf +=  "{0:<20}{1};\n".format("wire","w_oh_ready")
+        self.wires.append("w_oh_ready")
+        buf +=  "{0:<20}{1};\n".format("wire","w_oh_en")
+        buf += "\n"
+
+        buf +=  "//master signals\n"
+        buf +=  "{0:<20}{1};\n".format("wire","w_master_ready")
+        self.wires.append("w_master_ready")
+        buf +=  "{0:<20}{1};\n".format("wire","w_wbm_we_o")
+        self.wires.append("w_wbm_we_o")
+        buf +=  "{0:<20}{1};\n".format("wire","w_wbm_cyc_o")
+        self.wires.append("w_wbm_cyc_o")
+        buf +=  "{0:<20}{1};\n".format("wire","w_wbm_stb_o")
+        self.wires.append("w_wbm_stb_o")
+        buf +=  "{0:<19}{1};\n".format("wire\t[3:0]","w_wbm_sel_o")
+        self.wires.append("w_wbm_sel_o")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_wbm_adr_o")
+        self.wires.append("w_wbm_adr_o")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_wbm_dat_i")
+        self.wires.append("w_wbm_dat_i")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_wbm_dat_o")
+        self.wires.append("w_wbm_dat_o")
+        buf +=  "{0:<20}{1};\n".format("wire","w_wbm_ack_i")
+        self.wires.append("w_wbm_ack_i")
+        buf +=  "{0:<20}{1};\n".format("wire","w_wbm_int_i")
+        self.wires.append("w_wbm_int_i")
+
+        buf +=  "{0:<20}{1};\n".format("wire","w_mem_we_o")
+        self.wires.append("w_mem_we_o")
+        buf +=  "{0:<20}{1};\n".format("wire","w_mem_cyc_o")
+        self.wires.append("w_mem_cyc_o")
+        buf +=  "{0:<20}{1};\n".format("wire","w_mem_stb_o")
+        self.wires.append("w_mem_stb_o")
+        buf +=  "{0:<19}{1};\n".format("wire\t[3:0]","w_mem_sel_o")
+        self.wires.append("w_mem_sel_o")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_mem_adr_o")
+        self.wires.append("w_mem_adr_o")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_mem_dat_i")
+        self.wires.append("w_mem_dat_i")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_mem_dat_o")
+        self.wires.append("w_mem_dat_o")
+        buf +=  "{0:<20}{1};\n".format("wire","w_mem_ack_i")
+        self.wires.append("w_mem_ack_i")
+        buf +=  "{0:<20}{1};\n".format("wire","w_mem_int_i")
+        self.wires.append("w_mem_int_i")
+
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_wbm_debug_out")
+        self.wires.append("w_wbm_debug_out");
+        buf +=  "\n"
+
+        buf +=  "//slave signals\n\n"
+
+        for i in range (0, num_slaves):
+            buf +=  "//slave " + str(i) + "\n"
+            wr_name = "w_s%d_i_wbs_we" % i
+            buf +=  "{0:<20}{1};\n".format("wire", wr_name)
+            self.wires.append(wr_name)
+
+            wr_name = "w_s%d_i_wbs_cyc" % i
+            buf +=  "{0:<20}{1};\n".format("wire", wr_name)
+            self.wires.append(wr_name)
+
+            wr_name = "w_s%d_i_wbs_dat" % i
+            buf +=  "{0:<19}{1};\n".format("wire\t[31:0]", wr_name)
+            self.wires.append(wr_name)
+
+            wr_name = "w_s%d_o_wbs_dat" % i
+            buf +=  "{0:<19}{1};\n".format("wire\t[31:0]", wr_name)
+            self.wires.append(wr_name)
+
+            wr_name = "w_s%d_i_wbs_adr" % i
+            buf +=  "{0:<19}{1};\n".format("wire\t[31:0]", wr_name)
+            self.wires.append(wr_name)
+
+            wr_name = "w_s%d_i_wbs_stb" % i
+            buf +=  "{0:<20}{1};\n".format("wire", wr_name)
+            self.wires.append(wr_name)
+
+            wr_name = "w_s%d_i_wbs_sel" % i
+            buf +=  "{0:<19}{1};\n".format("wire\t[3:0]", wr_name)
+            self.wires.append(wr_name)
+
+            wr_name = "w_s%d_o_wbs_ack" % i
+            buf +=  "{0:<20}{1};\n".format("wire", wr_name)
+            self.wires.append(wr_name)
+
+            wr_name = "w_s%d_o_wbs_int" % i
+            buf +=  "{0:<20}{1};\n".format("wire", wr_name)
+            self.wires.append(wr_name)
+
+        if num_mem_slaves > 0:
+            buf += "\n"
+            for i in range (num_mem_slaves):
+                buf +=  "//mem slave " + str(i) + "\n"
+                wr_name = "w_sm%d_i_wbs_we" % i
+                buf +=  "{0:<20}{1};\n".format("wire", wr_name)
+                self.wires.append(wr_name)
+
+                wr_name = "w_sm%d_i_wbs_cyc" % i
+                buf +=  "{0:<20}{1};\n".format("wire", wr_name)
+                self.wires.append(wr_name)
+
+                wr_name = "w_sm%d_i_wbs_dat" % i
+                buf +=  "{0:<19}{1};\n".format("wire\t[31:0]", wr_name)
+                self.wires.append(wr_name)
+
+                wr_name = "w_sm%d_o_wbs_dat" % i
+                buf +=  "{0:<19}{1};\n".format("wire\t[31:0]", wr_name)
+                self.wires.append(wr_name)
+
+                wr_name = "w_sm%d_i_wbs_adr" % i
+                buf +=  "{0:<19}{1};\n".format("wire\t[31:0]", wr_name)
+                self.wires.append(wr_name)
+
+                wr_name = "w_sm%d_i_wbs_stb" % i
+                buf +=  "{0:<20}{1};\n".format("wire", wr_name)
+                self.wires.append(wr_name)
+
+                wr_name = "w_sm%d_i_wbs_sel" % i
+                buf +=  "{0:<19}{1};\n".format("wire\t[3:0]", wr_name)
+                self.wires.append(wr_name)
+
+                wr_name = "w_sm%d_o_wbs_ack" % i
+                buf +=  "{0:<20}{1};\n".format("wire", wr_name)
+                self.wires.append(wr_name)
+
+                wr_name = "w_sm%d_o_wbs_int" % i
+                buf +=  "{0:<20}{1};\n".format("wire", wr_name)
+                self.wires.append(wr_name)
+
+
+        if debug:
+            print "wr_buf: \n" + buf
+        return string.expandtabs(buf, 2)
+
+
+    def generate_internal_bindings(self):
+        if len(self.internal_bindings.keys()) == 0:
+            return ""
+
+        buf = "//Internal assigns\n"
+        #Generate the internal bindigns
+        for key in self.internal_bindings:
+            buf += "assign\t{0:20}=\t{1}:\n".format(key, self.internal_bindings[key]["signal"])
+        return string.expandtabs(buf, 2)
+
+    def generate_external_bindings(self, invert_reset):
+        buf  = "//external assigns\n"
+        board_dict = utils.get_board_config(self.tags["board"])
+        for key in self.bindings:
+            if key == self.bindings[key]["loc"]:
+                #Don't need to bind this one skip it
+                continue
+            if self.bindings[key]["direction"] == "input":
+                buf += "assign\t{0:20}=\t{1};\n".format(key, self.bindings[key]["loc"])
+            elif self.bindings[key]["direction"] == "output":
+                buf += "assign\t{0:20}=\t{1};\n".format(self.bindings[key]["loc"], key)
+
+        if invert_reset:
+            buf += "assign\t{0:<20}=\t{1};\n".format("rst_n", "~rst")
+        return string.expandtabs(buf, 2)
+        #Generate bindings that tie ports to wires
+
+    def generate_ports(self, debug = False):
+        """Create the ports string"""
+        buf = "module top (\n"
+        blist = self.bindings.keys()
+        for i in range (len(blist)):
+            name = blist[i]
+            port_name = self.bindings[name]["loc"]
+            eol = ""
+            if i < len(blist) - 1:
+                eol = ","
+            if "[" in port_name and ":" in port_name:
+                port_name = "[{0:<9}{1}".format(port_name.partition("[")[2], port_name.partition("[")[0])
+            else:
+                port_name = "{0:<10}{1}".format("", port_name)
+            buf += "\t{0:10}\t{1}{2}\n".format(self.bindings[name]["direction"], port_name, eol)
+
+        buf += ");"
+        if debug: print "port buffer:\n%s" % buf
+        return string.expandtabs(buf, 2)
+
+
+    def generate_module_port_signals(self,
+                              wishbone_prename = "",
+                              instance_name = "",
+                              slave_tags = {},
+                              module_tags = {},
+                              debug = False):
+
+
+        board_dict = utils.get_board_config(self.tags["board"])
+
+
+        buf = "(\n"
+        #Add the port declarations
+        buf += "\t.{0:<20}({1:<20}),\n".format("clk", "clk")
+        if board_dict["invert_reset"]:
+            buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst_n")
+        else:
+            buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst")
+
+        #Keep track of the port count so the last one won't have a comma
+        port_max = get_port_count(module_tags)
+        port_count = 0
+
+        input_ports = []
+        output_ports = []
+        inout_ports = []
+        if "input" in module_tags["ports"]:
+            input_ports = module_tags["ports"]["input"].keys()
+        if "output" in module_tags["ports"]:
+            output_ports = module_tags["ports"]["output"].keys()
+        if "inout" in module_tags["ports"]:
+            inout_ports = module_tags["ports"]["inout"].keys()
+
+        for port in input_ports:
+            port_count += 1
+            line = ""
+            if port == "rst":
+                continue
+            if port == "clk":
+                continue
+
+            #Check to see if this is one of the pre-defined wires
+            wire = ""
+            for w in IF_WIRES:
+                if w.endswith(port[2:]):
+                    wire = "w_%s" % w[2:]
+                    break
+
+            #Not Pre-defines
+            if len(wire) == 0:
+                if is_wishbone_slave_signal(port):
+                    wire = "%s%s" % (wishbone_prename, port)
+                else:
+                    if len(instance_name) > 0:
+                        wire = "%s_%s" % (instance_name, port)
+                    else:
+                        wire = port
+
+            line = "\t.{0:<20}({1:<20})".format(port, wire)
+            if port_count == port_max:
+                buf += "%s\n" % line
+            else:
+                buf += "%s,\n" % line
+
+
+        for port in output_ports:
+            port_count += 1
+            line = ""
+            #Check to see if this is one of the pre-defined wires
+            wire = ""
+            for w in IF_WIRES:
+                if w.endswith(port[2:]):
+                    wire = "w_%s" % w[2:]
+                    break
+
+            #Not Pre-defines
+            if len(wire) == 0:
+                if is_wishbone_slave_signal(port):
+                    wire = "%s%s" % (wishbone_prename, port)
+                else:
+                    if len(instance_name) > 0:
+                        wire = "%s_%s" % (instance_name, port)
+                    else:
+                        wire = port
+
+            line = "\t.{0:<20}({1:<20})".format(port, wire)
+            if port_count == port_max:
+                buf += "%s\n" % line
+            else:
+                buf += "%s,\n" % line
+
+        for port in inout_ports:
+            port_count += 1
+            line = ""
+            #Special Case, we need to tie the specific signal directly to this port
+            for key in slave_tags["bind"]:
+                bname = key.partition("[")[0]
+                bname.strip()
+                if debug: print "Checking: %s" % bname
+                if bname == port:
+                    loc = slave_tags["bind"][key]["loc"]
+                    if port_count == port_max:
+                        buf += "\t.{0:<20}({1:<20})\n".format(port, loc)
+                    else:
+                        buf += "\t.{0:<20}({1:<20}),\n".format(port, loc)
+
+
+        buf += ");"
+        return string.expandtabs(buf, 2)
+
+
+    def generate_host_interface_buffer(self, debug = False):
+
+
+        absfilepath = utils.find_rtl_file_location(self.tags["INTERFACE"]["filename"])
+        module_tags = utils.get_module_tags(filename = absfilepath,
+                                            bus = "wishbone",
+                                            user_paths = self.user_paths)
+        name = "io"
+        board_dict = utils.get_board_config(self.tags["board"])
+
+        buf =  "// %s ( %s )\n\n" % (name, module_tags["module"])
+        buf += "//wires\n"
+
+        #Generate wires
+        for io in IO_TYPES:
+            if io == "inout":
+                continue
+            ports = module_tags["ports"][io]
+            for port in ports:
+                port_dict = ports[port]
+
+                if port in IF_WIRES:
+                    #This wire is already declared
+                    continue
+
+                if port in self.wires:
+                    #This wire has already been declared somewhere else
+                    continue
+
+                #print "port: %s" % str(port)
+                max_val = 0
+                min_val = 0
+                if port_dict["size"] > 1:
+                    max_val = port_dict["max_val"]
+                    min_val = port_dict["min_val"]
+                buf += create_wire_buf(port,
+                                       port_dict["size"],
+                                       max_val,
+                                       min_val)
+
+        #Declare the Module
+        buf += "\n\n"
+        buf += "%s\t%s\t" % (module_tags["module"], name)
+        io_proj_tags = self.tags["INTERFACE"]
+        buf += self.generate_module_port_signals("",
+                                                 "",
+                                                 self.tags["INTERFACE"],
+                                                 module_tags)
+        return string.expandtabs(buf, 2)
 
     def generate_wishbone_buffer(self,
                                  name="",
                                  index=-1,
+                                 slave_tags = {},
                                  module_tags = {},
                                  mem_slave=False,
-                                 io_module=False,
                                  debug=False):
-        pass
+        board_dict = utils.get_board_config(self.tags["board"])
+        parameter_buffer = self.generate_parameters(name, slave_tags, debug)
+
+        buf =  "// %s ( %s )\n\n" % (name, module_tags["module"])
+        buf += "//Wires\n"
+
+        #Check for an arbitor buffer
+        arb_index = -1
+        if "ARBITORS" in self.tags:
+            if name in self.tags["ARBITORS"].keys():
+                arb_index = self.tags["ARBITORS"].keys().index(name)
+
+        #Generate wires
+        pre_name = ""
+        if (arb_index != -1):
+            pre_name = "w_arb%d_" % arb_index
+        else:
+            if debug: print "no arbitor"
+
+            if mem_slave:
+                pre_name = "w_sm%d_" % index
+            else:
+                pre_name = "w_s%d_" % index
+
+            if debug: print "pre name: %s" % pre_name
+
+        for io in IO_TYPES:
+            if io == "inout":
+                continue
+
+            for port in module_tags["ports"][io].keys():
+                wire = ""
+                port_dict = module_tags["ports"][io][port]
+                if port == "clk" or port == "rst":
+                    continue
+
+                if port in self.wires:
+                    continue
+
+                if is_wishbone_slave_signal(port):
+                    if debug: print "%s is a wishbone bus signal" % port
+                    wire = "%s%s" % (pre_name, port)
+                else:
+                    if debug: print "%s is NOT a wishbone bus signal" % port
+                    wire = "%s_%s" % (name, port)
+
+                if (wire in self.wires):
+                    continue
+
+                self.wires.append(port)
+
+
+                max_val = 0
+                min_val = 0
+                if port_dict["size"] > 1:
+                    max_val = port_dict["max_val"]
+                    min_val = port_dict["min_val"]
+                buf += create_wire_buf(wire,
+                                       port_dict["size"],
+                                       max_val,
+                                       min_val)
+
+
+            buf += "\n"
+
+        buf += "%s " % module_tags["module"]
+        buf += parameter_buffer
+        buf += "\t%s" % name
+        buf += self.generate_module_port_signals(pre_name, name, slave_tags, module_tags)
+        buf += "\n\n"
+        return string.expandtabs(buf, 2)
 
     def generate_arbitor_buffer(self, debug = False):
-        pass
+        buf = ""
+        board_dict = utils.get_board_config(self.tags["board"])
+        arbitor_count = 0
+        if not arbitor.is_arbitor_required(self.tags):
+            return ""
 
-    def generate_parameters(self, name="", module_tags={}, debug = False):
-        pass
+        if debug: print "Arbitor is required"
+        buf += "//Project Arbitors\n\n"
 
-    def generate_assigns(self, debug=False):
-        pass
+        arb_tags = arbitor.generate_arbitor_tags(self.tags)
+
+        for i in range (len(arb_tags.keys())):
+            arb_slave = arb_tags.keys()[i]
+            master_count = 1
+
+            if debug: print "Found arbitor slave: %s" % arb_slave
+            buf += "//%s arbitor\n\n" % arb_slave
+            master_count += len(arb_tags[arb_slave].keys())
+            arb_name = "arb%s" % str(i)
+
+            arb_module = "arbitor_%s_masters" % str(master_count)
+            if debug:
+                print "Number of masters for this arbitor: %d" % master_count
+                print "Using: %s" % arb_module
+                print "Arbitor name: %s" % arb_name
+
+
+            #Generte the wires
+            for mi in range (master_count):
+                wbm_name = ""
+                if mi == 0:
+                    #These Wires are taken care of by the interconnect
+                    continue
+
+                master_name = arb_tags[arb_slave].keys()[mi - 1]
+                bus_name = arb_tags[arb_slave][master_name]
+                wbm_name = "w_%s_%s" % (master_name, bus_name)
+
+                #Wishbone bus signals
+                #strobe
+                wire = "%s_i_stb" % wbm_name
+                if (not (wire in self.wires)):
+                    buf += "{0:<20}{1};\n".format("wire", wire)
+                    self.wires.append(wire)
+                #cycle
+                wire = "%s_i_cyc" % wbm_name
+                if (not (wire in self.wires)):
+                    buf += "{0:<20}{1};\n".format("wire", wire)
+                    self.wires.append(wire)
+                #write enable
+                wire = "%s_i_we" % wbm_name
+                if (not (wire in self.wires)):
+                    buf += "{0:<20}{1};\n".format("wire", wire)
+                    self.wires.append(wire)
+                #select
+                wire = "%s_i_sel" % wbm_name
+                if (not (wire in self.wires)):
+                    buf += "{0:<19}{1};\n".format("wire\t[3:0]", wire)
+                    self.wires.append(wire)
+                #in data
+                wire = "%s_i_dat" % wbm_name
+                if (not (wire in self.wires)):
+                    buf += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
+                    self.wires.append(wire)
+                #address
+                wire = "%s_i_adr" % wbm_name
+                if (not (wire in self.wires)):
+                    buf += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
+                    self.wires.append(wire)
+                #out data
+                wire = "%s_o_dat" % wbm_name
+                if (not (wire in self.wires)):
+                    buf += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
+                    self.wires.append(wire)
+                #acknowledge
+                wire = "%s_o_ack" % wbm_name
+                if (not (wire in self.wires)):
+                    buf += "{0:<20}{1};\n".format("wire", wire)
+                    self.wires.append(wire)
+                #interrupt
+                wire = "%s_o_int" % wbm_name
+                if (not (wire in self.wires)):
+                    buf += "{0:<20}{1};\n".format("wire", wire)
+                    self.wires.append(wire)
+
+            buf += "\n"
+            #generate arbitor signals
+            #strobe
+            wire = "w_%s_i_wbs_stb" % arb_name
+            if (not (wire in self.wires)):
+                buf += "{0:<20}{1};\n".format("wire", wire)
+                self.wires.append(wire)
+            #cycle
+            wire = "w_%s_i_wbs_cyc" % arb_name
+            if (not (wire in self.wires)):
+                buf += "{0:<20}{1};\n".format("wire", wire)
+                self.wires.append(wire)
+            #write enable
+            wire = "w_%s_i_wbs_we" % arb_name
+            if (not (wire in self.wires)):
+                buf += "{0:<20}{1};\n".format("wire", wire)
+                self.wires.append(wire)
+            #select
+            wire = "w_%s_i_wbs_sel" % arb_name
+            if (not (wire in self.wires)):
+                buf += "{0:<19}{1};\n".format("wire\t[3:0]", wire)
+                self.wires.append(wire)
+            #in data
+            wire = "w_%s_i_wbs_dat" % arb_name
+            if (not (wire in self.wires)):
+                buf += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
+                self.wires.append(wire)
+            #out data
+            wire = "w_%s_o_wbs_dat" % arb_name
+            if (not (wire in self.wires)):
+                buf += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
+                self.wires.append(wire)
+            #address
+            wire = "w_%s_i_wbs_adr" % arb_name
+            if (not (wire in self.wires)):
+                buf += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
+                self.wires.append(wire)
+            #acknowledge
+            wire = "w_%s_o_wbs_ack" % arb_name
+            if (not (wire in self.wires)):
+                buf += "{0:<20}{1};\n".format("wire", wire)
+                self.wires.append(wire)
+            #interrupt
+            wire = "w_%s_o_wbs_int" % arb_name
+            if (not (wire in self.wires)):
+                buf += "{0:<20}{1};\n".format("wire", wire)
+                self.wires.append(wire)
+
+            buf +="\n\n"
+
+
+            #finished generating the wires
+
+            buf += "%s %s (\n" % (arb_module, arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("clk", "clk")
+            if board_dict["invert_reset"]:
+                buf += "\t.{0:20}({1:20}),\n".format("rst", "rst_n")
+            else:
+                buf += "\t.{0:20}({1:20}),\n".format("rst", "rst")
+            buf += "\n"
+
+            buf += "\t//masters\n"
+
+            for mi in range(master_count):
+                wbm_name = ""
+
+                #Last master is always from the interconnect
+                #XXX: This should really be a parameter, but this will allow slaves to take over a peripheral
+                if (mi == master_count - 1):
+                    if debug: print "mi: %d" % mi
+                    on_periph_bus = False
+                    #in this case I need to use the wishbone interonnect
+                    #search for the index of the slave
+                    for i in range (len(self.tags["SLAVES"].keys())):
+                        name = self.tags["SLAVES"].keys()[i]
+                        if name == arb_slave:
+                            interconnect_index = i + 1 # +1 to account for the DRT
+                            on_periph_bus = True
+                            wbm_name = "s" + str(interconnect_index)
+                            if debug:
+                                print "arb slave on peripheral bus"
+                                print "slave index: %d" % interconnect_index - 1
+                                print "account for the drt, actual bus index: %d" % interconnect_index
+                            break
+                    if not on_periph_bus:
+                        if "MEMORY" in self.tags:
+                            #There is a memory bus, look in here
+                            for i in range (len(self.tags["MEMORY"].keys())):
+                                    name = self.tags["MEMORY"].keys()[i]
+                                    if name == arb_slave:
+                                        mem_inc_index = i
+                                        wbm_name = "sm%d" % i
+                                        if debug:
+                                            print "arb slave on mem bus"
+                                            print "slave index: %d" % mem_inc_index
+                                        break
+
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_we" % mi, "w_%s_i_wbs_we" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_stb" % mi, "w_%s_i_wbs_stb" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_cyc" % mi, "w_%s_i_wbs_cyc" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_sel" % mi, "w_%s_i_wbs_sel" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_dat" % mi, "w_%s_i_wbs_dat" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_adr" % mi, "w_%s_i_wbs_adr" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_dat" % mi, "w_%s_o_wbs_dat" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_ack" % mi, "w_%s_o_wbs_ack" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_int" % mi, "w_%s_o_wbs_int" % wbm_name)
+
+                    buf +="\n\n"
+                else:
+                    if debug: print "mi: %d" % mi
+                    master_name = arb_tags[arb_slave].keys()[mi]
+                    bus_name = arb_tags[arb_slave][master_name]
+                    wbm_name = "%s_%s" % (master_name, bus_name)
+
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_we" % mi, "w_%s_i_wbs_we" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_stb" % mi, "w_%s_i_wbs_stb" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_cyc" % mi, "w_%s_i_wbs_cyc" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_sel" % mi, "w_%s_i_wbs_sel" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_dat" % mi, "w_%s_i_wbs_dat" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_adr" % mi, "w_%s_i_wbs_adr" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_dat" % mi, "w_%s_o_wbs_dat" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_ack" % mi, "w_%s_o_wbs_ack" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_int" % mi, "w_%s_o_wbs_int" % wbm_name)
+                    buf +="\n\n"
+
+
+            buf += "\t//slave\n"
+            buf += "\t.{0:20}({1:20}),\n".format("o_s_we",  "w_%s_i_wbs_we"  % arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("o_s_stb", "w_%s_i_wbs_stb" % arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("o_s_cyc", "w_%s_i_wbs_cyc" % arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("o_s_sel", "w_%s_i_wbs_sel" % arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("o_s_dat", "w_%s_i_wbs_dat" % arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("o_s_adr", "w_%s_i_wbs_adr" % arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("i_s_dat", "w_%s_o_wbs_dat" % arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("i_s_ack", "w_%s_o_wbs_ack" % arb_name)
+            buf += "\t.{0:20}({1:20})\n".format( "i_s_int", "w_%s_o_wbs_int" % arb_name)
+            buf += ");\n"
+
+            return string.expandtabs(buf, 2)
+
+
+    def generate_parameters(self, name="", slave_tags={}, debug = False):
+        buf = ""
+        if not (name in self.tags["SLAVES"]):
+            if debug: print "Didn't find %s in slave list" % name
+            return ""
+
+        if debug: print "Check to see if %s contains parameter in config file" % name
+        if not ("PARAMETERS" in self.tags["SLAVES"][name]):
+            if debug: print "\tno"
+            return ""
+
+        if debug: print "\tyes"
+
+        if debug: print "chec to see if the module contains parameters..."
+        if len(slave_tags["PARAMETERS"].keys()) == 0:
+            if debug: print "\tno"
+            return ""
+
+        if debug: print "\tyes"
+        module_parameters = slave_tags["PARAMETERS"]
+        buf = "#(\n"
+        project_parameters =self.tags["SLAVES"][name]["PARAMETERS"]
+        first_item = True
+        for project_param in project_parameters:
+            if project_param in module_parameters:
+                if first_item == False:
+                    buf += ",\n"
+                first_item = False
+                if debug: print "Found that %s is a match" % project_param
+                buf += "\t.{0:10}\t({1:10})".format(project_param, project_parameters[project_param])
+                #buf += "\t\t.%s(%s)" % (project_param, project_parameters[project_param])
+
+        #Finish off the buffer
+        buf += "\n)\n"
+        return string.expandtabs(buf, 2)
+
+    def generate_assigns_buffer(self, debug=False):
+        board_dict = utils.get_board_config(self.tags["board"])
+        buf = ""
+        if len(self.internal_bindings) > 0:
+            buf += "//Internal Bindings\n"
+            for key in self.internal_bindings:
+                if key == "clk":
+                    continue
+                if key == "rst":
+                    continue
+
+                buf += "assign\t{0:<20}=\t{1};\n".format(key, self.internal_bindings[key]["signal"])
+
+        buf += "\n\n"
+        if len(self.bindings) > 0:
+            buf += "//Bindings\n"
+            for key in self.bindings:
+                if key == "clk":
+                    continue
+                if key == "rst":
+                    continue
+
+
+                if self.bindings[key]["direction"] == "input":
+                    buf += "assign\t{0:<20}=\t{1};\n".format(key, self.bindings[key]["loc"])
+                elif self.bindings[key]["direction"] == "output":
+                    buf += "assign\t{0:<20}=\t{1};\n".format(self.bindings[key]["loc"], key)
+
+        if board_dict["invert_reset"]:
+            buf += "\n"
+            buf += "//Invert Reset for this board\n"
+            buf += "assign\t{0:<20}=\t{1};\n".format("rst_n", "~rst")
+
+        return string.expandtabs(buf, 2)
+
