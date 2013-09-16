@@ -70,9 +70,10 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
   for i in range(0, num_mems):
     key = tags["MEMORY"].keys()[i]
     absfilename = utils.find_rtl_file_location(tags["MEMORY"][key]["filename"], user_paths)
+    #print "filename: %s" % absfilename
     slave_tags = utils.get_module_tags(filename = absfilename, bus = "wishbone", keywords = slave_keywords)
-    #if debug:
-    #  print "slave tags: " + str(slave_tags)
+    if debug:
+        print "slave tags: " + str(slave_tags)
 
     mem_size = slave_tags["keywords"]["DRT_SIZE"].strip()
 
