@@ -1,6 +1,8 @@
 # Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
 #
-# This file is part of Nysa (http://wiki.cospandesign.com/index.php?title=Nysa.org).
+# This file is part of Nysa.
+#
+#       (http://wiki.cospandesign.com/index.php?title=Nysa.org)
 #
 # Nysa is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,6 +25,7 @@ import sys
 import string
 import json
 import arbitor
+import re
 
 import utils
 import preprocessor
@@ -298,4 +301,168 @@ def remove_comments(buf="", debug=False):
  
     return bufy
 
+def generate_module_port_signals(invert_reset,
+                                 instance_name = "",
+                                 slave_tags = {},
+                                 module_tags = {},
+                                 wishbone_slave = False,
+                                 debug = False):
 
+    buf = "(\n"
+    if not wishbone_slave:
+        IF_WIRES = []
+
+    #Keep track of the port count so the last one won't have a comma
+    port_max = get_port_count(module_tags)
+    port_count = 0
+
+    input_ports = []
+    output_ports = []
+    inout_ports = []
+    if "input" in module_tags["ports"]:
+        input_ports = module_tags["ports"]["input"].keys()
+    if "output" in module_tags["ports"]:
+        output_ports = module_tags["ports"]["output"].keys()
+    if "inout" in module_tags["ports"]:
+        inout_ports = module_tags["ports"]["inout"].keys()
+
+    #Add the port declarations
+    if "clk" in input_ports:
+        buf += "\t.{0:<20}({1:<20}),\n".format("clk", "clk")
+    if "rst" in input_ports:
+        if invert_reset:
+            buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst_n")
+        else:
+            buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst")
+
+   
+
+    ports = sorted(input_ports, cmp = _port_cmp)
+    buf += "\n"
+    buf += "\t//inputs\n"
+
+    for port in ports:
+        port_count += 1
+        line = ""
+        if port == "rst":
+            continue
+        if port == "clk":
+            continue
+
+        #Check to see if this is one of the pre-defined wires
+        wire = ""
+        if wishbone_slave:
+            for w in IF_WIRES:
+                if w.endswith(port[2:]):
+                    wire = "%s" % w[2:]
+                    break
+
+        #Not Pre-defines
+        if len(wire) == 0:
+            if len(instance_name) > 0:
+                wire = "%s_%s" % (instance_name, port)
+            else:
+                wire = "%s" % port
+
+        line = "\t.{0:<20}({1:<20})".format(port, wire)
+        if port_count == port_max:
+            buf += "%s\n" % line
+        else:
+            buf += "%s,\n" % line
+
+
+    ports = sorted(output_ports, cmp = _port_cmp)
+    buf += "\n"
+    buf += "\t//outputs\n"
+
+    for port in ports:
+        port_count += 1
+        line = ""
+        #Check to see if this is one of the pre-defined wires
+        wire = ""
+        if wishbone_slave:
+            for w in IF_WIRES:
+                if w.endswith(port[2:]):
+                    wire = "%s" % w[2:]
+                    break
+
+        #Not Pre-defines
+        if len(wire) == 0:
+            if len(instance_name) > 0:
+                wire = "%s_%s" % (instance_name, port)
+            else:
+                wire = "%s" % port
+
+        line = "\t.{0:<20}({1:<20})".format(port, wire)
+        if port_count == port_max:
+            buf += "%s\n" % line
+        else:
+            buf += "%s,\n" % line
+
+    ports = sorted(inout_ports, cmp = _port_cmp)
+
+    if len(ports) > 0:
+        buf += "\n"
+        buf += "\t//inouts\n"
+
+
+    for port in ports:
+        port_count += 1
+        line = ""
+        #Special Case, we need to tie the specific signal directly to this port
+        for key in sorted(slave_tags["bind"], cmp = _port_cmp):
+            bname = key.partition("[")[0]
+            bname.strip()
+            if debug: print "Checking: %s" % bname
+            if bname == port:
+                loc = slave_tags["bind"][key]["loc"]
+                if port_count == port_max:
+                    buf += "\t.{0:<20}({1:<20})\n".format(port, loc)
+                else:
+                    buf += "\t.{0:<20}({1:<20}),\n".format(port, loc)
+
+
+    buf += ");"
+    return string.expandtabs(buf, 2)
+
+def get_port_count(module_tags = {}):
+    port_count = 0
+    if "inout" in module_tags["ports"]:
+        port_count += len(module_tags["ports"]["inout"])
+    if "output" in module_tags["ports"]:
+        port_count += len(module_tags["ports"]["output"])
+    if "input" in module_tags["ports"]:
+        port_count += len(module_tags["ports"]["input"])
+    return port_count
+
+
+def _port_cmp(x, y):
+
+    if re.search("[0-9]", x) and re.search("[0-9]", y):
+        x_name = x.strip(string.digits)
+        y_name = y.strip(string.digits)
+        if x_name == y_name:
+            #print "%s == %s" % x_name, y_name
+            x_num = int(x.strip(string.letters), 10)
+            y_num = int(y.strip(string.letters), 10)
+            #print "x:%s, y:%s, x_num:%d, y_num:%d" % (x, y, x_num, y_num)
+            if x_num < y_num:
+                #print "\tx < y"
+                return -1
+            if x_num == y_num:
+                #print "\tx == y"
+                return 0
+            if x_num > y_num:
+                #print "\tx > y"
+                return 1
+
+    
+    #print "normal search: %s:%s" % (x, y)
+    if x < y:
+        return -1
+    if x == y:
+        return 0
+    else:
+        return 1
+
+         
