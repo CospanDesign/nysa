@@ -98,6 +98,8 @@ class ModuleProcessor:
     """
     home = False
     location = utils.resolve_path(location)
+    if not os.path.exists(location):
+       utils.create_dir(location) 
     fname = os.path.join(location, filename)
     fileout = open(fname, "w")
     fileout.write(self.buf)
