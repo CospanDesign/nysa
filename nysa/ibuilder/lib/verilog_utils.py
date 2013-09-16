@@ -337,7 +337,7 @@ def generate_module_port_signals(invert_reset,
 
    
 
-    ports = sorted(input_ports, cmp = _port_cmp)
+    ports = sorted(input_ports, cmp = port_cmp)
     buf += "\n"
     buf += "\t//inputs\n"
 
@@ -371,7 +371,7 @@ def generate_module_port_signals(invert_reset,
             buf += "%s,\n" % line
 
 
-    ports = sorted(output_ports, cmp = _port_cmp)
+    ports = sorted(output_ports, cmp = port_cmp)
     buf += "\n"
     buf += "\t//outputs\n"
 
@@ -399,7 +399,7 @@ def generate_module_port_signals(invert_reset,
         else:
             buf += "%s,\n" % line
 
-    ports = sorted(inout_ports, cmp = _port_cmp)
+    ports = sorted(inout_ports, cmp = port_cmp)
 
     if len(ports) > 0:
         buf += "\n"
@@ -410,7 +410,7 @@ def generate_module_port_signals(invert_reset,
         port_count += 1
         line = ""
         #Special Case, we need to tie the specific signal directly to this port
-        for key in sorted(slave_tags["bind"], cmp = _port_cmp):
+        for key in sorted(slave_tags["bind"], cmp = port_cmp):
             bname = key.partition("[")[0]
             bname.strip()
             if debug: print "Checking: %s" % bname
@@ -436,7 +436,7 @@ def get_port_count(module_tags = {}):
     return port_count
 
 
-def _port_cmp(x, y):
+def port_cmp(x, y):
 
     if re.search("[0-9]", x) and re.search("[0-9]", y):
         x_name = x.strip(string.digits)
