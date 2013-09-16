@@ -1,6 +1,6 @@
 # Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
 #
-# This file is part of Nysa (http://ninja-ide.org).
+# This file is part of Nysa (http://wiki.cospandesign.com/index.php?title=Nysa.org).
 #
 # Nysa is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -186,39 +186,14 @@ def find_rtl_file_location(filename="", user_cbuilder_paths = [], debug=False):
 #XXX: This should probably return none, and not an empty string upon failure
 #XXX:   perhaps even raise an error
 
-def get_module_tags(filename="", bus="", keywords = [], user_paths = [], debug=False):
-  """Gets the tags for the module within the specified filename
-
-  Given a module within a filename search through the module and
-  find:
-    metadata
-      \"DRT_ID\"
-      \"DRT_FLAGS\"
-    ports: Inputs/Outputs of this module
-    module: Name of the module
-    parameters: Configuration parameters within the module
-    arbitor_masters: Any arbitor masters within the module
-
-  Args:
-    filename: Name of the module to interrogate
-    bus: A string declaring the bus type, this can be
-      \"wishbone\" or \"axie\"
-    keywords:
-      Besides the standard metadata any additional values to search for
-
-  Returns:
-    A dictionary of module tags
-
-  Raises
-    Nothing
-  """
+def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug=False):
+  raw_buf = buf
   tags = {}
   tags["keywords"] = {}
   tags["ports"] = {}
   tags["module"] = ""
   tags["parameters"] = {}
   tags["arbitor_masters"] = []
-  raw_buf = ""
 
   #need a more robust way of openning the slave
 
@@ -236,11 +211,6 @@ def get_module_tags(filename="", bus="", keywords = [], user_paths = [], debug=F
 
   #XXX only working with verilog at this time, need to extend to VHDL
   #print "filename: %s" % filename
-
-  with open(filename) as slave_file:
-    buf = slave_file.read()
-    raw_buf = buf
-
 
   #find all the metadata
   for key in keywords:
@@ -299,21 +269,8 @@ def get_module_tags(filename="", bus="", keywords = [], user_paths = [], debug=F
   output_count = buf.count("output")
   inout_count = buf.count("inout")
 
-  if debug:
-    print "filename: " + filename
-
-  filestring = ""
-  try:
-    f = open(filename)
-    filestring = f.read()
-    f.close()
-#XXX: This should probably allow the calling function to handle a failure
-  except:
-    print "Failed to open test filename"
-    return
-
   ldebug = debug
-  define_dict = preprocessor.generate_define_table(filestring, user_paths, ldebug)
+  define_dict = preprocessor.generate_define_table(raw_buf, user_paths, ldebug)
 
   #find all the IO's
   for io in ports:
@@ -427,6 +384,45 @@ def get_module_tags(filename="", bus="", keywords = [], user_paths = [], debug=F
           print "\t" + key + ":" + value
 
   return tags
+
+
+
+
+def get_module_tags(filename="", bus="", keywords = [], user_paths = [], debug=False):
+  """Gets the tags for the module within the specified filename
+
+  Given a module within a filename search through the module and
+  find:
+    metadata
+      \"DRT_ID\"
+      \"DRT_FLAGS\"
+    ports: Inputs/Outputs of this module
+    module: Name of the module
+    parameters: Configuration parameters within the module
+    arbitor_masters: Any arbitor masters within the module
+
+  Args:
+    filename: Name of the module to interrogate
+    bus: A string declaring the bus type, this can be
+      \"wishbone\" or \"axie\"
+    keywords:
+      Besides the standard metadata any additional values to search for
+
+  Returns:
+    A dictionary of module tags
+
+  Raises
+    Nothing
+  """
+  buf = ""
+  with open(filename) as slave_file:
+    buf = slave_file.read()
+
+  return get_module_buffer_tags(buf = buf,
+                                bus = buf,
+                                keywords = keywords,
+                                user_paths = user_paths,
+                                debug = debug)
 
 
 def get_nysa_base():
