@@ -94,7 +94,7 @@ class Test (unittest.TestCase):
         module_name = "wb_sdram"
         user_paths = []
         prev_dbg = self.dbg
-        self.dbg = True
+        #self.dbg = True
         buf = "%s sdram_sim " % test_dict["name"]
         buf += sutils.generate_sim_module_buf(False,
                                               test_dict,
@@ -102,4 +102,7 @@ class Test (unittest.TestCase):
         if self.dbg:
             print "sim module buffer:\n%s" % buf
         self.dbg = prev_dbg
+
+    def test_generate_tb_module_port(self):
+        sutils.generate_tb_module_ports()
 

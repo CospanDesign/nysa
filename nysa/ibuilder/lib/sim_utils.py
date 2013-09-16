@@ -198,4 +198,17 @@ def generate_sim_module_buf(invert_reset,
                                                 
         
 
+def generate_tb_module_ports():
+    """
+    Generate the test bench ports
 
+    Args:
+        Nothing
+
+    Returns:
+        (string): buffer of the test module ports
+
+    Raises:
+        Nothing
+    """
+    buf = ""
