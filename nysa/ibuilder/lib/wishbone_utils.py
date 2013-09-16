@@ -1,6 +1,6 @@
 # Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
 
-# This file is part of Nysa (http://ninja-ide.org).
+# This file is part of Nysa (http://wiki.cospandesign.com/index.php?title=Nysa).
 #
 # Nysa is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -301,6 +301,148 @@ def get_port_count(module_tags = {}):
     return port_count
 
 
+def generate_module_port_signals(invert_reset,
+                                 wishbone_prename = "",
+                                 instance_name = "",
+                                 slave_tags = {},
+                                 module_tags = {},
+                                 debug = False):
+
+
+
+    buf = "(\n"
+    #Add the port declarations
+    buf += "\t.{0:<20}({1:<20}),\n".format("clk", "clk")
+    if invert_reset:
+        buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst_n")
+    else:
+        buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst")
+
+    #Keep track of the port count so the last one won't have a comma
+    port_max = get_port_count(module_tags)
+    port_count = 0
+
+    input_ports = []
+    output_ports = []
+    inout_ports = []
+    if "input" in module_tags["ports"]:
+        input_ports = module_tags["ports"]["input"].keys()
+    if "output" in module_tags["ports"]:
+        output_ports = module_tags["ports"]["output"].keys()
+    if "inout" in module_tags["ports"]:
+        inout_ports = module_tags["ports"]["inout"].keys()
+
+    for port in input_ports:
+        port_count += 1
+        line = ""
+        if port == "rst":
+            continue
+        if port == "clk":
+            continue
+
+        #Check to see if this is one of the pre-defined wires
+        wire = ""
+        for w in IF_WIRES:
+            if w.endswith(port[2:]):
+                wire = "%s" % w[2:]
+                break
+
+        #Not Pre-defines
+        if len(wire) == 0:
+            if is_wishbone_slave_signal(port):
+                wire = "w_%s%s" % (wishbone_prename, port)
+            else:
+                if len(instance_name) > 0:
+                    wire = "%s_%s" % (instance_name, port)
+                else:
+                    wire = "%s" % port
+
+        line = "\t.{0:<20}({1:<20})".format(port, wire)
+        if port_count == port_max:
+            buf += "%s\n" % line
+        else:
+            buf += "%s,\n" % line
+
+
+    for port in output_ports:
+        port_count += 1
+        line = ""
+        #Check to see if this is one of the pre-defined wires
+        wire = ""
+        for w in IF_WIRES:
+            if w.endswith(port[2:]):
+                wire = "%s" % w[2:]
+                break
+
+        #Not Pre-defines
+        if len(wire) == 0:
+            if is_wishbone_slave_signal(port):
+                wire = "w_%s%s" % (wishbone_prename, port)
+            else:
+                if len(instance_name) > 0:
+                    wire = "%s_%s" % (instance_name, port)
+                else:
+                    wire = "%s" % port
+
+        line = "\t.{0:<20}({1:<20})".format(port, wire)
+        if port_count == port_max:
+            buf += "%s\n" % line
+        else:
+            buf += "%s,\n" % line
+
+    for port in inout_ports:
+        port_count += 1
+        line = ""
+        #Special Case, we need to tie the specific signal directly to this port
+        for key in slave_tags["bind"]:
+            bname = key.partition("[")[0]
+            bname.strip()
+            if debug: print "Checking: %s" % bname
+            if bname == port:
+                loc = slave_tags["bind"][key]["loc"]
+                if port_count == port_max:
+                    buf += "\t.{0:<20}({1:<20})\n".format(port, loc)
+                else:
+                    buf += "\t.{0:<20}({1:<20}),\n".format(port, loc)
+
+
+    buf += ");"
+    return string.expandtabs(buf, 2)
+
+def generate_assigns_buffer(invert_reset, bindings, internal_bindings, debug=False):
+    buf = ""
+    if len(internal_bindings) > 0:
+        buf += "//Internal Bindings\n"
+        for key in internal_bindings:
+            if key == "clk":
+                continue
+            if key == "rst":
+                continue
+
+            buf += "assign\t{0:<20}=\t{1};\n".format(key, internal_bindings[key]["signal"])
+
+    buf += "\n\n"
+    if len(bindings) > 0:
+        buf += "//Bindings\n"
+        for key in bindings:
+            if key == "clk":
+                continue
+            if key == "rst":
+                continue
+
+
+            if bindings[key]["direction"] == "input":
+                buf += "assign\t{0:<20}=\t{1};\n".format(key, bindings[key]["loc"])
+            elif bindings[key]["direction"] == "output":
+                buf += "assign\t{0:<20}=\t{1};\n".format(bindings[key]["loc"], key)
+
+    if invert_reset:
+        buf += "\n"
+        buf += "//Invert Reset for this board\n"
+        buf += "assign\t{0:<20}=\t{1};\n".format("rst_n", "~rst")
+
+    return string.expandtabs(buf, 2)
+
 
 class WishboneTopGenerator(object):
     def __init__(self):
@@ -310,7 +452,6 @@ class WishboneTopGenerator(object):
         self.internal_bindings = {}
         self.bindings = {}
         self.enable_mem_bus = False
-        self.invert_reset = False
         self.slave_list = {}
         self.tags = {}
         self.num_slaves = 0
@@ -325,7 +466,7 @@ class WishboneTopGenerator(object):
         #Setup values
         self.user_paths = user_paths
         board_dict = utils.get_board_config(self.tags["board"])
-        self.invert_reset = board_dict["invert_reset"]
+        invert_reset = board_dict["invert_reset"]
         self.enable_mem_bus = False
         self.slave_list = self.tags["SLAVES"]
 
@@ -384,7 +525,7 @@ class WishboneTopGenerator(object):
             if len(self.tags["MEMORY"]) > 0:
                 num_mem_slaves = len(self.tags["MEMORY"])
 
-        bp_buf  = self.generate_boilerplate_wires(board_dict["invert_reset"],
+        bp_buf  = self.generate_boilerplate_wires(invert_reset,
                                                   num_slaves,
                                                   num_mem_slaves,
                                                   debug = debug)
@@ -444,22 +585,22 @@ class WishboneTopGenerator(object):
 
 
         #Add the ports
-        buf =  self.generate_ports(debug = debug)
+        buf =  self.generate_top_ports(debug = debug)
         buf += "\n\n"
         #Add the boiler plate register/wires
         buf += bp_buf
         buf += "\n\n"
         #Add the master
-        buf += generate_master_buffer(board_dict["invert_reset"])
+        buf += generate_master_buffer(invert_reset)
         buf += "\n\n"
         #Add the host interface
         buf += hi_buf
         buf += "\n\n"
         #Add the peripheral interconnect
-        buf += generate_peripheral_wishbone_interconnect_buffer(num_slaves, board_dict["invert_reset"])
+        buf += generate_peripheral_wishbone_interconnect_buffer(num_slaves, invert_reset)
         buf += "\n\n"
         #Add The memory interconnect
-        buf += generate_memory_wishbone_interconnect_buffer(num_mem_slaves, board_dict["invert_reset"])
+        buf += generate_memory_wishbone_interconnect_buffer(num_mem_slaves, invert_reset)
         buf += "\n\n"
         #Add an aritor if there is any
         buf += arb_buf
@@ -472,7 +613,10 @@ class WishboneTopGenerator(object):
             buf += "\n\n"
 
         #Add assign statements
-        buf += self.generate_assigns_buffer(debug = debug)
+        buf += generate_assigns_buffer(invert_reset,
+                                            self.bindings, 
+                                            self.internal_bindings, 
+                                            debug = debug)
         buf += "\n\n"
 
         buf += "endmodule"
@@ -687,7 +831,7 @@ class WishboneTopGenerator(object):
         return string.expandtabs(buf, 2)
         #Generate bindings that tie ports to wires
 
-    def generate_ports(self, debug = False):
+    def generate_top_ports(self, debug = False):
         """Create the ports string"""
         buf = "module top (\n"
         blist = self.bindings.keys()
@@ -707,125 +851,12 @@ class WishboneTopGenerator(object):
         if debug: print "port buffer:\n%s" % buf
         return string.expandtabs(buf, 2)
 
-
-    def generate_module_port_signals(self,
-                              wishbone_prename = "",
-                              instance_name = "",
-                              slave_tags = {},
-                              module_tags = {},
-                              debug = False):
-
-
-        board_dict = utils.get_board_config(self.tags["board"])
-
-
-        buf = "(\n"
-        #Add the port declarations
-        buf += "\t.{0:<20}({1:<20}),\n".format("clk", "clk")
-        if board_dict["invert_reset"]:
-            buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst_n")
-        else:
-            buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst")
-
-        #Keep track of the port count so the last one won't have a comma
-        port_max = get_port_count(module_tags)
-        port_count = 0
-
-        input_ports = []
-        output_ports = []
-        inout_ports = []
-        if "input" in module_tags["ports"]:
-            input_ports = module_tags["ports"]["input"].keys()
-        if "output" in module_tags["ports"]:
-            output_ports = module_tags["ports"]["output"].keys()
-        if "inout" in module_tags["ports"]:
-            inout_ports = module_tags["ports"]["inout"].keys()
-
-        for port in input_ports:
-            port_count += 1
-            line = ""
-            if port == "rst":
-                continue
-            if port == "clk":
-                continue
-
-            #Check to see if this is one of the pre-defined wires
-            wire = ""
-            for w in IF_WIRES:
-                if w.endswith(port[2:]):
-                    wire = "%s" % w[2:]
-                    break
-
-            #Not Pre-defines
-            if len(wire) == 0:
-                if is_wishbone_slave_signal(port):
-                    wire = "w_%s%s" % (wishbone_prename, port)
-                else:
-                    if len(instance_name) > 0:
-                        wire = "%s_%s" % (instance_name, port)
-                    else:
-                        wire = "%s" % port
-
-            line = "\t.{0:<20}({1:<20})".format(port, wire)
-            if port_count == port_max:
-                buf += "%s\n" % line
-            else:
-                buf += "%s,\n" % line
-
-
-        for port in output_ports:
-            port_count += 1
-            line = ""
-            #Check to see if this is one of the pre-defined wires
-            wire = ""
-            for w in IF_WIRES:
-                if w.endswith(port[2:]):
-                    wire = "%s" % w[2:]
-                    break
-
-            #Not Pre-defines
-            if len(wire) == 0:
-                if is_wishbone_slave_signal(port):
-                    wire = "w_%s%s" % (wishbone_prename, port)
-                else:
-                    if len(instance_name) > 0:
-                        wire = "%s_%s" % (instance_name, port)
-                    else:
-                        wire = "%s" % port
-
-            line = "\t.{0:<20}({1:<20})".format(port, wire)
-            if port_count == port_max:
-                buf += "%s\n" % line
-            else:
-                buf += "%s,\n" % line
-
-        for port in inout_ports:
-            port_count += 1
-            line = ""
-            #Special Case, we need to tie the specific signal directly to this port
-            for key in slave_tags["bind"]:
-                bname = key.partition("[")[0]
-                bname.strip()
-                if debug: print "Checking: %s" % bname
-                if bname == port:
-                    loc = slave_tags["bind"][key]["loc"]
-                    if port_count == port_max:
-                        buf += "\t.{0:<20}({1:<20})\n".format(port, loc)
-                    else:
-                        buf += "\t.{0:<20}({1:<20}),\n".format(port, loc)
-
-
-        buf += ");"
-        return string.expandtabs(buf, 2)
-
-
     def generate_host_interface_buffer(self, debug = False):
-
-
         absfilepath = utils.find_rtl_file_location(self.tags["INTERFACE"]["filename"])
         module_tags = utils.get_module_tags(filename = absfilepath,
                                             bus = "wishbone",
                                             user_paths = self.user_paths)
+        #print "module_tags: %s" % str(module_tags)
         name = "io"
         board_dict = utils.get_board_config(self.tags["board"])
 
@@ -863,10 +894,13 @@ class WishboneTopGenerator(object):
         buf += "\n\n"
         buf += "%s\t%s\t" % (module_tags["module"], name)
         io_proj_tags = self.tags["INTERFACE"]
-        buf += self.generate_module_port_signals("",
-                                                 "",
-                                                 self.tags["INTERFACE"],
-                                                 module_tags)
+        invert_reset = utils.get_board_config(self.tags["board"])["invert_reset"]
+        buf += generate_module_port_signals(invert_reset,
+                                            "",
+                                            "",
+                                            self.tags["INTERFACE"],
+                                            module_tags)
+
         return string.expandtabs(buf, 2)
 
     def generate_wishbone_buffer(self,
@@ -944,7 +978,13 @@ class WishboneTopGenerator(object):
         buf += "%s " % module_tags["module"]
         buf += parameter_buffer
         buf += "\t%s" % name
-        buf += self.generate_module_port_signals(pre_name, name, slave_tags, module_tags)
+        invert_reset = utils.get_board_config(self.tags["board"])["invert_reset"]
+        buf += generate_module_port_signals(invert_reset,
+                                            pre_name, 
+                                            name, 
+                                            slave_tags, 
+                                            module_tags)
+
         buf += "\n\n"
         return string.expandtabs(buf, 2)
 
@@ -1212,38 +1252,4 @@ class WishboneTopGenerator(object):
         buf += "\n)\n"
         return string.expandtabs(buf, 2)
 
-    def generate_assigns_buffer(self, debug=False):
-        board_dict = utils.get_board_config(self.tags["board"])
-        buf = ""
-        if len(self.internal_bindings) > 0:
-            buf += "//Internal Bindings\n"
-            for key in self.internal_bindings:
-                if key == "clk":
-                    continue
-                if key == "rst":
-                    continue
-
-                buf += "assign\t{0:<20}=\t{1};\n".format(key, self.internal_bindings[key]["signal"])
-
-        buf += "\n\n"
-        if len(self.bindings) > 0:
-            buf += "//Bindings\n"
-            for key in self.bindings:
-                if key == "clk":
-                    continue
-                if key == "rst":
-                    continue
-
-
-                if self.bindings[key]["direction"] == "input":
-                    buf += "assign\t{0:<20}=\t{1};\n".format(key, self.bindings[key]["loc"])
-                elif self.bindings[key]["direction"] == "output":
-                    buf += "assign\t{0:<20}=\t{1};\n".format(self.bindings[key]["loc"], key)
-
-        if board_dict["invert_reset"]:
-            buf += "\n"
-            buf += "//Invert Reset for this board\n"
-            buf += "assign\t{0:<20}=\t{1};\n".format("rst_n", "~rst")
-
-        return string.expandtabs(buf, 2)
 
