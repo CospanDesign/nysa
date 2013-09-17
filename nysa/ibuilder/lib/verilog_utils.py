@@ -458,9 +458,58 @@ def get_port_count(module_tags = {}):
         port_count += len(module_tags["ports"]["input"])
     return port_count
 
+def create_wire_buf_from_dict(name, d):
+    size = d["size"]
+    if size == 1:
+        return create_wire_buf(name, 1, 0, 0)
+    else:
+        return create_wire_buf(name, size, d["max_val"], d["min_val"])
+
+
+def create_wire_buf(name, size, max_val, min_val):
+    line = ""
+    if size > 1:
+        size_range = "[%d:%d]" % (max_val, min_val)
+        line = "wire\t{0:18}{1};\n".format(size_range, name)
+    else:
+        line = "wire\t{0:18}{1};\n".format("", name)
+    return string.expandtabs(line, 2)
+
+def generate_assigns_buffer(invert_reset, bindings, internal_bindings, debug=False):
+    buf = ""
+    if len(internal_bindings) > 0:
+        buf += "//Internal Bindings\n"
+        for key in internal_bindings:
+            if key == "clk":
+                continue
+            if key == "rst":
+                continue
+
+            buf += "assign\t{0:<20}=\t{1};\n".format(key, internal_bindings[key]["signal"])
+
+    buf += "\n\n"
+    if len(bindings) > 0:
+        buf += "//Bindings\n"
+        for key in bindings:
+            if key == "clk":
+                continue
+            if key == "rst":
+                continue
+
+
+            if bindings[key]["direction"] == "input":
+                buf += "assign\t{0:<20}=\t{1};\n".format(key, bindings[key]["loc"])
+            elif bindings[key]["direction"] == "output":
+                buf += "assign\t{0:<20}=\t{1};\n".format(bindings[key]["loc"], key)
+
+    if invert_reset:
+        buf += "\n"
+        buf += "//Invert Reset for this board\n"
+        buf += "assign\t{0:<20}=\t{1};\n".format("rst_n", "~rst")
+
+    return string.expandtabs(buf, 2)
 
 def port_cmp(x, y):
-
     if re.search("[0-9]", x) and re.search("[0-9]", y):
         x_name = x.strip(string.digits)
         y_name = y.strip(string.digits)
