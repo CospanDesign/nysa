@@ -56,7 +56,7 @@ test_dict = {
     "BA1"     : "o_sdram_bank[1]",
     "BA0"     : "o_sdram_bank[0]",
     "DQMH"    : "o_sdram_data_mask[1]",
-    "DQML"     : "o_sdram_data_mask[0]"
+    "DQML"    : "o_sdram_data_mask[0]"
   }
 }
 
@@ -95,10 +95,10 @@ class Test (unittest.TestCase):
         user_paths = []
         prev_dbg = self.dbg
         #self.dbg = True
-        buf = "%s sdram_sim " % test_dict["name"]
-        buf += sutils.generate_sim_module_buf(False,
-                                              test_dict,
-                                              debug = self.dbg)
+        buf = sutils.generate_sim_module_buf(False,
+                                             test_dict["name"],
+                                             test_dict,
+                                             debug = self.dbg)
         if self.dbg:
             print "sim module buffer:\n%s" % buf
         self.dbg = prev_dbg

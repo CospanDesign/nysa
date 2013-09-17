@@ -30,6 +30,12 @@ import re
 import utils
 import preprocessor
 
+def get_eol(total, index):
+    if index < total:
+        return ","
+    return ""
+
+
 def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug=False):
     raw_buf = buf
     tags = {}
@@ -38,17 +44,17 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
     tags["module"] = ""
     tags["parameters"] = {}
     tags["arbitor_masters"] = []
- 
+
     ports = [
         "input",
         "output",
         "inout"
     ]
- 
- 
+
+
     #XXX only working with verilog at this time, need to extend to VHDL
     #print "filename: %s" % filename
- 
+
     #find all the metadata
     for key in keywords:
         index = buf.find (key)
@@ -58,26 +64,26 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
             continue
         if debug:
           print "found substring for " + key
-       
+
         substring = buf.__getslice__(index, len(buf)).splitlines()[0]
         if debug:
             print "substring: " + substring
-       
-       
+
+
         if debug:
             print "found " + key + " substring: " + substring
-       
+
         substring = substring.strip()
         substring = substring.strip("//")
         substring = substring.strip("/*")
         tags["keywords"][key] = substring.partition(":")[2]
- 
- 
- 
+
+
+
     #remove all the comments from the code
     buf = remove_comments(buf)
     #print "no comments: \n\n" + buf
- 
+
     for substring in buf.splitlines():
         if (len(substring.partition("module")[1]) == 0):
             continue
@@ -86,28 +92,28 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
         module_string = module_string.strip("(")
         module_string = module_string.strip("#")
         index = module_string.find(" ")
-       
+
         if (index != -1):
             tags["module"] = module_string.__getslice__(0, index)
         else:
             tags["module"] = module_string
-       
+
         if debug:
             print "module name: " + module_string
             print tags["module"]
         break
- 
+
     #find all the ports
     #find the index of all the processing block
     substrings = buf.splitlines()
- 
+
     input_count = buf.count("input")
     output_count = buf.count("output")
     inout_count = buf.count("inout")
- 
+
     ldebug = debug
     define_dict = preprocessor.generate_define_table(raw_buf, user_paths, ldebug)
- 
+
     #find all the IO's
     for io in ports:
         tags["ports"][io] = {}
@@ -142,9 +148,9 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
                 length_string = length_string.strip()
                 if debug:
                     print "length string: " + length_string
-               
+
                 ldebug = debug
-               
+
                 length_string = preprocessor.resolve_defines(length_string, define_dict, debug=ldebug)
                 length_string = preprocessor.evaluate_range(length_string)
                 length_string = length_string.partition("]")[0]
@@ -153,16 +159,16 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
                     print "length string: " + length_string
                 max_val = string.atoi(length_string.partition(":")[0])
                 min_val = string.atoi(length_string.partition(":")[2])
-           
+
             tags["ports"][io][substring] = {}
-           
+
             if (max_val != -1):
                 tags["ports"][io][substring]["max_val"] = max_val
                 tags["ports"][io][substring]["min_val"] = min_val
                 tags["ports"][io][substring]["size"] = (max_val + 1) - min_val
             else:
                 tags["ports"][io][substring]["size"] = 1
-       
+
     #find all the USER_PARAMETER declarations
     user_parameters = []
     substrings = raw_buf.splitlines()
@@ -171,8 +177,8 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
         if "USER_PARAMETER" in substring:
             name = substring.partition(":")[2].strip()
             user_parameters.append(name)
- 
- 
+
+
     #find all the parameters
     substrings = buf.splitlines()
     for substring in substrings:
@@ -190,17 +196,17 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
                 print "parameter value: " + parameter_value
             if parameter_name in user_parameters:
                 tags["parameters"][parameter_name] = parameter_value
- 
- 
+
+
     tags["arbitor_masters"] = arbitor.get_number_of_arbitor_hosts(tags)
- 
- 
+
+
     if debug:
         print "input count: " + str(input_count)
         print "output count: " + str(output_count)
         print "inout count: " + str(inout_count)
         print "\n"
- 
+
     if debug:
         print "module name: " + tags["module"]
         for key in tags["keywords"].keys():
@@ -213,7 +219,7 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
                     if (isinstance( value, int)):
                         value = str(value)
                     print "\t" + key + ":" + value
- 
+
     return tags
 
 
@@ -221,7 +227,7 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
 
 def get_module_tags(filename="", bus="", keywords = [], user_paths = [], debug=False):
     """Gets the tags for the module within the specified filename
- 
+
     Given a module within a filename search through the module and
     find:
       metadata
@@ -231,24 +237,24 @@ def get_module_tags(filename="", bus="", keywords = [], user_paths = [], debug=F
       module: Name of the module
       parameters: Configuration parameters within the module
       arbitor_masters: Any arbitor masters within the module
- 
+
     Args:
       filename: Name of the module to interrogate
       bus: A string declaring the bus type, this can be
         \"wishbone\" or \"axie\"
       keywords:
         Besides the standard metadata any additional values to search for
- 
+
     Returns:
       A dictionary of module tags
- 
+
     Raises
       Nothing
     """
     buf = ""
     with open(filename) as slave_file:
         buf = slave_file.read()
- 
+
     return get_module_buffer_tags(buf = buf,
                                   bus = buf,
                                   keywords = keywords,
@@ -258,13 +264,13 @@ def get_module_tags(filename="", bus="", keywords = [], user_paths = [], debug=F
 
 def remove_comments(buf="", debug=False):
     """Remove comments from a buffer.
- 
+
     Args:
       buf = Buffer to remove the comments from
- 
+
     Returns:
       A buffer with no verilog comments in it
- 
+
     Raises:
       Nothing
     """
@@ -278,7 +284,7 @@ def remove_comments(buf="", debug=False):
         bufx = bufx + line + "\n"
     if debug:
         print "bufx:\n" + bufx
- 
+
     if debug:
         print "working on /* */ comments\n\n\n"
     #get rid of /*, */ comments
@@ -295,20 +301,37 @@ def remove_comments(buf="", debug=False):
         buf_part = bufy.partition("/*")
         pre_comment = ""
         post_comment = ""
- 
+
     if debug:
         print "buf:\n" + bufy
- 
+
     return bufy
 
 def generate_module_port_signals(invert_reset,
-                                 instance_name = "",
+                                 name = "",
+                                 prename = "",
                                  slave_tags = {},
                                  module_tags = {},
                                  wishbone_slave = False,
                                  debug = False):
 
-    buf = "(\n"
+    buf = ""
+    if ("parameters" in module_tags) and \
+            len(module_tags["parameters"].keys()) > 0:
+        buf = "%s #(\n" % module_tags["module"]
+        num_params = len(module_tags["parameters"])
+        param_count = 1
+        for param in module_tags["parameters"]:
+            buf += "\t.{0:<20}({1:<18}){2}\n".format(param,
+                                                 module_tags["parameters"][param],
+                                                 get_eol(num_params, param_count))
+            param_count += 1
+
+        buf += ")%s (\n" % name
+
+    else:
+        buf = "%s %s(\n" % (module_tags["module"], name)
+
     if not wishbone_slave:
         IF_WIRES = []
 
@@ -335,7 +358,7 @@ def generate_module_port_signals(invert_reset,
         else:
             buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst")
 
-   
+
 
     ports = sorted(input_ports, cmp = port_cmp)
     buf += "\n"
@@ -359,8 +382,8 @@ def generate_module_port_signals(invert_reset,
 
         #Not Pre-defines
         if len(wire) == 0:
-            if len(instance_name) > 0:
-                wire = "%s_%s" % (instance_name, port)
+            if len(prename) > 0:
+                wire = "%s_%s" % (prename, port)
             else:
                 wire = "%s" % port
 
@@ -388,8 +411,8 @@ def generate_module_port_signals(invert_reset,
 
         #Not Pre-defines
         if len(wire) == 0:
-            if len(instance_name) > 0:
-                wire = "%s_%s" % (instance_name, port)
+            if len(prename) > 0:
+                wire = "%s_%s" % (prename, port)
             else:
                 wire = "%s" % port
 
@@ -456,7 +479,7 @@ def port_cmp(x, y):
                 #print "\tx > y"
                 return 1
 
-    
+
     #print "normal search: %s:%s" % (x, y)
     if x < y:
         return -1
@@ -465,4 +488,4 @@ def port_cmp(x, y):
     else:
         return 1
 
-         
+

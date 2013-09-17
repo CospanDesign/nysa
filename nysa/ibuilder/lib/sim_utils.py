@@ -117,6 +117,7 @@ def get_sim_module_dict(module_name, user_paths = [], debug = False):
     
 
 def generate_sim_module_buf(invert_reset,
+                            instance_name,
                             sim_module_tags,
                             debug = False):
     """
@@ -190,9 +191,10 @@ def generate_sim_module_buf(invert_reset,
             print "\t%s:%s" % (inout, inout_ports["bind"][inout])
 
     buf = vutils.generate_module_port_signals(invert_reset,
-                                              "",
-                                              inout_ports,
-                                              module_tags)
+                                              name = instance_name,
+                                              prename = "",
+                                              slave_tags = inout_ports,
+                                              module_tags = module_tags)
 
     return buf
                                                 
