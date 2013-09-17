@@ -282,13 +282,13 @@ def generate_master_buffer(invert_reset):
     return string.expandtabs(buf, 2)
 
 def create_wire_buf(name, size, max_val, min_val):
-        line = ""
-        if size > 1:
-            size_range = "[%d:%d]" % (max_val, min_val)
-            line = "wire\t{0:15}{1};\n".format(size_range, name)
-        else:
-            line = "wire\t{0:15}{1};\n".format("", name)
-        return string.expandtabs(line, 2)
+    line = ""
+    if size > 1:
+        size_range = "[%d:%d]" % (max_val, min_val)
+        line = "wire\t{0:15}{1};\n".format(size_range, name)
+    else:
+        line = "wire\t{0:15}{1};\n".format("", name)
+    return string.expandtabs(line, 2)
 
 def get_port_count(module_tags = {}):
     port_count = 0
