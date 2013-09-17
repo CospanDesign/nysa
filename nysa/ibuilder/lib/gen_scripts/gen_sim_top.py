@@ -7,10 +7,13 @@ from string import Template
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
 import utils
-import verilog_utils as vutils
 import arbitor
 import gen_top
-import wishbone_utils
+
+import verilog_utils as vutils
+import module_builder as mb
+import sim_utils as sutils
+
 
 from gen import Gen
 
@@ -32,16 +35,6 @@ class GenSimTop(Gen):
         buf = top.gen_script(sim_tags, buf, user_paths, debug)
 
         #Add the waveform file
-        waveform_init_string = ("\n" +
-            "initial begin\n"
-            "  $dumpfile (\"waveform.vcd\");\n" +
-            "  $dumpvars (0, top);\n" +
-            "end\n\n")
-
-        #put this in right before the 'endmodule'
-        pre_end = buf.partition("endmodule")[0]
-        buf = pre_end + waveform_init_string + "endmodule\n\n"
-        self.generate_test_bench(sim_tags, buf)
         return buf
 
     def inject_sim_interface(self, tags):
@@ -92,15 +85,4 @@ class GenSimTop(Gen):
                 "loc":"sim_out_data_count[27:0]",
                 "direction":"output"}
         return tags
-
-    def generate_test_bench(self, tags, top_buffer):
-        buf = "module tb (\n"
-        top_module_tags = vutils.get_module_buffer_tags(top_buffer,
-                                                        bus = "wishbone",
-                                                        user_paths = [])
-        #print "top module tags: %s" % str(top_module_tags)
-        #Generate 'slave_tags' or tags we will use to bind ports to simulation
-
-
-        return string.expandtabs(buf, 2)
 
