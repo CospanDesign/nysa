@@ -41,18 +41,76 @@ import json
 #Project Modules
 import utils
 import verilog_utils as vutils
+from verilog_utils import get_eol
 import ibuilder_error
 
 class ModuleBuilderError(ibuilder_error.IBuilderError):
     pass
 
-def get_port_eol(num_ports, index):
-    if index < num_ports:
-        return ","
-    return ""
+def generate_module_ports(module_name,
+                          port_dict,
+                          param_dict = {},
+                          debug = False):
+    """
+    Generates the name, parameters and port declarations of a verilog module
 
-def generate_module_ports(module_name, port_dict, debug = False):
-    buf =  "module %s(\n" % module_name
+    Args:
+        module_name (string): Name of the module to instantiate
+        port_dict (dictionary): Port dictionary
+            Format of port_dict:
+                {
+                    "input":{
+                        "clk",
+                        "rst",
+                        "stimulus",
+                        "array[31:0]",
+                        "button[3:0]"
+                    },
+                    "output":{
+                        "out1",
+                        "led[3:0]"
+                    },
+                    "inout":{
+                        "inout_test",
+                        "inout[5:1]"
+                    }
+                }
+            param_dict (dictionay): Parameter dictionary
+                Format of param_dict
+                {
+                    "PARAMETER1":"1",
+                    "PARAMETER2":"4"
+                }
+    Returns:
+        (string): buffer instantiation
+
+    Raises:
+        ModuleBuilderError:
+            -module_name is not a string
+            -param dictionary incorrectly formatted
+            -port dictionary incorrectly formatted
+    """
+    if not isinstance(module_name, str):
+        raise ModuleBuilderError("module_builder: module_name is not a string")
+    buf = ""
+
+    if len(param_dict.keys()) > 0:
+        num_params = len(param_dict.keys())
+        param_count = 1
+
+        buf = "module %s #(\n" % module_name
+        for param in param_dict:
+            buf += "\t{0:10}{1:12}{2:10}{3}{4}\n".format("parameter",
+                                                         param,
+                                                         "=",
+                                                         param_dict[param],
+                                                         get_eol(num_params,
+                                                                      param_count))
+            param_count += 1
+
+        buf += ")(\n"
+    else:
+        buf = "module %s(\n" % module_name
 
     input_ports  =[]
     output_ports = []
@@ -86,11 +144,11 @@ def generate_module_ports(module_name, port_dict, debug = False):
 
     #This is a special case which should not handle an array
     if "clk" in input_ports:
-        buf += "\t{0:20}\t{1}{2}\n".format("input", "clk", get_port_eol(num_ports, port_count))
+        buf += "\t{0:22}{1}{2}\n".format("input", "clk", get_eol(num_ports, port_count))
         port_count += 1
 
     if "rst" in input_ports:
-        buf += "\t{0:20}\t{1}{2}\n".format("input", "rst", get_port_eol(num_ports, port_count))
+        buf += "\t{0:22}{1}{2}\n".format("input", "rst", get_eol(num_ports, port_count))
         port_count += 1
 
     if port_count != len(input_ports):
@@ -104,18 +162,17 @@ def generate_module_ports(module_name, port_dict, debug = False):
             continue
 
         if "[" in port and ":" in port:
-            print "Found an array in the input ports: %s" % port
             port_name = "\t{0:10}[{1:11}{2}{3}\n".format(
                                                  "input",
-                                                 port.partition("[")[2], 
-                                                 port.partition("[")[0], 
-                                                 get_port_eol(num_ports,
+                                                 port.partition("[")[2],
+                                                 port.partition("[")[0],
+                                                 get_eol(num_ports,
                                                               port_count))
             port_count += 1
         else:
             port_name = "\t{0:22}{1}{2}\n".format("input",
                                                 port,
-                                                get_port_eol(num_ports,
+                                                get_eol(num_ports,
                                                              port_count))
             port_count += 1
         buf += port_name
@@ -127,15 +184,15 @@ def generate_module_ports(module_name, port_dict, debug = False):
         if "[" in port and ":" in port:
             port_name = "\t{0:10}[{1:11}{2}{3}\n".format(
                                                  "output",
-                                                 port.partition("[")[2], 
-                                                 port.partition("[")[0], 
-                                                 get_port_eol(num_ports,
+                                                 port.partition("[")[2],
+                                                 port.partition("[")[0],
+                                                 get_eol(num_ports,
                                                               port_count))
             port_count += 1
         else:
             port_name = "\t{0:22}{1}{2}\n".format("output",
                                                 port,
-                                                get_port_eol(num_ports,
+                                                get_eol(num_ports,
                                                              port_count))
             port_count += 1
         buf += port_name
@@ -148,15 +205,15 @@ def generate_module_ports(module_name, port_dict, debug = False):
         if "[" in port and ":" in port:
             port_name = "\t{0:10}[{1:11}{2}{3}\n".format(
                                                  "inout",
-                                                 port.partition("[")[2], 
-                                                 port.partition("[")[0], 
-                                                 get_port_eol(num_ports,
+                                                 port.partition("[")[2],
+                                                 port.partition("[")[0],
+                                                 get_eol(num_ports,
                                                               port_count))
             port_count += 1
         else:
             port_name = "\t{0:22}{1}{2}\n".format("inout",
                                                 port,
-                                                get_port_eol(num_ports,
+                                                get_eol(num_ports,
                                                              port_count))
             port_count += 1
 
@@ -164,4 +221,202 @@ def generate_module_ports(module_name, port_dict, debug = False):
 
     buf += ");\n"
     return string.expandtabs(buf, 2)
+
+def generate_defines_buf(defines_dict):
+    """
+    XXX: This function is not ready to be used, the defines need to be organized (DO NOT USE)
+    Generate a buffer with the specified defines
+
+    Args:
+        defines_dict (dictionary): list of define values in the format:
+            'name':'value'
+
+    Returns:
+        (string): buffer with the defines specified
+
+    Raises:
+        Nothing
+    """
+    if len(defines_dict) == 0:
+        return ""
+
+
+    buf =  "\n"
+    for define in defines_dict:
+        buf += "`define %s %s\n" % (define, defines_dict[define])
+    buf += "\n"
+    return buf
+
+def generate_timespec_buf(step = "1 ns", unit = "1 ps"):
+    """
+    Generate a timespec buffer given the input, if left empty fills in the
+    default of 1ns/1ps
+
+    Args:
+        step (string): Timespec step
+        unit (string): Unit of time step
+
+    Returns:
+        (string): buffer with the given timespec
+
+    Raises:
+        Nothing
+    """
+    buf  = "\n"
+    buf += "`timespec %s/%s\n" % (step, unit)
+    buf += "\n"
+    return buf
+
+
+class ModuleBuilder(object):
+    """Class used to build a generic verilog module given a configuratiom file"""
+
+    def __init__(self, tags = None):
+        self.tags = tags
+        self.wires = []
+        self.bindings = {}
+        self.user_paths = []
+        self.submodule_buffers = []
+
+    def add_ports_to_wires(self):
+        """Add all input and output wires to the ports"""
+
+        if "input" in self.tags["ports"]:
+            for port in self.tags["ports"]["input"]:
+                self.wires.append(port)
+        if "output" in self.tags["ports"]:
+            for port in self.tags["ports"]["output"]:
+                self.wires.append(port)
+
+    def generate_module_wires(self, invert_reset):
+        buf = ""
+        buf += vutils.create_wire_buf("rst_n", 1, 0, 0)
+        return buf
+
+    def generate_module(self, name, tags = None, invert_reset = False, debug = False):
+        self.wires = []
+        self.bindings = {}
+        self.submodule_buffers = []
+        if tags:
+            self.tags = tags
+
+        #Add the ports to wires
+        self.add_ports_to_wires()
+
+        #Generate the submodules
+        if "submodules" in self.tags:
+            for submodule in self.tags["submodules"]:
+                sub = self.generate_sub_module(invert_reset,
+                                               submodule,
+                                               self.tags["submodules"][submodule],
+                                               debug = False)
+
+                self.submodule_buffers.append(sub)
+
+        #Generate the bindings or assignments for the submodules
+        assign_buf = vutils.generate_assigns_buffer(invert_reset,
+                                                    bindings = self.bindings,
+                                                    internal_bindings = {},
+                                                    debug = False)
+
+        wire_buf = self.generate_module_wires(invert_reset)
+
+        buf =  generate_timespec_buf()
+        param_dict = {}
+        if "parameters" in self.tags:
+            param_dict = self.tags["parameters"]
+
+        buf += generate_module_ports(module_name = name,
+                                     port_dict = self.tags["ports"],
+                                     param_dict = param_dict,
+                                     debug = False)
+
+        buf += "\n"
+        buf += "//local parameters\n"
+        buf += "\n"
+        buf += "//registers/wires\n"
+        buf += wire_buf
+        buf += "\n"
+        buf += "//submodules\n"
+        buf += "\n"
+
+
+        for sub in self.submodule_buffers:
+            buf += sub
+            buf += "\n"
+
+        buf += "\n"
+        buf += assign_buf
+        buf += "//asynchronous logic\n"
+        buf += "//synchronous logic\n"
+        buf += "\n"
+        buf += "endmodule"
+        return buf
+        
+
+    def generate_sub_module_wires(self, invert_reset, instance_name, module_tags):
+        #Add all input and output wires to the ports
+        buf = ""
+        if "input" in module_tags["ports"]:
+            buf += "//inputs\n"
+            for port in module_tags["ports"]["input"]:
+                if port == "clk":
+                    continue
+                if port == "rst":
+                    continue
+                pname = "%s_%s" % (instance_name, port)
+                buf += vutils.create_wire_buf_from_dict(pname,
+                                                        module_tags["ports"]["input"][port])
+                if pname not in self.wires:
+                    self.wires.append(pname)
+
+            buf += "\n"
+
+        if "output" in module_tags["ports"]:
+            buf += "//outputs\n"
+            for port in module_tags["ports"]["output"]:
+                pname = "%s_%s" % (instance_name, port)
+                buf += vutils.create_wire_buf_from_dict(pname,
+                                                        module_tags["ports"]["output"][port])
+
+                if pname not in self.wires:
+                    self.wires.append(pname)
+            buf += "\n"
+        return buf
+
+    def generate_sub_module(self,
+                            invert_reset,
+                            instance_name,
+                            sub_module_tags,
+                            debug = False):
+
+        filepath = utils.find_rtl_file_location(sub_module_tags["filename"],
+                                                self.user_paths)
+        module_tags = vutils.get_module_tags(filepath,
+                                             user_paths = self.user_paths)
+        if debug:
+            print "Module Tags:"
+            utils.pretty_print_dict(module_tags)
+
+        buf =  "//Module %s (  %s  )\n" % (module_tags["module"], instance_name)
+        buf += "\n"
+        buf += self.generate_sub_module_wires(invert_reset, instance_name, module_tags)
+       
+        buf += vutils.generate_module_port_signals(invert_reset = invert_reset,
+                                                   name = instance_name,
+                                                   prename = instance_name,
+                                                   slave_tags = sub_module_tags,
+                                                   module_tags = module_tags)
+
+        #Add the bindings for this modules to the bind dictionary
+        if "bind" in sub_module_tags:
+            for bind in sub_module_tags["bind"]:
+                bname = bind
+                if len(instance_name) > 0:
+                    bname = "%s_%s" % (instance_name, bind)
+                self.bindings[bname] = {}
+                self.bindings[bname] = sub_module_tags["bind"][bind]
+
+        return buf
+
 
