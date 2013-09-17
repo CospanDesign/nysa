@@ -908,3 +908,22 @@ def create_native_path(path):
     for unit in units:
         out_path = os.path.join(out_path, unit)
     return out_path
+
+def pretty_print_dict(d):
+    """
+    Prints the given dictionary in a human readible format
+
+    Args:
+        d (dictionary): Dictionary to display
+
+    Return:
+        Nothing
+
+    Raises:
+        Nothing
+    """
+    print json.dumps(d,
+                     sort_keys = True,
+                     indent = 2,
+                     separators=(',', ':'))
+
