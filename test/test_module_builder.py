@@ -42,19 +42,45 @@ test_module_tags = {
     },
     "ports":{
         "input":{
-            "clk",
-            "rst",
-            "stimulus",
-            "array[31:0]",
-            "button[3:0]"
+            "clk":{
+                "size":1
+            },
+            "rst":{
+                "size":1
+            },
+            "stimulus":{
+                "size":1
+            },
+            "array":{
+                "size":31,
+                "max_val":31,
+                "min_val":0
+            },
+            "button":{
+                "size":4,
+                "max_val":3,
+                "min_val":0
+            }
         },
         "output":{
-            "out1",
-            "led[3:0]"
+            "out1":{
+                "size":1
+            },
+            "led":{
+                "size":4,
+                "max_val":3,
+                "min_val":0
+            }
         },
         "inout":{
-            "inout_test",
-            "inout[5:1]"
+            "inout_test":{
+                "size":1
+            },
+            "inout":{
+                "size":5,
+                "max_val":5,
+                "min_val":1
+            }
         }
     }
 }
@@ -82,7 +108,6 @@ class Test (unittest.TestCase):
             print "Module Port Buffer\n%s" % buf
         self.dbg = prev_dbg
 
-
     def test_module_port_and_parameters_generator(self):
         module_name = test_module_tags["module"]
         port_dict = test_module_tags["ports"]
@@ -97,16 +122,13 @@ class Test (unittest.TestCase):
             print "Module Port Buffer\n%s" % buf
         self.dbg = prev_dbg
 
-
-
-    def test_timespec_buffer(self):
+    def test_timestep_buffer(self):
         prev_dbg = self.dbg
         #self.dbg = True
         buf = mb.generate_timespec_buf()
         if self.dbg:
             print "Module Timespec buffer\n%s" % buf
         self.dbg = prev_dbg
-        
 
     def test_generate_define_buffer(self):
         defines_dict = test_module_tags["defines"]
@@ -131,7 +153,7 @@ class Test (unittest.TestCase):
 
     def test_generate_module(self):
         prev_dbg = self.dbg
-        #self.dbg = True
+        self.dbg = True
         MB = mb.ModuleBuilder(test_module_tags)
         buf = MB.generate_module("test_module",
                                  test_module_tags,

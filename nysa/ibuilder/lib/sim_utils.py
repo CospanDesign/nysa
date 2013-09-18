@@ -277,26 +277,22 @@ def generate_tb_module(tags, top_buffer, user_paths = [], debug=False):
     }
     ports["input"]["sim_in_command"] = {
         "direction":"input",
-        "size":31,
+        "size":32,
         "min_val":0,
         "max_val":31
     }
-
-
     ports["input"]["sim_in_address"] = {
-         "direction":"input",
-        "size":31,
+        "direction":"input",
+        "size":32,
         "min_val":0,
         "max_val":31
     }
-
     ports["input"]["sim_in_data"] = {
           "direction":"input",
-        "size":31,
+        "size":32,
         "min_val":0,
         "max_val":31
     }
-
     ports["input"]["sim_in_data_count"] = {
         "direction":"input",
         "size":28,
@@ -311,28 +307,26 @@ def generate_tb_module(tags, top_buffer, user_paths = [], debug=False):
         "direction":"output",
         "size":1
     }
-    ports["output"]["sim_out_status[31:0]"] = {
+    ports["output"]["sim_out_status"] = {
         "direction":"output",
-        "size":31,
+        "size":32,
+        "min_val":0,
+        "max_val":31
+    }
+    ports["output"]["sim_out_address"] = {
+        "direction":"output",
+        "size":32,
+        "min_val":0,
+        "max_val":31
+    }
+    ports["output"]["sim_out_data"] = {
+        "direction":"output",
+        "size":32,
         "min_val":0,
         "max_val":31
     }
 
-    ports["output"]["sim_out_address[31:0]"] = {
-        "direction":"output",
-        "size":31,
-        "min_val":0,
-        "max_val":31
-    }
-
-    ports["output"]["sim_out_data[31:0]"] = {
-        "direction":"output",
-        "size":31,
-        "min_val":0,
-        "max_val":31
-    }
-
-    ports["output"]["sim_out_data_count[27:0]"] = {
+    ports["output"]["sim_out_data_count"] = {
         "direction":"output",
         "size":28,
         "min_val":0,
@@ -368,7 +362,7 @@ def generate_tb_module(tags, top_buffer, user_paths = [], debug=False):
                                                 debug = False)
     buf =  mb.generate_timespec_buf()
     buf += mb.generate_module_ports("tb",
-                                    tb_tags["ports"],
+                                    MB.tags["ports"],
                                     param_dict = {},
                                     debug = False)
     buf += "\n"
