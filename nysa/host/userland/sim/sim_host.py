@@ -58,8 +58,8 @@ class NysaSim (Nysa):
 
         self.rst            = self.dut.rst
         self.rst            <= 1
-        self.rst_n          = self.dut.rst_n
-        self.rst_n          <= 0
+        self.rst          = self.dut.rst
+        self.rst          <= 0
 
         self.master_ready   = self.dut.sim_master_ready
         self.in_reset       = self.dut.sim_in_reset
@@ -260,7 +260,7 @@ class NysaSim (Nysa):
         self.dut.log.info("Sending Reset to the bus")
         yield Timer (0)
 
-        self.rst_n          <= 1
+        self.rst            <= 1
         yield ClockCycles(self.dut.clk, self.reset_length)
         #self.rst            <= 0
         self.in_ready       <= 0
@@ -272,7 +272,7 @@ class NysaSim (Nysa):
         self.in_data        <= 0
         self.in_data_count  <= 0
 
-        self.rst_n          <= 0
+        self.rst            <= 0
         yield ClockCycles(self.dut.clk, self.reset_length)
         yield ClockCycles(self.dut.clk, self.reset_length)
 
