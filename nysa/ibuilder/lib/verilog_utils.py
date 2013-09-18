@@ -45,6 +45,9 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
     tags["parameters"] = {}
     tags["arbitor_masters"] = []
 
+    in_task = False
+    end_module = False
+
     ports = [
         "input",
         "output",
@@ -116,10 +119,39 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
 
     #find all the IO's
     for io in ports:
+        end_module = False
+        in_task = False
+
         tags["ports"][io] = {}
         substrings = buf.splitlines()
         for substring in substrings:
             substring = substring.strip()
+            if substring.startswith("endmodule"):
+                end_module = True
+                continue
+            #Only count one module per buffer
+            if end_module:
+                continue
+
+            if substring.startswith("task"):
+                #Sub tasks and functions declare inputs and outputs, don't count these
+                in_task = True
+                continue
+            if substring.startswith("function"):
+                in_task = True
+                continue
+
+            if substring.startswith("endtask"):
+                in_task = False
+                continue
+
+            if substring.startswith("endfunction"):
+                in_task = False
+                continue
+
+            if in_task:
+                continue
+
             #if line doesn't start with an input/output or inout
             if (not substring.startswith(io)):
                 continue
@@ -461,6 +493,26 @@ def get_port_count(module_tags = {}):
     if "input" in module_tags["ports"]:
         port_count += len(module_tags["ports"]["input"])
     return port_count
+
+
+
+def create_reg_buf_from_dict(name, d):
+    size = d["size"]
+    if size == 1:
+        return create_reg_buf(name, 1, 0, 0)
+    else:
+        return create_reg_buf(name, size, d["max_val"], d["min_val"])
+
+def create_reg_buf(name, size, max_val, min_val):
+    line = ""
+    if size > 1:
+        size_range = "[%d:%d]" % (max_val, min_val)
+        line = "reg\t{0:20}{1};\n".format(size_range, name)
+    else:
+        line = "reg\t{0:20}{1};\n".format("", name)
+    return string.expandtabs(line, 2)
+
+
 
 def create_wire_buf_from_dict(name, d):
     size = d["size"]
