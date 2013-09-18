@@ -124,6 +124,7 @@ localparam        WRITE_RESPONSE  = 4'h5;
 localparam        GET_WRITE_DATA  = 4'h6;
 localparam        READ_RESPONSE   = 4'h7;
 localparam        READ_MORE_DATA  = 4'h8;
+localparam        FINISHED        = 4'h9;
 
 //Registers/Wires/Simulation Integers
 integer           fd_in;
@@ -351,9 +352,6 @@ end
 //initial begin
 //    $monitor("%t, data: %h, state: %h, execute command: %h", $time, w_wbm_dat_o, state, execute_command);
 //end
-
-
-
 always @ (posedge clk) begin
   if (rst) begin
     state                     <= IDLE;
@@ -383,18 +381,22 @@ always @ (posedge clk) begin
       endcase
 
       state                   <= IDLE;
-      command_finished        <= 1;
       timeout_count           <= `TIMEOUT_COUNT;
       data_write_count        <= 1;
     end //end reached the end of a timeout
 
     case (state)
       IDLE: begin
-        if (execute_command & ~command_finished) begin
-          $display ("TB: #:C:A:D = %h:%h:%h:%h", r_in_data_count, r_in_command, r_in_address, r_in_data);
-          timeout_count       <= `TIMEOUT_COUNT;
-          state               <= EXECUTE;
+        //if (sdram_ready) begin
+          if (execute_command & ~command_finished) begin
+            $display ("TB: #:C:A:D = %h:%h:%h:%h", r_in_data_count, r_in_command, r_in_address, r_in_data);
+            timeout_count       <= `TIMEOUT_COUNT;
+            state               <= EXECUTE;
+          end
         end
+        //else begin
+        //  $display ("Waiting for SDRAM");
+        //end
       end
       EXECUTE: begin
         if (w_master_ready) begin
@@ -434,8 +436,7 @@ always @ (posedge clk) begin
       RESET: begin
         //reset the system
         r_ih_reset                    <=  1;
-        command_finished            <=  1;
-        state                       <=  IDLE;
+        state                       <=  FINISHED;
       end
       PING_RESPONSE: begin
         if (w_out_en) begin
@@ -446,8 +447,7 @@ always @ (posedge clk) begin
             $display ("TB: Ping response is incorrect!");
           end
           $display ("TB: \tS:A:D = %h:%h:%h\n", w_out_status, w_out_address, w_out_data);
-          command_finished  <= 1;
-          state                     <=  IDLE;
+          state                     <=  FINISHED;
         end
       end
       WRITE_DATA: begin
@@ -465,8 +465,7 @@ always @ (posedge clk) begin
             $display ("TB: Write response is incorrect!");
           end
           $display ("TB: \tS:A:D = %h:%h:%h\n", w_out_status, w_out_address, w_out_data);
-          state                   <=  IDLE;
-          command_finished  <= 1;
+          state                   <=  FINISHED;
         end
       end
       GET_WRITE_DATA: begin
@@ -488,13 +487,12 @@ always @ (posedge clk) begin
               timeout_count     <=  `TIMEOUT_COUNT;
             end
             else begin
-              state             <=  IDLE;
-              command_finished  <= 1;
+              state             <=  FINISHED;
             end
           end
           else begin
             $display ("TB: Read response is incorrect");
-            command_finished  <= 1;
+            state             <=  FINISHED;
           end
           $display ("TB: \tS:A:D = %h:%h:%h\n", w_out_status, w_out_address, w_out_data);
         end
@@ -512,9 +510,15 @@ always @ (posedge clk) begin
 
           //read the output data count to determine if there is more data
           if (w_out_data_count == 0) begin
-            state             <=  IDLE;
-            command_finished  <=  1;
+            state             <=  FINISHED;
           end
+        end
+      end
+      FINISHED: begin
+        command_finished      <=  1;
+        if (!execute_command) begin
+          command_finished    <=  0;
+          state               <=  IDLE;
         end
       end
       default: begin
