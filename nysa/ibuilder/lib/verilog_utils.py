@@ -432,17 +432,21 @@ def generate_module_port_signals(invert_reset,
     for port in ports:
         port_count += 1
         line = ""
+        found = False
         #Special Case, we need to tie the specific signal directly to this port
         for key in sorted(slave_tags["bind"], cmp = port_cmp):
             bname = key.partition("[")[0]
             bname.strip()
-            if debug: print "Checking: %s" % bname
             if bname == port:
+                found = True
                 loc = slave_tags["bind"][key]["loc"]
                 if port_count == port_max:
                     buf += "\t.{0:<20}({1:<20})\n".format(port, loc)
                 else:
                     buf += "\t.{0:<20}({1:<20}),\n".format(port, loc)
+
+        if not found:
+            buf += "\t.{0:<20}({1:<20}){2}\n".format(port, port, get_eol(port_max, port_count))
 
 
     buf += ");"
@@ -464,7 +468,6 @@ def create_wire_buf_from_dict(name, d):
         return create_wire_buf(name, 1, 0, 0)
     else:
         return create_wire_buf(name, size, d["max_val"], d["min_val"])
-
 
 def create_wire_buf(name, size, max_val, min_val):
     line = ""
