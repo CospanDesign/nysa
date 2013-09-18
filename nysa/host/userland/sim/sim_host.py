@@ -58,13 +58,13 @@ class NysaSim (Nysa):
 
         self.rst            = self.dut.rst
         self.rst            <= 1
-        self.rst          = self.dut.rst
-        self.rst          <= 0
+        self.rst            = self.dut.rst
+        self.rst            <= 0
 
         self.master_ready   = self.dut.sim_master_ready
         self.in_reset       = self.dut.sim_in_reset
 
-        self.in_ready       = self.dut.top.ih_ready
+        self.in_ready       = self.dut.sim_in_ready
         self.in_command     = self.dut.sim_in_command
         self.in_address     = self.dut.sim_in_address
         self.in_data        = self.dut.sim_in_data
@@ -262,6 +262,7 @@ class NysaSim (Nysa):
 
         self.rst            <= 1
         yield ClockCycles(self.dut.clk, self.reset_length)
+        self.dut.log.info("Reset high") 
         #self.rst            <= 0
         self.in_ready       <= 0
         self.in_reset       <= 0

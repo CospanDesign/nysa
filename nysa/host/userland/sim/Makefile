@@ -39,11 +39,13 @@ PWD=$(shell pwd)
 COMPILE_ARGS=-y$(XILINX_PATH)/ISE/verilog/src/unisims
 COMPILE_ARGS+=-I$(PWD)/../rtl/dependencies -I$(PWD)/../rtl
 COMPILE_ARGS+=-I$(PWD)/../rtl/bus/slave
+COMPILE_ARGS+=-I$(PWD)/sim_modules
 
 
 VERILOG_SOURCES = $(XILINX_PATH)/ISE/verilog/src/glbl.v
 VERILOG_SOURCES += $(shell find $(PWD)/../rtl/dependencies/ -name '*.v')
 VERILOG_SOURCES += $(shell find $(PWD)/../rtl/bus/ -name '*.v')
+VERILOG_SOURCES += $(shell find $(PWD)/sim_modules -name '*.v')
 VERILOG_SOURCES += ./top.v ./sim_interface.v ./tb.v
 
 MODULE=test

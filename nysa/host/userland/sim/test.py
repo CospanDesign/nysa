@@ -13,7 +13,9 @@ from array import array as Array
 @cocotb.test()
 def test_hello(dut):
     clk_gen = cocotb.fork(Clock(dut.clk, 10).start())
+    yield Timer(0)
     nysa = NysaSim(dut)
+
     yield Join(cocotb.fork(nysa.reset()))
     yield ClockCycles(dut.clk, 100)
     yield Join(cocotb.fork(nysa.ping()))
