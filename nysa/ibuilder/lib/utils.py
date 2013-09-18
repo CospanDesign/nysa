@@ -1,6 +1,7 @@
 # Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
 #
-# This file is part of Nysa (http://wiki.cospandesign.com/index.php?title=Nysa.org).
+# This file is part of Nysa.
+#       (http://wiki.cospandesign.com/index.php?title=Nysa.org)
 #
 # Nysa is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
