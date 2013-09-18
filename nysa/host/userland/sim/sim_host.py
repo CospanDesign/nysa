@@ -61,20 +61,20 @@ class NysaSim (Nysa):
         self.rst_n          = self.dut.rst_n
         self.rst_n          <= 0
 
-        self.master_ready   = self.dut.o_sim_master_ready
-        self.in_reset       = self.dut.i_sim_in_reset
+        self.master_ready   = self.dut.sim_master_ready
+        self.in_reset       = self.dut.sim_in_reset
 
-        self.in_ready       = self.dut.w_ih_ready
-        self.in_command     = self.dut.i_sim_in_command
-        self.in_address     = self.dut.i_sim_in_address
-        self.in_data        = self.dut.i_sim_in_data
-        self.in_data_count  = self.dut.i_sim_in_data_count
+        self.in_ready       = self.dut.top.ih_ready
+        self.in_command     = self.dut.sim_in_command
+        self.in_address     = self.dut.sim_in_address
+        self.in_data        = self.dut.sim_in_data
+        self.in_data_count  = self.dut.sim_in_data_count
 
-        self.out_en         = self.dut.o_sim_out_en
-        self.out_ready      = self.dut.i_sim_out_ready
-        self.out_status     = self.dut.o_sim_out_status
-        self.out_address    = self.dut.o_sim_out_address
-        self.out_data       = self.dut.o_sim_out_data
+        self.out_en         = self.dut.sim_out_en
+        self.out_ready      = self.dut.sim_out_ready
+        self.out_status     = self.dut.sim_out_status
+        self.out_address    = self.dut.sim_out_address
+        self.out_data       = self.dut.sim_out_data
 
         self.in_ready       <= 0
         self.in_reset       <= 0
