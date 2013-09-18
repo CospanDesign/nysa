@@ -487,6 +487,8 @@ def generate_assigns_buffer(invert_reset, bindings, internal_bindings, debug=Fal
                 continue
             if key == "rst":
                 continue
+            if key == internal_bindings[key]["signal"]:
+                continue
 
             buf += "assign\t{0:<20}=\t{1};\n".format(key, internal_bindings[key]["signal"])
 
@@ -498,7 +500,8 @@ def generate_assigns_buffer(invert_reset, bindings, internal_bindings, debug=Fal
                 continue
             if key == "rst":
                 continue
-
+            if key == bindings[key]["loc"]:
+                continue
 
             if bindings[key]["direction"] == "input":
                 buf += "assign\t{0:<20}=\t{1};\n".format(key, bindings[key]["loc"])
