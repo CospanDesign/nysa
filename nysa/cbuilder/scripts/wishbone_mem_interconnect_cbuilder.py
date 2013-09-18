@@ -11,6 +11,7 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
                               "lib"))
 
 import utils
+import verilog_utils as vutils
 
 def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
 
@@ -71,7 +72,7 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
     key = tags["MEMORY"].keys()[i]
     absfilename = utils.find_rtl_file_location(tags["MEMORY"][key]["filename"], user_paths)
     #print "filename: %s" % absfilename
-    slave_tags = utils.get_module_tags(filename = absfilename, bus = "wishbone", keywords = slave_keywords)
+    slave_tags = vutils.get_module_tags(filename = absfilename, bus = "wishbone", keywords = slave_keywords)
     if debug:
         print "slave tags: " + str(slave_tags)
 
