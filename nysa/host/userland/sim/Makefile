@@ -33,7 +33,7 @@ NYSA_PATH=${NYSA}
 
 
 
-TOPLEVEL=top
+TOPLEVEL=tb
 
 PWD=$(shell pwd)
 COMPILE_ARGS=-y$(XILINX_PATH)/ISE/verilog/src/unisims
@@ -44,7 +44,7 @@ COMPILE_ARGS+=-I$(PWD)/../rtl/bus/slave
 VERILOG_SOURCES = $(XILINX_PATH)/ISE/verilog/src/glbl.v
 VERILOG_SOURCES += $(shell find $(PWD)/../rtl/dependencies/ -name '*.v')
 VERILOG_SOURCES += $(shell find $(PWD)/../rtl/bus/ -name '*.v')
-VERILOG_SOURCES += ./top.v ./sim_interface.v
+VERILOG_SOURCES += ./top.v ./sim_interface.v ./tb.v
 
 MODULE=test
 
