@@ -12,8 +12,7 @@ from array import array as Array
 
 @cocotb.test()
 def test_hello(dut):
-    in_clk    = Clock(dut.clk, 10)
-    in_clk.start()
+    clk_gen = cocotb.fork(Clock(dut.clk, 10).start())
     nysa = NysaSim(dut)
     yield Join(cocotb.fork(nysa.reset()))
     yield ClockCycles(dut.clk, 100)
@@ -37,5 +36,4 @@ def test_hello(dut):
 
     yield ClockCycles(dut.clk, 100)
 
-    in_clk.stop()
 
