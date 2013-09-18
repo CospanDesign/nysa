@@ -295,9 +295,9 @@ def generate_tb_module(tags, top_buffer, user_paths = [], debug=False):
     }
     ports["input"]["sim_in_data_count"] = {
         "direction":"input",
-        "size":28,
+        "size":32,
         "min_val":0,
-        "max_val":27
+        "max_val":31
     }
     ports["output"]["sim_master_ready"] = {
         "direction":"output",
@@ -328,9 +328,9 @@ def generate_tb_module(tags, top_buffer, user_paths = [], debug=False):
 
     ports["output"]["sim_out_data_count"] = {
         "direction":"output",
-        "size":28,
+        "size":32,
         "min_val":0,
-        "max_val":27
+        "max_val":31
     }
 
 
