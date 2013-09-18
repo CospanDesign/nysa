@@ -40,10 +40,10 @@ module sim_interface (
   input   [31:0]      i_sim_in_address,
   input   [31:0]      i_sim_in_data,
   input   [31:0]      i_sim_in_data_count,
-                      
+
   input               i_sim_out_ready,
   output              o_sim_out_en,
-                      
+
   output  [31:0]      o_sim_out_status,
   output  [31:0]      o_sim_out_address,
   output  [31:0]      o_sim_out_data,
@@ -83,30 +83,26 @@ assign  o_sim_out_data_count  = i_out_data_count;
 
 
 //Synchronous Logic
-always @ (posedge clk) begin
-  if (rst) begin
-    o_ih_reset            <=  0;
-    o_ih_ready            <=  0;
-                                             
-    o_in_command          <=  0;
-    o_in_address          <=  0;
-    o_in_data             <=  0;
-    o_in_data_count       <=  0;
-                          
-    o_oh_ready            <=  0;
- 
-  end
-  else begin
-    o_ih_reset            <= i_sim_in_reset;
-    o_ih_ready            <= i_sim_in_ready;
-                                             
-    o_in_command          <= i_sim_in_command;
-    o_in_address          <= i_sim_in_address;
-    o_in_data             <= i_sim_in_data;
-    o_in_data_count       <= i_sim_in_data_count;
-                          
-    o_oh_ready            <= i_sim_out_ready;
-  end
+always @ (i_sim_in_reset) begin
+    o_ih_reset            = i_sim_in_reset;
 end
-                                                 
+always @ (i_sim_in_ready) begin
+    o_ih_ready            =  i_sim_in_ready;
+end
+always @ (i_sim_in_command) begin
+    o_in_command          = i_sim_in_command;
+end
+always @ (i_sim_in_address) begin
+    o_in_address          = i_sim_in_address;
+end
+always @ (i_sim_in_data) begin
+    o_in_data             = i_sim_in_data;
+end
+always @ (i_sim_in_data_count) begin
+    o_in_data_count       = i_sim_in_data_count;
+end
+always @ (i_sim_out_ready) begin
+    o_oh_ready            = i_sim_out_ready;
+end
+
 endmodule
