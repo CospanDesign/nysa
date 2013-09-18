@@ -123,7 +123,7 @@ class Test (unittest.TestCase):
         MB = mb.ModuleBuilder(test_module_tags)
         buf = MB.generate_sub_module(False,
                                      instance_name = "module1",
-                                     sub_module_tags = test_module_tags["submodules"]["module1"],
+                                     config_tags = test_module_tags["submodules"]["module1"],
                                      debug = self.dbg)
         if self.dbg:
             print "Submodule buffer\n%s" % buf

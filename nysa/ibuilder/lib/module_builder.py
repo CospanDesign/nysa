@@ -364,7 +364,9 @@ class ModuleBuilder(object):
                     continue
                 if port == "rst":
                     continue
-                pname = "%s_%s" % (instance_name, port)
+                pname = port
+                if len(instance_name) > 0:
+                    pname = "%s_%s" % (instance_name, port)
                 buf += vutils.create_wire_buf_from_dict(pname,
                                                         module_tags["ports"]["input"][port])
                 if pname not in self.wires:
@@ -375,47 +377,58 @@ class ModuleBuilder(object):
         if "output" in module_tags["ports"]:
             buf += "//outputs\n"
             for port in module_tags["ports"]["output"]:
-                pname = "%s_%s" % (instance_name, port)
+                pname = port
+                if len(instance_name) > 0:
+                    pname = "%s_%s" % (instance_name, port)
                 buf += vutils.create_wire_buf_from_dict(pname,
                                                         module_tags["ports"]["output"][port])
 
                 if pname not in self.wires:
                     self.wires.append(pname)
             buf += "\n"
+
         return buf
 
     def generate_sub_module(self,
                             invert_reset,
                             instance_name,
-                            sub_module_tags,
+                            config_tags,
+                            module_tags = None,
+                            enable_unique_ports = True,
                             debug = False):
 
-        filepath = utils.find_rtl_file_location(sub_module_tags["filename"],
-                                                self.user_paths)
-        module_tags = vutils.get_module_tags(filepath,
-                                             user_paths = self.user_paths)
-        if debug:
-            print "Module Tags:"
-            utils.pretty_print_dict(module_tags)
+
+        if module_tags is None:
+            filepath = utils.find_rtl_file_location(config_tags["filename"],
+                                                    self.user_paths)
+            module_tags = vutils.get_module_tags(filepath,
+                                                user_paths = self.user_paths)
+        #if debug:
+            #print "Module Tags:"
+            #utils.pretty_print_dict(module_tags)
 
         buf =  "//Module %s (  %s  )\n" % (module_tags["module"], instance_name)
         buf += "\n"
-        buf += self.generate_sub_module_wires(invert_reset, instance_name, module_tags)
-       
+        prename = ""
+        if enable_unique_ports:
+            prename = instance_name
+        buf += self.generate_sub_module_wires(invert_reset, prename, module_tags)
+
+
         buf += vutils.generate_module_port_signals(invert_reset = invert_reset,
                                                    name = instance_name,
-                                                   prename = instance_name,
-                                                   slave_tags = sub_module_tags,
+                                                   prename = prename,
+                                                   slave_tags = config_tags,
                                                    module_tags = module_tags)
 
         #Add the bindings for this modules to the bind dictionary
-        if "bind" in sub_module_tags:
-            for bind in sub_module_tags["bind"]:
+        if "bind" in config_tags:
+            for bind in config_tags["bind"]:
                 bname = bind
-                if len(instance_name) > 0:
-                    bname = "%s_%s" % (instance_name, bind)
+                if len(prename) > 0:
+                    bname = "%s_%s" % (prename, bind)
                 self.bindings[bname] = {}
-                self.bindings[bname] = sub_module_tags["bind"][bind]
+                self.bindings[bname] = config_tags["bind"][bind]
 
         return buf
 
