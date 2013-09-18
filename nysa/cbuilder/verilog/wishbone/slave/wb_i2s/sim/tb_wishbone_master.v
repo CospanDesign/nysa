@@ -78,6 +78,17 @@ wire  [27:0]      w_out_data_count;
 reg               r_ih_reset      = 0;
 
 //wishbone signals
+wire              w_wbp_we;
+wire              w_wbp_cyc;
+wire              w_wbp_stb;
+wire [3:0]        w_wbp_sel;
+wire [31:0]       w_wbp_adr;
+wire [31:0]       w_wbp_dat_o;
+wire [31:0]       w_wbp_dat_i;
+wire              w_wbp_ack;
+wire              w_wbp_int;
+
+//Wishbone master mem bus
 wire              w_wbm_we;
 wire              w_wbm_cyc;
 wire              w_wbm_stb;
@@ -112,18 +123,6 @@ wire  [31:0]      w_wbs1_dat_i;
 wire  [31:0]      w_wbs1_dat_o;
 wire  [31:0]      w_wbs1_adr;
 wire              w_wbs1_int;
-
-//arbitrator signals
-wire		          arb_we_o;
-wire		          arb_cyc_o;
-wire  [31:0]	    arb_dat_o;
-wire		          arb_stb_o;
-wire  [3:0]	      arb_sel_o;
-wire		          arb_ack_i;
-wire  [31:0]	    arb_dat_i;
-wire  [31:0]	    arb_adr_o;
-wire		          arb_int_i;
-
 
 //audio buffer master bus
 wire		          audio_we_o;
@@ -166,6 +165,17 @@ wire              phy_clock;
 wire              phy_data;
 wire              phy_lr;
 
+wire                w_arb0_i_wbs_stb;
+wire                w_arb0_i_wbs_cyc;
+wire                w_arb0_i_wbs_we;
+wire  [3:0]         w_arb0_i_wbs_sel;
+wire  [31:0]        w_arb0_i_wbs_dat;
+wire  [31:0]        w_arb0_o_wbs_dat;
+wire  [31:0]        w_arb0_i_wbs_adr;
+wire                w_arb0_o_wbs_ack;
+wire                w_arb0_o_wbs_int;
+
+
 
 
 //Local Parameters
@@ -179,6 +189,7 @@ localparam        WRITE_RESPONSE  = 4'h5;
 localparam        GET_WRITE_DATA  = 4'h6;
 localparam        READ_RESPONSE   = 4'h7;
 localparam        READ_MORE_DATA  = 4'h8;
+localparam        FINISHED        = 4'h9;
 
 //Registers/Wires/Simulation Integers
 integer           fd_in;
@@ -199,16 +210,41 @@ reg               request_more_data;
 reg               request_more_data_ack;
 reg     [27:0]    data_write_count;
 
+wire              i2s_mem_o_stb;
+wire              i2s_mem_o_cyc;
+wire              i2s_mem_o_we;
+wire  [3:0]       i2s_mem_o_sel;
+wire  [31:0]      i2s_mem_o_dat;
+wire  [31:0]      i2s_mem_o_adr;
+wire  [31:0]      i2s_mem_i_dat;
+wire              i2s_mem_i_ack;
+wire              i2s_mem_i_int;
 
-//Spi Stuff
-wire  [7:0]       ss_pad_o;
-wire              sclk_pad_o;
-wire              mosi_pad_o;
-reg               miso_pad_i;
+//mem slave 0
+wire                w_sm0_i_wbs_we;
+wire                w_sm0_i_wbs_cyc;
+wire  [31:0]        w_sm0_i_wbs_dat;
+wire  [31:0]        w_sm0_o_wbs_dat;
+wire  [31:0]        w_sm0_i_wbs_adr;
+wire                w_sm0_i_wbs_stb;
+wire  [3:0]         w_sm0_i_wbs_sel;
+wire                w_sm0_o_wbs_ack;
+wire                w_sm0_o_wbs_int;
+
+wire                w_mem_we_o;
+wire                w_mem_cyc_o;
+wire                w_mem_stb_o;
+wire  [3:0]         w_mem_sel_o;
+wire  [31:0]        w_mem_adr_o;
+wire  [31:0]        w_mem_dat_i;
+wire  [31:0]        w_mem_dat_o;
+wire                w_mem_ack_i;
+wire                w_mem_int_i;
 
 
 
 //Submodules
+
 wishbone_master wm (
   .clk            (clk              ),
   .rst            (rst              ),
@@ -227,16 +263,30 @@ wishbone_master wm (
   .o_data_count   (w_out_data_count ),
   .o_master_ready (w_master_ready   ),
 
-  .o_per_we        (w_wbm_we        ),
-  .o_per_adr       (w_wbm_adr       ),
-  .o_per_dat       (w_wbm_dat_i     ),
-  .i_per_dat       (w_wbm_dat_o     ),
-  .o_per_stb       (w_wbm_stb       ),
-  .o_per_cyc       (w_wbm_cyc       ),
-  .o_per_msk       (w_wbm_msk       ),
-  .o_per_sel       (w_wbm_sel       ),
-  .i_per_ack       (w_wbm_ack       ),
-  .i_per_int       (w_wbm_int       )
+  .o_per_we       (w_wbp_we         ),
+  .o_per_adr      (w_wbp_adr        ),
+  .o_per_dat      (w_wbp_dat_i      ),
+  .i_per_dat      (w_wbp_dat_o      ),
+  .o_per_stb      (w_wbp_stb        ),
+  .o_per_cyc      (w_wbp_cyc        ),
+  .o_per_msk      (w_wbp_msk        ),
+  .o_per_sel      (w_wbp_sel        ),
+  .i_per_ack      (w_wbp_ack        ),
+  .i_per_int      (w_wbp_int        ),
+
+  //memory interconnect signals
+  .o_mem_we       (w_mem_we_o          ),
+  .o_mem_adr      (w_mem_adr_o         ),
+  .o_mem_dat      (w_mem_dat_o         ),
+  .i_mem_dat      (w_mem_dat_i         ),
+  .o_mem_stb      (w_mem_stb_o         ),
+  .o_mem_cyc      (w_mem_cyc_o         ),
+  .o_mem_msk      (w_mem_msk_o         ),
+  .o_mem_sel      (w_mem_sel_o         ),
+  .i_mem_ack      (w_mem_ack_i         ),
+  .i_mem_int      (w_mem_int_i         )
+
+
 );
 
 //slave 1
@@ -254,10 +304,23 @@ wb_i2s s1 (
   .i_wbs_adr  (w_wbs1_adr           ),
   .o_wbs_int  (w_wbs1_int           ),
 
-  .ss_pad_o   (ss_pad_o             ),
-  .sclk_pad_o (sclk_pad_o           ),
-  .mosi_pad_o (mosi_pad_o           ),
-  .miso_pad_i (miso_pad_i           )
+
+
+  .mem_o_cyc  (i2s_mem_o_cyc        ),
+  .mem_o_stb  (i2s_mem_o_stb        ),
+  .mem_o_we   (i2s_mem_o_we         ),
+  .mem_i_ack  (i2s_mem_i_ack        ),
+  .mem_o_sel  (i2s_mem_o_sel        ),
+  .mem_o_adr  (i2s_mem_o_adr        ),
+  .mem_o_dat  (i2s_mem_o_dat        ),
+  .mem_i_dat  (i2s_mem_i_dat        ),
+  .mem_i_int  (i2s_mem_i_int        ),
+
+
+  .phy_mclock (phy_mclock           ),
+  .phy_clock  (phy_clock            ),
+  .phy_data   (phy_data             ),
+  .phy_lr     (phy_lr               )
 
 );
 
@@ -265,14 +328,14 @@ wishbone_interconnect wi (
   .clk        (clk                  ),
   .rst        (rst                  ),
 
-  .i_m_we     (w_wbm_we             ),
-  .i_m_cyc    (w_wbm_cyc            ),
-  .i_m_stb    (w_wbm_stb            ),
-  .o_m_ack    (w_wbm_ack            ),
-  .i_m_dat    (w_wbm_dat_i          ),
-  .o_m_dat    (w_wbm_dat_o          ),
-  .i_m_adr    (w_wbm_adr            ),
-  .o_m_int    (w_wbm_int            ),
+  .i_m_we     (w_wbp_we             ),
+  .i_m_cyc    (w_wbp_cyc            ),
+  .i_m_stb    (w_wbp_stb            ),
+  .o_m_ack    (w_wbp_ack            ),
+  .i_m_dat    (w_wbp_dat_i          ),
+  .o_m_dat    (w_wbp_dat_o          ),
+  .i_m_adr    (w_wbp_adr            ),
+  .o_m_int    (w_wbp_int            ),
 
   .o_s0_we    (w_wbs0_we            ),
   .o_s0_cyc   (w_wbs0_cyc           ),
@@ -292,6 +355,35 @@ wishbone_interconnect wi (
   .o_s1_adr   (w_wbs1_adr           ),
   .i_s1_int   (w_wbs1_int           )
 );
+
+wishbone_mem_interconnect wmi (
+  .clk                 (clk                 ),
+  .rst                 (rst_n               ),
+
+  //master
+  .i_m_we              (w_mem_we_o          ),
+  .i_m_cyc             (w_mem_cyc_o         ),
+  .i_m_stb             (w_mem_stb_o         ),
+  .i_m_sel             (w_mem_sel_o         ),
+  .o_m_ack             (w_mem_ack_i         ),
+  .i_m_dat             (w_mem_dat_o         ),
+  .o_m_dat             (w_mem_dat_i         ),
+  .i_m_adr             (w_mem_adr_o         ),
+  .o_m_int             (w_mem_int_i         ),
+
+
+  //slave 0
+  .o_s0_we             (w_sm0_i_wbs_we      ),
+  .o_s0_cyc            (w_sm0_i_wbs_cyc     ),
+  .o_s0_stb            (w_sm0_i_wbs_stb     ),
+  .o_s0_sel            (w_sm0_i_wbs_sel     ),
+  .i_s0_ack            (w_sm0_o_wbs_ack     ),
+  .o_s0_dat            (w_sm0_i_wbs_dat     ),
+  .i_s0_dat            (w_sm0_o_wbs_dat     ),
+  .o_s0_adr            (w_sm0_i_wbs_adr     ),
+  .i_s0_int            (w_sm0_o_wbs_int     )
+);
+
 
 
 mt48lc4m16
@@ -348,29 +440,71 @@ wb_sdram m0 (
   .clk(clk),
   .rst(rst),
 
-  .wbs_we_i(arb_we_o),
-  .wbs_cyc_i(arb_cyc_o),
-  .wbs_dat_i(arb_dat_o),
-  .wbs_stb_i(arb_stb_o),
-  .wbs_sel_i(arb_sel_o),
-  .wbs_ack_o(arb_ack_i),
-  .wbs_dat_o(arb_dat_i),
-  .wbs_adr_i(arb_adr_o),
-  .wbs_int_o(arb_int_i),
 
-  .sdram_clk(sdram_clk ),
-  .sdram_cke(sdram_cke ),
-  .sdram_cs_n(sdram_cs_n ),
-  .sdram_ras(sdram_ras ),
-  .sdram_cas(sdram_cas ),
-  .sdram_we(sdram_we ),
+  .i_wbs_cyc           (w_arb0_i_wbs_cyc    ),
+  .i_wbs_dat           (w_arb0_i_wbs_dat    ),
+  .i_wbs_we            (w_arb0_i_wbs_we     ),
+  .i_wbs_stb           (w_arb0_i_wbs_stb    ),
+  .i_wbs_sel           (w_arb0_i_wbs_sel    ),
+  .i_wbs_adr           (w_arb0_i_wbs_adr    ),
+  .o_wbs_dat           (w_arb0_o_wbs_dat    ),
+  .o_wbs_ack           (w_arb0_o_wbs_ack    ),
+  .o_wbs_int           (w_arb0_o_wbs_int    ),
 
-  .sdram_addr(sdram_addr ),
-  .sdram_bank(sdram_bank ),
-  .sdram_data(sdram_data ),
-  .sdram_data_mask(sdram_data_mask ),
-  .sdram_ready(sdram_ready)
 
+
+  .o_sdram_clk(sdram_clk ),
+  .o_sdram_cke(sdram_cke ),
+  .o_sdram_cs_n(sdram_cs_n ),
+  .o_sdram_ras(sdram_ras ),
+  .o_sdram_cas(sdram_cas ),
+  .o_sdram_we(sdram_we ),
+
+  .o_sdram_addr(sdram_addr ),
+  .o_sdram_bank(sdram_bank ),
+  .io_sdram_data(sdram_data ),
+  .o_sdram_data_mask(sdram_data_mask ),
+  .o_sdram_ready(sdram_ready)
+
+);
+
+arbitor_2_masters arb0 (
+  .clk                 (clk                 ),
+  .rst                 (rst_n               ),
+
+  //masters
+  .i_m0_we             (i2s_mem_o_we        ),
+  .i_m0_stb            (i2s_mem_o_stb       ),
+  .i_m0_cyc            (i2s_mem_o_cyc       ),
+  .i_m0_sel            (i2s_mem_o_sel       ),
+  .i_m0_dat            (i2s_mem_o_dat       ),
+  .i_m0_adr            (i2s_mem_o_adr       ),
+  .o_m0_dat            (i2s_mem_i_dat       ),
+  .o_m0_ack            (i2s_mem_i_ack       ),
+  .o_m0_int            (i2s_mem_i_int       ),
+
+
+  .i_m1_we             (w_sm0_i_wbs_we      ),
+  .i_m1_stb            (w_sm0_i_wbs_stb     ),
+  .i_m1_cyc            (w_sm0_i_wbs_cyc     ),
+  .i_m1_sel            (w_sm0_i_wbs_sel     ),
+  .i_m1_dat            (w_sm0_i_wbs_dat     ),
+  .i_m1_adr            (w_sm0_i_wbs_adr     ),
+  .o_m1_dat            (w_sm0_o_wbs_dat     ),
+  .o_m1_ack            (w_sm0_o_wbs_ack     ),
+  .o_m1_int            (w_sm0_o_wbs_int     ),
+
+
+  //slave
+  .o_s_we              (w_arb0_i_wbs_we     ),
+  .o_s_stb             (w_arb0_i_wbs_stb    ),
+  .o_s_cyc             (w_arb0_i_wbs_cyc    ),
+  .o_s_sel             (w_arb0_i_wbs_sel    ),
+  .o_s_dat             (w_arb0_i_wbs_dat    ),
+  .o_s_adr             (w_arb0_i_wbs_adr    ),
+  .i_s_dat             (w_arb0_o_wbs_dat    ),
+  .i_s_ack             (w_arb0_o_wbs_ack    ),
+  .i_s_int             (w_arb0_o_wbs_int    )
 );
 
 
@@ -534,17 +668,21 @@ always @ (posedge clk) begin
       endcase
 
       state                   <= IDLE;
-      command_finished        <= 1;
       timeout_count           <= `TIMEOUT_COUNT;
       data_write_count        <= 1;
     end //end reached the end of a timeout
 
     case (state)
       IDLE: begin
-        if (execute_command & ~command_finished) begin
-          $display ("TB: #:C:A:D = %h:%h:%h:%h", r_in_data_count, r_in_command, r_in_address, r_in_data);
-          timeout_count       <= `TIMEOUT_COUNT;
-          state               <= EXECUTE;
+        if (sdram_ready) begin
+          if (execute_command & ~command_finished) begin
+            $display ("TB: #:C:A:D = %h:%h:%h:%h", r_in_data_count, r_in_command, r_in_address, r_in_data);
+            timeout_count       <= `TIMEOUT_COUNT;
+            state               <= EXECUTE;
+          end
+        end
+        else begin
+          $display ("Waiting for SDRAM");
         end
       end
       EXECUTE: begin
@@ -585,8 +723,7 @@ always @ (posedge clk) begin
       RESET: begin
         //reset the system
         r_ih_reset                    <=  1;
-        command_finished            <=  1;
-        state                       <=  IDLE;
+        state                       <=  FINISHED;
       end
       PING_RESPONSE: begin
         if (w_out_en) begin
@@ -597,8 +734,7 @@ always @ (posedge clk) begin
             $display ("TB: Ping response is incorrect!");
           end
           $display ("TB: \tS:A:D = %h:%h:%h\n", w_out_status, w_out_address, w_out_data);
-          command_finished  <= 1;
-          state                     <=  IDLE;
+          state                     <=  FINISHED;
         end
       end
       WRITE_DATA: begin
@@ -616,8 +752,7 @@ always @ (posedge clk) begin
             $display ("TB: Write response is incorrect!");
           end
           $display ("TB: \tS:A:D = %h:%h:%h\n", w_out_status, w_out_address, w_out_data);
-          state                   <=  IDLE;
-          command_finished  <= 1;
+          state                   <=  FINISHED;
         end
       end
       GET_WRITE_DATA: begin
@@ -639,13 +774,12 @@ always @ (posedge clk) begin
               timeout_count     <=  `TIMEOUT_COUNT;
             end
             else begin
-              state             <=  IDLE;
-              command_finished  <= 1;
+              state             <=  FINISHED;
             end
           end
           else begin
             $display ("TB: Read response is incorrect");
-            command_finished  <= 1;
+            state             <=  FINISHED;
           end
           $display ("TB: \tS:A:D = %h:%h:%h\n", w_out_status, w_out_address, w_out_data);
         end
@@ -663,9 +797,15 @@ always @ (posedge clk) begin
 
           //read the output data count to determine if there is more data
           if (w_out_data_count == 0) begin
-            state             <=  IDLE;
-            command_finished  <=  1;
+            state             <=  FINISHED;
           end
+        end
+      end
+      FINISHED: begin
+        command_finished      <=  1;
+        if (!execute_command) begin
+          command_finished    <=  0;
+          state               <=  IDLE;
         end
       end
       default: begin
@@ -681,75 +821,6 @@ always @ (posedge clk) begin
     end
   end//not reset
 end
-
-
-reg prev_sclk;
-reg [127:0]mosi_data;
-wire pos_edge_sclk;
-reg [7:0] index;
-
-assign pos_edge_sclk    = ~prev_sclk && sclk_pad_o;
-
-always @ (posedge clk) begin
-  if (rst) begin
-    miso_pad_i          <=  0;
-    prev_sclk           <=  0;
-    mosi_data           <=  0;
-    index               <=  0;
-  end
-  else begin
-    if (~ss_pad_o[0]) begin
-      index     <=  0;
-    end
-    if (pos_edge_sclk) begin
-      miso_pad_i        <=  ~miso_pad_i;
-      mosi_data[index]  <=  mosi_pad_o;
-      index             <=  index + 1;
-    end
-    prev_sclk   <=  sclk_pad_o;
-  end
-end
-
-
-
-arbitor_2_masters arb0(
-  .clk              (clk),
-  .rst              (rst_n),
-
-  //masters
-  .i_m0_we          (i2s_mem_o_we),
-  .i_m0_stb         (i2s_mem_o_stb),
-  .i_m0_cyc         (i2s_mem_o_cyc),
-  .i_m0_sel         (i2s_mem_o_sel),
-  .i_m0_dat         (i2s_mem_o_dat),
-  .i_m0_adr         (i2s_mem_o_adr),
-  .o_m0_dat         (i2s_mem_i_dat),
-  .o_m0_ack         (i2s_mem_i_ack),
-  .o_m0_int         (i2s_mem_i_int),
-
-
-  .i_m1_we          (w_sm0_i_wbs_we),
-  .i_m1_stb         (w_sm0_i_wbs_stb),
-  .i_m1_cyc         (w_sm0_i_wbs_cyc),
-  .i_m1_sel         (w_sm0_i_wbs_sel),
-  .i_m1_dat         (w_sm0_i_wbs_dat),
-  .i_m1_adr         (w_sm0_i_wbs_adr),
-  .o_m1_dat         (w_sm0_o_wbs_dat),
-  .o_m1_ack         (w_sm0_o_wbs_ack),
-  .o_m1_int         (w_sm0_o_wbs_int),
-
-
-  //slave
-  .o_s_we           (w_arb0_i_wbs_we),
-  .o_s_stb          (w_arb0_i_wbs_stb),
-  .o_s_cyc          (w_arb0_i_wbs_cyc),
-  .o_s_sel          (w_arb0_i_wbs_sel),
-  .o_s_dat          (w_arb0_i_wbs_dat),
-  .o_s_adr          (w_arb0_i_wbs_adr),
-  .i_s_dat          (w_arb0_o_wbs_dat),
-  .i_s_ack          (w_arb0_o_wbs_ack),
-  .i_s_int          (w_arb0_o_wbs_int)
-);
 
 
 

@@ -4,6 +4,9 @@
 #Ping
 00000000:00000000:12345678:FEDCBA98
 
+#Write one peice of data to the peripheral device 1, address 0, data 1
+00000000:00000001:01000000:00000001
+
 #Write 10 values into memory
 0000000A:00010001:00000000:00000000
 80000000
