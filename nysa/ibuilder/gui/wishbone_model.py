@@ -50,6 +50,7 @@ from graph_manager import NodeType
 from graph_manager import get_unique_name
 
 import utils
+import verilog_utils as vutils
 
 
 class WishboneModel():
@@ -178,7 +179,7 @@ class WishboneModel():
                 print ("device_rom_table.v not found")
             raise WishboneModelError("DRT module was not found")
 
-        parameters = utils.get_module_tags(filename=filename,
+        parameters = vutils.get_module_tags(filename=filename,
                                            bus=self.get_bus_type(),
                                            user_paths = self.get_user_paths())
         self.gm.set_parameters(drt_name, parameters)
@@ -251,7 +252,7 @@ class WishboneModel():
                             self.get_user_paths())
             if debug:
                 print (("Loading interface: %s" % filename))
-            parameters = utils.get_module_tags(filename=filename,
+            parameters = vutils.get_module_tags(filename=filename,
                                                bus=self.get_bus_type(),
                                                user_paths = self.get_user_paths())
             self.set_host_interface(parameters["module"])
@@ -603,7 +604,7 @@ class WishboneModel():
 
         #print "hi project tags: %s" % str(self.project_tags["INTERFACE"])
         # If the host interface is valid then get all the tags ...
-        parameters = utils.get_module_tags(filename=filename,
+        parameters = vutils.get_module_tags(filename=filename,
                                            bus=self.get_bus_type(),
                                            user_paths = self.get_user_paths())
         # ... and set them up.
@@ -910,7 +911,7 @@ class WishboneModel():
         if filename is not None:
 ##           print "filename: " + filename
             if len(filename) > 0:
-                parameters = utils.get_module_tags(filename = filename,
+                parameters = vutils.get_module_tags(filename = filename,
                                                    bus = self.bus_type,
                                                    user_paths = self.get_user_paths())
                 self.gm.set_parameters(uname, parameters)
@@ -1035,7 +1036,7 @@ class WishboneModel():
         if fn is None:
             fn = utils.find_module_filename(module_name, self.get_user_paths())
             fn = utils.find_rtl_file_location(fn, self.get_user_paths())
-        new_d = utils.get_module_tags(filename = fn,
+        new_d = vutils.get_module_tags(filename = fn,
                                       bus='wishbone',
                                       user_paths = self.get_user_paths())
 

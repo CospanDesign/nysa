@@ -33,6 +33,7 @@ Changes:
 #gen_drt.py
 from gen import Gen
 import utils
+import verilog_utils as vutils
 from string import Template
 from string import atoi
 
@@ -96,7 +97,7 @@ class GenDRT(Gen):
                 "DRT_FLAGS",
                 "DRT_SIZE"
             ]
-            slave_tags = utils.get_module_tags(filename = absfilename, bus = "wishbone", keywords = slave_keywords)
+            slave_tags = vutils.get_module_tags(filename = absfilename, bus = "wishbone", keywords = slave_keywords)
 
             drt_id_buffer = "{0:0=8X}"
             drt_flags_buffer = "{0:0=8X}"
@@ -131,7 +132,7 @@ class GenDRT(Gen):
                     "DRT_FLAGS",
                     "DRT_SIZE"
                 ]
-                slave_tags = utils.get_module_tags(filename = absfilename, bus = "wishbone", keywords = slave_keywords)
+                slave_tags = vutils.get_module_tags(filename = absfilename, bus = "wishbone", keywords = slave_keywords)
 
                 drt_id_buffer = "{0:0=8X}"
                 drt_flags_buffer = "{0:0=8X}"

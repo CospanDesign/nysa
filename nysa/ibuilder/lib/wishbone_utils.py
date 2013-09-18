@@ -47,6 +47,7 @@ PATH_TO_TOP = os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 #Nysa imports
 import utils
+import verilog_utils as vutils
 import arbitor
 
 
@@ -535,7 +536,7 @@ class WishboneTopGenerator(object):
         #Add DRT
         slave_index = 0
         absfilename = utils.find_rtl_file_location("device_rom_table.v", self.user_paths)
-        slave_tags = utils.get_module_tags(filename = absfilename,
+        slave_tags = vutils.get_module_tags(filename = absfilename,
                                            bus = "wishbone",
                                            user_paths = self.user_paths)
         slave_buf = self.generate_wishbone_buffer(name = "drt",
@@ -551,7 +552,7 @@ class WishboneTopGenerator(object):
             slave = self.tags["SLAVES"][slave_name]["filename"]
             if debug: "slave name: %s" % slave_name
             absfilename = utils.find_rtl_file_location(slave, self.user_paths)
-            slave_tags = utils.get_module_tags(filename = absfilename,
+            slave_tags = vutils.get_module_tags(filename = absfilename,
                                                bus = "wishbone",
                                                user_paths = self.user_paths)
 
@@ -573,7 +574,7 @@ class WishboneTopGenerator(object):
                 filename = self.tags["MEMORY"][mem_name]["filename"]
                 if debug: print "Mem device: %s, mem file: %s" % (mem_name, filename)
                 absfilename = utils.find_rtl_file_location(filename)
-                mem_tags = utils.get_module_tags(filename = absfilename,
+                mem_tags = vutils.get_module_tags(filename = absfilename,
                                                  bus = "wishbone",
                                                  user_paths = self.user_paths)
                 mem_buf = self.generate_wishbone_buffer(mem_name,
@@ -853,7 +854,7 @@ class WishboneTopGenerator(object):
 
     def generate_host_interface_buffer(self, debug = False):
         absfilepath = utils.find_rtl_file_location(self.tags["INTERFACE"]["filename"])
-        module_tags = utils.get_module_tags(filename = absfilepath,
+        module_tags = vutils.get_module_tags(filename = absfilepath,
                                             bus = "wishbone",
                                             user_paths = self.user_paths)
         #print "module_tags: %s" % str(module_tags)

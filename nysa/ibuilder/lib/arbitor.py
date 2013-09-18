@@ -23,6 +23,7 @@ import os
 import string
 from string import Template
 import utils
+import verilog_utils as vutils
 
 
 from ibuilder_error import ArbitorError
@@ -48,7 +49,7 @@ def get_number_of_arbitor_hosts(module_tags = {}, debug = False):
 
   Args:
     module_tags: the tags for this module
-      can be obtained with utils.get_module_tags
+      can be obtained with vutils.get_module_tags
 
   Return:
     the number of arbitor hosts associated with this module
@@ -127,7 +128,7 @@ def is_arbitor_host(module_tags = {}, debug = False):
 
   Args:
     module_tags: The tags that are associated with this modue
-      can be obtained with utils.get_module_tags
+      can be obtained with vutils.get_module_tags
 
   Return:
     True: Slave is an arbitor host
