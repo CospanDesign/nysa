@@ -314,7 +314,6 @@ class ModuleBuilder(object):
         self.user_paths = []
         self.submodule_buffers = []
 
-       
     def add_ports_to_wires(self):
         """Add all input and output wires to the ports"""
 
@@ -328,7 +327,8 @@ class ModuleBuilder(object):
 
     def generate_module_wires(self, invert_reset):
         buf = ""
-        buf += vutils.create_wire_buf("rst_n", 1, 0, 0)
+        if invert_reset:
+            buf += vutils.create_wire_buf("rst_n", 1, 0, 0)
         return buf
 
     def generate_module(self, name, tags = None, invert_reset = False, debug = False):

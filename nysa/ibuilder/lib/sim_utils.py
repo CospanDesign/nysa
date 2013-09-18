@@ -37,6 +37,7 @@ import os
 import sys
 import json
 import string
+import shutil
 
 #Project Modules
 import utils
@@ -117,6 +118,35 @@ def get_sim_module_dict(module_name, user_paths = [], debug = False):
 
     return sim_dict
 
+def add_sim_modules_to_project(tags, sim_dict, user_paths):
+    #utils.pretty_print_dict(tags)
+    #utils.pretty_print_dict(sim_dict)
+    #Get the directory of where to put the sim modules
+    base_dir = utils.resolve_path(tags["BASE_DIR"])
+    project_dir = tags["PROJECT_NAME"]
+    out_dir = os.path.join(base_dir, "sim", "sim_modules")
+    if not os.path.exists(out_dir):
+        utils.create_dir(out_dir)
+
+
+    #Find all the file locations
+    module_filename = utils.find_module_filename(sim_dict["name"], user_paths)
+    module_filepath = utils.find_rtl_file_location(module_filename, user_paths)
+
+    out_file_path = os.path.join(out_dir, module_filename)
+    #print "copy %s > %s" % (module_filepath, out_file_path)
+    shutil.copy2(module_filepath, os.path.join(out_dir, out_file_path))
+
+    #Get the locations for each of the auxilary files
+    for f in sim_dict["aux_files"]:
+        module_path = utils.find_rtl_file_location(f)
+        out_file_path = os.path.join(out_dir, f)
+        #print "copy %s > %s" % (module_path, out_file_path)
+        shutil.copy2(module_path, os.path.join(out_dir, f))
+
+
+
+
 
 def get_bind_direction(signal, module_tags):
     #We have a signal and a location to bind it, we need the direction
@@ -173,52 +203,58 @@ def generate_tb_module(tags, top_buffer, user_paths = [], debug=False):
     top_module = {
         "bind":{
             "sim_in_reset":{
-                "loc":"sim_in_reset",
-                "direction":"input"
+                "loc":"i_sim_in_reset",
+                "direction":"input",
+                "reg":True
             },
             "sim_in_ready":{
-                "loc":"sim_in_ready",
-                "direction":"input"
+                "loc":"i_sim_in_ready",
+                "direction":"input",
+                "reg":True
             },
             "sim_in_command":{
-                "loc":"sim_in_command",
-                "direction":"input"
+                "loc":"i_sim_in_command",
+                "direction":"input",
+                "reg":True
             },
             "sim_in_address":{
-                "loc":"sim_in_address",
-                "direction":"input"
+                "loc":"i_sim_in_address",
+                "direction":"input",
+                "reg":True
             },
             "sim_in_data":{
-                "loc":"sim_in_data",
-                "direction":"input"
+                "loc":"i_sim_in_data",
+                "direction":"input",
+                "reg":True
             },
             "sim_in_data_count":{
-                "loc":"sim_in_data_count",
-                "direction":"input"
+                "loc":"i_sim_in_data_count",
+                "direction":"input",
+                "reg":True
             },
 
             "sim_master_ready":{
-                "loc":"sim_master_ready",
+                "loc":"o_sim_master_ready",
                 "direction":"output"
             },
             "sim_out_en":{
-                "loc":"sim_out_en",
+                "loc":"o_sim_out_en",
                 "direction":"output"
             },
             "sim_out_status":{
-                "loc":"sim_out_status",
+                "loc":"o_sim_out_status",
                 "direction":"output"
             },
             "sim_out_address":{
-                "loc":"sim_out_address",
+                "loc":"o_sim_out_address",
                 "direction":"output"
             },
             "sim_out_data":{
-                "loc":"sim_out_data",
+                "loc":"o_sim_out_data",
                 "direction":"output"
             },
             "sim_out_data_count":{
-                "loc":"sim_out_data_count",
+                "loc":"o_sim_out_data_count",
                 "direction":"output"
             }
         }
@@ -239,6 +275,7 @@ def generate_tb_module(tags, top_buffer, user_paths = [], debug=False):
                 module_name = tags["SLAVES"][slave]["filename"].strip(".v")
                 sim_dict = get_sim_module_dict(module_name,
                                                user_paths)
+                add_sim_modules_to_project(tags, sim_dict, user_paths)
                 sim_modules[slave] = generate_sub_slave_dict(sim_dict)
 
 
@@ -248,13 +285,14 @@ def generate_tb_module(tags, top_buffer, user_paths = [], debug=False):
                 module_name = tags["MEMORY"][mem]["filename"].strip(".v")
                 sim_dict = get_sim_module_dict(module_name,
                                                user_paths)
+                add_sim_modules_to_project(tags, sim_dict, user_paths)
                 sim_modules[mem] = generate_sub_slave_dict(sim_dict)
 
     tb_tags = {}
     tb_tags["module"] = "tb"
-    tb_tags["ports"] = {}
 
-    ports = tb_tags["ports"]
+    #ports = tb_tags["ports"]
+    ports = {}
     ports["input"] = {}
     ports["output"] = {}
     ports["inout"] = {}
@@ -267,76 +305,77 @@ def generate_tb_module(tags, top_buffer, user_paths = [], debug=False):
         "direction":"input",
         "size":1
     }
-    ports["input"]["sim_in_reset"]= {
+    ports["input"]["i_sim_in_reset"]= {
         "direction":"input",
         "size":1
     }
-    ports["input"]["sim_in_ready"] = {
+    ports["input"]["i_sim_in_ready"] = {
         "direction":"input",
         "size":1
     }
-    ports["input"]["sim_in_command"] = {
+    ports["input"]["i_sim_in_command"] = {
         "direction":"input",
         "size":32,
         "min_val":0,
         "max_val":31
     }
-    ports["input"]["sim_in_address"] = {
+    ports["input"]["i_sim_in_address"] = {
         "direction":"input",
         "size":32,
         "min_val":0,
         "max_val":31
     }
-    ports["input"]["sim_in_data"] = {
+    ports["input"]["i_sim_in_data"] = {
           "direction":"input",
         "size":32,
         "min_val":0,
         "max_val":31
     }
-    ports["input"]["sim_in_data_count"] = {
+    ports["input"]["i_sim_in_data_count"] = {
         "direction":"input",
         "size":32,
         "min_val":0,
         "max_val":31
     }
-    ports["output"]["sim_master_ready"] = {
+    ports["output"]["o_sim_master_ready"] = {
         "direction":"output",
         "size":1
     }
-    ports["output"]["sim_out_en"] = {
+    ports["output"]["o_sim_out_en"] = {
         "direction":"output",
         "size":1
     }
-    ports["output"]["sim_out_status"] = {
+    ports["output"]["o_sim_out_status"] = {
         "direction":"output",
         "size":32,
         "min_val":0,
         "max_val":31
     }
-    ports["output"]["sim_out_address"] = {
+    ports["output"]["o_sim_out_address"] = {
         "direction":"output",
         "size":32,
         "min_val":0,
         "max_val":31
     }
-    ports["output"]["sim_out_data"] = {
+    ports["output"]["o_sim_out_data"] = {
         "direction":"output",
         "size":32,
         "min_val":0,
         "max_val":31
     }
 
-    ports["output"]["sim_out_data_count"] = {
+    ports["output"]["o_sim_out_data_count"] = {
         "direction":"output",
         "size":32,
         "min_val":0,
         "max_val":31
     }
+    tb_tags["ports"] = ports
 
 
     #if debug:
     #    utils.pretty_print_dict(tb_tags)
-    MB = mb.ModuleBuilder(tb_tags)
+    MB = TBModuleBuilder(tb_tags)
     #Generate 'slave_tags' or tags we will use to bind ports to simulation
     #Add the ports to the wires
     MB.add_ports_to_wires()
@@ -356,16 +395,17 @@ def generate_tb_module(tags, top_buffer, user_paths = [], debug=False):
                             sim_modules[sim],
                             sim_modules[sim]))
 
-    assign_buf = vutils.generate_assigns_buffer(invert_reset,
-                                                MB.bindings,
-                                                internal_bindings = {},
-                                                debug = False)
+    assign_buf = generate_assigns_buffer(invert_reset,
+                                         MB.bindings,
+                                         internal_bindings = {},
+                                         debug = False)
     buf =  mb.generate_timespec_buf()
     buf += mb.generate_module_ports("tb",
                                     MB.tags["ports"],
                                     param_dict = {},
                                     debug = False)
     buf += "\n"
+    buf += MB.generate_module_wires(invert_reset)
     buf += generate_top_inout_wires(top_module)
     for sub in sub_buffers:
         buf += sub
@@ -386,6 +426,69 @@ def generate_tb_module(tags, top_buffer, user_paths = [], debug=False):
                                     
     return string.expandtabs(buf, 2)
 
+def generate_assigns_buffer(invert_reset, bindings, internal_bindings, debug=False):
+    buf = ""
+    if len(internal_bindings) > 0:
+        buf += "//Internal Bindings\n"
+        for key in internal_bindings:
+            if key == "clk":
+                continue
+            if key == "rst":
+                continue
+            if key == internal_bindings[key]["signal"]:
+                continue
+
+            buf += "assign\t{0:<20}=\t{1};\n".format(key, internal_bindings[key]["signal"])
+
+    buf += "\n\n"
+    if len(bindings) > 0:
+        buf += "//Bindings\n"
+        buf += "always @ (*) begin\n"
+
+        for key in bindings:
+            if key == "clk":
+                continue
+            if key == "rst":
+                continue
+            if key == bindings[key]["loc"]:
+                continue
+
+            if (bindings[key]["direction"] == "input") and ("reg" in bindings[key]):
+                buf += "\t{0:<20}=\t{1};\n".format(key, bindings[key]["loc"])
+                #buf += "assign\t{0:<20}=\t{1};\n".format(key, bindings[key]["loc"])
+
+        buf += "end\n" 
+        for key in bindings:
+            if key == "clk":
+                continue
+            if key == "rst":
+                continue
+            if key == bindings[key]["loc"]:
+                continue
+
+            if (bindings[key]["direction"] == "input") and ("reg" not in bindings[key]):
+                buf += "assign\t{0:<20}=\t{1};\n".format(key, bindings[key]["loc"])
+
+        for key in bindings:
+            if key == bindings[key]["loc"]:
+                continue
+
+
+            if bindings[key]["direction"] == "output":
+                buf += "assign\t{0:<20}=\t{1};\n".format(bindings[key]["loc"], key)
+
+
+    if invert_reset:
+        buf += "\n"
+        buf += "//Invert Reset for this board\n"
+        buf += "always @ (*) begin\n"
+        buf += "\t{0:<20}=\t{1};\n".format("rst_n", "~rst")
+        buf += "end\n"
+
+    return string.expandtabs(buf, 2)
+
+
+
 def generate_top_inout_wires(top_module):
     buf = "//Master inout wires\n"
     if "inout" in top_module["ports"]:
@@ -393,3 +496,62 @@ def generate_top_inout_wires(top_module):
             buf += vutils.create_wire_buf_from_dict(port, top_module["ports"]["inout"][port])
 
     return buf
+
+
+class TBModuleBuilder(mb.ModuleBuilder):
+
+    def __init__(self, tags = None):
+        super(TBModuleBuilder, self).__init__(tags)
+
+    def generate_sub_module_wires(self, invert_reset, instance_name, module_tags):
+        #Add all input and output wires to the ports
+        buf = ""
+        if "input" in module_tags["ports"]:
+            buf += "//inputs\n"
+            for port in module_tags["ports"]["input"]:
+                if port == "clk":
+                    continue
+                if port == "rst":
+                    continue
+                pname = port
+                if len(instance_name) > 0:
+                    pname = "%s_%s" % (instance_name, port)
+
+                if self.in_wires(pname, module_tags["ports"]["input"][port]):
+                    continue
+
+                if module_tags["module"] == "top":
+                    buf += vutils.create_reg_buf_from_dict(pname,
+                                                            module_tags["ports"]["input"][port])
+                else:
+                    buf += vutils.create_wire_buf_from_dict(pname,
+                                                            module_tags["ports"]["input"][port])
+                self.add_wire(pname, module_tags["ports"]["input"][port])
+
+            buf += "\n"
+
+        if "output" in module_tags["ports"]:
+            buf += "//outputs\n"
+            for port in module_tags["ports"]["output"]:
+                pname = port
+                if len(instance_name) > 0:
+                    pname = "%s_%s" % (instance_name, port)
+
+                if self.in_wires(pname, module_tags["ports"]["output"][port]):
+                    continue
+
+                buf += vutils.create_wire_buf_from_dict(pname,
+                                                        module_tags["ports"]["output"][port])
+
+                self.add_wire(pname, module_tags["ports"]["output"][port])
+            buf += "\n"
+
+        return buf
+
+    def generate_module_wires(self, invert_reset):
+        buf = ""
+        if invert_reset:
+            buf += vutils.create_reg_buf("rst_n", 1, 0, 0)
+        return buf
+
+

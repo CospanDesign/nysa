@@ -94,6 +94,9 @@
           "interface":{
             "dir":true
           },
+          "sim_modules":{
+            "dir":true
+          },
           "sim_interface.v":{
             "location":"${NYSA}/cbuilder/verilog/wishbone/host_interface/sim_interface"
           },
