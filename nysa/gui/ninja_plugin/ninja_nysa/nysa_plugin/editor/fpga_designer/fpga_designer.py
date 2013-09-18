@@ -94,6 +94,7 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
 
 
 import utils
+import verilog_utils as vutils
 import drt
 
 
@@ -269,9 +270,9 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
 
     def addBox(self, name, color = "black"):
         user_dirs = self.vc.get_user_dirs()
-        fn = utils.find_module_filename(name, user_dirs)
+        fn = vutils.find_module_filename(name, user_dirs)
         fn = utils.find_rtl_file_location(fn, user_dirs)
-        mt = utils.get_module_tags(filename = fn, user_paths = user_dirs)
+        mt = vutils.get_module_tags(filename = fn, user_paths = user_dirs)
 
         Box(  position = self.position(),
               scene = self.scene,
@@ -318,7 +319,7 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         memory_dict = {}
 
         for slave in slave_list:
-            tags = utils.get_module_tags(   filename = slave,
+            tags = vutils.get_module_tags(   filename = slave,
                                             keywords=["DRT_FLAGS"],
                                             bus = self.vc.get_bus(),
                                             user_paths = user_dirs)
