@@ -104,6 +104,9 @@
             "location":"${NYSA}/cbuilder/template/top",
             "gen_script":"gen_sim_top"
           },
+          "tb.v":{
+            "gen_script":"gen_sim_tb"
+          },
           "Makefile":{
             "location":"${NYSA}/host/userland/sim",
             "gen_script":"gen_sim_makefile"
