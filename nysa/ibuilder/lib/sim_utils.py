@@ -36,10 +36,12 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 import os
 import sys
 import json
+import string
 
 #Project Modules
 import utils
 import verilog_utils as vutils
+import module_builder as mb
 import ibuilder_error
 
 class SimUtilsError(ibuilder_error.IBuilderError):
@@ -98,119 +100,302 @@ def get_sim_module_dict(module_name, user_paths = [], debug = False):
                 found_path = True
                 break
 
-    #Check if we captures something
+    #Check if we captured something
     if sim_filepath is None:
         raise SimUtilsError("sim_utils: did not find %s" % sim_filename,
                             "searched: %s" % str(paths))
     sim_dict = None
     try:
         fp = open(sim_filepath, "r")
-        if debug: print "Open: %s" % sim_filepath
+        #print "Open: %s" % sim_filepath
         sim_dict = json.loads(fp.read())
         fp.close()
     except IOError, err:
-        raise SimUtilsError("sim_utils: Failed to open file %s: Error: %s" % 
+        raise SimUtilsError("sim_utils: Failed to open file %s: Error: %s" %
                 (sim_filepath, str(err)))
 
 
     return sim_dict
-    
 
-def generate_sim_module_buf(invert_reset,
-                            instance_name,
-                            sim_module_tags,
-                            debug = False):
+
+def get_bind_direction(signal, module_tags):
+    #We have a signal and a location to bind it, we need the direction
+    if "input" in module_tags["ports"]:
+        for port in module_tags["ports"]["input"]:
+            if port == signal:
+                return "input"
+    if "output" in module_tags["ports"]:
+        for port in module_tags["ports"]["output"]:
+            if port == signal:
+                return "output"
+
+    if "inout" in module_tags["ports"]:
+        for port in module_tags["ports"]["inout"]:
+            if port == signal:
+                return "inout"
+
+def generate_sub_slave_dict(sim_dict, debug = False):
+    #Get sim module tags
+    filename = utils.find_module_filename(sim_dict["name"])
+    filepath = utils.find_rtl_file_location(filename)
+    sim_tags = vutils.get_module_tags(filepath)
+    bind_dict = sim_tags["ports"]
+    sim_tags["bind"] = {}
+    #Go through each dictionary entry and determine the direction
+    for signal in sim_dict["bind"]:
+        #XXX: Don't support subset of busses yet
+        sim_tags["bind"][signal] = {}
+        sim_tags["bind"][signal]["loc"] = sim_dict["bind"][signal]
+        sim_tags["bind"][signal]["direction"] = get_bind_direction(signal, sim_tags)
+
+    return sim_tags
+
+def generate_tb_module(tags, top_buffer, user_paths = [], debug=False):
     """
-    Generates a sim module buffer that is suitable to be put in the testbench
+    Generate the test bench
 
     Args:
-        invert_reset (boolean):
-            True: reset is inverted
-            False: reset is not inverted
-        sim_module_tags (dict): A dictionary of simulation tags used to
-            generate the buffer
-    
+        tags (dictionary): Dictionary defining a project
+        top_buffer (string): A buffer of the top module
+        user_paths (list of strings): a list of paths pointing to user
+            directories
+
     Returns:
-        (string): buffer that will instantiate the simulation module
+        (string): buffer of the test module
 
     Raises:
         Nothing
-
     """
-    #Look through the sim_module_tags for the inout ports
-    nysa_base = utils.get_nysa_base()
-    #search_path = os.path.join(nysa_base,
-    #                           "cbuilder",
-    #                           "verilog")
-    #filename = utils.find_module_filename(sim_module_tags["name"], [search_path])
-    filename = utils.find_module_filename(sim_module_tags["name"])
-    if debug: print "Module filename: %s" % filename
-    filepath = utils.find_rtl_file_location(filename)
-    if debug: print "Module filepath: %s" % filepath
-    module_tags = vutils.get_module_tags(filepath)
-    #if debug: print "Module Tags: %s" % str(module_tags)
-    #if debug: print "Ports: %s" % str(sim_module_tags["bind"].keys())
 
-    bind_list = []
+    top_module_tags = vutils.get_module_buffer_tags(top_buffer,
+                                                    bus = "wishbone",
+                                                    user_paths = [])
+    top_module = {
+        "bind":{
+            "sim_in_reset":{
+                "loc":"sim_in_reset",
+                "direction":"input"
+            },
+            "sim_in_ready":{
+                "loc":"sim_in_ready",
+                "direction":"input"
+            },
+            "sim_in_command":{
+                "loc":"sim_in_command",
+                "direction":"input"
+            },
+            "sim_in_address":{
+                "loc":"sim_in_address",
+                "direction":"input"
+            },
+            "sim_in_data":{
+                "loc":"sim_in_data",
+                "direction":"input"
+            },
+            "sim_in_data_count":{
+                "loc":"sim_in_data_count",
+                "direction":"input"
+            },
 
-    for port in sim_module_tags["bind"].keys():
-        #if debug: print "port: %s" % port
-        #if debug: print "partition: %s" % str(port.partition("[")[0])
-        if len(port.partition("[")[0]) > 0:
-            name = port.partition("[")[0]
-            if name not in bind_list:
-                bind_list.append(name)
-        else:
-            if port not in bind_list:
-                bind_list.append(port)
+            "sim_master_ready":{
+                "loc":"sim_master_ready",
+                "direction":"output"
+            },
+            "sim_out_en":{
+                "loc":"sim_out_en",
+                "direction":"output"
+            },
+            "sim_out_status":{
+                "loc":"sim_out_status",
+                "direction":"output"
+            },
+            "sim_out_address":{
+                "loc":"sim_out_address",
+                "direction":"output"
+            },
+            "sim_out_data":{
+                "loc":"sim_out_data",
+                "direction":"output"
+            },
+            "sim_out_data_count":{
+                "loc":"sim_out_data_count",
+                "direction":"output"
+            }
+        }
+    }
+    top_module["ports"] = {}
+    top_module["ports"] = top_module_tags["ports"]
+    top_module["module"] = top_module_tags["module"]
+    #print "top module tags:\n"
+    #utils.pretty_print_dict(top_module)
+
+
+
+    invert_reset = utils.get_board_config(tags["board"])
+    sim_modules = {}
+    if "SLAVES" in tags:
+        for slave in tags["SLAVES"]:
+            if "sim" in tags["SLAVES"][slave]:
+                module_name = tags["SLAVES"][slave]["filename"].strip(".v")
+                sim_dict = get_sim_module_dict(module_name,
+                                               user_paths)
+                sim_modules[slave] = generate_sub_slave_dict(sim_dict)
+
+
+    if "MEMORY" in tags:
+        for mem in tags["MEMORY"]:
+            if "sim" in tags["MEMORY"][mem]:
+                module_name = tags["MEMORY"][mem]["filename"].strip(".v")
+                sim_dict = get_sim_module_dict(module_name,
+                                               user_paths)
+                sim_modules[mem] = generate_sub_slave_dict(sim_dict)
+
+    tb_tags = {}
+    tb_tags["module"] = "tb"
+    tb_tags["ports"] = {}
+
+    ports = tb_tags["ports"]
+    ports["input"] = {}
+    ports["output"] = {}
+    ports["inout"] = {}
+
+    ports["input"]["clk"] = {
+        "direction":"input",
+        "size":1
+    }
+    ports["input"]["rst"] = {
+        "direction":"input",
+        "size":1
+    }
+    ports["input"]["sim_in_reset"]= {
+        "direction":"input",
+        "size":1
+    }
+    ports["input"]["sim_in_ready"] = {
+        "direction":"input",
+        "size":1
+    }
+    ports["input"]["sim_in_command"] = {
+        "direction":"input",
+        "size":31,
+        "min_val":0,
+        "max_val":31
+    }
+
+
+    ports["input"]["sim_in_address"] = {
+         "direction":"input",
+        "size":31,
+        "min_val":0,
+        "max_val":31
+    }
+
+    ports["input"]["sim_in_data"] = {
+          "direction":"input",
+        "size":31,
+        "min_val":0,
+        "max_val":31
+    }
+
+    ports["input"]["sim_in_data_count"] = {
+        "direction":"input",
+        "size":28,
+        "min_val":0,
+        "max_val":27
+    }
+    ports["output"]["sim_master_ready"] = {
+        "direction":"output",
+        "size":1
+    }
+    ports["output"]["sim_out_en"] = {
+        "direction":"output",
+        "size":1
+    }
+    ports["output"]["sim_out_status[31:0]"] = {
+        "direction":"output",
+        "size":31,
+        "min_val":0,
+        "max_val":31
+    }
+
+    ports["output"]["sim_out_address[31:0]"] = {
+        "direction":"output",
+        "size":31,
+        "min_val":0,
+        "max_val":31
+    }
+
+    ports["output"]["sim_out_data[31:0]"] = {
+        "direction":"output",
+        "size":31,
+        "min_val":0,
+        "max_val":31
+    }
+
+    ports["output"]["sim_out_data_count[27:0]"] = {
+        "direction":"output",
+        "size":28,
+        "min_val":0,
+        "max_val":27
+    }
+
 
     #if debug:
-    #    print "bind list:"
-    #    for bind in bind_list:
-    #        print "\t%s" % bind
-    #    print ""
-        
-    #Need to fake out the verilog_utils port interface to thinking we are just a
-    #   normal slave module with port declaration for the entire module
-    inout_ports = {}
-    inout_ports["bind"] = {}
-    if "inout" in module_tags["ports"]:
-        for inout_port in module_tags["ports"]["inout"]:
-            #if debug: print "inout_port: %s" % str(inout_port)
-            if inout_port not in sim_module_tags["bind"]:
-                continue
+    #    utils.pretty_print_dict(tb_tags)
+    MB = mb.ModuleBuilder(tb_tags)
+    #Generate 'slave_tags' or tags we will use to bind ports to simulation
+    #Add the ports to the wires
+    MB.add_ports_to_wires()
+    sub_buffers = []
+    sub_buffers.append(MB.generate_sub_module(
+                        invert_reset,
+                        "top",
+                        top_module,
+                        top_module,
+                        enable_unique_ports = False))
 
-            #inout_ports["bind"]["inout"] = module_tags["ports"]["inout"]
-            inout_ports["bind"][inout_port] = {}
 
-            inout_ports["bind"][inout_port]["loc"] = sim_module_tags["bind"][inout_port]
+    for sim in sim_modules:
+        sub_buffers.append(MB.generate_sub_module(
+                            invert_reset,
+                            sim,
+                            sim_modules[sim],
+                            sim_modules[sim]))
 
-    if debug:
-        print "inout ports"
-        for inout in inout_ports["bind"]:
-            print "\t%s:%s" % (inout, inout_ports["bind"][inout])
+    assign_buf = vutils.generate_assigns_buffer(invert_reset,
+                                                MB.bindings,
+                                                internal_bindings = {},
+                                                debug = False)
+    buf =  mb.generate_timespec_buf()
+    buf += mb.generate_module_ports("tb",
+                                    tb_tags["ports"],
+                                    param_dict = {},
+                                    debug = False)
+    buf += "\n"
+    buf += generate_top_inout_wires(top_module)
+    for sub in sub_buffers:
+        buf += sub
+        buf += "\n"
 
-    buf = vutils.generate_module_port_signals(invert_reset,
-                                              name = instance_name,
-                                              prename = "",
-                                              slave_tags = inout_ports,
-                                              module_tags = module_tags)
+    buf += "\n"
+    buf += assign_buf
+    buf += "\n"
+
+    buf += ("\n" +
+        "initial begin\n"
+        "  $dumpfile (\"waveform.vcd\");\n" +
+        "  $dumpvars (0, tb);\n" +
+        "end\n\n")
+
+
+    buf += "endmodule"
+                                    
+    return string.expandtabs(buf, 2)
+
+def generate_top_inout_wires(top_module):
+    buf = "//Master inout wires\n"
+    if "inout" in top_module["ports"]:
+        for port in top_module["ports"]["inout"]:
+            buf += vutils.create_wire_buf_from_dict(port, top_module["ports"]["inout"][port])
 
     return buf
-                                                
-        
-
-def generate_tb_module_ports():
-    """
-    Generate the test bench ports
-
-    Args:
-        Nothing
-
-    Returns:
-        (string): buffer of the test module ports
-
-    Raises:
-        Nothing
-    """
-    buf = ""

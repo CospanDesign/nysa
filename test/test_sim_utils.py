@@ -60,6 +60,57 @@ test_dict = {
   }
 }
 
+top_buffer = " "\
+    "module top (\n"\
+    "  input                 sim_in_ready,\n"\
+    "  output      [27:0]    sim_out_data_count,\n"\
+    "  output                cas,\n"\
+    "  input       [31:0]    sim_in_command,\n"\
+    "  output                sim_out_en,\n"\
+    "  output                we,\n"\
+    "  output                dqmh,\n"\
+    "  input                 s1,\n"\
+    "  output                sim_master_ready,\n"\
+    "  input                 sim_out_ready,\n"\
+    "  output                cke,\n"\
+    "  output      [11:0]    a,\n"\
+    "  output                ras,\n"\
+    "  input       [1:0]     button,\n"\
+    "  inout       [15:0]    dq,\n"\
+    "  input       [31:0]    sim_in_data,\n"\
+    "  output      [1:0]     ba,\n"\
+    "  output      [31:0]    sim_out_data,\n"\
+    "  input       [31:0]    sim_in_address,\n"\
+    "  output      [1:0]     led,\n"\
+    "  output                dqml,\n"\
+    "  output      [31:0]    sim_out_address,\n"\
+    "  output                s0,\n"\
+    "  input       [31:0]    sim_in_data_count,\n"\
+    "  output      [31:0]    sim_out_status,\n"\
+    "  input                 sim_in_reset,\n"\
+    "  output                cs_n,\n"\
+    "  output                sdram_clk\n"\
+    ");\n"\
+    "endmodule"
+
+tb_tags = {
+}
+
+tags = {
+	"BASE_DIR":"~/projects/ibuilder_project",
+	"board":"dionysus",
+	"PROJECT_NAME":"example_project",
+	"TEMPLATE":"wishbone_template.json",
+	"INTERFACE":{},
+    "SLAVES":{},
+    "MEMORY":{
+        "mem1":{
+            "filename":"wb_sdram.v",
+            "sim":True
+        }
+    }
+}
+
 class Test (unittest.TestCase):
     """Unit test for verilog_utils"""
 
@@ -69,7 +120,7 @@ class Test (unittest.TestCase):
         self.nysa_base = os.path.abspath(base)
         self.dbg = False
 
-    def test_get_sim_module_dict_pass(self):
+    def test_get_sim_module_dic(self):
         """
         Test the function to get the dictionary of the interface to the test
         module of the specified module (Sorry this is confusing)
@@ -82,27 +133,40 @@ class Test (unittest.TestCase):
                                            user_paths,
                                            debug = self.dbg)
 
+        if self.dbg:
+            utils.pretty_print_dict(sdict)
         self.dbg = prev_dbg
         self.assertIsNotNone(sdict)
 
-
-
-
-    def test_generate_sim_module_buf(self):
-        """Test generate sim moulde buf"""
-
-        module_name = "wb_sdram"
+    def test_generate_sub_slave_dict(self):
         user_paths = []
         prev_dbg = self.dbg
         #self.dbg = True
-        buf = sutils.generate_sim_module_buf(False,
-                                             test_dict["name"],
-                                             test_dict,
-                                             debug = self.dbg)
+        module_name = "wb_sdram"
+        sdict = sutils.get_sim_module_dict(module_name,
+                                           user_paths)
+
+        module_tags = sutils.generate_sub_slave_dict(sdict,
+                                                     debug = self.dbg)
+
         if self.dbg:
-            print "sim module buffer:\n%s" % buf
+            utils.pretty_print_dict(module_tags)
+
         self.dbg = prev_dbg
 
-    def test_generate_tb_module_port(self):
-        sutils.generate_tb_module_ports()
+    def test_generate_tb_module(self):
+        user_paths = []
+        prev_dbg = self.dbg
+        #self.dbg = True
+        tb = sutils.generate_tb_module(tags,
+                                       top_buffer,
+                                       user_paths = [],
+                                       debug = self.dbg)
+        if self.dbg:
+            #print "tb\n"
+            #print  tb
+            f = open("/home/cospan/sandbox/tb.v", "w")
+            f.write(tb)
+            f.close()
+        self.dbg = prev_dbg
 
