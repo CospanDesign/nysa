@@ -4,21 +4,21 @@ Distributed under the MIT licesnse.
 Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all 
+The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
@@ -36,12 +36,12 @@ SOFTWARE.
     -added support for nacks when the slave doesn't respond in time
   11/07/2011
     -added interrupt handling to the master
-    -when the master is idle the interconnect will output the interrupt 
+    -when the master is idle the interconnect will output the interrupt
       on the wbs data
   10/30/2011
-    -fixed the memory bus issue where that master was not responding 
+    -fixed the memory bus issue where that master was not responding
       to a slave ack
-    -changed the READ and WRITE command to call either the memory 
+    -changed the READ and WRITE command to call either the memory
       bus depending on the
     flags in the command sent from the user
   10/25/2011
@@ -108,8 +108,8 @@ module wishbone_master (
 
   );
   //debug output
-  
- 
+
+
   //parameters
   localparam       IDLE                  = 32'h00000000;
   localparam       WRITE                 = 32'h00000001;
@@ -139,7 +139,7 @@ module wishbone_master (
 
   reg                 interrupt_mask    = 32'h00000000;
 
-  reg [31:0]          nack_timeout      = `DEF_NACK_TIMEOUT; 
+  reg [31:0]          nack_timeout      = `DEF_NACK_TIMEOUT;
   reg [31:0]          nack_count        = 0;
 
   //core dump
@@ -182,17 +182,17 @@ module wishbone_master (
 
 initial begin
 //$monitor("%t, int: %h, ih_ready: %h, ack: %h, stb: %h, cyc: %h", $time, i_per_int, i_ready, i_per_ack, o_per_stb_o, o_per_cyc_o);
-//$monitor( "%t, cyc: %h, stb: %h, ack: %h, i_ready: %h, o_en: %h, o_master_ready: %h", 
+//$monitor( "%t, cyc: %h, stb: %h, ack: %h, i_ready: %h, o_en: %h, o_master_ready: %h",
 //          $time, o_per_cyc, o_per_stb, i_per_ack, i_ready, o_en, o_master_ready);
 
-//$monitor( "%t, addr: %h, data: %h", $time, o_per_adr, o_per_dat); 
+//$monitor( "%t, addr: %h, data: %h", $time, o_per_adr, o_per_dat);
 
 end
 
 
 //blocks
 always @ (posedge clk) begin
-    
+
   o_en              <= 0;
 
 //master ready should be used as a flow control, for now its being reset every
@@ -269,8 +269,8 @@ always @ (posedge clk) begin
 
   end
 
-  else begin 
-    
+  else begin
+
     //check for timeout conditions
     if (nack_count == 0) begin
       if (state != IDLE && enable_nack) begin
@@ -299,13 +299,14 @@ always @ (posedge clk) begin
           else if (~o_mem_stb && i_out_ready) begin
             $display("WBM: local_data_count = %h", local_data_count);
             o_data    <= i_mem_dat;
-            o_en      <= 1; 
+            o_en      <= 1;
             if (local_data_count > 1) begin
               o_debug[9]  <=  ~o_debug[9];
               //finished the next double word
               nack_count    <= nack_timeout;
               local_data_count  <= local_data_count -1;
-              o_mem_adr   <= o_mem_adr + 4;
+              $display ("WBM: (burst mode) reading double word from memory");
+              o_mem_adr   <= o_mem_adr + 1;
               o_mem_stb   <= 1;
               //initiate an output transfer
             end
@@ -327,7 +328,7 @@ always @ (posedge clk) begin
            //put the data in the otput
            o_data    <= i_per_dat;
            //tell the io_handler to send data
-           o_en    <= 1; 
+           o_en    <= 1;
 
             if (local_data_count > 1) begin
               o_debug[8]  <=  ~o_debug[8];
@@ -335,6 +336,7 @@ always @ (posedge clk) begin
 //at this point we are waiting on the io handler
               nack_count    <= nack_timeout;
               local_data_count  <= local_data_count - 1;
+              $display ("WBM: (burst mode) reading double word from peripheral");
               o_per_adr    <= o_per_adr + 1;
               o_per_stb    <= 1;
             end
@@ -352,7 +354,7 @@ always @ (posedge clk) begin
           if (i_mem_ack) begin
             o_mem_stb    <= 0;
             if (local_data_count <= 1) begin
-              //finished all writes 
+              //finished all writes
               $display ("WBM: i_data_count == 0");
               o_debug[12] <=  ~o_debug[12];
               o_mem_cyc <= 0;
@@ -365,10 +367,10 @@ always @ (posedge clk) begin
           end
           else if ((local_data_count > 1) && i_ready && (o_mem_stb == 0)) begin
             local_data_count  <= local_data_count - 1;
-            $display ("WBM: (burst mode) writing another double word");
+            $display ("WBM: (burst mode) writing another double word to memory");
             o_master_ready  <=  0;
             o_mem_stb   <= 1;
-            o_mem_adr   <= o_mem_adr + 4;
+            o_mem_adr   <= o_mem_adr + 1;
             o_mem_dat   <= i_data;
             nack_count    <= nack_timeout;
             o_debug[13] <=  ~o_debug[13];
@@ -387,10 +389,10 @@ always @ (posedge clk) begin
             //tell the IO handler were ready for the next one
             o_master_ready  <= 1;
           end
-          else if ((local_data_count > 1) && i_ready && (o_per_stb == 0)) begin 
+          else if ((local_data_count > 1) && i_ready && (o_per_stb == 0)) begin
             local_data_count <= local_data_count - 1;
             o_debug[5]  <= ~o_debug[5];
-            $display ("WBM: (burst mode) writing another double word");
+            $display ("WBM: (burst mode) writing another double word to peripheral");
             o_master_ready  <=  0;
             o_per_stb    <= 1;
             o_per_adr    <= o_per_adr + 1;
@@ -456,7 +458,7 @@ always @ (posedge clk) begin
            end
            o_status              <=  ~i_command;
            o_address             <=  0;
-           o_en                  <=  1; 
+           o_en                  <=  1;
            dump_count              <=  dump_count + 1;
         end
       end
@@ -489,7 +491,7 @@ always @ (posedge clk) begin
               o_debug[1]    <= ~o_debug[1];
               local_data_count    <=  i_data_count;
               if (command_flags & `FLAG_MEM_BUS) begin
-                mem_bus_select  <= 1; 
+                mem_bus_select  <= 1;
                 o_mem_adr     <= i_address;
                 o_mem_stb     <= 1;
                 o_mem_cyc     <= 1;
@@ -503,7 +505,7 @@ always @ (posedge clk) begin
                 o_per_cyc      <= 1;
                 o_per_we       <= 1;
                 o_per_dat      <= i_data;
-              end 
+              end
               o_address     <= i_address;
               o_data        <= i_data;
               o_master_ready    <= 0;
@@ -513,7 +515,7 @@ always @ (posedge clk) begin
               local_data_count  <=  i_data_count;
               o_debug[2]    <= ~o_debug[2];
               if (command_flags & `FLAG_MEM_BUS) begin
-                mem_bus_select  <= 1; 
+                mem_bus_select  <= 1;
                 o_mem_adr     <= i_address;
                 o_mem_stb     <= 1;
                 o_mem_cyc     <= 1;
@@ -531,7 +533,7 @@ always @ (posedge clk) begin
               o_master_ready    <= 0;
               o_address     <= i_address;
               state           <= READ;
-            end 
+            end
             `COMMAND_MASTER_ADDR: begin
               o_address     <=  i_address;
               o_status      <= ~i_command;
@@ -545,7 +547,7 @@ always @ (posedge clk) begin
                 `MADDR_WR_INT_EN: begin
                   interrupt_mask  <= i_data;
                   o_data      <=  i_data;
-                  $display("WBM: setting interrupt enable to: %h", i_data); 
+                  $display("WBM: setting interrupt enable to: %h", i_data);
                 end
                 `MADDR_RD_INT_EN: begin
                   o_data      <= interrupt_mask;
@@ -580,13 +582,13 @@ always @ (posedge clk) begin
             //work around to add a delay
             o_per_adr              <= local_address;
             //handle input
-            local_address         <= 32'hFFFFFFFF;        
+            local_address         <= 32'hFFFFFFFF;
           //check if there is an interrupt
           //if the i_per_int goes positive then send a nortifiction to the user
-          if ((~prev_int) & i_per_int) begin 
+          if ((~prev_int) & i_per_int) begin
             o_debug[11]          <= ~o_debug[11];
             $display("WBM: found an interrupt!");
-            o_status            <= `PERIPH_INTERRUPT; 
+            o_status            <= `PERIPH_INTERRUPT;
             //only supporting interrupts on slave 0 - 31
             o_address           <= 32'h00000000;
             o_data              <= i_per_dat;
