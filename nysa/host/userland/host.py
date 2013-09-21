@@ -29,7 +29,6 @@ implement a new board a user must implement all the required functions
 
 __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
-#! /usr/bin/python
 import time
 import random
 import sys
@@ -39,7 +38,11 @@ import json
 from array import array as Array
 
 #put nysa in the system path
-sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "cbuilder/drt"))
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir,
+                             "cbuilder",
+                             "drt"))
 import drt as drt_controller
 from drt import DRTManager
 
@@ -47,14 +50,11 @@ from drt import DRTManager
 class NysaCommError(Exception):
     """NysaCommError
 
-      Errors associated with communication
+    Errors associated with communications
         Response Timeout
         Incorrect settings
     """
-    def __init__(self, value):
-        self.value = value
-    def __str__ (self):
-        return repr(self.value)
+    pass
 
 
 class Nysa(object):
@@ -64,7 +64,8 @@ class Nysa(object):
     device specific functions such as initialize, read, write, and ping
     """
 
-    read_timeout  = 3
+    #XXX: This might be better specified as a float
+    timeout  = 3
     interrupts = 0
     interrupt_address = 0
 
@@ -93,7 +94,7 @@ class Nysa(object):
         Sets the timeout (in seconds) of the read
 
         Args:
-          timeout: new timeout
+          timeout (int): new timeout
 
         Returns:
           Nothing
@@ -112,7 +113,7 @@ class Nysa(object):
           Nothing
 
         Returns:
-          Nothing
+          (int): Timeout value (in seconds)
 
         Raises:
           Nothing
@@ -126,38 +127,44 @@ class Nysa(object):
         integer
 
         Args:
-          device_id:  Device identification number, this number is found in the DRT
-          address:  Address of the register/memory to read
+          device_id (int):  Device identification number, this number is found
+                            in the DRT
+          address (int):  Address of the register/memory to read
 
         Returns:
-          32-bit unsigned integer
+          (int): 32-bit unsigned register value
 
         Raises:
           NysaCommError: Error in communication
         """
         register_array = self.read(device_id, address, 1)
-        return register_array[0] << 24 | register_array[1] << 16 | register_array[2] << 8 | register_array[3]
+        return register_array[0] << 24 | \
+               register_array[1] << 16 | \
+               register_array[2] << 8  | \
+               register_array[3]
 
 
     def read(self, device_id, address, length = 1, mem_device = False):
         """read
 
-        Generic read command used to read data from an Nysa image, this will be
+        Generic read command used to read data from a Nysa image, this will be
         overriden based on the communication method with the FPGA board
 
         standard methods include
 
-        UART, FTDI Synchronous FIFO, Cypress USB 3.0 Interface, Beaglebone Memory
-        interface
+        UART, FTDI Synchronous FIFO, Cypress USB 3.0 Interface,
 
         Args:
-          length: Number of 32 bit words to read from the FPGA
-          device_id:  Device identification number, this number is found in the DRT
-          address:  Address of the register/memory to read
-          mem_device: Whether the device is on the memory bus or the peripheral bus
+          length (int): Number of 32 bit words to read from the FPGA
+          device_id (int):  Device identification number, this number is found
+                            in the DRT
+          address (int):  Address of the register/memory to read
+          mem_device (int): Whether the device is on the memory bus or the
+                            peripheral bus
 
         Returns:
-          A byte array containing the raw data returned from Nysa
+          (Array of unsigned bytes): A byte array containtin the raw data
+                                     returned from Nysa
 
         Raises:
           AssertionError: This function must be overriden by a board specific
@@ -172,8 +179,8 @@ class Nysa(object):
         memory
 
         Args:
-          address: Starting location o memory to read from
-          size: total number of 32-bit words to read
+          address (int): Starting location o memory to read from
+          size (int): total number of 32-bit words to read
 
         Returns:
           Nothing
@@ -189,11 +196,12 @@ class Nysa(object):
         Writes a single register from a 32-bit unsingned integer
 
         Args:
-          device_id:  Device identification number, this number is found in the DRT
-          address:  Address of the register/memory to read
-          value:  32-bit unsigned integer to be written into the register
+          device_id (int): Device identification number, this number is found
+                           in the DRT
+          address (int):  Address of the register/memory to read
+          value (int)  32-bit unsigned integer to be written into the register
 
-        Return:
+        Returns:
           Nothing
 
         Raises:
@@ -212,11 +220,12 @@ class Nysa(object):
         Sets an individual bit in a register
 
         Args:
-          device_id: Device identification number, this number is found in the DRT
-          address:  Address of the register/memory to modify
-          value:    address of bit to set (31 - 0)
+          device_id (int): Device identification number, this number is found
+                           in the DRT
+          address (int): Address of the register/memory to modify
+          bit (int): Address of bit to set (31 - 0)
 
-        Return:
+        Returns:
           Nothing
 
         Raises:
@@ -233,11 +242,12 @@ class Nysa(object):
         Clear an individual bit in a register
 
         Args:
-          device_id:  Device identification number, this number is found in the DRT
-          address:    Address of the register/memory to modify
-          value       Address of bit to set (31 - 0)
+          device_id (int): Device identification number, this number is found
+                           in the DRT
+          address (int): Address of the register/memory to modify
+          bit (int): Address of bit to set (31 - 0)
 
-        Return:
+        Returns:
           Nothing
 
         Raises:
@@ -255,12 +265,15 @@ class Nysa(object):
         returns true if an individual bit is set, false if clear
 
         Args:
-          device_id:  Device identification number ,this number is found in the DRT
-          address:    Address of the register/memory to read
+          device_id (int): Device identification number ,this number is found
+                           in the DRT
+          address (int): Address of the register/memory to read
+          bit (int): Address of bit to check (31 - 0)
 
-        Return:
-          True: bit is set
-          False: bit is not set
+        Returns:
+          (boolean):
+            True: bit is set
+            False: bit is not set
 
         Raises:
           NysaCommError
@@ -276,8 +289,9 @@ class Nysa(object):
         Writes the byte of array of bytes down to the memory of the bus
 
         Args:
-          address: Starting location of memory to write to
-          data: A byte array of raw values to write to the memory
+          address (int): Starting location of memory to write to
+          data (array of unsigned bytes): A byte array of raw values to write to
+                                          the memory
 
         Returns:
           Nothing
@@ -290,14 +304,15 @@ class Nysa(object):
     def write(self, device_id, address, data = None, mem_device = False):
         """write
 
-        Generic write command usd to write data to an Nysa image, this will be
+        Generic write command usd to write data to a Nysa image, this will be
         overriden based on the communication method with the specific FPGA board
 
         Args:
-          device_id: Device identification number, found in the DRT
-          address: Address of the register/memory to read
-          mem_device: True if the device is on the memory bus
-          data: Array of raw bytes to send to the device
+          device_id (int): Device identification number, found in the DRT
+          address (int): Address of the register/memory to read
+          mem_device (int): True if the device is on the memory bus
+          data (array of unsigned bytes): Array of raw bytes to send to the
+                                          device
 
         Returns:
           Nothing
@@ -356,7 +371,7 @@ class Nysa(object):
           Nothing
 
         Returns:
-          The number of devices on the DRT
+          (int): The number of devices on the DRT
 
         Raises:
           Nothing
@@ -369,10 +384,10 @@ class Nysa(object):
         From the index within the DRT return the ID of this device
 
         Args:
-          device_index: index of the device
+          device (int): index of the device
 
         Returns:
-          Standard device ID
+          (int): Standard device ID
 
         Raises:
           Nothing
@@ -386,10 +401,10 @@ class Nysa(object):
         device
 
         Args:
-          device_index: index of the device
+          device (int): index of the device
 
         Returns:
-          32-bit address of the device
+          (int): 32-bit address of the device
 
         Raises:
           Nothing
@@ -405,10 +420,10 @@ class Nysa(object):
         if memory gets the size of the memory
 
         Args:
-          device_index: index of the device
+          device (int): index of the device
 
         Returns:
-          size
+          (int): size
 
         Raises:
           Nothing
@@ -422,11 +437,12 @@ class Nysa(object):
         peripheral bus
 
         Args:
-          device_index: Index of the device to test
+          device (int): Index of the device to test
 
         Returns:
-          True: Device is on the memory bus
-          False: Device is on the peripheral bus
+          (boolean):
+            True: Device is on the memory bus
+            False: Device is on the peripheral bus
 
         Raises:
           Nothing
@@ -445,7 +461,7 @@ class Nysa(object):
           Nothing
 
         Returns:
-          Size of the total memory
+          (int): Size of the total memory
 
         Raises:
           DRTError: DRT Not defined
@@ -498,11 +514,12 @@ class Nysa(object):
           Nothing
 
         Returns:
-          Array of 32-bit values to be parsed by core_analyzer
+          (Array of unsigned 32-bit values): Array of 32-bit values to be parsed
+                                             by core_analyzer
 
         Raises:
           AssertionError: This function must be overriden by a board specific
-          implementation
+                          implementation
           NysaCommError: A failure of communication is detected
         """
         raise AssertionError("Core Dump function not implemented")
@@ -513,11 +530,13 @@ class Nysa(object):
         listen for interrupts for the specified amount of time
 
         Args:
-          wait_time: the amount of time in seconds to wait for an interrupt
+          wait_time (int): the amount of time in seconds to wait for an
+                           interrupt
 
         Returns:
-          True: Interrupts were detected
-          False: No interrupts detected
+          (boolean):
+            True: Interrupts were detected
+            False: No interrupts detected
 
         Raises:
           AssertionError: This function must be overriden by a board specifific
@@ -531,11 +550,12 @@ class Nysa(object):
         Test to see if the interrupt is for the specified slave
 
         Args:
-          device_id:  device to test for
+          device_id (int):  device to test for
 
         Returns:
-          True: interrupt is for device
-          False: interrupt is not for the device
+          (boolean):
+            True: interrupt is for device
+            False: interrupt is not for the device
 
         Raises:
           Nothing
