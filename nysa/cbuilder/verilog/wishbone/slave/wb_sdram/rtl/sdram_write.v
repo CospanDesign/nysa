@@ -147,13 +147,7 @@ always @(posedge clk) begin
               end
             end
             else begin
-              //we have an enabled FIFO
-              if (fifo_count >= fifo_size) begin
-                //there is no data in this FIFO
-                fifo_activate <=  0;
-                delay         <=  1;
-              end
-              else begin
+              if (fifo_count < fifo_size) begin
                 //everything is good to go
                 state         <=  ACTIVATE;
                 fifo_count    <=  fifo_count + 1;
@@ -161,9 +155,13 @@ always @(posedge clk) begin
                 bottom_data   <=  fifo_data[15:0];
                 top_mask      <=  fifo_data[35:34];
                 bottom_mask   <=  fifo_data[33:32];
-                if (fifo_count < fifo_size) begin
-                  fifo_read   <=  1;
-                end
+                fifo_read   <=  1;
+              end
+              else begin
+                //we have an enabled FIFO
+                //there is no data in this FIFO
+                fifo_activate <=  0;
+                delay         <=  1;
               end
             end
           end
@@ -184,7 +182,6 @@ always @(posedge clk) begin
           data_out      <=  top_data;
           data_mask     <=  top_mask;
           state         <=  WRITE_BOTTOM;
-          write_address <=  write_address + 2;
         end
         WRITE_TOP: begin
           empty         <=  0;
@@ -192,35 +189,32 @@ always @(posedge clk) begin
           data_out      <=  top_data;
           data_mask     <=  top_mask;
           state         <=  WRITE_BOTTOM;
-          write_address <=  write_address + 2;
-          fifo_count    <=  fifo_count + 1;
+          //fifo_count    <=  fifo_count + 1;
         end
         WRITE_BOTTOM: begin
           command       <=  `SDRAM_CMD_NOP;
+          write_address <=  write_address + 2;
           data_out      <=  bottom_data;
           data_mask     <=  bottom_mask;
           //if there is more data to write then continue on with the write
           //and issue a command to the AFIFO to grab more data
-          if (fifo_count >= fifo_size) begin
+          if ((column == 8'h00) || auto_refresh) begin
             //we could have reached the end of a row here
-            state         <=  BURST_TERMINATE;
+            state       <=  BURST_TERMINATE;
           end
-          else if ((column == 8'h00) || auto_refresh) begin
-            //the fifo count != 0 so get the next peice of data
-            state         <=  BURST_TERMINATE;
+          else if (fifo_count < fifo_size) begin
+            state         <=  WRITE_TOP;
+            fifo_count    <=  fifo_count + 1;
+            top_data      <=  fifo_data[31:16];
+            bottom_data   <=  fifo_data[15:0];
+            top_mask      <=  fifo_data[35:34];
+            bottom_mask   <=  fifo_data[33:32];
+            fifo_read   <=  1;
+
           end
           else begin
-            state         <=  WRITE_TOP;
-            if (fifo_count < fifo_size) begin
-                fifo_count    <=  fifo_count + 1;
-                top_data      <=  fifo_data[31:16];
-                bottom_data   <=  fifo_data[15:0];
-                top_mask      <=  fifo_data[35:34];
-                bottom_mask   <=  fifo_data[33:32];
-                if (fifo_count < fifo_size - 1) begin
-                  fifo_read   <=  1;
-                end
-            end
+            //There is no more data left in the FIFO
+            state       <=  BURST_TERMINATE;
           end
         end
         BURST_TERMINATE: begin

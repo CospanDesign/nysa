@@ -105,8 +105,10 @@ reg               wb_reading;
 
 reg               writing;
 reg               reading;
-reg       [21:0]  ram_address;
+reg       [21:0]  app_address;
 reg               first_exchange;
+
+wire              of_wb_reset;
 
 
 //Submoduels
@@ -134,8 +136,7 @@ sdram ram (
   .sdram_write_enable (writing            ),
   .sdram_read_enable  (reading            ),
   .sdram_ready        (o_sdram_ready      ),
-  //.app_address      (i_wbs_adr[23:2]    ),
-  .app_address        (ram_address        ),
+  .app_address        (app_address        ),
 
   .sd_clk             (o_sdram_clk        ),
   .cke                (o_sdram_cke        ),
@@ -149,9 +150,13 @@ sdram ram (
   .data               (io_sdram_data      ),
   .data_mask          (o_sdram_data_mask  ),
 
+  .i_wb_of_reset      (of_wb_reset        ),
+
   .ext_sdram_clk      (o_ext_sdram_clk    )
 
 );
+
+assign  of_wb_reset = (~i_wbs_cyc || i_wbs_we);
 
 //blocks
 always @ (posedge clk) begin
@@ -167,7 +172,7 @@ always @ (posedge clk) begin
     if_count                          <= 0;
     of_count                          <= 0;
     if_write_activate                 <= 0;
-    ram_address                       <= 0;
+    app_address                       <= 0;
     first_exchange                    <= 0;
     o_wbs_dat                         <= 0;
   end
@@ -195,7 +200,9 @@ always @ (posedge clk) begin
 
     else if (!o_wbs_ack && i_wbs_stb && i_wbs_cyc) begin
       if (first_exchange) begin
-        ram_address                   <=  i_wbs_adr[22:1];
+        //app_address                   <=  {9'b0, i_wbs_adr[22:1], 1'b0};
+        app_address                   <=  {8'b0, i_wbs_adr[22:1], 2'b0};
+        //app_address                   <=  {10'b0, i_wbs_adr[22:1]};
         first_exchange                <=  0;
       end
       //master is requesting something
@@ -206,21 +213,21 @@ always @ (posedge clk) begin
           if (if_write_ready > 0) begin
             if_count                  <= 0;
             if (if_write_ready[0]) begin
-              $display ("Getting FIFO 0");
+              //$display ("Getting FIFO 0");
               if_write_activate[0]    <=  1;
             end
             else begin
-              $display ("Getting FIFO 1");
+              //$display ("Getting FIFO 1");
               if_write_activate[1]    <=  1;
             end
           end
         end
         else begin
-          $display ("Writing");
+          //$display ("Writing");
           //write request
           if (~o_wbs_ack) begin
             if (if_count < (if_write_fifo_size - 1)) begin
-              $display("user wrote %h to address %h", i_wbs_dat, i_wbs_adr);
+              $display("WB_SDRAM: user wrote %h to address %h", i_wbs_dat, i_wbs_adr);
               o_wbs_ack               <= 1;
               if_write_strobe         <= 1;
               if_count                <= if_count + 1;
@@ -248,7 +255,7 @@ always @ (posedge clk) begin
               of_count                <=  of_count - 1;
               of_read_strobe          <=  1;
               o_wbs_ack               <=  1;
-              $display("user wb_reading %h", o_wbs_dat);
+              $display("WB_SDRAM: user wb_reading %h", o_wbs_dat);
             end
           end
           else begin

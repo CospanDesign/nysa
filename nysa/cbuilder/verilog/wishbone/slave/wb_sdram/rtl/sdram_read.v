@@ -3,21 +3,21 @@ Distributed under the MIT license.
 Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all 
+The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
@@ -139,6 +139,9 @@ always @ (posedge clk) begin
       fifo_write        <=  1;
       fifo_count        <=  fifo_count - 1;
     end
+    if (fifo_write) begin
+      $display ("SDRAM_READ: Read in: %h", fifo_data);
+    end
 
     //reading the top and bottom should always be a pulse to the other state machine
     //so always reset them
@@ -155,7 +158,7 @@ always @ (posedge clk) begin
         IDLE: begin
           fifo_activate         <=  0;
           if (enable && (fifo_ready > 0)) begin
-            $display ("SDRAM_READ: IDLE: Read request");
+            //$display ("SDRAM_READ: IDLE: Read request");
             state               <=  WAIT;
             read_address        <=  app_address;
             fifo_count          <=  fifo_size - 1;
@@ -213,7 +216,7 @@ always @ (posedge clk) begin
           end
         end
         ACTIVATE: begin
-          $display ("SDRAM_READ: Activate row");
+          //$display ("SDRAM_READ: Activate row");
           if (auto_refresh) begin
             state         <=  WAIT;
           end
@@ -226,21 +229,21 @@ always @ (posedge clk) begin
           end
         end
         READ_COMMAND: begin
-          $display ("SDRAM_READ: Start reading");
+          //$display ("SDRAM_READ: Start reading");
           command       <=  `SDRAM_CMD_READ;
           state         <=  READ_TOP;
           address       <=  {4'b0000, column[7:0]};
           delay         <=  `T_CAS - 1;
         end
         READ_TOP: begin
-          $display ("SDRAM_READ: Reading top word");
+          //$display ("SDRAM_READ: Reading top word");
           command       <=  `SDRAM_CMD_NOP;
           read_top      <=  1;
           state         <=  READ_BOTTOM;
           read_address  <=  read_address + 2;
         end
         READ_BOTTOM: begin
-          $display ("SDRAM_READ: Reading bottom word");
+          //$display ("SDRAM_READ: Reading bottom word");
           command       <=  `SDRAM_CMD_NOP;
           read_bottom   <=  1;
           if ((fifo_count == 1) || !enable || (read_address[7:0] == 8'h00) || auto_refresh || (starved && read_threshold)) begin
@@ -258,7 +261,12 @@ always @ (posedge clk) begin
         PRECHARGE: begin
           command       <=  `SDRAM_CMD_PRE;
           delay         <=  `T_RP;
-          state         <=  WAIT;
+          if (!enable) begin
+            state       <=  IDLE;
+          end
+          else begin
+            state       <=  WAIT;
+          end
         end
         default: begin
           $display ("SDRAM_READ: Entered Illegal state");

@@ -1010,7 +1010,7 @@ module mt48lc4m16
                     end
                     else if (command == act)
                     begin
-                        $display ("\tRAM: Activate Command Received");
+                        //$display ("\tRAM: Activate Command Received for bank: %h", bank);
                         statebank[bank] = bank_act;
                         ras_in[bank] = 1'b1;
                         ras_in [bank] <= #70 1'b0;
@@ -1114,7 +1114,7 @@ module mt48lc4m16
 
                 bank_act :
                 begin
-                    $display ("\tRAM: Bank Activate");
+                    //$display ("\tRAM: Bank Activate: %h", bank);
                     if (command == pre && (cur_bank == bank || A[10]))
                     begin
                         if (~ras_out[bank])
@@ -1307,7 +1307,7 @@ module mt48lc4m16
 
               read :
                 begin
-                    $display ("\tRAM: Read");
+                    //$display ("\tRAM: Read");
                     if (command == bst)
                     begin
                         statebank[bank] = bank_act;

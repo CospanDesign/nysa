@@ -57,6 +57,8 @@ output              ras,
 output              cas,
 output              we,
 
+input               i_wb_of_reset,
+
 output      [11:0]  address,
 output      [1:0]   bank,
 inout       [15:0]  data,
@@ -186,8 +188,10 @@ wire                read_idle;
 wire        [11:0]  read_address;
 wire        [1:0]   read_bank;
 
-wire        [15:0]  data_in;
-assign              data_in = data;
+reg         [15:0]  data_in;
+always @ (data) begin
+  data_in <= #10 data;
+end
 wire                of_fifo_reset;
 
 //Control Signals
@@ -210,7 +214,7 @@ ppfifo#(
   .DATA_WIDTH(32),
   .ADDRESS_WIDTH(9)
 )ppfifo_rd (
-  .reset(rst || ~sdram_ready || of_fifo_reset),
+  .reset(rst || ~sdram_ready || of_fifo_reset || i_wb_of_reset),
 
   //Write
   .write_clock(sdram_clk),
