@@ -4,21 +4,21 @@ Distributed under the MIT license.
 Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all 
+The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
@@ -26,59 +26,33 @@ SOFTWARE.
 `timescale 1 ns/1 ps
 
 module i2s_mem_controller (
-  rst,
-  clk,
+  input               rst,
+  input               clk,
 
   //control
-  enable,
-  post_fifo_wave_en,
-  pre_fifo_wave_en,
+  input               enable,
+  input               post_fifo_wave_en,
 
   //clock divider
-  i2s_clock,
-  
+  input               i2s_clock,
+
   //memory interface
-  request_data,
-  request_size,
-  request_finished,
-  memory_data_strobe,
-  memory_data,
+  output      [23:0]  wfifo_size,
+  output      [1:0]   wfifo_ready,
+  input       [1:0]   wfifo_activate,
+  input               wfifo_strobe,
+  input       [31:0]  wfifo_data,
 
   //i2s writer
-  audio_data_request,
-  audio_data_ack,
-  audio_data,
-  audio_lr_bit
+  input               audio_data_request,
+  output  reg         audio_data_ack,
+  output  reg [23:0]  audio_data,
+  output  reg         audio_lr_bit
 );
-
-input               rst;
-input               clk;
-
-input               enable;
-input               post_fifo_wave_en;
-input               pre_fifo_wave_en;
-
-input               i2s_clock;
-
-output  reg         request_data = 0;
-output      [23:0]  request_size;
-input               request_finished;
-input       [31:0]  memory_data;
-input               memory_data_strobe;
-
-input               audio_data_request;
-output  reg         audio_data_ack = 0;
-output  reg [23:0]  audio_data = 0;
-output  reg         audio_lr_bit = 0;
-
-
 
 //registers/wires
 
 //input side
-wire        [1:0]   write_ready;
-reg         [1:0]   write_activate = 0;
-wire        [23:0]  write_fifo_size;
 wire                starved;
 
 //output side
@@ -108,13 +82,10 @@ reg         [7:0]   test_pos = 0;
 wire        [7:0]   test_wavelength;
 wire        [15:0]  test_value;
 
-assign              fifo_data         = (pre_fifo_wave_en) ? test_pre_data : memory_data;
-assign              fifo_write_strobe = (pre_fifo_wave_en) ? test_pre_write_strobe : memory_data_strobe;
-
 //parameters
 parameter   READ_STROBE     = 4'h0;
 parameter   DELAY           = 4'h1;
-parameter   READ            = 4'h2; 
+parameter   READ            = 4'h2;
 
 //generate a Ping Pong FIFO to cross the clock domain
 ppfifo #(
@@ -122,37 +93,29 @@ ppfifo #(
 `ifndef SIMULATION
   .ADDRESS_WIDTH(12)
 `else
-  .ADDRESS_WIDTH(4)
+  .ADDRESS_WIDTH(2)
 `endif
 )ping_pong (
 
-  .reset(rst),
+  .reset           (rst || !enable    ),
 
   //write
-  .write_clock(clk),
-  .write_ready(write_ready),
-  .write_activate(write_activate),
-  .write_fifo_size(write_fifo_size),
-  .write_strobe(fifo_write_strobe),
-  .write_data(fifo_data),
+  .write_clock     (clk               ),
+  .write_ready     (wfifo_ready       ),
+  .write_activate  (wfifo_activate    ),
+  .write_fifo_size (wfifo_size        ),
+  .write_strobe    (wfifo_strobe      ),
+  .write_data      (wfifo_data        ),
 
-  .starved(starved),
+  //.starved         (starved           ),
 
   //read
-  .read_clock(i2s_clock),
-  .read_strobe(read_strobe),
-  .read_ready(read_ready),
-  .read_activate(read_activate),
-  .read_count(read_size),
-  .read_data(read_data)
-);
-
-waveform wave_pre (
-  .clk(clk),
-  .rst(rst),
-  .wavelength(test_pre_wavelength),
-  .pos(test_pre_pos),
-  .value(test_pre_value)
+  .read_clock      (i2s_clock         ),
+  .read_strobe     (read_strobe       ),
+  .read_ready      (read_ready        ),
+  .read_activate   (read_activate     ),
+  .read_count      (read_size         ),
+  .read_data       (read_data         )
 );
 
 
@@ -165,84 +128,6 @@ waveform wave_post (
 );
 
 //asynchronous logic
-
-//XXX: the request data may need to be controlled within a block
-assign  request_size  = write_fifo_size;
-
-
-//blocks
-
-//data flow and control
-always @(posedge clk) begin
-  if (rst) begin
-    request_data          <=  0;
-    write_activate        <=  0;
-    test_pre_pos          <=  0;
-    test_pre_data         <=  0;
-    test_pre_data[31]     <=  1;
-    test_pre_write_strobe <=  0;
-    write_count           <=  0;
-  end
-  else begin
-    request_data          <=  0;
-    test_pre_write_strobe     <=  0;
-    if (enable) begin
-      if (pre_fifo_wave_en) begin
-        if ((write_ready > 0) && (write_activate == 0)) begin
-          //find a buffer that is empty
-          if (write_ready[0]) begin
-            //activate that buffer
-            write_activate[0] <=  1;
-          end
-          else if (write_ready[1]) begin
-            //activate that buffer
-            write_activate[1] <=  1;
-          end
-          write_count       <=  request_size - 1;
-        end
-        else if (write_activate > 0) begin
-          if (write_count > 0) begin
-            if (test_pre_pos      >= test_pre_wavelength - 1) begin 
-              test_pre_pos        <=  0;
-            end
-            else begin
-              test_pre_pos        <=  test_pre_pos + 1;
-            end
-            write_count           <=  write_count - 1;
-            test_pre_data[31]     <= ~test_pre_data[31];
-            test_pre_data[30:24]  <=  0;
-            test_pre_data[23:8]   <=  test_pre_value;
-            test_pre_data[7:0]    <=  0;
-            test_pre_write_strobe <=  1;
-          end
-          else begin
-            write_activate        <=  0;
-          end
-        end
-      end
-      else begin
-        if ((write_ready > 0) && (write_activate == 0)) begin
-          //find a buffer that is empty
-          if (write_ready[0]) begin
-            //activate that buffer
-            write_activate[0] <=  1;
-          end
-          else if (write_ready[1]) begin
-            //activate that buffer
-            write_activate[1] <=  1;
-          end
-          //request data from the memory
-          request_data        <=  1;
-        end
-        //wait for request finished to pusle high
-        if (request_finished) begin
-          write_activate <= 0;
-        end
-      end
-    end
-  end
-end
-
 
 //prepare the data for the i2s writer
 `ifdef SIMULATION
@@ -272,13 +157,13 @@ always @(posedge i2s_clock) begin
       if (audio_data_request && ~audio_data_ack) begin
         audio_lr_bit    <=  ~audio_lr_bit;
 
-        if (test_pos >= test_wavelength - 1) begin 
+        if (test_pos >= test_wavelength - 1) begin
           test_pos  <=  0;
         end
         else begin
           test_pos  <=  test_pos + 1;
         end
-        
+
         audio_data        <=  {test_value, 8'h0};
         audio_data_ack    <=  1;
       end
@@ -326,7 +211,5 @@ always @(posedge i2s_clock) begin
     end
   end
 end
- 
-
 
 endmodule

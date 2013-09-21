@@ -48,7 +48,7 @@ SOFTWARE.
 `define OUTPUT_FILE "sim/master_output_test_data.txt"
 
 
-`define CLK_HALF_PERIOD 1
+`define CLK_HALF_PERIOD 10
 `define CLK_PERIOD (2 * `CLK_HALF_PERIOD)
 
 `define SLEEP_HALF_CLK #(`CLK_HALF_PERIOD)
@@ -180,16 +180,17 @@ wire                w_arb0_o_wbs_int;
 
 //Local Parameters
 
-localparam        IDLE            = 4'h0;
-localparam        EXECUTE         = 4'h1;
-localparam        RESET           = 4'h2;
-localparam        PING_RESPONSE   = 4'h3;
-localparam        WRITE_DATA      = 4'h4;
-localparam        WRITE_RESPONSE  = 4'h5;
-localparam        GET_WRITE_DATA  = 4'h6;
-localparam        READ_RESPONSE   = 4'h7;
-localparam        READ_MORE_DATA  = 4'h8;
-localparam        FINISHED        = 4'h9;
+localparam        WAIT_FOR_SDRAM  = 4'h0;
+localparam        IDLE            = 4'h1;
+localparam        EXECUTE         = 4'h2;
+localparam        RESET           = 4'h3;
+localparam        PING_RESPONSE   = 4'h4;
+localparam        WRITE_DATA      = 4'h5;
+localparam        WRITE_RESPONSE  = 4'h6;
+localparam        GET_WRITE_DATA  = 4'h7;
+localparam        READ_RESPONSE   = 4'h8;
+localparam        READ_MORE_DATA  = 4'h9;
+localparam        FINISHED        = 4'hA;
 
 //Registers/Wires/Simulation Integers
 integer           fd_in;
@@ -242,6 +243,7 @@ wire                w_mem_ack_i;
 wire                w_mem_int_i;
 
 
+reg                 start = 0;
 
 //Submodules
 
@@ -509,6 +511,8 @@ arbitor_2_masters arb0 (
 
 
 
+assign  w_wbs0_ack   = 0;
+assign  w_wbs0_dat_o = 0;
 
 
 
@@ -531,7 +535,7 @@ initial begin
   `SLEEP_HALF_CLK;
 
   rst                         <= 0;
-  `SLEEP_CLK(2);
+  `SLEEP_CLK(100);
   rst                         <= 1;
 
   //clear the handler signals
@@ -582,7 +586,7 @@ initial begin
         else if (read_count == 1) begin
           $display ("Sleep for %h Clock cycles", r_in_data_count);
           `SLEEP_CLK(r_in_data_count);
-          $display ("");
+          $display ("Sleep Finished");
         end
         else begin
           $display ("Error: read_count = %h != 4", read_count);
@@ -641,21 +645,23 @@ end
 
 always @ (posedge clk) begin
   if (rst) begin
-    state                     <= IDLE;
+    state                     <= WAIT_FOR_SDRAM;
     request_more_data         <= 0;
     timeout_count             <= 0;
     prev_int                  <= 0;
     r_ih_reset                <= 0;
     data_write_count          <= 0;
+    start                     <= 1;
   end
   else begin
     r_ih_reset                <= 0;
     r_in_ready                <= 0;
     r_out_ready               <= 1;
     command_finished          <= 0;
+    start                     <= 0;
 
     //Countdown the NACK timeout
-    if (execute_command && timeout_count > 0) begin
+    if (execute_command && timeout_count > 0 && sdram_ready) begin
       timeout_count           <= timeout_count - 1;
     end
 
@@ -673,17 +679,23 @@ always @ (posedge clk) begin
     end //end reached the end of a timeout
 
     case (state)
-      IDLE: begin
+      WAIT_FOR_SDRAM: begin
+        if (start) begin
+          $display ("-------------------------------");
+          $display ("Waiting for SDRAM to initialize");
+          $display ("-------------------------------");
+          r_in_ready          <= 0;
+        end
         if (sdram_ready) begin
+          state               <=  IDLE;
+        end
+      end
+      IDLE: begin
           if (execute_command & ~command_finished) begin
             $display ("TB: #:C:A:D = %h:%h:%h:%h", r_in_data_count, r_in_command, r_in_address, r_in_data);
             timeout_count       <= `TIMEOUT_COUNT;
             state               <= EXECUTE;
           end
-        end
-        else begin
-          $display ("Waiting for SDRAM");
-        end
       end
       EXECUTE: begin
         if (w_master_ready) begin

@@ -70,7 +70,7 @@ module wb_i2s (
   output reg          mem_o_stb,
   output reg          mem_o_cyc,
   output reg  [3:0]   mem_o_sel,
-  output reg  [31:0]  mem_o_adr,
+  output      [31:0]  mem_o_adr,
   output reg  [31:0]  mem_o_dat,
   input       [31:0]  mem_i_dat,
   input               mem_i_ack,
@@ -88,14 +88,20 @@ module wb_i2s (
 );
 
 
-localparam           REG_CONTROL       = 32'h00000000;
-localparam           REG_STATUS        = 32'h00000001;
-localparam           REG_CLOCK_RATE    = 32'h00000002;
-localparam           REG_CLOCK_DIVIDER = 32'h00000003;
-localparam           REG_MEM_0_BASE    = 32'h00000004;
-localparam           REG_MEM_0_SIZE    = 32'h00000005;
-localparam           REG_MEM_1_BASE    = 32'h00000006;
-localparam           REG_MEM_1_SIZE    = 32'h00000007;
+localparam           REG_CONTROL        = 32'h00000000;
+localparam           REG_STATUS         = 32'h00000001;
+localparam           REG_CLOCK_RATE     = 32'h00000002;
+localparam           REG_CLOCK_DIVIDER  = 32'h00000003;
+localparam           REG_MEM_0_BASE     = 32'h00000004;
+localparam           REG_MEM_0_SIZE     = 32'h00000005;
+localparam           REG_MEM_1_BASE     = 32'h00000006;
+localparam           REG_MEM_1_SIZE     = 32'h00000007;
+
+//States
+localparam          IDLE                = 4'h0;
+localparam          GET_MEMORY_BLOCK    = 4'h1;
+localparam          READ_DATA           = 4'h2;
+localparam          FINISHED            = 4'h3;
 
 
 //Reg/Wire
@@ -106,24 +112,13 @@ reg         [31:0]  timeout_value;
 
 reg                 enable_mem_read;
 
-wire                request_data;
-reg                 prev_request_data;
-wire                request_data_pos_edge;
-
-reg                 prev_mem_ack;
-wire                mem_ack_pos_edge;
-
-wire        [23:0]  request_size;
-reg                 request_finished;
-//wire        [31:0]  memory_data;
-reg         [31:0]  memory_data;
 reg                 memory_data_strobe;
 reg                 enable_strobe;
 
 
 reg         [31:0]  control;
 wire        [31:0]  status;
-reg         [31:0]  clock_divider;
+reg         [31:0]  clock_divider = 1;
 
 
 reg         [23:0]  request_count;
@@ -141,7 +136,7 @@ wire        [31:0]  memory_0_pointer;
 wire        [31:0]  memory_1_pointer;
 
 reg                 memory_ready;
-reg                 active_block;
+reg                 active_bank;
 
 
 reg         [31:0]  memory_base[1:0];
@@ -158,37 +153,43 @@ wire                pre_fifo_wave_en;
 wire                memory_0_empty;
 wire                memory_1_empty;
 
+wire        [23:0]  wfifo_size;
+reg         [23:0]  write_count;
+reg         [23:0]  memory_write_count;
+reg         [23:0]  memory_write_size;
 
+wire        [1:0]   wfifo_ready;
+reg         [1:0]   wfifo_activate;
+reg                 wfifo_strobe;
+wire        [31:0]  wfifo_data;
+
+reg         [3:0]   state;
 
 
 i2s_controller controller (
-  .rst(rst),
-  .clk(clk),
+  .rst               (rst               ),
+  .clk               (clk               ),
 
-  .enable(enable),
-  .post_fifo_wave_en(post_fifo_wave_en),
-  .pre_fifo_wave_en(pre_fifo_wave_en),
+  .enable            (enable            ),
+  .post_fifo_wave_en (post_fifo_wave_en ),
 
-  .clock_divider(clock_divider),
+  .clock_divider     (clock_divider     ),
 
-  .request_data(request_data),
-  .request_size(request_size),
-  .request_finished(request_finished),
-  .memory_data(memory_data),
-  .memory_data_strobe(memory_data_strobe),
+  .wfifo_size        (wfifo_size        ),
+  .wfifo_ready       (wfifo_ready       ),
+  .wfifo_activate    (wfifo_activate    ),
+  .wfifo_strobe      (wfifo_strobe      ),
+  .wfifo_data        (wfifo_data        ),
 
-  .starved(writer_starved),
 
-  .i2s_mclock(phy_mclock),
-  .i2s_clock(phy_clock),
-  .i2s_data(phy_data),
-  .i2s_lr(phy_lr)
+  .i2s_mclock        (phy_mclock        ),
+  .i2s_clock         (phy_clock         ),
+  .i2s_data          (phy_data          ),
+  .i2s_lr            (phy_lr            )
 );
 
 
 //Asynchronous Logic
-//assign        memory_data           = mem_i_dat;
-
 assign        enable                = control[`CONTROL_ENABLE];
 assign        enable_interrupt      = control[`CONTROL_ENABLE_INTERRUPT];
 assign        post_fifo_wave_en     = control[`CONTROL_POST_FIFO_WAVE];
@@ -201,8 +202,6 @@ assign        status[`STATUS_MEMORY_0_EMPTY]  = memory_0_empty;
 assign        status[`STATUS_MEMORY_1_EMPTY]  = memory_1_empty;
 assign        status[31:2]          = 0;
 
-assign        request_data_pos_edge = request_data && ~prev_request_data;
-assign        mem_ack_pos_edge      = mem_i_ack && ~prev_mem_ack;
 
 assign        memory_count[0]       = memory_0_size - memory_pointer[0];
 assign        memory_count[1]       = memory_1_size - memory_pointer[1];
@@ -257,6 +256,11 @@ always @ (posedge clk) begin
         case (i_wbs_adr)
           REG_CONTROL: begin
             control           <=  i_wbs_dat;
+            if (i_wbs_dat[`CONTROL_ENABLE]) begin
+              $display ("-----------------------------------------------------------");
+              $display ("WB_I2S: Core Enable"); 
+              $display ("-----------------------------------------------------------");
+            end
           end
           REG_CLOCK_DIVIDER: begin
             clock_divider     <=  i_wbs_dat;
@@ -322,141 +326,6 @@ always @ (posedge clk) begin
   end
 end
 
-//detect the positive edge of request data
-always @ (posedge clk) begin
-  if (rst) begin
-    prev_request_data   <=  0;
-    prev_mem_ack        <=  0;
-  end
-  else begin
-    prev_request_data   <=  request_data;
-    prev_mem_ack        <=  mem_i_ack;
-  end
-end
-
-
-//wishbone master module
-always @ (posedge clk) begin
-  if (rst) begin
-    mem_o_we            <=  0;
-    mem_o_stb           <=  0;
-    mem_o_cyc           <=  0;
-    mem_o_sel           <=  4'h0;
-    mem_o_adr           <=  32'h00000000;
-    mem_o_dat           <=  32'h00000000;
-
-    //strobe for the i2s memory controller
-    memory_data_strobe  <=  0;
-
-    //point to the current location in the memory to read from
-    memory_pointer[0]   <=  0;
-    memory_pointer[1]   <=  0;
-
-    request_count       <=  0;
-
-    enable_strobe       <=  0;
-
-  end
-  else begin
-
-    request_finished    <=  0;
-
-    if (memory_0_new_data) begin
-      memory_pointer[0] <=  0;
-    end
-    if (memory_1_new_data) begin
-      memory_pointer[1] <=  0;
-    end
-
-    //a delay for the strobe so the data can be registered
-    if (enable_strobe) begin
-      enable_strobe     <=  0;
-      memory_data_strobe<=  1;
-    end
-    //memory strobe
-    if (memory_data_strobe) begin
-      memory_data_strobe  <=  0;
-      if (request_count == 0) begin
-        request_finished            <=  1;
-      end
-    end
-
-
-    //check to see if the i2s_mem_controller has requested data
-    if (request_data_pos_edge) begin
-      request_count     <=  request_size - 1;
-    end
-    //postvie edge of the ack, send the data to the mem controller
-    if (mem_ack_pos_edge) begin
-      $display ("got an ack!");
-      if (request_count == 1) begin
-        mem_o_cyc                   <=  0;
-      end
-      memory_data                   <=  mem_i_dat;
-      enable_strobe                 <=  1;
-      request_count                 <=  request_count - 1;
-      memory_pointer[active_block]  <=  memory_pointer[active_block] + 4;
-      mem_o_stb                       <=  0;
-    end
-    if (memory_ready) begin
-      if ((request_count > 0) && (memory_count[active_block] > 0) && ~mem_o_stb && ~mem_i_ack) begin
-        //need to request data from the memory
-        $display("get some data from the memory");
-        mem_o_cyc                     <=  1;
-        mem_o_stb                     <=  1;
-        mem_o_sel                     <=  4'b1111;
-        mem_o_we                      <=  0;
-        mem_o_dat                     <=  0;
-        mem_o_adr                     <=  memory_base[active_block] + memory_pointer[active_block];
-      end
-    end
-    else begin
-      //the memory is not ready
-      mem_o_stb                       <=  0;
-      mem_o_cyc                       <=  0;
-    end
-/*
-    if (request_count == 0) begin
-      //finished filling up the internal buffer
-      mem_o_stb                       <=  0;
-      mem_o_cyc                       <=  0;
-    end
-*/
-  end
-end
-
-//active block logic
-always @ (posedge clk) begin
-  if (rst) begin
-    active_block  <=  0;
-    memory_ready  <=  0;
-  end
-  else begin
-    //active memory logic
-    if (!memory_ready) begin
-      //if there is any memory at all in the memory chunks
-      if (memory_count[0] > 0) begin
-        memory_ready    <=  1;
-        active_block    <=  0;
-      end
-      else if (memory_count[1] > 0) begin
-        memory_ready    <=  1;
-        active_block    <=  1;
-      end
-    end
-    else begin
-      //if we're are currently active and a the active block
-      //is empty then disable the block
-      if      ((active_block == 0) && (memory_count[0] == 0)) begin
-        memory_ready    <=  0;
-      end
-      else if ((active_block == 1) && (memory_count[1] == 0)) begin
-        memory_ready    <=  0;
-      end
-    end
-  end
-end
-
 //initerrupt controller
 always @ (posedge clk) begin
   if (rst) begin
@@ -481,5 +350,192 @@ always @ (posedge clk) begin
   end
 end
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//Memory interface
+
+
+//blocks
+assign  wfifo_data                    = mem_i_dat;
+
+always @ (posedge clk) begin
+  if (wfifo_strobe) begin
+    $display ("\tI2S MEM CONTROLLER: Wrote: %h: Request: %h Write Count: %h", wfifo_data, wfifo_size, write_count);
+  end
+end
+
+assign              mem_o_adr         = {(memory_base[active_bank] + memory_pointer[active_bank])};
+
+//wishbone master module
+always @ (posedge clk) begin
+  if (rst) begin
+    mem_o_we            <=  0;
+    mem_o_stb           <=  0;
+    mem_o_cyc           <=  0;
+    mem_o_sel           <=  4'b1111;
+    mem_o_dat           <=  32'h00000000;
+
+    //strobe for the i2s memory controller
+    memory_data_strobe  <=  0;
+
+    //point to the current location in the memory to read from
+    memory_pointer[0]   <=  0;
+    memory_pointer[1]   <=  0;
+    request_count       <=  0;
+    enable_strobe       <=  0;
+
+    wfifo_activate      <=  0;
+    wfifo_strobe        <=  0;
+    write_count         <=  0;
+
+    memory_write_count  <=  0;
+    memory_write_size   <=  0;
+
+    state               <=  IDLE;
+
+  end
+  else begin
+    wfifo_strobe        <=  0;
+
+    //Grab an available FIFO if the core is activated
+    if (enable) begin
+      if ((wfifo_ready > 0) && (wfifo_activate == 0)) begin
+        write_count         <=  0;
+        if (wfifo_ready[0]) begin
+          wfifo_activate[0] <=  1;
+        end
+        else begin
+          wfifo_activate[1] <=  1;
+        end
+      end
+    end
+
+
+    case (state)
+      IDLE: begin
+        if (enable) begin
+          state                           <=  GET_MEMORY_BLOCK;
+        end
+      end
+      GET_MEMORY_BLOCK: begin
+        mem_o_cyc                         <=  0;
+        mem_o_stb                         <=  0;
+
+        if (memory_ready) begin
+          memory_write_size               <=  memory_count[active_bank];
+          state                           <=  READ_DATA;
+        end
+        else begin
+          //Memory blocks are not ready
+          if (write_count > 0) begin
+            //There is some data left in the write FIFO but no data from the
+            //memory, release this FIFO
+            write_count                   <=  0;
+            wfifo_activate                <=  0;
+          end
+          if (!enable) begin
+            state                         <=  IDLE;
+          end
+        end
+      end
+      READ_DATA: begin
+        //Check to see of the Memory has space
+        if (memory_pointer[active_bank] < memory_write_size) begin
+          //Check if the FIFO has room
+          if (wfifo_activate) begin
+            if (write_count < wfifo_size) begin
+              mem_o_cyc                     <=  1;
+              mem_o_stb                     <=  1;
+            
+              //Ping Pong FIFO has room
+              //if we received data from the memory bus, read them in
+              if (mem_i_ack && mem_o_stb) begin
+            
+                memory_write_count          <=  memory_write_count + 1;
+                memory_pointer[active_bank] <=  memory_pointer[active_bank] + 1;
+                write_count                 <=  write_count + 1;
+                wfifo_strobe                <=  1;
+                mem_o_stb                   <=  0;
+              end
+            end
+            else begin
+              //Release the Activate
+              //Release the Wishbone Cycle so the host has a chance to write some data
+              mem_o_cyc                     <=  0;
+              mem_o_stb                     <=  0;
+              wfifo_activate                <=  0;
+            end
+          end
+          else begin
+            mem_o_cyc                       <=  0;
+            mem_o_stb                       <=  0;
+          end
+        end
+        else begin
+          //Memory Doesn't have room, release it
+          state                             <=  GET_MEMORY_BLOCK;
+        end
+      end
+      FINISHED: begin
+      end
+    endcase
+
+    //If there more data from the host
+    if (memory_0_new_data) begin
+      memory_pointer[0] <=  0;
+    end
+    if (memory_1_new_data) begin
+      memory_pointer[1] <=  0;
+    end
+  end
+end
+
+
+
+
+//active block logic
+always @ (posedge clk) begin
+  if (rst) begin
+    active_bank  <=  0;
+    memory_ready  <=  0;
+  end
+  else begin
+    //active memory logic
+    if (!memory_ready) begin
+      //if there is any memory at all in the memory chunks
+      if (memory_count[0] > 0) begin
+        memory_ready    <=  1;
+        active_bank    <=  0;
+      end
+      else if (memory_count[1] > 0) begin
+        memory_ready    <=  1;
+        active_bank    <=  1;
+      end
+    end
+    else begin
+      //if we're are currently active and a the active block
+      //is empty then disable the block
+      if      ((active_bank == 0) && (memory_count[0] == 0)) begin
+        memory_ready    <=  0;
+      end
+      else if ((active_bank == 1) && (memory_count[1] == 0)) begin
+        memory_ready    <=  0;
+      end
+    end
+  end
+end
 
 endmodule
