@@ -258,7 +258,7 @@ always @ (posedge clk) begin
             control           <=  i_wbs_dat;
             if (i_wbs_dat[`CONTROL_ENABLE]) begin
               $display ("-----------------------------------------------------------");
-              $display ("WB_I2S: Core Enable"); 
+              $display ("WB_I2S: Core Enable");
               $display ("-----------------------------------------------------------");
             end
           end
@@ -459,11 +459,11 @@ always @ (posedge clk) begin
             if (write_count < wfifo_size) begin
               mem_o_cyc                     <=  1;
               mem_o_stb                     <=  1;
-            
+
               //Ping Pong FIFO has room
               //if we received data from the memory bus, read them in
               if (mem_i_ack && mem_o_stb) begin
-            
+
                 memory_write_count          <=  memory_write_count + 1;
                 memory_pointer[active_bank] <=  memory_pointer[active_bank] + 1;
                 write_count                 <=  write_count + 1;
@@ -526,7 +526,7 @@ always @ (posedge clk) begin
       end
     end
     else begin
-      //if we're are currently active and a the active block
+      //if we're currently active and a the active block
       //is empty then disable the block
       if      ((active_bank == 0) && (memory_count[0] == 0)) begin
         memory_ready    <=  0;
