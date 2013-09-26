@@ -1,8 +1,8 @@
 Wishbone Memory to Ping Pong FIFO
 
-Utility Module that can be put into a slave to allow it to read data from
-a wishbone memory interface and write it into a Ping Pong FIFO
-
+Utility module that can be used in a slave core to read data from a memory
+core (wb_sdram, wb_bram) on the wishbone bus and transfer this data to a
+local Ping Pong FIFO
 
 How to use:
 
@@ -21,5 +21,12 @@ How to use:
    host that a memory buffer is now empty
 8. attach i_enable to either '1' or when the slave core is enabled
 
+EXAMPLE:
 
+An example design is supplied in the 'sim' directory
+
+The example reads data from the memory and puts the data into a local Ping
+Pong FIFO. The test core will drain the ping pong FIFO whenever there is data
+available. The clock speed of the read side of the ping pong FIFO can be
+adjusted to observe the behavior of different clock speeds
 
