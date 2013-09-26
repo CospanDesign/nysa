@@ -106,8 +106,8 @@ module wishbone_master (
   input               i_mem_ack,
   input               i_mem_int
 
-  );
-  //debug output
+);
+//debug output
 
 
   //parameters
@@ -304,7 +304,7 @@ always @ (posedge clk) begin
               o_debug[9]  <=  ~o_debug[9];
               //finished the next double word
               nack_count    <= nack_timeout;
-              local_data_count  <= local_data_count -1;
+              local_data_count  <= local_data_count - 1;
               $display ("WBM: (burst mode) reading double word from memory");
               o_mem_adr   <= o_mem_adr + 1;
               o_mem_stb   <= 1;
@@ -454,37 +454,38 @@ always @ (posedge clk) begin
              local_data_count <= local_data_count - 1;
            end
            else begin
-            state                 <=  IDLE;
+            state                  <=  IDLE;
            end
-           o_status              <=  ~i_command;
-           o_address             <=  0;
-           o_en                  <=  1;
+           o_status                <=  ~i_command;
+           o_address               <=  0;
+           o_en                    <=  1;
            dump_count              <=  dump_count + 1;
         end
       end
       IDLE: begin
         //handle input
-        o_master_ready            <= 1;
-        mem_bus_select          <= 0;
+        o_master_ready             <= 1;
+        mem_bus_select             <= 0;
         if (i_ready) begin
-          o_debug[6]          <= ~o_debug[6];
-          mem_bus_select        <= 0;
-          nack_count            <= nack_timeout;
+          o_debug[6]               <= ~o_debug[6];
+          mem_bus_select           <= 0;
+          nack_count               <= nack_timeout;
 
-          local_address         <= i_address;
-          local_data            <= i_data;
-          //o_data_count  <= 0;
+          local_address            <= i_address;
+          local_data               <= i_data;
+          //o_data_count           <= 0;
 
           case (real_command)
 
             `COMMAND_PING: begin
               $display ("WBM: ping");
-              o_debug[0]    <= ~o_debug[0];
-              o_status      <= ~i_command;
-              o_address     <= 32'h00000000;
-              o_data        <= S_PING_RESP;
-              o_en          <= 1;
-              state           <= IDLE;
+              o_master_ready       <= 0;
+              o_debug[0]           <= ~o_debug[0];
+              o_status             <= ~i_command;
+              o_address            <= 32'h00000000;
+              o_data               <= S_PING_RESP;
+              o_en                 <= 1;
+              state                <= IDLE;
             end
             `COMMAND_WRITE: begin
               o_status      <= ~i_command;
@@ -512,6 +513,7 @@ always @ (posedge clk) begin
               state           <= WRITE;
             end
             `COMMAND_READ:  begin
+              $display ("WBM: Received Read Command");
               local_data_count  <=  i_data_count;
               o_debug[2]    <= ~o_debug[2];
               if (command_flags & `FLAG_MEM_BUS) begin
