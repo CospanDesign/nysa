@@ -130,7 +130,8 @@ always @ (posedge clk) begin
     if (i_wbs_stb & i_wbs_cyc) begin
       //master is requesting somethign
       en_ram <= 1;
-      ram_adr <= i_wbs_adr[RAM_SIZE + 2:2];
+      //ram_adr <= i_wbs_adr[RAM_SIZE + 2:2];
+      ram_adr <= i_wbs_adr[RAM_SIZE:0];
       if (i_wbs_we) begin
         //write request
         //the bram module will handle all the writes
