@@ -306,8 +306,6 @@ wb_i2s s1 (
   .i_wbs_adr  (w_wbs1_adr           ),
   .o_wbs_int  (w_wbs1_int           ),
 
-
-
   .mem_o_cyc  (i2s_mem_o_cyc        ),
   .mem_o_stb  (i2s_mem_o_stb        ),
   .mem_o_we   (i2s_mem_o_we         ),
