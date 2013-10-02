@@ -55,7 +55,9 @@ output  reg         fifo_write,
 input       [1:0]   fifo_ready,
 output  reg [1:0]   fifo_activate,
 input       [23:0]  fifo_size,
-input               starved
+input               starved,
+
+output      [31:0]  debug
 
 );
 
@@ -88,11 +90,21 @@ wire                neg_edge_enable;
 reg                 prev_enable;
 
 //assign      bank    = read_address[21:20];
-assign              row     = read_address[19:8];
-assign              column  = read_address[7:0];
+assign              row         = read_address[19:8];
+assign              column      = read_address[7:0];
+
+assign              debug[2:0]  = state[2:0];
+assign              debug[3]    = read_top;
+assign              debug[4]    = read_bottom;
+assign              debug[12:5] = column;
+assign              debug[13]   = (command == `SDRAM_CMD_TERM);
+assign              debug[14]   = fifo_data[31];
+assign              debug[15]   = fifo_write;
+assign              debug[31:16]= fifo_data[23:8];
+
 
 //assign idle
-assign              idle    = ((delay == 0) && ((state == IDLE) || (state == WAIT)));
+assign              idle            = ((delay == 0) && ((state == IDLE) || (state == WAIT)));
 assign              neg_edge_enable = !enable & prev_enable;
 
 assign              read_threshold  = ((fifo_count + `THRESHOLD) <= fifo_size);
@@ -232,7 +244,7 @@ always @ (posedge clk) begin
           //$display ("SDRAM_READ: Start reading");
           command       <=  `SDRAM_CMD_READ;
           state         <=  READ_TOP;
-          address       <=  {4'b0000, column[7:0]};
+          address       <=  {4'b0000, column};
           delay         <=  `T_CAS - 1;
         end
         READ_TOP: begin
@@ -246,7 +258,12 @@ always @ (posedge clk) begin
           //$display ("SDRAM_READ: Reading bottom word");
           command       <=  `SDRAM_CMD_NOP;
           read_bottom   <=  1;
-          if ((fifo_count == 1) || !enable || (read_address[7:0] == 8'h00) || auto_refresh || (starved && read_threshold)) begin
+          if ((fifo_count == 1) ||
+              !enable           ||
+              (column == 8'h00) ||
+              auto_refresh      ||
+              (starved && read_threshold)) begin
+
             state       <=  BURST_TERMINATE;
           end
           else begin

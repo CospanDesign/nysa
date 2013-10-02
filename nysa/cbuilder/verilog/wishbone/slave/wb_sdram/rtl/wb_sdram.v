@@ -75,7 +75,8 @@ module wb_sdram (
   output    [1:0]     o_sdram_data_mask,
   output              o_sdram_ready,
 
-  output              o_ext_sdram_clk
+  output              o_ext_sdram_clk,
+  output    [31:0]    debug
 
 
 );
@@ -116,6 +117,7 @@ wire              of_wb_reset;
 sdram ram (
   .clk                (clk                ),
   .rst                (rst                ),
+  //.debug              (debug              ),
 
   //write path
   .if_write_strobe    (if_write_strobe    ),
@@ -155,6 +157,24 @@ sdram ram (
   .ext_sdram_clk      (o_ext_sdram_clk    )
 
 );
+
+//assign  debug[0]    = of_wb_reset;
+//assign  debug[1]    = of_read_ready;
+//assign  debug[2]    = of_read_activate;
+//assign  debug[3]    = of_read_strobe;
+//assign  debug[4]    = of_read_data[31];
+//assign  debug[20:5] = of_read_data[23:8];
+assign  debug[0]    = i_wbs_cyc;
+assign  debug[1]    = i_wbs_stb;
+assign  debug[2]    = i_wbs_we;
+assign  debug[3]    = o_wbs_ack;
+assign  debug[19:4] = i_wbs_dat;
+assign  debug[24:20]= app_address[5:1];
+assign  debug[25]   = first_exchange;
+assign  debug[26]   = if_write_activate;
+assign  debug[27]   = if_starved;
+//assign  debug[31:25]= of_read_count[7:0];
+
 
 assign  of_wb_reset = (~i_wbs_cyc || i_wbs_we);
 
@@ -201,7 +221,7 @@ always @ (posedge clk) begin
     else if (!o_wbs_ack && i_wbs_stb && i_wbs_cyc) begin
       if (first_exchange) begin
         //app_address                   <=  {9'b0, i_wbs_adr[22:1], 1'b0};
-        app_address                   <=  {8'b0, i_wbs_adr[22:1], 2'b0};
+        app_address                   <=  {8'b0, i_wbs_adr[22:0], 1'b0};
         //app_address                   <=  {10'b0, i_wbs_adr[22:1]};
         first_exchange                <=  0;
       end

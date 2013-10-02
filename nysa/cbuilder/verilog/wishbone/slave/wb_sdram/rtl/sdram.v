@@ -30,6 +30,8 @@ module sdram (
 input               clk,
 input               rst,
 
+output      [31:0]  debug,
+
 input               if_write_strobe,
 input       [31:0]  if_write_data,
 input       [3:0]   if_write_mask,
@@ -155,6 +157,7 @@ ppfifo#(
 sdram_write write_path (
   .rst                       (rst || ~sdram_ready            ),
   .clk                       (sdram_clk                      ),
+  .debug                     (debug                          ),
 
   //Write Path SDRAM Control
   .command                   (write_command                  ),
@@ -237,32 +240,33 @@ ppfifo#(
 
 //Read Path
 sdram_read read_path (
-  .rst(rst || ~sdram_ready),
-  .clk(sdram_clk),
+  .rst                      (rst || ~sdram_ready ),
+  .clk                      (sdram_clk           ),
+  //.debug                    (debug               ),
 
   //Read Path SDRAM Control
-  .command(read_command),
-  .address(read_address),
-  .bank(read_bank),
-  .data_in(data_in),
+  .command                  (read_command        ),
+  .address                  (read_address        ),
+  .bank                     (read_bank           ),
+  .data_in                  (data_in             ),
 
   //Control
-  .enable(read_enable),
-  .idle(read_idle),
-  .auto_refresh(refresh),
-  .wait_for_refresh(rwfr),
+  .enable                   (read_enable         ),
+  .idle                     (read_idle           ),
+  .auto_refresh             (refresh             ),
+  .wait_for_refresh         (rwfr                ),
 
   //application address
-  .app_address(app_address),
+  .app_address              (app_address         ),
 
   //Data In Path
-  .fifo_reset(of_fifo_reset),
-  .fifo_data(of_write_data),
-  .fifo_write(of_write_strobe),
-  .fifo_ready(of_write_ready),
-  .fifo_activate(of_write_activate),
-  .fifo_size(of_write_fifo_size),
-  .starved(of_starved)
+  .fifo_reset               (of_fifo_reset       ),
+  .fifo_data                (of_write_data       ),
+  .fifo_write               (of_write_strobe     ),
+  .fifo_ready               (of_write_ready      ),
+  .fifo_activate            (of_write_activate   ),
+  .fifo_size                (of_write_fifo_size  ),
+  .starved                  (of_starved          )
 );
 
 //Initialization Write Path
@@ -287,6 +291,28 @@ assign data_mask = ~write_idle ? write_data_mask : 2'b00;
 
 //Attach the tristate Data to an in and out
 assign        data = writing ? data_out : 16'hZZZZ;
+
+
+//Write Side of PPFIFO
+//assign        debug[1:0]      = of_write_ready;
+//assign        debug[3:2]      = of_write_activate;
+//assign        debug[4]        = of_write_strobe;
+//assign        debug[5]        = of_write_data[31];
+//assign        debug[14]       = read_enable;
+//assign        debug[15]       = rst || ~sdram_ready || of_fifo_reset || i_wb_of_reset;
+//assign        debug[31:16]    = of_write_data[23:8];
+
+
+//Read side of PPFIFO Read
+//assign        debug[0]      = read_enable;
+//assign        debug[1]      = of_read_ready;
+//assign        debug[2]      = of_read_activate;
+//assign        debug[3]      = of_read_data[31];
+//assign        debug[4]      = of_read_strobe;
+//assign        debug[6]      = rst || ~sdram_ready || of_fifo_reset || i_wb_of_reset;
+//assign        debug[22:7]   = of_read_data[23:8];
+//assign        debug[23]     = sdram_write_enable;
+
 
 parameter     START               = 4'h0;
 parameter     PRECHARGE           = 4'h1;

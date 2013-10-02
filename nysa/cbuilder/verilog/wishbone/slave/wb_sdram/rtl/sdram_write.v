@@ -28,6 +28,7 @@ SOFTWARE.
 module sdram_write (
 input               rst,
 input               clk,
+output      [31:0]  debug,
 
 //RAM control
 output  reg [2:0]   command,
@@ -80,13 +81,22 @@ reg     [1:0]       top_mask;
 reg     [15:0]      bottom_data;
 reg     [1:0]       bottom_mask;
 
-//assign  bank    =   write_address[21:20];
-assign  row     =   write_address[19:8];
-assign  column  =   write_address[7:0]; //4 Byte Boundary
+//assign  bank          =   write_address[21:20];
+assign  row           =   write_address[19:8];
+assign  column        =   write_address[7:0]; //4 Byte Boundary
+
+assign  debug[15:0]   =   fifo_data[15:0];
+assign  debug[18:16]  =   state[2:0];
+assign  debug[19]     =   fifo_read;
+assign  debug[20]     =   enable;
+assign  debug[23:21]  =   command;
+assign  debug[25:24]  =   write_address[3:1];
+assign  debug[26]     =   fifo_inactive;
+assign  debug[28]     =   fifo_activate;
 
 
 //assign idle
-assign  idle    =   ((delay == 0) && ((state == IDLE) || (state == WAIT)));
+assign  idle          =   ((delay == 0) && ((state == IDLE) || (state == WAIT)));
 
 
 always @(posedge clk) begin
@@ -155,7 +165,7 @@ always @(posedge clk) begin
                 bottom_data   <=  fifo_data[15:0];
                 top_mask      <=  fifo_data[35:34];
                 bottom_mask   <=  fifo_data[33:32];
-                fifo_read   <=  1;
+                fifo_read     <=  1;
               end
               else begin
                 //we have an enabled FIFO
@@ -198,9 +208,11 @@ always @(posedge clk) begin
           data_mask     <=  bottom_mask;
           //if there is more data to write then continue on with the write
           //and issue a command to the AFIFO to grab more data
-          if ((column == 8'h00) || auto_refresh) begin
+          if ((column == 8'hFE) || auto_refresh) begin
             //we could have reached the end of a row here
             state       <=  BURST_TERMINATE;
+            write_address[7:0]  <=  write_address + 2;
+
           end
           else if (fifo_count < fifo_size) begin
             state         <=  WRITE_TOP;
