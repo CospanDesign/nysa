@@ -228,6 +228,24 @@ module mt48lc4m16
     reg [3:0] ras_out = 1'b0;
 
     reg [15 : 0] DQ_zd = 16'bz;
+
+    wire DQ15_zd;
+    wire DQ14_zd;
+    wire DQ13_zd;
+    wire DQ12_zd;
+    wire DQ11_zd;
+    wire DQ10_zd;
+    wire DQ9_zd;
+    wire DQ8_zd;
+    wire DQ7_zd;
+    wire DQ6_zd;
+    wire DQ5_zd;
+    wire DQ4_zd;
+    wire DQ3_zd;
+    wire DQ2_zd;
+    wire DQ1_zd;
+    wire DQ0_zd;
+
     assign {DQ15_zd,
             DQ14_zd,
             DQ13_zd,
