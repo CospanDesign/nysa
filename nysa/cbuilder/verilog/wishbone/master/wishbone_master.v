@@ -352,52 +352,54 @@ always @ (posedge clk) begin
       WRITE: begin
         if (mem_bus_select) begin
           if (i_mem_ack) begin
-            o_mem_stb    <= 0;
+            o_mem_stb               <= 0;
+            if (o_mem_stb) begin
+              o_mem_adr               <= o_mem_adr + 1;
+            end
             if (local_data_count <= 1) begin
               //finished all writes
               $display ("WBM: i_data_count == 0");
-              o_debug[12] <=  ~o_debug[12];
-              o_mem_cyc <= 0;
-              state   <= IDLE;
-              o_en    <= 1;
-              o_mem_we  <= 0;
+              o_debug[12]           <= ~o_debug[12];
+              o_mem_cyc             <= 0;
+              state                 <= IDLE;
+              o_en                  <= 1;
+              o_mem_we              <= 0;
             end
             //tell the IO handler were ready for the next one
-            o_master_ready  <=  1;
+            o_master_ready          <=  1;
           end
           else if ((local_data_count > 1) && i_ready && (o_mem_stb == 0)) begin
-            local_data_count  <= local_data_count - 1;
+            local_data_count        <= local_data_count - 1;
             $display ("WBM: (burst mode) writing another double word to memory");
-            o_master_ready  <=  0;
-            o_mem_stb   <= 1;
-            o_mem_adr   <= o_mem_adr + 1;
-            o_mem_dat   <= i_data;
-            nack_count    <= nack_timeout;
-            o_debug[13] <=  ~o_debug[13];
+            o_master_ready          <= 0;
+            o_mem_stb               <= 1;
+            o_mem_dat               <= i_data;
+            nack_count              <= nack_timeout;
+            o_debug[13]             <= ~o_debug[13];
           end
         end //end working with mem_bus
         else begin //peripheral bus
           if (i_per_ack) begin
-            o_per_stb              <= 0;
-            if (local_data_count  <= 1) begin
+            o_per_stb               <= 0;
+            if (local_data_count    <= 1) begin
               $display ("WBM: i_data_count == 0");
-              o_per_cyc            <= 0;
-              state               <= IDLE;
-              o_en              <= 1;
-              o_per_we             <= 0;
+              o_per_cyc             <= 0;
+              state                 <= IDLE;
+              o_en                  <= 1;
+              o_per_we              <= 0;
             end
             //tell the IO handler were ready for the next one
             o_master_ready  <= 1;
           end
           else if ((local_data_count > 1) && i_ready && (o_per_stb == 0)) begin
-            local_data_count <= local_data_count - 1;
-            o_debug[5]  <= ~o_debug[5];
+            local_data_count        <= local_data_count - 1;
+            o_debug[5]              <= ~o_debug[5];
             $display ("WBM: (burst mode) writing another double word to peripheral");
-            o_master_ready  <=  0;
-            o_per_stb    <= 1;
-            o_per_adr    <= o_per_adr + 1;
-            o_per_dat    <= i_data;
-            nack_count    <= nack_timeout;
+            o_master_ready          <=  0;
+            o_per_stb               <= 1;
+            o_per_adr               <= o_per_adr + 1;
+            o_per_dat               <= i_data;
+            nack_count              <= nack_timeout;
           end
         end
       end
@@ -488,90 +490,90 @@ always @ (posedge clk) begin
               state                <= IDLE;
             end
             `COMMAND_WRITE: begin
-              o_status      <= ~i_command;
-              o_debug[1]    <= ~o_debug[1];
-              local_data_count    <=  i_data_count;
+              o_status             <= ~i_command;
+              o_debug[1]           <= ~o_debug[1];
+              local_data_count     <= i_data_count;
               if (command_flags & `FLAG_MEM_BUS) begin
-                mem_bus_select  <= 1;
-                o_mem_adr     <= i_address;
-                o_mem_stb     <= 1;
-                o_mem_cyc     <= 1;
-                o_mem_we      <= 1;
-                o_mem_dat     <= i_data;
+                mem_bus_select     <= 1;
+                o_mem_adr          <= i_address;
+                o_mem_stb          <= 1;
+                o_mem_cyc          <= 1;
+                o_mem_we           <= 1;
+                o_mem_dat          <= i_data;
               end
               else begin
-                mem_bus_select  <= 0;
-                o_per_adr      <= i_address;
-                o_per_stb      <= 1;
-                o_per_cyc      <= 1;
-                o_per_we       <= 1;
-                o_per_dat      <= i_data;
+                mem_bus_select     <= 0;
+                o_per_adr          <= i_address;
+                o_per_stb          <= 1;
+                o_per_cyc          <= 1;
+                o_per_we           <= 1;
+                o_per_dat          <= i_data;
               end
-              o_address     <= i_address;
-              o_data        <= i_data;
-              o_master_ready    <= 0;
-              state           <= WRITE;
+              o_address            <= i_address;
+              o_data               <= i_data;
+              o_master_ready       <= 0;
+              state                <= WRITE;
             end
             `COMMAND_READ:  begin
               $display ("WBM: Received Read Command");
-              local_data_count  <=  i_data_count;
-              o_debug[2]    <= ~o_debug[2];
+              local_data_count    <=  i_data_count;
+              o_debug[2]          <= ~o_debug[2];
               if (command_flags & `FLAG_MEM_BUS) begin
-                mem_bus_select  <= 1;
-                o_mem_adr     <= i_address;
-                o_mem_stb     <= 1;
-                o_mem_cyc     <= 1;
-                o_mem_we      <= 0;
-                o_status    <= ~i_command;
+                mem_bus_select    <= 1;
+                o_mem_adr         <= i_address;
+                o_mem_stb         <= 1;
+                o_mem_cyc         <= 1;
+                o_mem_we          <= 0;
+                o_status          <= ~i_command;
               end
               else begin
-                mem_bus_select <= 0;
-                o_per_adr    <= i_address;
-                o_per_stb    <= 1;
-                o_per_cyc    <= 1;
-                o_per_we     <= 0;
-                o_status       <= ~i_command;
+                mem_bus_select    <= 0;
+                o_per_adr         <= i_address;
+                o_per_stb         <= 1;
+                o_per_cyc         <= 1;
+                o_per_we          <= 0;
+                o_status          <= ~i_command;
               end
-              o_master_ready    <= 0;
-              o_address     <= i_address;
-              state           <= READ;
+              o_master_ready      <= 0;
+              o_address           <= i_address;
+              state               <= READ;
             end
             `COMMAND_MASTER_ADDR: begin
-              o_address     <=  i_address;
-              o_status      <= ~i_command;
+              o_address           <=  i_address;
+              o_status            <= ~i_command;
               case (i_address)
                 `MADDR_WR_FLAGS: begin
-                  master_flags  <= i_data;
+                  master_flags    <= i_data;
                 end
                 `MADDR_RD_FLAGS: begin
-                  o_data      <= master_flags;
+                  o_data          <= master_flags;
                 end
                 `MADDR_WR_INT_EN: begin
                   interrupt_mask  <= i_data;
-                  o_data      <=  i_data;
+                  o_data          <=  i_data;
                   $display("WBM: setting interrupt enable to: %h", i_data);
                 end
                 `MADDR_RD_INT_EN: begin
-                  o_data      <= interrupt_mask;
+                  o_data          <= interrupt_mask;
                 end
                 `MADDR_NACK_TO_WR: begin
-                  nack_timeout  <= i_data;
+                  nack_timeout    <= i_data;
                 end
                 `MADDR_NACK_TO_RD: begin
-                  o_data      <= nack_timeout;
+                  o_data          <= nack_timeout;
                 end
                 default: begin
                   //unrecognized command
-                  o_status      <=  32'h00000000;
+                  o_status        <=  32'h00000000;
                end
               endcase
-              o_en          <=  1;
-              state           <=  IDLE;
+              o_en                <=  1;
+              state               <=  IDLE;
             end
             `COMMAND_CORE_DUMP: begin
-              local_data_count        <=  DUMP_COUNT + 1;
-              dump_count              <=  0;
-              state                   <=  DUMP_CORE;
+              local_data_count    <=  DUMP_COUNT + 1;
+              dump_count          <=  0;
+              state               <=  DUMP_CORE;
             end
             default:    begin
             end
@@ -582,19 +584,19 @@ always @ (posedge clk) begin
           //hack for getting the i_data_count before the io_handler decrements it
             //local_data_count  <= i_data_count;
             //work around to add a delay
-            o_per_adr              <= local_address;
+            o_per_adr             <= local_address;
             //handle input
             local_address         <= 32'hFFFFFFFF;
           //check if there is an interrupt
           //if the i_per_int goes positive then send a nortifiction to the user
           if ((~prev_int) & i_per_int) begin
-            o_debug[11]          <= ~o_debug[11];
+            o_debug[11]           <= ~o_debug[11];
             $display("WBM: found an interrupt!");
-            o_status            <= `PERIPH_INTERRUPT;
+            o_status              <= `PERIPH_INTERRUPT;
             //only supporting interrupts on slave 0 - 31
-            o_address           <= 32'h00000000;
-            o_data              <= i_per_dat;
-            o_en                <= 1;
+            o_address             <= 32'h00000000;
+            o_data                <= i_per_dat;
+            o_en                  <= 1;
           end
           prev_int  <= i_per_int;
         end
