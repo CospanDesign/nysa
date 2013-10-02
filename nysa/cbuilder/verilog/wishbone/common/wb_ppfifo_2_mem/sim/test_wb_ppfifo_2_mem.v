@@ -37,8 +37,15 @@ localparam           CLOCK_DIVISOR      = 32'h00000006;
 
 //Wires/Registers
 reg                   r_enable;
+reg         [31:0]  r_clock_divisor = 0;
+reg         [31:0]  r_clock_count;
+reg                 dclock;
+reg                 r_dclock;
 
 
+/*-------------------------------------
+ * Copy the Following into you core
+ *-------------------------------------*/
 reg         [31:0]  r_memory_0_base;
 reg         [31:0]  r_memory_0_size;
 wire        [31:0]  w_memory_0_count;
@@ -69,11 +76,6 @@ wire                w_rfifo_ready;
 wire                w_rfifo_activate;
 wire                w_rfifo_strobe;
 wire        [31:0]  w_rfifo_data;
-
-reg         [31:0]  r_clock_divisor = 0;
-reg         [31:0]  r_clock_count;
-reg                 dclock;
-reg                 r_dclock;
 
 reg         [23:0]  r_wfifo_count;
 
@@ -148,6 +150,7 @@ ppfifo #(
 );
 
 
+/*-------------------------------------*/
 
 //Asynchronous Logic
 //Synchronous Logic
@@ -157,6 +160,10 @@ always @ (posedge clk) begin
     o_wbs_ack       <=  0;
     r_enable        <=  0;
     r_clock_divisor <=  0;
+
+    /*-------------------------------------
+    * Copy the following into you module
+    -------------------------------------*/
 
     //Default base, user can change this from the API
     r_memory_0_base <=  w_default_mem_0_base;
@@ -168,10 +175,17 @@ always @ (posedge clk) begin
 
     r_memory_0_new_data <=  0;
     r_memory_1_new_data <=  0;
+
+    /*-------------------------------------*/
   end
   else begin
+    /*-------------------------------------
+    * Copy the following into you module
+    -------------------------------------*/
     r_memory_0_new_data <=  0;
     r_memory_1_new_data <=  0;
+    /*-------------------------------------*/
+
     //when the master acks our ack, then put our ack down
     if (o_wbs_ack & ~ i_wbs_stb)begin
       o_wbs_ack <= 0;
@@ -186,6 +200,10 @@ always @ (posedge clk) begin
           end
           REG_STATUS: begin
           end
+
+          /*-------------------------------------
+          * Copy the following into you module
+          -------------------------------------*/
           REG_MEM_0_BASE: begin
             r_memory_0_base       <=  i_wbs_dat;
           end
@@ -204,6 +222,9 @@ always @ (posedge clk) begin
               r_memory_1_new_data <=  1;
             end
           end
+          /*-----------------------------------*/
+
+
           CLOCK_DIVISOR: begin
             r_clock_divisor       <=  i_wbs_dat;
           end
@@ -221,6 +242,10 @@ always @ (posedge clk) begin
             //Indicates which memory bank is empty
             o_wbs_dat           <=  {30'h00000000, w_memory_1_empty, w_memory_0_empty};
           end
+
+          /*-------------------------------------
+          * Copy these signals directly into your module
+          -------------------------------------*/
           REG_MEM_0_BASE: begin
             o_wbs_dat <=  r_memory_0_base;
           end
@@ -236,6 +261,8 @@ always @ (posedge clk) begin
           CLOCK_DIVISOR: begin
             o_wbs_dat <=  r_clock_divisor;
           end
+          /*-----------------------------------*/
+
           default: begin
             o_wbs_dat <=  32'h00;
           end

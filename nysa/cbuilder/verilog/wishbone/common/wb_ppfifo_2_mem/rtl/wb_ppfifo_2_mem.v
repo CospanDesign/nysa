@@ -80,7 +80,6 @@ reg           [3:0]   state;
 assign  o_default_mem_0_base  = 32'h00000000;
 assign  o_default_mem_1_base  = 32'h00200000;
 
-assign  o_ppfifo_data         = i_mem_dat;
 assign  o_mem_adr             = w_mem_base[r_active_bank] + r_mem_ptr[r_active_bank];
 
 assign  r_mem_count[0]        = i_memory_0_size - r_mem_ptr[0];
@@ -261,7 +260,7 @@ end
 //Simulation information
 always @ (posedge clk) begin
   if (o_ppfifo_stb) begin
-    $display ("\t__wb_ppfifo_2_mem: Wrote: %h: Write Count: %h", o_ppfifo_data, r_ppfifo_count);
+    $display ("\t__wb_ppfifo_2_mem: Wrote: %h: Write Count: %h", i_ppfifo_data, r_ppfifo_count);
   end
 end
 
