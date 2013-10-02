@@ -2,7 +2,7 @@
 `define __LA_DEFINES__
 
 `define CAP_DAT_WIDTH 32
-`define CAP_MEM_SIZE  13
+`define CAP_MEM_SIZE  11
 `define TRIG          32'h00000000
 
 //UART Interface
@@ -50,7 +50,7 @@
 //CR:                   '\n'
 
 //Response ID:          'R'
-//Response Status:      '0' = Disabled '1' = Enabled 
+//Response Status:      '0' = Disabled '1' = Enabled
 //LF:                   '\r'
 //CR:                   '\n'
 

@@ -3,21 +3,21 @@ Distributed under the MIT license.
 Copyright (c) 2012 Dave McCoy (dave.mccoy@cospandesign.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all 
+The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
@@ -49,6 +49,7 @@ module logic_analyzer #(
   finished,
 
   //data output interface
+  start,
   data_out_read_strobe,
   data_out_read_size,
   data_out
@@ -77,7 +78,7 @@ input           enable;
 input           restart;
 output          finished;
 
-
+output  reg     [CAPTURE_DEPTH - 1: 0]        start;
 input           data_out_read_strobe;
 output  [31:0]  data_out_read_size;
 output  [31:0]  data_out;
@@ -99,7 +100,6 @@ localparam       READ      = 1;
 
 //reg/wires
 reg     [CAPTURE_DEPTH - 1: 0]        in_pointer;
-reg     [CAPTURE_DEPTH - 1: 0]        start;
 reg     [CAPTURE_DEPTH - 1: 0]        out_pointer;
 wire    [CAPTURE_DEPTH - 1: 0]        last;
 wire                                  full;
@@ -160,9 +160,9 @@ generate
   for (i = 0; i < 32; i = i + 1) begin : tsbuf
     assign cap_pos_edge[i] = cap_data[i] & ~prev_cap[i];
     assign cap_neg_edge[i] = ~cap_data[i] & prev_cap[i];
-    assign cap_sig_start[i]   = 
-            (~trigger_mask[i]) ? 1 :                                            //if the mask is 0 then this is true 
-              (trigger_edge[i]) ?                                               //if edge trigger is enabled 
+    assign cap_sig_start[i]   =
+            (~trigger_mask[i]) ? 1 :                                            //if the mask is 0 then this is true
+              (trigger_edge[i]) ?                                               //if edge trigger is enabled
                 (both_edges[i] & (cap_pos_edge[i] | cap_neg_edge[i])) |         //if both edges detected
                 (trigger[i] & cap_pos_edge[i]) | (~trigger[i] & cap_neg_edge[i]) : //if only one edge is sensative
               (trigger[i] & cap_data[i]) | (~trigger[i] & ~cap_data[i]);        //not edge but level and data matches
@@ -172,7 +172,7 @@ endgenerate
 
 
 /*
-assign  out_clk             = (clk_div > 0) ? div_clk : cap_clk; 
+assign  out_clk             = (clk_div > 0) ? div_clk : cap_clk;
 
 
 //clock divider
