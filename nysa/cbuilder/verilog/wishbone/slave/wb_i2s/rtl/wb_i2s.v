@@ -66,12 +66,12 @@ module wb_i2s (
   output reg          o_wbs_int,
 
   //master control signal for memory arbitration
-  output reg          mem_o_we,
-  output reg          mem_o_stb,
-  output reg          mem_o_cyc,
-  output reg  [3:0]   mem_o_sel,
+  output              mem_o_we,
+  output              mem_o_stb,
+  output              mem_o_cyc,
+  output      [3:0]   mem_o_sel,
   output      [31:0]  mem_o_adr,
-  output reg  [31:0]  mem_o_dat,
+  output      [31:0]  mem_o_dat,
   input       [31:0]  mem_i_dat,
   input               mem_i_ack,
   input               mem_i_int,
@@ -83,7 +83,9 @@ module wb_i2s (
   output              phy_mclock,
   output              phy_clock,
   output              phy_data,
-  output              phy_lr
+  output              phy_lr,
+
+  output      [31:0]  debug
 
 );
 
@@ -123,25 +125,27 @@ reg         [31:0]  clock_divider = 1;
 
 reg         [23:0]  request_count;
 
-reg         [31:0]  memory_0_size;
-reg                 memory_0_new_data;
-reg         [31:0]  memory_1_size;
-reg                 memory_1_new_data;
-
-wire        [31:0]  memory_count[1:0];
-wire        [31:0]  memory_0_count;
-wire        [31:0]  memory_1_count;
-reg         [31:0]  memory_pointer[1:0];
-wire        [31:0]  memory_0_pointer;
-wire        [31:0]  memory_1_pointer;
-
 reg                 memory_ready;
 reg                 active_bank;
 
+//Mem 2 PPFIFO
+reg         [31:0]  r_memory_0_base;
+reg         [31:0]  r_memory_0_size;
+wire        [31:0]  w_memory_0_count;
+reg                 r_memory_0_new_data;
+wire                w_memory_0_empty;
 
-reg         [31:0]  memory_base[1:0];
-wire        [31:0]  memory_0_base;
-wire        [31:0]  memory_1_base;
+wire        [31:0]  w_default_mem_0_base;
+
+reg         [31:0]  r_memory_1_base;
+reg         [31:0]  r_memory_1_size;
+wire        [31:0]  w_memory_1_count;
+reg                 r_memory_1_new_data;
+wire                w_memory_1_empty;
+
+wire        [31:0]  w_default_mem_1_base;
+
+wire                w_read_finished;
 
 //control
 wire                enable;
@@ -150,8 +154,6 @@ wire                post_fifo_wave_en;
 wire                pre_fifo_wave_en;
 
 //status
-wire                memory_0_empty;
-wire                memory_1_empty;
 
 wire        [23:0]  wfifo_size;
 reg         [23:0]  write_count;
@@ -159,8 +161,8 @@ reg         [23:0]  memory_write_count;
 reg         [23:0]  memory_write_size;
 
 wire        [1:0]   wfifo_ready;
-reg         [1:0]   wfifo_activate;
-reg                 wfifo_strobe;
+wire        [1:0]   wfifo_activate;
+wire                wfifo_strobe;
 wire        [31:0]  wfifo_data;
 
 reg         [3:0]   state;
@@ -188,6 +190,54 @@ i2s_controller controller (
   .i2s_lr            (phy_lr            )
 );
 
+wb_mem_2_ppfifo m2p(
+
+  .clk                  (clk                      ),
+  .rst                  (rst                      ),
+  .debug                (debug                    ),
+
+  //Control
+  .i_enable             (enable                   ),
+
+  .i_memory_0_base      (r_memory_0_base          ),
+  .i_memory_0_size      (r_memory_0_size          ),
+  .o_memory_0_count     (w_memory_0_count         ),
+  .i_memory_0_new_data  (r_memory_0_new_data      ),
+  .o_memory_0_empty     (w_memory_0_empty         ),
+
+  .o_default_mem_0_base (w_default_mem_0_base     ),
+
+  .i_memory_1_base      (r_memory_1_base          ),
+  .i_memory_1_size      (r_memory_1_size          ),
+  .o_memory_1_count     (w_memory_1_count         ),
+  .i_memory_1_new_data  (r_memory_1_new_data      ),
+  .o_memory_1_empty     (w_memory_1_empty         ),
+
+  .o_default_mem_1_base (w_default_mem_1_base     ),
+
+  .o_read_finished      (w_read_finished          ),
+
+  //master control signal for memory arbitration
+  .o_mem_we             (mem_o_we                 ),
+  .o_mem_stb            (mem_o_stb                ),
+  .o_mem_cyc            (mem_o_cyc                ),
+  .o_mem_sel            (mem_o_sel                ),
+  .o_mem_adr            (mem_o_adr                ),
+  .o_mem_dat            (mem_o_dat                ),
+  .i_mem_dat            (mem_i_dat                ),
+  .i_mem_ack            (mem_i_ack                ),
+  .i_mem_int            (mem_i_int                ),
+
+  //Ping Pong FIFO Interface
+  .i_ppfifo_rdy         (wfifo_ready              ),
+  .o_ppfifo_act         (wfifo_activate           ),
+  .i_ppfifo_size        (wfifo_size               ),
+  .o_ppfifo_stb         (wfifo_strobe             ),
+  .o_ppfifo_data        (wfifo_data               )
+);
+
+
+
 
 //Asynchronous Logic
 assign        enable                = control[`CONTROL_ENABLE];
@@ -195,26 +245,15 @@ assign        enable_interrupt      = control[`CONTROL_ENABLE_INTERRUPT];
 assign        post_fifo_wave_en     = control[`CONTROL_POST_FIFO_WAVE];
 assign        pre_fifo_wave_en      = control[`CONTROL_PRE_FIFO_WAVE];
 
-assign        memory_0_empty        = (memory_count[0] == 0);
-assign        memory_1_empty        = (memory_count[1] == 0);
-
-assign        status[`STATUS_MEMORY_0_EMPTY]  = memory_0_empty;
-assign        status[`STATUS_MEMORY_1_EMPTY]  = memory_1_empty;
+assign        status[`STATUS_MEMORY_0_EMPTY]  = w_memory_0_empty;
+assign        status[`STATUS_MEMORY_1_EMPTY]  = w_memory_1_empty;
 assign        status[31:2]          = 0;
 
-
-assign        memory_count[0]       = memory_0_size - memory_pointer[0];
-assign        memory_count[1]       = memory_1_size - memory_pointer[1];
-
-assign        memory_0_count        = memory_count[0];
-assign        memory_1_count        = memory_count[1];
-
-assign        memory_0_pointer      = memory_pointer[0];
-assign        memory_1_pointer      = memory_pointer[1];
-
-assign        memory_0_base         = memory_base[0];
-assign        memory_1_base         = memory_base[1];
-
+//assign        debug[1:0]            = wfifo_ready;
+//assign        debug[3:2]            = wfifo_activate;
+//assign        debug[4]              = wfifo_strobe;
+//assign        debug[5]              = wfifo_data[31];
+//assign        debug[31:16]          = wfifo_data[23:8];
 
 //blocks
 always @ (posedge clk) begin
@@ -226,22 +265,25 @@ always @ (posedge clk) begin
 
     control         <=  0;
 
-    memory_base[0]  <=  `DEFAULT_MEM_0_BASE;
-    memory_base[1]  <=  `DEFAULT_MEM_1_BASE;
+    //Default base, user can change this from the API
+    r_memory_0_base <=  w_default_mem_0_base;
+    r_memory_1_base <=  w_default_mem_1_base;
 
-    //memory_0_base   <=  `DEFAULT_MEM_0_BASE;
-    //memory_1_base   <=  `DEFAULT_MEM_1_BASE;
+    //Nothing in the memory initially
+    r_memory_0_size <=  0;
+    r_memory_1_size <=  0;
 
-    memory_0_new_data <=  0;
-    memory_1_new_data <=  0;
+    r_memory_0_new_data <=  0;
+    r_memory_1_new_data <=  0;
+
 
     clock_divider   <=  `DEFAULT_CLOCK_DIVISOR;
   end
 
   else begin
 
-    memory_0_new_data <=  0;
-    memory_1_new_data <=  0;
+    r_memory_0_new_data <=  0;
+    r_memory_1_new_data <=  0;
 
 
     //when the master acks our ack, then put our ack down
@@ -266,21 +308,21 @@ always @ (posedge clk) begin
             clock_divider     <=  i_wbs_dat;
           end
           REG_MEM_0_BASE: begin
-            memory_base[0]    <=  i_wbs_dat;
+            r_memory_0_base       <=  i_wbs_dat;
           end
           REG_MEM_0_SIZE: begin
-            memory_0_size     <=  i_wbs_dat;
+            r_memory_0_size       <=  i_wbs_dat;
             if (i_wbs_dat > 0) begin
-              memory_0_new_data <=  1;
+              r_memory_0_new_data <=  1;
             end
           end
           REG_MEM_1_BASE: begin
-            memory_base[1]    <=  i_wbs_dat;
+            r_memory_1_base       <=  i_wbs_dat;
           end
           REG_MEM_1_SIZE: begin
-            memory_1_size     <=  i_wbs_dat;
+            r_memory_1_size       <=  i_wbs_dat;
             if (i_wbs_dat > 0) begin
-              memory_1_new_data <=  1;
+              r_memory_1_new_data <=  1;
             end
           end
           default: begin
@@ -304,16 +346,16 @@ always @ (posedge clk) begin
             o_wbs_dat <=  clock_divider;
           end
           REG_MEM_0_BASE: begin
-            o_wbs_dat <=  memory_0_base;
+            o_wbs_dat <=  r_memory_0_base;
           end
           REG_MEM_0_SIZE: begin
-            o_wbs_dat <=  memory_0_count;
+            o_wbs_dat <=  w_memory_0_count;
           end
           REG_MEM_1_BASE: begin
-            o_wbs_dat <=  memory_1_base;
+            o_wbs_dat <=  r_memory_1_base;
           end
           REG_MEM_1_SIZE: begin
-            o_wbs_dat <=  memory_1_count;
+            o_wbs_dat <=  w_memory_1_count;
           end
           //add as many ADDR_X you need here
           default: begin
@@ -332,7 +374,7 @@ always @ (posedge clk) begin
     o_wbs_int <=  0;
   end
   else if (enable) begin
-    if (!memory_0_empty && !memory_1_empty) begin
+    if (!w_memory_0_empty && !w_memory_1_empty) begin
       o_wbs_int <=  0;
     end
     if (i_wbs_stb) begin
@@ -340,7 +382,7 @@ always @ (posedge clk) begin
       //interrupt when the wbs is de-asserted
       o_wbs_int <=  0;
     end
-    else if (memory_0_empty || memory_1_empty) begin
+    else if (w_memory_0_empty || w_memory_1_empty) begin
       o_wbs_int <=  1;
     end
   end
@@ -350,192 +392,9 @@ always @ (posedge clk) begin
   end
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//Memory interface
-
-
-//blocks
-assign  wfifo_data                    = mem_i_dat;
-
 always @ (posedge clk) begin
   if (wfifo_strobe) begin
-    $display ("\tI2S MEM CONTROLLER: Wrote: %h: Request: %h Write Count: %h", wfifo_data, wfifo_size, write_count);
+    $display ("\tI2S MEM CONTROLLER: Wrote: %h: Request: %h", wfifo_data, wfifo_size);
   end
 end
-
-assign              mem_o_adr         = {(memory_base[active_bank] + memory_pointer[active_bank])};
-
-//wishbone master module
-always @ (posedge clk) begin
-  if (rst) begin
-    mem_o_we            <=  0;
-    mem_o_stb           <=  0;
-    mem_o_cyc           <=  0;
-    mem_o_sel           <=  4'b1111;
-    mem_o_dat           <=  32'h00000000;
-
-    //strobe for the i2s memory controller
-    memory_data_strobe  <=  0;
-
-    //point to the current location in the memory to read from
-    memory_pointer[0]   <=  0;
-    memory_pointer[1]   <=  0;
-    request_count       <=  0;
-    enable_strobe       <=  0;
-
-    wfifo_activate      <=  0;
-    wfifo_strobe        <=  0;
-    write_count         <=  0;
-
-    memory_write_count  <=  0;
-    memory_write_size   <=  0;
-
-    state               <=  IDLE;
-
-  end
-  else begin
-    wfifo_strobe        <=  0;
-
-    //Grab an available FIFO if the core is activated
-    if (enable) begin
-      if ((wfifo_ready > 0) && (wfifo_activate == 0)) begin
-        write_count         <=  0;
-        if (wfifo_ready[0]) begin
-          wfifo_activate[0] <=  1;
-        end
-        else begin
-          wfifo_activate[1] <=  1;
-        end
-      end
-    end
-
-
-    case (state)
-      IDLE: begin
-        if (enable) begin
-          state                           <=  GET_MEMORY_BLOCK;
-        end
-      end
-      GET_MEMORY_BLOCK: begin
-        mem_o_cyc                         <=  0;
-        mem_o_stb                         <=  0;
-
-        if (memory_ready) begin
-          memory_write_size               <=  memory_count[active_bank];
-          state                           <=  READ_DATA;
-        end
-        else begin
-          //Memory blocks are not ready
-          if (write_count > 0) begin
-            //There is some data left in the write FIFO but no data from the
-            //memory, release this FIFO
-            write_count                   <=  0;
-            wfifo_activate                <=  0;
-          end
-          if (!enable) begin
-            state                         <=  IDLE;
-          end
-        end
-      end
-      READ_DATA: begin
-        //Check to see of the Memory has space
-        if (memory_pointer[active_bank] < memory_write_size) begin
-          //Check if the FIFO has room
-          if (wfifo_activate) begin
-            if (write_count < wfifo_size) begin
-              mem_o_cyc                     <=  1;
-              mem_o_stb                     <=  1;
-
-              //Ping Pong FIFO has room
-              //if we received data from the memory bus, read them in
-              if (mem_i_ack && mem_o_stb) begin
-
-                memory_write_count          <=  memory_write_count + 1;
-                memory_pointer[active_bank] <=  memory_pointer[active_bank] + 1;
-                write_count                 <=  write_count + 1;
-                wfifo_strobe                <=  1;
-                mem_o_stb                   <=  0;
-              end
-            end
-            else begin
-              //Release the Activate
-              //Release the Wishbone Cycle so the host has a chance to write some data
-              mem_o_cyc                     <=  0;
-              mem_o_stb                     <=  0;
-              wfifo_activate                <=  0;
-            end
-          end
-          else begin
-            mem_o_cyc                       <=  0;
-            mem_o_stb                       <=  0;
-          end
-        end
-        else begin
-          //Memory Doesn't have room, release it
-          state                             <=  GET_MEMORY_BLOCK;
-        end
-      end
-      FINISHED: begin
-      end
-    endcase
-
-    //If there more data from the host
-    if (memory_0_new_data) begin
-      memory_pointer[0] <=  0;
-    end
-    if (memory_1_new_data) begin
-      memory_pointer[1] <=  0;
-    end
-  end
-end
-
-
-
-
-//active block logic
-always @ (posedge clk) begin
-  if (rst) begin
-    active_bank  <=  0;
-    memory_ready  <=  0;
-  end
-  else begin
-    //active memory logic
-    if (!memory_ready) begin
-      //if there is any memory at all in the memory chunks
-      if (memory_count[0] > 0) begin
-        memory_ready    <=  1;
-        active_bank    <=  0;
-      end
-      else if (memory_count[1] > 0) begin
-        memory_ready    <=  1;
-        active_bank    <=  1;
-      end
-    end
-    else begin
-      //if we're currently active and a the active block
-      //is empty then disable the block
-      if      ((active_bank == 0) && (memory_count[0] == 0)) begin
-        memory_ready    <=  0;
-      end
-      else if ((active_bank == 1) && (memory_count[1] == 0)) begin
-        memory_ready    <=  0;
-      end
-    end
-  end
-end
-
 endmodule

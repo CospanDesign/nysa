@@ -165,15 +165,15 @@ wire              phy_clock;
 wire              phy_data;
 wire              phy_lr;
 
-wire                w_arb0_i_wbs_stb;
-wire                w_arb0_i_wbs_cyc;
-wire                w_arb0_i_wbs_we;
-wire  [3:0]         w_arb0_i_wbs_sel;
-wire  [31:0]        w_arb0_i_wbs_dat;
-wire  [31:0]        w_arb0_o_wbs_dat;
-wire  [31:0]        w_arb0_i_wbs_adr;
-wire                w_arb0_o_wbs_ack;
-wire                w_arb0_o_wbs_int;
+wire              w_arb0_i_wbs_stb;
+wire              w_arb0_i_wbs_cyc;
+wire              w_arb0_i_wbs_we;
+wire  [3:0]       w_arb0_i_wbs_sel;
+wire  [31:0]      w_arb0_i_wbs_dat;
+wire  [31:0]      w_arb0_o_wbs_dat;
+wire  [31:0]      w_arb0_i_wbs_adr;
+wire              w_arb0_o_wbs_ack;
+wire              w_arb0_o_wbs_int;
 
 
 
@@ -222,28 +222,28 @@ wire              i2s_mem_i_ack;
 wire              i2s_mem_i_int;
 
 //mem slave 0
-wire                w_sm0_i_wbs_we;
-wire                w_sm0_i_wbs_cyc;
-wire  [31:0]        w_sm0_i_wbs_dat;
-wire  [31:0]        w_sm0_o_wbs_dat;
-wire  [31:0]        w_sm0_i_wbs_adr;
-wire                w_sm0_i_wbs_stb;
-wire  [3:0]         w_sm0_i_wbs_sel;
-wire                w_sm0_o_wbs_ack;
-wire                w_sm0_o_wbs_int;
+wire              w_sm0_i_wbs_we;
+wire              w_sm0_i_wbs_cyc;
+wire  [31:0]      w_sm0_i_wbs_dat;
+wire  [31:0]      w_sm0_o_wbs_dat;
+wire  [31:0]      w_sm0_i_wbs_adr;
+wire              w_sm0_i_wbs_stb;
+wire  [3:0]       w_sm0_i_wbs_sel;
+wire              w_sm0_o_wbs_ack;
+wire              w_sm0_o_wbs_int;
 
-wire                w_mem_we_o;
-wire                w_mem_cyc_o;
-wire                w_mem_stb_o;
-wire  [3:0]         w_mem_sel_o;
-wire  [31:0]        w_mem_adr_o;
-wire  [31:0]        w_mem_dat_i;
-wire  [31:0]        w_mem_dat_o;
-wire                w_mem_ack_i;
-wire                w_mem_int_i;
+wire              w_mem_we_o;
+wire              w_mem_cyc_o;
+wire              w_mem_stb_o;
+wire  [3:0]       w_mem_sel_o;
+wire  [31:0]      w_mem_adr_o;
+wire  [31:0]      w_mem_dat_i;
+wire  [31:0]      w_mem_dat_o;
+wire              w_mem_ack_i;
+wire              w_mem_int_i;
 
 
-reg                 start = 0;
+reg               start = 0;
 
 //Submodules
 
@@ -277,16 +277,16 @@ wishbone_master wm (
   .i_per_int      (w_wbp_int        ),
 
   //memory interconnect signals
-  .o_mem_we       (w_mem_we_o          ),
-  .o_mem_adr      (w_mem_adr_o         ),
-  .o_mem_dat      (w_mem_dat_o         ),
-  .i_mem_dat      (w_mem_dat_i         ),
-  .o_mem_stb      (w_mem_stb_o         ),
-  .o_mem_cyc      (w_mem_cyc_o         ),
-  .o_mem_msk      (w_mem_msk_o         ),
-  .o_mem_sel      (w_mem_sel_o         ),
-  .i_mem_ack      (w_mem_ack_i         ),
-  .i_mem_int      (w_mem_int_i         )
+  .o_mem_we       (w_mem_we_o       ),
+  .o_mem_adr      (w_mem_adr_o      ),
+  .o_mem_dat      (w_mem_dat_o      ),
+  .i_mem_dat      (w_mem_dat_i      ),
+  .o_mem_stb      (w_mem_stb_o      ),
+  .o_mem_cyc      (w_mem_cyc_o      ),
+  .o_mem_msk      (w_mem_msk_o      ),
+  .o_mem_sel      (w_mem_sel_o      ),
+  .i_mem_ack      (w_mem_ack_i      ),
+  .i_mem_int      (w_mem_int_i      )
 
 
 );
@@ -405,7 +405,7 @@ ram (
   .A0   (sdram_addr[0]),
 
   .DQ15 (sdram_data[15]),
-  .DQ14 (sdram_data[14])  ,
+  .DQ14 (sdram_data[14]),
   .DQ13 (sdram_data[13]),
   .DQ12 (sdram_data[12]),
   .DQ11 (sdram_data[11]),

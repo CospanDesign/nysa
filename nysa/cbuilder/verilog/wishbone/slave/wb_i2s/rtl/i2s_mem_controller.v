@@ -92,6 +92,7 @@ ppfifo #(
   .DATA_WIDTH(32),
 `ifndef SIMULATION
   .ADDRESS_WIDTH(12)
+  //.ADDRESS_WIDTH(4)
 `else
   .ADDRESS_WIDTH(2)
 `endif
@@ -168,44 +169,24 @@ always @(posedge i2s_clock) begin
         audio_data_ack    <=  1;
       end
     end
+
     else begin
-      if (audio_data_request && ~audio_data_ack) begin
-       if (read_count > 0) begin
-          //more than 0 in the read count
-          case (state)
-            READ_STROBE: begin
-              //if the i2s writer request a dword
-              //more data to be read
-              read_count          <=  read_count - 1;
-              read_strobe         <=  1;
-              state               <=  DELAY;
-            end
-            DELAY: begin
-              state               <=  READ;
-            end
-            READ: begin
-              //get data from the ping pong
-              //put it into the dword_data
-              audio_data          <=  read_data[23:0];
-              audio_lr_bit        <=  read_data[31];
-              //raise the ACK to indicate there is new data
-              audio_data_ack      <=  1;
-              state               <=  READ_STROBE;
-            end
-            default: begin
-            end
-          endcase
+      if (read_ready && !read_activate) begin
+        read_count        <=  0;
+        read_activate     <=  1;
+      end
+      else if (read_activate) begin
+        if (read_count < read_size) begin
+          if (audio_data_request && !audio_data_ack) begin
+            audio_data    <=  read_data[23:0];
+            audio_lr_bit  <=  read_data[31];
+            audio_data_ack<=  1;
+            read_count    <=  read_count + 1;
+            read_strobe   <=  1;
+          end
         end
         else begin
-          if (read_activate) begin
-            read_activate       <=  0;
-          end
-          //get a new FIFO if it is available
-          else if (read_ready) begin
-            //activate the PPFIFO
-            read_count        <=  read_size;
-            read_activate     <=  1;
-          end
+          read_activate   <=  0;
         end
       end
     end
