@@ -947,15 +947,23 @@ class WishboneTopGenerator(object):
                 if port == "clk" or port == "rst":
                     continue
 
-                if port in self.wires:
-                    continue
+                #if port in self.wires:
+                #    if debug: print "%s is in wires already" % port
+                #    continue
 
                 if is_wishbone_slave_signal(port):
                     if debug: print "%s is a wishbone bus signal" % port
                     wire = "%s%s" % (pre_name, port)
+                    if wire in self.wires:
+                        if debug: print "%s is in wires already" % wire
+                        continue
                 else:
                     if debug: print "%s is NOT a wishbone bus signal" % port
                     wire = "%s_%s" % (name, port)
+                    if wire in self.wires:
+                        if debug: print "%s is in wires already" % wire
+                        continue
+
 
                 if (wire in self.wires):
                     continue
