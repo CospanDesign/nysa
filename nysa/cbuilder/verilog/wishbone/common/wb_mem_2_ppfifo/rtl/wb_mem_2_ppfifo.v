@@ -2,6 +2,7 @@ module wb_mem_2_ppfifo(
 
   input               clk,
   input               rst,
+  output      [31:0]  debug,
 
   //Control
 
@@ -11,7 +12,7 @@ module wb_mem_2_ppfifo(
   input       [31:0]  i_memory_0_size,
   output      [31:0]  o_memory_0_count,
   input               i_memory_0_new_data,
-  output  reg         o_memory_0_empty,
+  output              o_memory_0_empty,
 
   output      [31:0]  o_default_mem_0_base,
 
@@ -19,7 +20,7 @@ module wb_mem_2_ppfifo(
   input       [31:0]  i_memory_1_size,
   output      [31:0]  o_memory_1_count,
   input               i_memory_1_new_data,
-  output  reg         o_memory_1_empty,
+  output              o_memory_1_empty,
 
   output      [31:0]  o_default_mem_1_base,
 
@@ -59,9 +60,6 @@ wire          [31:0]  w_mem_base  [1:0];
 reg           [31:0]  r_mem_ptr   [1:0];
 wire          [31:0]  r_mem_count [1:0];
 
-wire                  w_mem_0_empty;
-wire                  w_mem_1_empty;
-
 wire          [31:0]  w_mem_0_ptr;
 wire          [31:0]  w_mem_1_ptr;
 
@@ -75,10 +73,45 @@ reg                   r_memory_ready;
 
 reg           [3:0]   state;
 
+
+
 //Submodules
 //Asynchronous Logic
+
+//Debug Assignments
+//assign  debug[19:0]             = r_mem_ptr[r_active_bank];
+//assign  debug[20]               = ((r_mem_ptr[r_active_bank] == 0) && (o_mem_cyc == 1));
+//assign  debug[21]               = o_memory_0_empty;
+//assign  debug[22]               = o_ppfifo_stb;
+//assign  debug[26:23]            = state;
+//assign  debug[27]               = r_active_bank;
+//assign  debug[28]               = r_memory_ready;
+//
+
+//assign  debug[3]              = r_memory_ready;
+//assign  debug[7:4]            = state;
+//assign  debug[8]              = o_read_finished;
+//assign  debug[10]             = o_memory_1_empty;
+//assign  debug[13:12]          = i_ppfifo_rdy;
+//assign  debug[15:14]          = o_ppfifo_act;
+//assign  debug[1]              = i_mem_dat[31];
+
+assign  debug[1]                = o_mem_cyc;
+assign  debug[2]                = o_mem_stb;
+assign  debug[3]                = i_mem_ack;
+assign  debug[4]                = i_mem_dat[31];
+assign  debug[11]               = ((r_mem_ptr[r_active_bank] == 0) && (o_mem_cyc == 1));
+assign  debug[12]               = r_active_bank;
+assign  debug[13]               = r_memory_ready;
+assign  debug[14]               = o_memory_0_empty;
+assign  debug[15]               = o_ppfifo_stb;
+assign  debug[31:16]            = i_mem_dat[23:8];
+
+
+
+
 assign  o_default_mem_0_base  = 32'h00000000;
-assign  o_default_mem_1_base  = 32'h00200000;
+assign  o_default_mem_1_base  = 32'h00080000;
 
 assign  o_ppfifo_data         = i_mem_dat;
 assign  o_mem_adr             = w_mem_base[r_active_bank] + r_mem_ptr[r_active_bank];
@@ -86,8 +119,10 @@ assign  o_mem_adr             = w_mem_base[r_active_bank] + r_mem_ptr[r_active_b
 assign  r_mem_count[0]        = i_memory_0_size - r_mem_ptr[0];
 assign  r_mem_count[1]        = i_memory_1_size - r_mem_ptr[1];
 
-assign  w_mem_0_empty         = (r_mem_count[0] == 0);
-assign  w_mem_1_empty         = (r_mem_count[1] == 0);
+assign  o_memory_0_empty      = (r_mem_count[0] == 0);
+assign  o_memory_1_empty      = (r_mem_count[1] == 0);
+//assign  w_mem_0_empty         = (r_mem_count[0] == 0);
+//assign  w_mem_1_empty         = (r_mem_count[1] == 0);
 
 assign  o_memory_0_count      = r_mem_count[0];
 assign  o_memory_1_count      = r_mem_count[1];
@@ -168,7 +203,6 @@ always @ (posedge clk) begin
         if (r_mem_ptr[r_active_bank] < r_mem_read_size) begin
           //If the FIFO has room
           if (o_ppfifo_act > 0) begin
-            //if (r_mem_ptr[r_active_bank] < i_ppfifo_size) begin
             if (r_ppfifo_count < i_ppfifo_size) begin
               o_mem_cyc   <=  1;
               o_mem_stb   <=  1;
@@ -233,8 +267,8 @@ end
 //Bank Select and Memory Ready
 always @ (posedge clk) begin
   if (rst) begin
-    r_active_bank   <=  0;
-    r_memory_ready     <=  0;
+    r_active_bank       <=  0;
+    r_memory_ready      <=  0;
   end
   else begin
     //Activate Memory Logic
@@ -252,10 +286,10 @@ always @ (posedge clk) begin
     else begin
       //If we're currently active and the active block is empty
       //disable the block
-      if ((r_active_bank == 0) && (r_mem_count[0] == 0)) begin
+      if ((r_active_bank == 0) && (r_mem_count[0] == 0) && (!o_ppfifo_stb)) begin
         r_memory_ready     <=  0;
       end
-      else if ((r_active_bank == 1) && (r_mem_count[1] == 0)) begin
+      else if ((r_active_bank == 1) && (r_mem_count[1] == 0) && (!o_ppfifo_stb)) begin
         r_memory_ready     <=  0;
       end
     end
