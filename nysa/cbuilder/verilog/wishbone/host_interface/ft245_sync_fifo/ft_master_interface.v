@@ -292,16 +292,16 @@ always @ (posedge clk ) begin
   if (rst) begin
     input_handler_state   <=  IDLE;
     read_dword            <=  1;
-    o_in_command            <=  0;
-    o_in_address            <=  0;
-    o_in_data               <=  0;
-    o_in_data_count         <=  0;
+    o_in_command          <=  0;
+    o_in_address          <=  0;
+    o_in_data             <=  0;
+    o_in_data_count       <=  0;
     local_data_count      <=  0;
-    o_ih_ready              <=  0;
+    o_ih_ready            <=  0;
   end
   else begin
     read_dword            <=  0;
-    o_ih_ready              <=  0;
+    o_ih_ready            <=  0;
     case (input_handler_state)
       IDLE: begin
         if (found_id_byte) begin
@@ -312,8 +312,8 @@ always @ (posedge clk ) begin
         if (dword_ready) begin
           read_dword  <=  1;
           input_handler_state <=  READ_COMMAND;
-          o_in_command          <=  {12'h000, input_dword[31:28], 12'h000, input_dword[27:24]};
-          o_in_data_count       <=  {8'h00, input_dword[23:0]};
+          o_in_command        <=  {12'h000, input_dword[31:28], 12'h000, input_dword[27:24]};
+          o_in_data_count     <=  {8'h00, input_dword[23:0]};
           local_data_count    <=  input_dword[23:0];
         end
       end
