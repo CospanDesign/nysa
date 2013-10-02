@@ -84,12 +84,12 @@ module wb_sf_camera (
   //output              o_wbs_int
 
   //master control signal for memory arbitration
-  output reg          o_mem_we,
-  output reg          o_mem_stb,
-  output reg          o_mem_cyc,
-  output reg  [3:0]   o_mem_sel,
-  output reg  [31:0]  o_mem_adr,
-  output reg  [31:0]  o_mem_dat,
+  output              o_mem_we,
+  output              o_mem_stb,
+  output              o_mem_cyc,
+  output      [3:0]   o_mem_sel,
+  output      [31:0]  o_mem_adr,
+  output      [31:0]  o_mem_dat,
   input       [31:0]  i_mem_dat,
   input               i_mem_ack,
   input               i_mem_int
@@ -97,49 +97,119 @@ module wb_sf_camera (
 
 
 //Local Parameters
-localparam     ADDR_0  = 32'h00000000;
-localparam     ADDR_1  = 32'h00000001;
-localparam     ADDR_2  = 32'h00000002;
+localparam           CONTROL            = 32'h00000000;
+localparam           STATUS             = 32'h00000001;
+
+localparam           REG_MEM_0_BASE     = 32'h00000004;
+localparam           REG_MEM_0_SIZE     = 32'h00000005;
+localparam           REG_MEM_1_BASE     = 32'h00000006;
+localparam           REG_MEM_1_SIZE     = 32'h00000007;
+
+
 
 //Local Registers/Wires
-wire        [31:0]  memory_count[1:0];
-wire        [31:0]  memory_0_count;
-wire        [31:0]  memory_1_count;
-reg         [31:0]  memory_pointer[1:0];
-wire        [31:0]  memory_0_pointer;
-wire        [31:0]  memory_1_pointer;
 
 //Control
 reg         [31:0]  control;
 wire        [31:0]  status;
 reg         [31:0]  clock_divider = 1;
 
+wire                w_enable_dma;
+
+//Get the Memory write controller
+//nysa/cbuilder/verilog/wishbone/wb_ppfifo_2_mem/sim/test_wb_ppfifo_2_mem.v
+
+reg         [31:0]  r_memory_0_base;
+reg         [31:0]  r_memory_0_size;
+wire        [31:0]  w_memory_0_count;
+reg                 r_memory_0_new_data;
+wire                w_memory_0_empty;
+
+wire        [31:0]  w_default_mem_0_base;
+
+reg         [31:0]  r_memory_1_base;
+reg         [31:0]  r_memory_1_size;
+wire        [31:0]  w_memory_1_count;
+reg                 r_memory_1_new_data;
+wire                w_memory_1_empty;
+
+wire        [31:0]  w_default_mem_1_base;
+
+wire                w_write_finished;
+
+wire                w_rfifo_ready;
+wire                w_rfifo_activate;
+wire                w_rfifo_strobe;
+wire        [31:0]  w_rfifo_data;
+wire        [23:0]  w_rfifo_size;
+
+
+//Submodules
+wb_ppfifo_2_mem p2m(
+
+  .clk                  (clk                      ),
+  .rst                  (rst                      ),
+
+  //Control
+  .i_enable             (w_enable_dma             ),
+
+  .i_memory_0_base      (r_memory_0_base          ),
+  .i_memory_0_size      (r_memory_0_size          ),
+  .o_memory_0_count     (w_memory_0_count         ),
+  .i_memory_0_new_data  (r_memory_0_new_data      ),
+  .o_memory_0_empty     (w_memory_0_empty         ),
+
+  .o_default_mem_0_base (w_default_mem_0_base     ),
+
+  .i_memory_1_base      (r_memory_1_base          ),
+  .i_memory_1_size      (r_memory_1_size          ),
+  .o_memory_1_count     (w_memory_1_count         ),
+  .i_memory_1_new_data  (r_memory_1_new_data      ),
+  .o_memory_1_empty     (w_memory_1_empty         ),
+
+  .o_default_mem_1_base (w_default_mem_1_base     ),
+
+  .o_write_finished     (w_write_finished         ),
+
+  //master control signal for memory arbitration
+  .o_mem_we             (o_mem_we                 ),
+  .o_mem_stb            (o_mem_stb                ),
+  .o_mem_cyc            (o_mem_cyc                ),
+  .o_mem_sel            (o_mem_sel                ),
+  .o_mem_adr            (o_mem_adr                ),
+  .o_mem_dat            (o_mem_dat                ),
+  .i_mem_dat            (i_mem_dat                ),
+  .i_mem_ack            (i_mem_ack                ),
+  .i_mem_int            (i_mem_int                ),
+
+  //Ping Pong FIFO Interface (Read)
+  .i_ppfifo_rdy         (w_rfifo_ready            ),
+  .o_ppfifo_act         (w_rfifo_activate         ),
+  .i_ppfifo_size        (w_rfifo_size             ),
+  .o_ppfifo_stb         (w_rfifo_strobe           ),
+  .i_ppfifo_data        (w_rfifo_data             )
+);
+
+sf_camera camera(
+  .clk                  (clk                      ),
+  .rst                  (rst                      ),
+
+  //Memory Enable
+  .o_enable_dma         (w_enable_dma             ),
+  //Ping Pong FIFO Signals
+  .o_rfifo_ready        (w_rfifo_ready            ),
+  .i_rfifo_activate     (w_rfifo_activate         ),
+  .i_rfifo_strobe       (w_rfifo_strobe           ),
+  .o_rfifo_data         (w_rfifo_data             ),
+  .o_rfifo_size         (w_rfifo_size             )
+);
+
+
+
 
 //Submodules
 
 //Asynchronous Logic
-assign        memory_0_empty        = (memory_count[0] == 0);
-assign        memory_1_empty        = (memory_count[1] == 0);
-
-assign        status[`STATUS_MEMORY_0_EMPTY]  = memory_0_empty;
-assign        status[`STATUS_MEMORY_1_EMPTY]  = memory_1_empty;
-assign        status[31:2]          = 0;
-
-
-assign        memory_count[0]       = memory_0_size - memory_pointer[0];
-assign        memory_count[1]       = memory_1_size - memory_pointer[1];
-
-assign        memory_0_count        = memory_count[0];
-assign        memory_1_count        = memory_count[1];
-
-assign        memory_0_pointer      = memory_pointer[0];
-assign        memory_1_pointer      = memory_pointer[1];
-
-assign        memory_0_base         = memory_base[0];
-assign        memory_1_base         = memory_base[1];
-
-
-
 //Synchronous Logic
 
 always @ (posedge clk) begin
@@ -147,6 +217,17 @@ always @ (posedge clk) begin
     o_wbs_dat <= 32'h0;
     o_wbs_ack <= 0;
     o_wbs_int <= 0;
+
+    r_memory_0_base <=  w_default_mem_0_base;
+    r_memory_1_base <=  w_default_mem_1_base;
+
+    //Nothing in the memory initially
+    r_memory_0_size <=  0;
+    r_memory_1_size <=  0;
+
+    r_memory_0_new_data <=  0;
+    r_memory_1_new_data <=  0;
+
   end
 
   else begin
@@ -160,31 +241,33 @@ always @ (posedge clk) begin
       if (i_wbs_we) begin
         //write request
         case (i_wbs_adr)
-          ADDR_0: begin
-            //writing something to address 0
-            //do something
-
-            //NOTE THE FOLLOWING LINE IS AN EXAMPLE
-            //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
+          CONTROL: begin
             $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
           end
-          ADDR_1: begin
-            //writing something to address 1
-            //do something
-
-            //NOTE THE FOLLOWING LINE IS AN EXAMPLE
-            //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
+          STATUS: begin
             $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
           end
-          ADDR_2: begin
-            //writing something to address 3
-            //do something
 
-            //NOTE THE FOLLOWING LINE IS AN EXAMPLE
-            //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-            $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
+
+          REG_MEM_0_BASE: begin
+            r_memory_0_base       <=  i_wbs_dat;
           end
-          //add as many ADDR_X you need here
+          REG_MEM_0_SIZE: begin
+            r_memory_0_size       <=  i_wbs_dat;
+            if (i_wbs_dat > 0) begin
+              r_memory_0_new_data <=  1;
+            end
+          end
+          REG_MEM_1_BASE: begin
+            r_memory_1_base       <=  i_wbs_dat;
+          end
+          REG_MEM_1_SIZE: begin
+            r_memory_1_size       <=  i_wbs_dat;
+            if (i_wbs_dat > 0) begin
+              r_memory_1_new_data <=  1;
+            end
+          end
+
           default: begin
           end
         endcase
@@ -194,29 +277,29 @@ always @ (posedge clk) begin
         if (!o_wbs_ack) begin //Fix double reads
           //read request
           case (i_wbs_adr)
-            ADDR_0: begin
-              //reading something from address 0
-              //NOTE THE FOLLOWING LINE IS AN EXAMPLE
-              //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-              $display("user read %h", ADDR_0);
-              o_wbs_dat <= ADDR_0;
+            CONTROL: begin
+              $display("user read %h", CONTROL);
+              o_wbs_dat <= CONTROL;
             end
-            ADDR_1: begin
-              //reading something from address 1
-              //NOTE THE FOLLOWING LINE IS AN EXAMPLE
-              //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-              $display("user read %h", ADDR_1);
-              o_wbs_dat <= ADDR_1;
+            STATUS: begin
+              $display("user read %h", STATUS);
+              o_wbs_dat <=  {30'h00000000, w_memory_1_empty, w_memory_0_empty};
             end
-            ADDR_2: begin
-              //reading soething from address 2
-              //NOTE THE FOLLOWING LINE IS AN EXAMPLE
-              //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-              $display("user read %h", ADDR_2);
-              o_wbs_dat <= ADDR_2;
+
+            REG_MEM_0_BASE: begin
+              o_wbs_dat <=  r_memory_0_base;
             end
-            //add as many ADDR_X you need here
+            REG_MEM_0_SIZE: begin
+              o_wbs_dat <=  w_memory_0_count;
+            end
+            REG_MEM_1_BASE: begin
+              o_wbs_dat <=  r_memory_1_base;
+            end
+            REG_MEM_1_SIZE: begin
+              o_wbs_dat <=  w_memory_1_count;
+            end
             default: begin
+              o_wbs_dat <=  32'h00;
             end
           endcase
         end
@@ -226,24 +309,5 @@ always @ (posedge clk) begin
   end
 end
 
-
 //Wishbone Memory Master
-always @ (posedge clk) begin
-  if (rst) begin
-    o_mem_we            <=  0;
-    o_mem_stb           <=  0;
-    o_mem_cyc           <=  0;
-    o_mem_sel           <=  4'b1111;
-    o_mem_adr           <=  32'h00000000;
-    o_mem_dat           <=  32'h00000000;
-
-    //point to the current location in the memory to write to
-    memory_pointer[0]   <=  0;
-    memory_pointer[1]   <=  0;
-  end
-  else begin
-
-  end
-end
-
 endmodule

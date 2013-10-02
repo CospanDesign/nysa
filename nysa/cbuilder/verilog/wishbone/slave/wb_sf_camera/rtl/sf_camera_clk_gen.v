@@ -7,6 +7,10 @@ output                phy_out_clk
 
 //Local parameters
 //Registers/Wires
+wire                  clkfbout_buf;
+wire                  clkfb;
+wire                  clkout;
+wire                  phy_bufout;
 //Submodules
 DCM_SP #(
   .CLKDV_DIVIDE         (2.500),

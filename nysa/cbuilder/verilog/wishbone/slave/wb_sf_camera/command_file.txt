@@ -17,6 +17,8 @@ ${NYSA}/cbuilder/verilog/wishbone/master/wishbone_master.v
 #${NYSA}/cbuilder/verilog/generic/<some name here>.v
 
 
+../../common/wb_ppfifo_2_mem/rtl/wb_ppfifo_2_mem.v
+
 /opt/Xilinx/14.5/ISE_DS/ISE/verilog/src/glbl.v
 /opt/Xilinx/14.5/ISE_DS/ISE/verilog/src/unisims/STARTUP_SPARTAN6.v
 /opt/Xilinx/14.5/ISE_DS/ISE/verilog/src/unisims/BUFG.v
@@ -24,6 +26,7 @@ ${NYSA}/cbuilder/verilog/wishbone/master/wishbone_master.v
 /opt/Xilinx/14.5/ISE_DS/ISE/verilog/src/unisims/PLL_BASE.v
 /opt/Xilinx/14.5/ISE_DS/ISE/verilog/src/unisims/PLL_ADV.v
 /opt/Xilinx/14.5/ISE_DS/ISE/verilog/src/unisims/DCM_SP.v
+
 
 ${NYSA}/cbuilder/verilog/generic/ppfifo.v
 ${NYSA}/cbuilder/verilog/generic/blk_mem.v
@@ -46,6 +49,7 @@ rtl/sf_camera_clk_gen.v
 rtl/sf_camera_reader.v
 rtl/sf_camera_controller.v
 rtl/wb_sf_camera.v
+rtl/sf_camera.v
 
 sim/arbitor_2_masters.v
 sim/wishbone_mem_interconnect.v

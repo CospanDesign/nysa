@@ -2,30 +2,22 @@ module sf_camera_reader (
 input                 clk,
 input                 rst,
 
-//Physical Interface
-output                o_cam_rst,
-output                o_flash,
-output                o_status,
+//Configuration Registers
+input                 i_enable,
+output  reg           o_captured,
 
-output                o_cam_in_clk,
+//Physical Interface
 input                 i_pix_clk,
-input                 i_flag_strobe,
 input                 i_vsync,
 input                 i_hsync,
 input       [7:0]     i_pix_data,
 
 //Memory FIFO Interface
-output                o_fifo_ready,
-input                 o_fifo_activate,
-input                 i_fifo_strobe,
-output      [31:0]    o_fifo_data,
-output      [23:0]    o_fifo_size,
-
-
-//Configuration Registers
-input       [31:0]    i_control,
-output  reg           o_captured,
-input       [31:0]    i_hcount
+output                o_rfifo_ready,
+input                 i_rfifo_activate,
+input                 i_rfifo_strobe,
+output      [31:0]    o_rfifo_data,
+output      [23:0]    o_rfifo_size
 
 );
 
@@ -48,7 +40,7 @@ wire  [23:0]          w_write_fifo_size;
 reg                   r_write_strobe;
 reg   [23:0]          r_write_count;
 reg   [1:0]           r_byte_index;
-wire  [7:0]           w_write_data;
+wire  [31:0]          w_write_data;
 wire                  w_locked;
 
 reg   [31:0]          r_pix_count;
@@ -81,15 +73,18 @@ ppfifo # (
 
   //read side
   .read_clock       (clk                ),
-  .read_strobe      (i_fifo_strobe      ),
-  .read_ready       (o_fifo_ready       ),
-  .read_activate    (o_fifo_activate    ),
-  .read_count       (o_fifo_size        ),
-  .read_data        (o_fifo_data        )
+  .read_strobe      (i_rfifo_strobe     ),
+  .read_ready       (o_rfifo_ready      ),
+  .read_activate    (i_rfifo_activate   ),
+  .read_count       (o_rfifo_size       ),
+  .read_data        (o_rfifo_data       )
 );
 
 
 //Asynchronous Logic
+wire    [31:0]      i_hcount;           //XXX: Temporary signal, may be removed
+assign              i_hcount = 0;
+
 always @ (*) begin
   if (rst) begin
     next_state      = IDLE;

@@ -6,13 +6,13 @@ import SCons
 from string import Template
 
 
-verilog_builder = Builder ( action = 'iverilog -o$TARGET -c$SOURCE -DSIMULATION', 
+verilog_builder = Builder ( action = 'iverilog -o$TARGET -c$SOURCE -DSIMULATION -Wimplicit',
                             suffix = '.sim')
 sim_builder = Builder     ( action = 'vvp $SOURCE', suffix='.vcd')
 wave_builder = Builder    ( action = 'gtkwave design.vcd &')
 
 env = Environment(ENV=os.environ,
-                  BUILDERS={'verilog':verilog_builder, 
+                  BUILDERS={'verilog':verilog_builder,
                     'sim':sim_builder,
                     'wave':wave_builder})
 

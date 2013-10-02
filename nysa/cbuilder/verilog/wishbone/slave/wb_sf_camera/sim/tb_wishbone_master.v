@@ -57,106 +57,107 @@ SOFTWARE.
 //Sleep a number of clock cycles
 `define SLEEP_CLK(x)  #(x * `CLK_PERIOD)
 
+
 module wishbone_master_tb (
 );
 
 //Virtual Host Interface Signals
-reg                 clk           = 0;
-reg                 rst           = 0;
-wire                w_master_ready;
-reg                 r_in_ready      = 0;
-reg   [31:0]        r_in_command    = 32'h00000000;
-reg   [31:0]        r_in_address    = 32'h00000000;
-reg   [31:0]        r_in_data       = 32'h00000000;
-reg   [27:0]        r_in_data_count = 0;
-reg                 r_out_ready     = 0;
-wire                w_out_en;
-wire  [31:0]        w_out_status;
-wire  [31:0]        w_out_address;
-wire  [31:0]        w_out_data;
-wire  [27:0]        w_out_data_count;
-reg                 r_ih_reset      = 0;
+reg               clk           = 0;
+reg               rst           = 0;
+wire              w_master_ready;
+reg               r_in_ready      = 0;
+reg   [31:0]      r_in_command    = 32'h00000000;
+reg   [31:0]      r_in_address    = 32'h00000000;
+reg   [31:0]      r_in_data       = 32'h00000000;
+reg   [27:0]      r_in_data_count = 0;
+reg               r_out_ready     = 0;
+wire              w_out_en;
+wire  [31:0]      w_out_status;
+wire  [31:0]      w_out_address;
+wire  [31:0]      w_out_data;
+wire  [27:0]      w_out_data_count;
+reg               r_ih_reset      = 0;
 
 //wishbone signals
-wire                w_wbp_we;
-wire                w_wbp_cyc;
-wire                w_wbp_stb;
-wire [3:0]          w_wbp_sel;
-wire [31:0]         w_wbp_adr;
-wire [31:0]         w_wbp_dat_o;
-wire [31:0]         w_wbp_dat_i;
-wire                w_wbp_ack;
-wire                w_wbp_int;
+wire              w_wbp_we;
+wire              w_wbp_cyc;
+wire              w_wbp_stb;
+wire [3:0]        w_wbp_sel;
+wire [31:0]       w_wbp_adr;
+wire [31:0]       w_wbp_dat_o;
+wire [31:0]       w_wbp_dat_i;
+wire              w_wbp_ack;
+wire              w_wbp_int;
 
 //Wishbone master mem bus
-wire                w_wbm_we;
-wire                w_wbm_cyc;
-wire                w_wbm_stb;
-wire [3:0]          w_wbm_sel;
-wire [31:0]         w_wbm_adr;
-wire [31:0]         w_wbm_dat_o;
-wire [31:0]         w_wbm_dat_i;
-wire                w_wbm_ack;
-wire                w_wbm_int;
+wire              w_wbm_we;
+wire              w_wbm_cyc;
+wire              w_wbm_stb;
+wire [3:0]        w_wbm_sel;
+wire [31:0]       w_wbm_adr;
+wire [31:0]       w_wbm_dat_o;
+wire [31:0]       w_wbm_dat_i;
+wire              w_wbm_ack;
+wire              w_wbm_int;
 
 
 
 //Wishbone Slave 0 (DRT) signals
-wire                w_wbs0_we;
-wire                w_wbs0_cyc;
-wire  [31:0]        w_wbs0_dat_o;
-wire                w_wbs0_stb;
-wire  [3:0]         w_wbs0_sel;
-wire                w_wbs0_ack;
-wire  [31:0]        w_wbs0_dat_i;
-wire  [31:0]        w_wbs0_adr;
-wire                w_wbs0_int;
+wire              w_wbs0_we;
+wire              w_wbs0_cyc;
+wire  [31:0]      w_wbs0_dat_o;
+wire              w_wbs0_stb;
+wire  [3:0]       w_wbs0_sel;
+wire              w_wbs0_ack;
+wire  [31:0]      w_wbs0_dat_i;
+wire  [31:0]      w_wbs0_adr;
+wire              w_wbs0_int;
 
 
 //wishbone slave 1 (Unit Under Test) signals
-wire                w_wbs1_we;
-wire                w_wbs1_cyc;
-wire                w_wbs1_stb;
-wire  [3:0]         w_wbs1_sel;
-wire                w_wbs1_ack;
-wire  [31:0]        w_wbs1_dat_i;
-wire  [31:0]        w_wbs1_dat_o;
-wire  [31:0]        w_wbs1_adr;
-wire                w_wbs1_int;
+wire              w_wbs1_we;
+wire              w_wbs1_cyc;
+wire              w_wbs1_stb;
+wire  [3:0]       w_wbs1_sel;
+wire              w_wbs1_ack;
+wire  [31:0]      w_wbs1_dat_i;
+wire  [31:0]      w_wbs1_dat_o;
+wire  [31:0]      w_wbs1_adr;
+wire              w_wbs1_int;
 
 //wishbone slave 0 signals
-wire		            mem0_we_o;
-wire		            mem0_cyc_o;
-wire  [31:0]	      mem0_dat_o;
-wire		            mem0_stb_o;
-wire  [3:0]	        mem0_sel_o;
-wire		            mem0_ack_i;
-wire  [31:0]	      mem0_dat_i;
-wire  [31:0]	      mem0_adr_o;
-wire		            mem0_int_i;
-                    
-wire                sdram_clk;
-wire                sdram_cke;
-wire                sdram_cs_n;
-wire                sdram_ras;
-wire                sdram_cas;
-wire                sdram_we;
-wire      [11:0]    sdram_addr;
-wire      [1:0]     sdram_bank;
-wire      [15:0]    sdram_data;
-wire      [1:0]     sdram_data_mask;
-wire                sdram_ready;
-reg       [15:0]    sdram_in_data;
-                    
-wire                w_arb0_i_wbs_stb;
-wire                w_arb0_i_wbs_cyc;
-wire                w_arb0_i_wbs_we;
-wire  [3:0]         w_arb0_i_wbs_sel;
-wire  [31:0]        w_arb0_i_wbs_dat;
-wire  [31:0]        w_arb0_o_wbs_dat;
-wire  [31:0]        w_arb0_i_wbs_adr;
-wire                w_arb0_o_wbs_ack;
-wire                w_arb0_o_wbs_int;
+wire		          mem0_we_o;
+wire		          mem0_cyc_o;
+wire  [31:0]	    mem0_dat_o;
+wire		          mem0_stb_o;
+wire  [3:0]	      mem0_sel_o;
+wire		          mem0_ack_i;
+wire  [31:0]	    mem0_dat_i;
+wire  [31:0]	    mem0_adr_o;
+wire		          mem0_int_i;
+
+wire              sdram_clk;
+wire              sdram_cke;
+wire              sdram_cs_n;
+wire              sdram_ras;
+wire              sdram_cas;
+wire              sdram_we;
+wire      [11:0]  sdram_addr;
+wire      [1:0]   sdram_bank;
+wire      [15:0]  sdram_data;
+wire      [1:0]   sdram_data_mask;
+wire              sdram_ready;
+reg       [15:0]  sdram_in_data;
+
+wire              w_arb0_i_wbs_stb;
+wire              w_arb0_i_wbs_cyc;
+wire              w_arb0_i_wbs_we;
+wire  [3:0]       w_arb0_i_wbs_sel;
+wire  [31:0]      w_arb0_i_wbs_dat;
+wire  [31:0]      w_arb0_o_wbs_dat;
+wire  [31:0]      w_arb0_i_wbs_adr;
+wire              w_arb0_o_wbs_ack;
+wire              w_arb0_o_wbs_int;
 
 
 
@@ -205,71 +206,69 @@ wire              camera_i_mem_ack;
 wire              camera_i_mem_int;
 
 //mem slave 0
-wire                w_sm0_i_wbs_we;
-wire                w_sm0_i_wbs_cyc;
-wire  [31:0]        w_sm0_i_wbs_dat;
-wire  [31:0]        w_sm0_o_wbs_dat;
-wire  [31:0]        w_sm0_i_wbs_adr;
-wire                w_sm0_i_wbs_stb;
-wire  [3:0]         w_sm0_i_wbs_sel;
-wire                w_sm0_o_wbs_ack;
-wire                w_sm0_o_wbs_int;
+wire              w_sm0_i_wbs_we;
+wire              w_sm0_i_wbs_cyc;
+wire  [31:0]      w_sm0_i_wbs_dat;
+wire  [31:0]      w_sm0_o_wbs_dat;
+wire  [31:0]      w_sm0_i_wbs_adr;
+wire              w_sm0_i_wbs_stb;
+wire  [3:0]       w_sm0_i_wbs_sel;
+wire              w_sm0_o_wbs_ack;
+wire              w_sm0_o_wbs_int;
 
-wire                w_mem_we_o;
-wire                w_mem_cyc_o;
-wire                w_mem_stb_o;
-wire  [3:0]         w_mem_sel_o;
-wire  [31:0]        w_mem_adr_o;
-wire  [31:0]        w_mem_dat_i;
-wire  [31:0]        w_mem_dat_o;
-wire                w_mem_ack_i;
-wire                w_mem_int_i;
+wire              w_mem_we_o;
+wire              w_mem_cyc_o;
+wire              w_mem_stb_o;
+wire  [3:0]       w_mem_sel_o;
+wire  [31:0]      w_mem_adr_o;
+wire  [31:0]      w_mem_dat_i;
+wire  [31:0]      w_mem_dat_o;
+wire              w_mem_ack_i;
+wire              w_mem_int_i;
 
 
-reg                 start = 0;
+reg               start = 0;
 
 //Submodules
 
 wishbone_master wm (
-  .clk                 (clk                 ),
-  .rst                 (rst                 ),
+  .clk            (clk              ),
+  .rst            (rst              ),
 
-  .i_ih_rst            (r_ih_reset          ),
-  .i_ready             (r_in_ready          ),
-  .i_command           (r_in_command        ),
-  .i_address           (r_in_address        ),
-  .i_data              (r_in_data           ),
-  .i_data_count        (r_in_data_count     ),
-  .i_out_ready         (r_out_ready         ),
-  .o_en                (w_out_en            ),
-  .o_status            (w_out_status        ),
-  .o_address           (w_out_address       ),
-  .o_data              (w_out_data          ),
-  .o_data_count        (w_out_data_count    ),
-  .o_master_ready      (w_master_ready      ),
+  .i_ih_rst       (r_ih_reset       ),
+  .i_ready        (r_in_ready       ),
+  .i_command      (r_in_command     ),
+  .i_address      (r_in_address     ),
+  .i_data         (r_in_data        ),
+  .i_data_count   (r_in_data_count  ),
+  .i_out_ready    (r_out_ready      ),
+  .o_en           (w_out_en         ),
+  .o_status       (w_out_status     ),
+  .o_address      (w_out_address    ),
+  .o_data         (w_out_data       ),
+  .o_data_count   (w_out_data_count ),
+  .o_master_ready (w_master_ready   ),
 
-  .o_per_we            (w_wbp_we            ),
-  .o_per_adr           (w_wbp_adr           ),
-  .o_per_dat           (w_wbp_dat_i         ),
-  .i_per_dat           (w_wbp_dat_o         ),
-  .o_per_stb           (w_wbp_stb           ),
-  .o_per_cyc           (w_wbp_cyc           ),
-  .o_per_msk           (w_wbp_msk           ),
-  .o_per_sel           (w_wbp_sel           ),
-  .i_per_ack           (w_wbp_ack           ),
-  .i_per_int           (w_wbp_int           ),
+  .o_per_we       (w_wbp_we         ),
+  .o_per_adr      (w_wbp_adr        ),
+  .o_per_dat      (w_wbp_dat_i      ),
+  .i_per_dat      (w_wbp_dat_o      ),
+  .o_per_stb      (w_wbp_stb        ),
+  .o_per_cyc      (w_wbp_cyc        ),
+  .o_per_sel      (w_wbp_sel        ),
+  .i_per_ack      (w_wbp_ack        ),
+  .i_per_int      (w_wbp_int        ),
 
   //memory interconnect signals
-  .o_mem_we            (w_mem_we_o          ),
-  .o_mem_adr           (w_mem_adr_o         ),
-  .o_mem_dat           (w_mem_dat_o         ),
-  .i_mem_dat           (w_mem_dat_i         ),
-  .o_mem_stb           (w_mem_stb_o         ),
-  .o_mem_cyc           (w_mem_cyc_o         ),
-  .o_mem_msk           (w_mem_msk_o         ),
-  .o_mem_sel           (w_mem_sel_o         ),
-  .i_mem_ack           (w_mem_ack_i         ),
-  .i_mem_int           (w_mem_int_i         )
+  .o_mem_we       (w_mem_we_o       ),
+  .o_mem_adr      (w_mem_adr_o      ),
+  .o_mem_dat      (w_mem_dat_o      ),
+  .i_mem_dat      (w_mem_dat_i      ),
+  .o_mem_stb      (w_mem_stb_o      ),
+  .o_mem_cyc      (w_mem_cyc_o      ),
+  .o_mem_sel      (w_mem_sel_o      ),
+  .i_mem_ack      (w_mem_ack_i      ),
+  .i_mem_int      (w_mem_int_i      )
 
 
 );
@@ -335,7 +334,7 @@ wishbone_interconnect wi (
 
 wishbone_mem_interconnect wmi (
   .clk                 (clk                 ),
-  .rst                 (rst_n               ),
+  .rst                 (rst                 ),
 
   //master
   .i_m_we              (w_mem_we_o          ),
@@ -368,54 +367,54 @@ mt48lc4m16
 //  tdevice_TRCD = 10
 //)
 ram (
-  .A11                 (sdram_addr[11]      ),
-  .A10                 (sdram_addr[10]      ),
-  .A9                  (sdram_addr[9]       ),
-  .A8                  (sdram_addr[8]       ),
-  .A7                  (sdram_addr[7]       ),
-  .A6                  (sdram_addr[6]       ),
-  .A5                  (sdram_addr[5]       ),
-  .A4                  (sdram_addr[4]       ),
-  .A3                  (sdram_addr[3]       ),
-  .A2                  (sdram_addr[2]       ),
-  .A1                  (sdram_addr[1]       ),
-  .A0                  (sdram_addr[0]       ),
+  .A11  (sdram_addr[11]),
+  .A10  (sdram_addr[10]),
+  .A9   (sdram_addr[9]),
+  .A8   (sdram_addr[8]),
+  .A7   (sdram_addr[7]),
+  .A6   (sdram_addr[6]),
+  .A5   (sdram_addr[5]),
+  .A4   (sdram_addr[4]),
+  .A3   (sdram_addr[3]),
+  .A2   (sdram_addr[2]),
+  .A1   (sdram_addr[1]),
+  .A0   (sdram_addr[0]),
 
-  .DQ15                (sdram_data[15]      ),
-  .DQ14                (sdram_data[14]      ),
-  .DQ13                (sdram_data[13]      ),
-  .DQ12                (sdram_data[12]      ),
-  .DQ11                (sdram_data[11]      ),
-  .DQ10                (sdram_data[10]      ),
-  .DQ9                 (sdram_data[9]       ),
-  .DQ8                 (sdram_data[8]       ),
-  .DQ7                 (sdram_data[7]       ),
-  .DQ6                 (sdram_data[6]       ),
-  .DQ5                 (sdram_data[5]       ),
-  .DQ4                 (sdram_data[4]       ),
-  .DQ3                 (sdram_data[3]       ),
-  .DQ2                 (sdram_data[2]       ),
-  .DQ1                 (sdram_data[1]       ),
-  .DQ0                 (sdram_data[0]       ),
+  .DQ15 (sdram_data[15]),
+  .DQ14 (sdram_data[14]),
+  .DQ13 (sdram_data[13]),
+  .DQ12 (sdram_data[12]),
+  .DQ11 (sdram_data[11]),
+  .DQ10 (sdram_data[10]),
+  .DQ9  (sdram_data[9]),
+  .DQ8  (sdram_data[8]),
+  .DQ7  (sdram_data[7]),
+  .DQ6  (sdram_data[6]),
+  .DQ5  (sdram_data[5]),
+  .DQ4  (sdram_data[4]),
+  .DQ3  (sdram_data[3]),
+  .DQ2  (sdram_data[2]),
+  .DQ1  (sdram_data[1]),
+  .DQ0  (sdram_data[0]),
 
-  .BA0                 (sdram_bank[0]       ),
-  .BA1                 (sdram_bank[1]       ),
-  .DQMH                (sdram_data_mask[1]  ),
-  .DQML                (sdram_data_mask[0]  ),
-  .CLK                 (sdram_clk           ),
-  .CKE                 (sdram_cke           ),
-  .WENeg               (sdram_we            ),
-  .RASNeg              (sdram_ras           ),
-  .CSNeg               (sdram_cs_n          ),
-  .CASNeg              (sdram_cas           )
+  .BA0  (sdram_bank[0]),
+  .BA1  (sdram_bank[1]),
+  .DQMH (sdram_data_mask[1]),
+  .DQML (sdram_data_mask[0]),
+  .CLK  (sdram_clk),
+  .CKE  (sdram_cke),
+  .WENeg  (sdram_we),
+  .RASNeg (sdram_ras),
+  .CSNeg  (sdram_cs_n),
+  .CASNeg (sdram_cas)
 );
 
 
 //mem 0
 wb_sdram m0 (
 
-  .clk                 (clk                 ),
-  .rst                 (rst                 ),
+  .clk(clk),
+  .rst(rst),
 
 
   .i_wbs_cyc           (w_arb0_i_wbs_cyc    ),
@@ -447,7 +446,7 @@ wb_sdram m0 (
 
 arbitor_2_masters arb0 (
   .clk                 (clk                 ),
-  .rst                 (rst_n               ),
+  .rst                 (rst                 ),
 
   //masters
   .i_m0_we             (camera_o_mem_we     ),
