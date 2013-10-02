@@ -99,13 +99,6 @@ localparam           REG_MEM_0_SIZE     = 32'h00000005;
 localparam           REG_MEM_1_BASE     = 32'h00000006;
 localparam           REG_MEM_1_SIZE     = 32'h00000007;
 
-//States
-localparam          IDLE                = 4'h0;
-localparam          GET_MEMORY_BLOCK    = 4'h1;
-localparam          READ_DATA           = 4'h2;
-localparam          FINISHED            = 4'h3;
-
-
 //Reg/Wire
 wire                timeout_elapsed;
 reg                 timeout_enable;
