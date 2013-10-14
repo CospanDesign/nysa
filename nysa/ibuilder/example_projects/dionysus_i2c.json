@@ -52,23 +52,7 @@
 					"loc":"led[1:0]",
 					"direction":"output"
 				},
-        "gpio_out[2]":{
-          "loc":"pmoda7",
-          "direction":"output"
-        },
-        "gpio_out[3]":{
-          "loc":"pmoda8",
-          "direction":"output"
-        },
-        "gpio_out[4]":{
-          "loc":"pmoda9",
-          "direction":"output"
-        },
-        "gpio_out[5]":{
-          "loc":"pmoda10",
-          "direction":"output"
-        },
-				"gpio_in[7:6]":{
+				"gpio_in[3:2]":{
 					"loc":"button[1:0]",
 					"direction":"input"
 				}
@@ -86,13 +70,12 @@
           "direction":"inout"
         }
       }
-    }
-  },
+		}
+	},
   "MEMORY":{
 		"mem1":{
 			"filename":"wb_sdram.v",
 			"bind":{
-	
 				"o_sdram_clk":{
 					"loc":"sdram_clk",
 					"direction":"output"
@@ -129,11 +112,11 @@
 					"loc":"dq[15:0]",
 					"direction":"inout"
 				},
-				"io_sdram_data_mask[1]":{
+				"o_sdram_data_mask[1]":{
 					"loc":"dqmh",
 					"direction":"output"
 				},
-				"io_sdram_data_mask[0]":{
+				"o_sdram_data_mask[0]":{
 					"loc":"dqml",
 					"direction":"output"
 				}
@@ -142,9 +125,16 @@
 		}
 	},
 
-	"bind": {
+	"bind":{
+    "clk":{
+      "direction":"input",
+      "loc":"clk"
+    },
+    "rst":{
+      "direction":"input",
+      "loc":"rst"
+    }
 	},
 	"constraint_files":[
 	]
-
 }
