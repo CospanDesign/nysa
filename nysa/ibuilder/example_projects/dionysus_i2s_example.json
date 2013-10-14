@@ -62,11 +62,11 @@
 		"i2s":{
 			"filename":"wb_i2s.v",
 			"BUS":{
-				"mem":"mem1"	
+				"mem":"mem1"
 			},
 			"bind":{
        "writer_starved":{
-        "loc":"s0",
+        "loc":"s3",
         "direction":"output"
        },
        "phy_mclock":{
