@@ -20,7 +20,7 @@
 		"console1":{
 			"filename":"wb_console.v",
 			"BUS":{
-				"fb":"mem1"	
+				"fb":"mem1"
 			}
 		},
 		"console2":{
