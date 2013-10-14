@@ -2,6 +2,7 @@ module wb_ppfifo_2_mem(
 
   input               clk,
   input               rst,
+  output      [31:0]  debug,
 
   //Control
 
@@ -10,16 +11,18 @@ module wb_ppfifo_2_mem(
   input       [31:0]  i_memory_0_base,
   input       [31:0]  i_memory_0_size,
   output      [31:0]  o_memory_0_count,
-  input               i_memory_0_new_data,
-  output  reg         o_memory_0_empty,
+  input               i_memory_0_ready,
+  output              o_memory_0_finished,
+  output              o_memory_0_empty,
 
   output      [31:0]  o_default_mem_0_base,
 
   input       [31:0]  i_memory_1_base,
   input       [31:0]  i_memory_1_size,
   output      [31:0]  o_memory_1_count,
-  input               i_memory_1_new_data,
-  output  reg         o_memory_1_empty,
+  input               i_memory_1_ready,
+  output              o_memory_1_finished,
+  output              o_memory_1_empty,
 
   output      [31:0]  o_default_mem_1_base,
 
@@ -48,7 +51,7 @@ module wb_ppfifo_2_mem(
 //States
 localparam          IDLE                = 4'h0;
 localparam          GET_MEMORY_BLOCK    = 4'h1;
-localparam          WRITE_DATA           = 4'h2;
+localparam          WRITE_DATA          = 4'h2;
 localparam          FINISHED            = 4'h3;
 
 //Registers/Wires
@@ -58,9 +61,6 @@ reg           [31:0]  r_mem_read_size;  //Current Memory Size to read
 wire          [31:0]  w_mem_base  [1:0];
 reg           [31:0]  r_mem_ptr   [1:0];
 wire          [31:0]  r_mem_count [1:0];
-
-wire                  w_mem_0_empty;
-wire                  w_mem_1_empty;
 
 wire          [31:0]  w_mem_0_ptr;
 wire          [31:0]  w_mem_1_ptr;
@@ -85,8 +85,12 @@ assign  o_mem_adr             = w_mem_base[r_active_bank] + r_mem_ptr[r_active_b
 assign  r_mem_count[0]        = i_memory_0_size - r_mem_ptr[0];
 assign  r_mem_count[1]        = i_memory_1_size - r_mem_ptr[1];
 
-assign  w_mem_0_empty         = (r_mem_count[0] == 0);
-assign  w_mem_1_empty         = (r_mem_count[1] == 0);
+assign  o_memory_0_empty      = (r_mem_count[0] == 0) || (i_memory_0_size == 0);
+assign  o_memory_1_empty      = (r_mem_count[1] == 0) || (i_memory_1_size == 0);
+
+
+assign  o_memory_0_finished   = (r_mem_count[0] == 0) && (i_memory_0_size > 0);
+assign  o_memory_1_finished   = (r_mem_count[1] == 0) && (i_memory_1_size > 0);
 
 assign  o_memory_0_count      = r_mem_count[0];
 assign  o_memory_1_count      = r_mem_count[1];
@@ -96,6 +100,22 @@ assign  w_mem_1_ptr           = r_mem_ptr[1];
 
 assign  w_mem_base[0]         = i_memory_0_base;
 assign  w_mem_base[1]         = i_memory_1_base;
+
+assign  debug[0]              = i_enable;
+
+assign  debug[1]              = o_mem_cyc;
+assign  debug[2]              = o_mem_stb;
+assign  debug[3]              = o_mem_we;
+assign  debug[4]              = i_mem_ack;
+assign  debug[5]              = o_write_finished;
+assign  debug[8:6]            = state;
+
+assign  debug[9]              = o_ppfifo_act;
+assign  debug[10]             = o_ppfifo_stb;
+assign  debug[11]             = r_memory_ready;
+assign  debug[12]             = r_active_bank;
+assign  debug[23:16]          = o_mem_adr;
+
 
 
 //Synchronous Logic
@@ -126,7 +146,7 @@ always @ (posedge clk) begin
   else begin
     //De-assert Strobes
     o_ppfifo_stb          <=  0;
-    o_write_finished       <=  0;
+    o_write_finished      <=  0;
 
     //Grab an Available FIFO if the core is activated
     if (i_enable) begin
@@ -216,10 +236,10 @@ always @ (posedge clk) begin
   end
 
   //Reset the pointers
-  if (i_memory_0_new_data) begin
+  if (i_memory_0_ready) begin
     r_mem_ptr[0]          <=  0;
   end
-  if (i_memory_1_new_data) begin
+  if (i_memory_1_ready) begin
     r_mem_ptr[1]          <=  0;
   end
 end

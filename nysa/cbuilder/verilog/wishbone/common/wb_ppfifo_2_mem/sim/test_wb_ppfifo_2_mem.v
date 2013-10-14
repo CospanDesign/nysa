@@ -49,7 +49,7 @@ reg                 r_dclock;
 reg         [31:0]  r_memory_0_base;
 reg         [31:0]  r_memory_0_size;
 wire        [31:0]  w_memory_0_count;
-reg                 r_memory_0_new_data;
+reg                 r_memory_0_ready;
 wire                w_memory_0_empty;
 
 wire        [31:0]  w_default_mem_0_base;
@@ -57,7 +57,7 @@ wire        [31:0]  w_default_mem_0_base;
 reg         [31:0]  r_memory_1_base;
 reg         [31:0]  r_memory_1_size;
 wire        [31:0]  w_memory_1_count;
-reg                 r_memory_1_new_data;
+reg                 r_memory_1_ready;
 wire                w_memory_1_empty;
 
 wire        [31:0]  w_default_mem_1_base;
@@ -91,7 +91,7 @@ wb_ppfifo_2_mem p2m(
   .i_memory_0_base      (r_memory_0_base          ),
   .i_memory_0_size      (r_memory_0_size          ),
   .o_memory_0_count     (w_memory_0_count         ),
-  .i_memory_0_new_data  (r_memory_0_new_data      ),
+  .i_memory_0_ready  (r_memory_0_ready      ),
   .o_memory_0_empty     (w_memory_0_empty         ),
 
   .o_default_mem_0_base (w_default_mem_0_base     ),
@@ -99,7 +99,7 @@ wb_ppfifo_2_mem p2m(
   .i_memory_1_base      (r_memory_1_base          ),
   .i_memory_1_size      (r_memory_1_size          ),
   .o_memory_1_count     (w_memory_1_count         ),
-  .i_memory_1_new_data  (r_memory_1_new_data      ),
+  .i_memory_1_ready  (r_memory_1_ready      ),
   .o_memory_1_empty     (w_memory_1_empty         ),
 
   .o_default_mem_1_base (w_default_mem_1_base     ),
@@ -173,8 +173,8 @@ always @ (posedge clk) begin
     r_memory_0_size <=  0;
     r_memory_1_size <=  0;
 
-    r_memory_0_new_data <=  0;
-    r_memory_1_new_data <=  0;
+    r_memory_0_ready <=  0;
+    r_memory_1_ready <=  0;
 
     /*-------------------------------------*/
   end
@@ -182,8 +182,8 @@ always @ (posedge clk) begin
     /*-------------------------------------
     * Copy the following into you module
     -------------------------------------*/
-    r_memory_0_new_data <=  0;
-    r_memory_1_new_data <=  0;
+    r_memory_0_ready <=  0;
+    r_memory_1_ready <=  0;
     /*-------------------------------------*/
 
     //when the master acks our ack, then put our ack down
@@ -210,7 +210,7 @@ always @ (posedge clk) begin
           REG_MEM_0_SIZE: begin
             r_memory_0_size       <=  i_wbs_dat;
             if (i_wbs_dat > 0) begin
-              r_memory_0_new_data <=  1;
+              r_memory_0_ready    <=  1;
             end
           end
           REG_MEM_1_BASE: begin
@@ -219,7 +219,7 @@ always @ (posedge clk) begin
           REG_MEM_1_SIZE: begin
             r_memory_1_size       <=  i_wbs_dat;
             if (i_wbs_dat > 0) begin
-              r_memory_1_new_data <=  1;
+              r_memory_1_ready    <=  1;
             end
           end
           /*-----------------------------------*/
