@@ -334,26 +334,31 @@ def get_net_names(constraint_filename, debug = False):
     Raises:
         IBuilder Error
     """
+    filepath = get_constraint_file_path(constraint_filename)
+    return constraint_utils.get_net_names(filepath)
 
+def get_constraint_file_path(constraint_filename, debug = False):
     board_dir = os.path.join(nysa_base, "ibuilder", "boards")
     filename = ""
     buf = ""
-    nets = []
-
-
+    clock_rate = ""
     if debug: print "Looking for: " + constraint_filename
     for root, dirs, names in os.walk(board_dir):
         if debug: print "name: " + str(names)
         if constraint_filename in names:
             if debug: print "found the file!"
-            filename =  os.path.join(root, constraint_filename)
-            break
+            return os.path.join(root, constraint_filename)
 
     if (len(filename) == 0):
-        if debug:print "didn't find constraint file"
-        return ""
+        cbuilder_dir = os.path.join(nysa_base, "cbuilder", "verilog")
+        for root, dirs, names in os.walk(cbuilder_dir):
+            if debug: print "name: " + str(names)
+            if constraint_filename in names:
+                if debug: print "found the file!"
+                return os.path.join(root, constraint_filename)
 
-    return constraint_utils.get_net_names(filename)
+    raise IBuilderError("Constraint File: %s wasn't found, looked in board directories and core directories", constraint_filename)
+
 
 def read_clock_rate(constraint_filename, debug = False):
     """Returns a string of the clock rate
@@ -371,21 +376,8 @@ def read_clock_rate(constraint_filename, debug = False):
     Raises:
       Nothing
     """
-    board_dir = os.path.join(nysa_base, "ibuilder", "boards")
-    filename = ""
-    buf = ""
-    clock_rate = ""
-    if debug: print "Looking for: " + constraint_filename
-    for root, dirs, names in os.walk(board_dir):
-        if debug: print "name: " + str(names)
-        if constraint_filename in names:
-            if debug: print "found the file!"
-            filename =  os.path.join(root, constraint_filename)
-            break
-    if (len(filename) == 0):
-        if debug: print "didn't find constraing file"
-        return ""
-    return constraint_utils.read_clock_rate(filename)
+    filepath = get_constraint_file_path(constraint_filename)
+    return constraint_utils.read_clock_rate(filepath)
 
 def _get_slave_list(directory, debug = False):
   """Gets a list of slaves given a directory"""
