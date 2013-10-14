@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 /*
-  Use this to tell sycamore how to populate the Device ROM table
+  Use this to tell Nysa how to populate the Device ROM table
   so that users can interact with your slave
 
   META DATA
