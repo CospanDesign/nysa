@@ -60,6 +60,10 @@
     "Experiment":{
       "description":"Experiment",
       "ID":"0x000E"
+    },
+    "LCD":{
+      "description":"LCD Display",
+      "ID":"0x000F"
     }
   },
   "flags":{
