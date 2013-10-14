@@ -572,7 +572,7 @@ def port_cmp(x, y):
         x_name = x.strip(string.digits)
         y_name = y.strip(string.digits)
         if x_name == y_name:
-            #print "%s == %s" % x_name, y_name
+            #print "%s == %s" % (x_name, y_name)
             x_num = int(x.strip(string.letters), 10)
             y_num = int(y.strip(string.letters), 10)
             #print "x:%s, y:%s, x_num:%d, y_num:%d" % (x, y, x_num, y_num)
