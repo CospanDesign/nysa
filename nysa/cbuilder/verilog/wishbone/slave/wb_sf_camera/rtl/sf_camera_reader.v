@@ -1,10 +1,21 @@
-module sf_camera_reader (
+module sf_camera_reader #(
+  parameter BUFFER_SIZE = 12
+)(
 input                 clk,
 input                 rst,
 
+output      [31:0]    debug,
+
+input                 i_camera_reset,
+input                 i_clk_locked,
+
 //Configuration Registers
 input                 i_enable,
+input                 i_reset_counts,
 output  reg           o_captured,
+output  reg           o_busy,
+output  reg [31:0]    o_pixel_count,
+output  reg [31:0]    o_row_count,
 
 //Physical Interface
 input                 i_pix_clk,
@@ -30,7 +41,6 @@ localparam  IMAGE_CAPTURED  = 4;
 
 //Registers/Wires
 reg   [3:0]           state;
-reg   [3:0]           next_state;
 
 
 //ppfifo interface
@@ -40,28 +50,28 @@ wire  [23:0]          w_write_fifo_size;
 reg                   r_write_strobe;
 reg   [23:0]          r_write_count;
 reg   [1:0]           r_byte_index;
-wire  [31:0]          w_write_data;
+reg   [31:0]          r_write_data;
 wire                  w_locked;
 
 reg   [31:0]          r_pix_count;
 reg   [31:0]          r_pix_per_line;
 reg   [31:0]          r_hcount;
 
-wire  [31:0]          w_dword_pixel;
+reg   [7:0]           r_byte_data [3:0];
+reg                   r_prev_vsync;
+reg                   r_pre_write_strobe;
 
-reg   [7:0]           r_dword_pixel [3:0];
-
-
-
+reg                   r_capture_image_start;
+reg                   r_capture_image;
 
 //Submodules
 ppfifo # (
   .DATA_WIDTH       (32                 ),
-  .ADDRESS_WIDTH    (10                 )
+  .ADDRESS_WIDTH    (BUFFER_SIZE        )
 )camera_fifo        (
 
   //universal input
-  .reset            (rst                ),
+  .reset            (rst || !i_clk_locked),
 
   //write side
   .write_clock      (i_pix_clk          ),
@@ -69,7 +79,7 @@ ppfifo # (
   .write_activate   (r_write_activate   ),
   .write_fifo_size  (w_write_fifo_size  ),
   .write_strobe     (r_write_strobe     ),
-  .write_data       (w_write_data       ),
+  .write_data       (r_write_data       ),
 
   //read side
   .read_clock       (clk                ),
@@ -82,66 +92,79 @@ ppfifo # (
 
 
 //Asynchronous Logic
-wire    [31:0]      i_hcount;           //XXX: Temporary signal, may be removed
-assign              i_hcount = 0;
+assign  debug[0]                  = i_enable;
+assign  debug[2:1]                = w_write_ready;
+assign  debug[4:3]                = r_write_activate;
+assign  debug[5]                  = r_write_strobe;
+assign  debug[13:6]               = i_pix_data;
+assign  debug[14]                 = i_vsync;
+assign  debug[15]                 = i_hsync;
+assign  debug[16]                 = o_busy;
 
-always @ (*) begin
-  if (rst) begin
-    next_state      = IDLE;
-  end
-  else begin
-    case (state)
-      IDLE: begin
-        next_state  = IDLE;
-      end
-      CAPTURE: begin
-      end
-      default: begin
-      end
-    endcase
-  end
-end
+
 //Synchronous Logic
 always @ (posedge i_pix_clk) begin
-  if (rst) begin
-    state         <=  IDLE;
-  end
-  else begin
-    state         <=  next_state;
-  end
-end
-
-always @ (posedge i_pix_clk) begin
-  if (rst) begin
+  if (!i_camera_reset || !i_clk_locked) begin
     r_write_activate              <=  0;
     r_write_strobe                <=  0;
     r_write_count                 <=  0;
     r_byte_index                  <=  0;
-                                 
-    r_dword_pixel[0]              <=  0;
-    r_dword_pixel[1]              <=  0;
-    r_dword_pixel[2]              <=  0;
-    r_dword_pixel[3]              <=  0;
-                                 
+    r_write_data                  <=  0;
+    r_pre_write_strobe            <=  0;
+
+    r_byte_data[0]                <=  0;
+    r_byte_data[1]                <=  0;
+    r_byte_data[2]                <=  0;
+    r_byte_data[3]                <=  0;
+
     r_hcount                      <=  0;
     o_captured                    <=  0;
-  end                            
-  else begin                     
-    //Strobes                    
+    o_busy                        <=  0;
+
+    r_capture_image_start         <=  0;
+    r_capture_image               <=  0;
+
+  end
+  else begin
+    //Strobes
     r_write_strobe                <=  0;
+    r_pre_write_strobe            <=  0;
     o_captured                    <=  0;
+    o_busy                        <=  0;
+    r_capture_image_start         <=  0;
+
+    if (i_enable && !r_capture_image && !r_capture_image_start && i_vsync) begin
+      r_capture_image_start       <=  1;
+    end
+
+    if (r_capture_image_start && !r_capture_image) begin
+      r_capture_image             <=  1;
+    end
+
+
+    if (i_vsync) begin
+      o_busy                      <=  1;
+    end
+    else if (o_busy && !i_vsync) begin
+      o_captured                  <=  1;
+      r_hcount                    <=  0;
+      r_capture_image             <=  0;
+    end
+    if (r_pre_write_strobe) begin
+        r_write_strobe            <=  1;
+    end
 
     //Get an empty FIFO
     if ((w_write_ready > 0) && (r_write_activate == 0)) begin
       r_byte_index                <=  0;
       r_write_count               <=  0;
-                                  
-      r_dword_pixel[0]            <=  0;
-      r_dword_pixel[1]            <=  0;
-      r_dword_pixel[2]            <=  0;
-      r_dword_pixel[3]            <=  0;
 
-      if (w_write_ready[0] == 1) begin
+      r_byte_data[0]              <=  0;
+      r_byte_data[1]              <=  0;
+      r_byte_data[2]              <=  0;
+      r_byte_data[3]              <=  0;
+
+      if (w_write_ready[0]) begin
         r_write_activate[0]       <=  1;
       end
       else begin
@@ -149,29 +172,67 @@ always @ (posedge i_pix_clk) begin
       end
     end
 
-    if (r_hcount > i_hcount) begin
-      o_captured                  <=  0;
-      r_hcount                    <=  0;
+    //Capture Pixels when hsync is high
+    if (i_enable && (r_write_activate > 0)) begin
+      if (i_hsync) begin
+        r_byte_data[r_byte_index]   <=  i_pix_data;
+        if (r_byte_index == 3)begin
+          //if we hit the double word boundary send this peice of data to the
+          //FIFO
+          r_write_count               <=  r_write_count + 1;
+          r_write_data                <=  {r_byte_data[0], r_byte_data[1], r_byte_data[2], i_pix_data};
+          r_pre_write_strobe          <=  1;
+          r_byte_index                <=  0;
+        end
+        else begin
+          r_byte_index                <=  r_byte_index + 1;
+        end
+      end
+      else begin
+        //if the hsync line is low we are done with a line capture
+        if (!r_pre_write_strobe && !r_write_strobe && (r_write_activate > 0) && (r_write_count > 0)) begin
+          r_hcount                  <=  r_hcount + 1;
+          r_byte_index              <=  0;
+          r_write_activate          <=  0;
+          r_write_count             <=  0;
+        end
+      end
+    end
+  end
+end
+
+reg   [31:0]      r_row_count;
+reg   [31:0]      r_pixel_count;
+always @ (posedge i_pix_clk) begin
+  if (!i_camera_reset || !i_clk_locked) begin
+    r_row_count                     <=  0;
+    o_row_count                     <=  0;
+    r_pixel_count                   <=  0;
+    o_pixel_count                   <=  0;
+
+  end
+  else begin
+    if (i_reset_counts) begin
+      o_pixel_count                 <=  0;
+      o_row_count                   <=  0;
     end
 
-    //Capture Pixels when hsync is high
-    if (i_hsync) begin
-      r_dword_pixel[r_byte_index] <=  i_pix_data;
-      if (r_byte_index == 3) begin
-        //if we hit the double word boundary send this peice of data to the
-        //FIFO
-        r_write_strobe            <=  1;
-        r_write_count             <=  r_write_count + 1;
+    if (!i_vsync) begin
+      if ((r_row_count > 0) && (r_row_count > o_row_count)) begin
+        o_row_count                 <=  r_row_count;
       end
-      r_byte_index                <=  r_byte_index + 1;
+      r_row_count                   <=  0;
+    end
+
+    if (!i_hsync) begin
+      if (r_pixel_count > 0) begin
+        o_pixel_count               <=  r_pixel_count;
+        r_row_count                 <=  r_row_count + 1;
+      end
+      r_pixel_count                 <=  0;
     end
     else begin
-      //if the hsync line is low we are done with a line capture
-      if (r_write_count > 0) begin
-        r_byte_index              <=  0;
-        r_write_activate          <=  0;
-        r_hcount                  <=  r_hcount + 1;
-      end
+      r_pixel_count                 <=  r_pixel_count + 1;
     end
   end
 end

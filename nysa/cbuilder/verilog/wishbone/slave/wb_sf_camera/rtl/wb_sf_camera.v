@@ -49,25 +49,28 @@ SOFTWARE.
   META DATA
 
   identification of your device 0 - 65536
-  DRT_ID:(1,)
+  DRT_ID: 13
 
   flags (read drt.txt in the slave/device_rom_table directory 1 means
   a standard device
-  DRT_FLAGS:(1,)
+  DRT_FLAGS: 1
 
   number of registers this should be equal to the nubmer of ADDR_???
   parameters
-  DRT_SIZE:(3,)
+  DRT_SIZE: 8
 
 */
 
 `include "sf_camera_defines.v"
 
-module wb_sf_camera (
+module wb_sf_camera #(
+  parameter           BUFFER_SIZE = 12
+)(
   input               clk,
   input               rst,
 
   //Add signals to control your device here
+  output      [31:0]  debug,
 
   //Wishbone Bus Signals
   input               i_wbs_we,
@@ -84,26 +87,39 @@ module wb_sf_camera (
   //output              o_wbs_int
 
   //master control signal for memory arbitration
-  output              o_mem_we,
-  output              o_mem_stb,
-  output              o_mem_cyc,
-  output      [3:0]   o_mem_sel,
-  output      [31:0]  o_mem_adr,
-  output      [31:0]  o_mem_dat,
-  input       [31:0]  i_mem_dat,
-  input               i_mem_ack,
-  input               i_mem_int
+  output              mem_o_we,
+  output              mem_o_stb,
+  output              mem_o_cyc,
+  output      [3:0]   mem_o_sel,
+  output      [31:0]  mem_o_adr,
+  output      [31:0]  mem_o_dat,
+  input       [31:0]  mem_i_dat,
+  input               mem_i_ack,
+  input               mem_i_int,
+
+
+  output              o_cam_rst,
+  output              o_flash,
+
+  output              o_cam_in_clk,
+  input               i_pix_clk,
+  input               i_flash_strobe,
+  input               i_vsync,
+  input               i_hsync,
+  input       [7:0]   i_pix_data
+
 );
 
 
 //Local Parameters
-localparam           CONTROL            = 32'h00000000;
-localparam           STATUS             = 32'h00000001;
-
-localparam           REG_MEM_0_BASE     = 32'h00000004;
-localparam           REG_MEM_0_SIZE     = 32'h00000005;
-localparam           REG_MEM_1_BASE     = 32'h00000006;
-localparam           REG_MEM_1_SIZE     = 32'h00000007;
+localparam          CONTROL             = 32'h00000000;
+localparam          STATUS              = 32'h00000001;
+localparam          PIXEL_COUNT         = 32'h00000002;
+localparam          ROW_COUNT           = 32'h00000003;
+localparam          REG_MEM_0_BASE      = 32'h00000004;
+localparam          REG_MEM_0_SIZE      = 32'h00000005;
+localparam          REG_MEM_1_BASE      = 32'h00000006;
+localparam          REG_MEM_1_SIZE      = 32'h00000007;
 
 
 
@@ -112,9 +128,14 @@ localparam           REG_MEM_1_SIZE     = 32'h00000007;
 //Control
 reg         [31:0]  control;
 wire        [31:0]  status;
-reg         [31:0]  clock_divider = 1;
 
-wire                w_enable_dma;
+wire                w_auto_flash;
+wire                w_enable;
+wire                w_enable_interrupt;
+wire                w_manual_flash_on;
+wire                w_camera_reset;
+wire                w_reset_counts;
+
 
 //Get the Memory write controller
 //nysa/cbuilder/verilog/wishbone/wb_ppfifo_2_mem/sim/test_wb_ppfifo_2_mem.v
@@ -122,7 +143,8 @@ wire                w_enable_dma;
 reg         [31:0]  r_memory_0_base;
 reg         [31:0]  r_memory_0_size;
 wire        [31:0]  w_memory_0_count;
-reg                 r_memory_0_new_data;
+reg                 r_memory_0_ready;
+wire                w_memory_0_finished;
 wire                w_memory_0_empty;
 
 wire        [31:0]  w_default_mem_0_base;
@@ -130,7 +152,8 @@ wire        [31:0]  w_default_mem_0_base;
 reg         [31:0]  r_memory_1_base;
 reg         [31:0]  r_memory_1_size;
 wire        [31:0]  w_memory_1_count;
-reg                 r_memory_1_new_data;
+reg                 r_memory_1_ready;
+wire                w_memory_1_finished;
 wire                w_memory_1_empty;
 
 wire        [31:0]  w_default_mem_1_base;
@@ -142,21 +165,30 @@ wire                w_rfifo_activate;
 wire                w_rfifo_strobe;
 wire        [31:0]  w_rfifo_data;
 wire        [23:0]  w_rfifo_size;
+wire                w_captured;
+wire                w_busy;
+wire                w_locked;
+
+wire        [31:0]  w_row_count;
+wire        [31:0]  w_pixel_count;
 
 
 //Submodules
 wb_ppfifo_2_mem p2m(
 
   .clk                  (clk                      ),
-  .rst                  (rst                      ),
+  .rst                  (rst  || !w_camera_reset  ),
+  .debug                (debug                    ),
+
 
   //Control
-  .i_enable             (w_enable_dma             ),
+  .i_enable             (w_enable                 ),
 
   .i_memory_0_base      (r_memory_0_base          ),
   .i_memory_0_size      (r_memory_0_size          ),
   .o_memory_0_count     (w_memory_0_count         ),
-  .i_memory_0_new_data  (r_memory_0_new_data      ),
+  .i_memory_0_ready     (r_memory_0_ready         ),
+  .o_memory_0_finished  (w_memory_0_finished      ),
   .o_memory_0_empty     (w_memory_0_empty         ),
 
   .o_default_mem_0_base (w_default_mem_0_base     ),
@@ -164,7 +196,8 @@ wb_ppfifo_2_mem p2m(
   .i_memory_1_base      (r_memory_1_base          ),
   .i_memory_1_size      (r_memory_1_size          ),
   .o_memory_1_count     (w_memory_1_count         ),
-  .i_memory_1_new_data  (r_memory_1_new_data      ),
+  .i_memory_1_ready     (r_memory_1_ready         ),
+  .o_memory_1_finished  (w_memory_1_finished      ),
   .o_memory_1_empty     (w_memory_1_empty         ),
 
   .o_default_mem_1_base (w_default_mem_1_base     ),
@@ -172,15 +205,15 @@ wb_ppfifo_2_mem p2m(
   .o_write_finished     (w_write_finished         ),
 
   //master control signal for memory arbitration
-  .o_mem_we             (o_mem_we                 ),
-  .o_mem_stb            (o_mem_stb                ),
-  .o_mem_cyc            (o_mem_cyc                ),
-  .o_mem_sel            (o_mem_sel                ),
-  .o_mem_adr            (o_mem_adr                ),
-  .o_mem_dat            (o_mem_dat                ),
-  .i_mem_dat            (i_mem_dat                ),
-  .i_mem_ack            (i_mem_ack                ),
-  .i_mem_int            (i_mem_int                ),
+  .o_mem_we             (mem_o_we                 ),
+  .o_mem_stb            (mem_o_stb                ),
+  .o_mem_cyc            (mem_o_cyc                ),
+  .o_mem_sel            (mem_o_sel                ),
+  .o_mem_adr            (mem_o_adr                ),
+  .o_mem_dat            (mem_o_dat                ),
+  .i_mem_dat            (mem_i_dat                ),
+  .i_mem_ack            (mem_i_ack                ),
+  .i_mem_int            (mem_i_int                ),
 
   //Ping Pong FIFO Interface (Read)
   .i_ppfifo_rdy         (w_rfifo_ready            ),
@@ -190,47 +223,108 @@ wb_ppfifo_2_mem p2m(
   .i_ppfifo_data        (w_rfifo_data             )
 );
 
-sf_camera camera(
+sf_camera#(
+  .BUFFER_SIZE          (BUFFER_SIZE              )
+) camera(
   .clk                  (clk                      ),
   .rst                  (rst                      ),
+  //.debug                (debug                    ),
 
-  //Memory Enable
-  .o_enable_dma         (w_enable_dma             ),
   //Ping Pong FIFO Signals
   .o_rfifo_ready        (w_rfifo_ready            ),
   .i_rfifo_activate     (w_rfifo_activate         ),
   .i_rfifo_strobe       (w_rfifo_strobe           ),
   .o_rfifo_data         (w_rfifo_data             ),
-  .o_rfifo_size         (w_rfifo_size             )
+  .o_rfifo_size         (w_rfifo_size             ),
+
+  //Control
+  .i_camera_reset       (w_camera_reset           ),
+  .i_auto_flash         (w_auto_flash             ),
+  .i_manual_flash_on    (w_manual_flash_on        ),
+  .i_enable             (w_enable                 ),
+  .i_reset_counts       (w_reset_counts           ),
+
+  //Status
+  .o_captured           (w_captured               ),
+  .o_busy               (w_busy                   ),
+  .o_row_count          (w_row_count              ),
+  .o_pixel_count        (w_pixel_count            ),
+  .o_clk_locked         (w_locked                 ),
+
+  //Physical Interface
+  .o_cam_rst            (o_cam_rst                ),
+  .o_flash              (o_flash                  ),
+
+  .o_cam_in_clk         (o_cam_in_clk             ),
+  .i_pix_clk            (i_pix_clk                ),
+  .i_flash_strobe       (i_flash_strobe           ),
+  .i_vsync              (i_vsync                  ),
+  .i_hsync              (i_hsync                  ),
+  .i_pix_data           (i_pix_data               )
 );
 
 
 
 
-//Submodules
 
 //Asynchronous Logic
-//Synchronous Logic
+assign  w_enable            = control[`CONTROL_ENABLE];
+assign  w_auto_flash        = control[`CONTROL_AUTO_FLASH];
+assign  w_enable_interrupt  = control[`CONTROL_ENABLE_INTERRUPT];
+assign  w_manual_flash_on   = control[`CONTROL_MANUAL_FLASH_ON];
+assign  w_camera_reset      = control[`CONTROL_CAMERA_RESET];
+assign  w_reset_counts      = control[`CONTROL_RESET_COUNTS];
 
+
+assign  status[`STATUS_MEMORY_0_FINISHED]   = w_memory_0_empty;
+assign  status[`STATUS_MEMORY_1_FINISHED]   = w_memory_1_empty;
+assign  status[`STATUS_IMAGE_CAPTURED]      = w_captured;
+assign  status[`STATUS_BUSY]                = w_busy;
+assign  status[`STATUS_DCM_LOCKED]          = w_locked;
+assign  status[`STATUS_ENABLE]              = w_enable;
+
+//Synchronous Logic
 always @ (posedge clk) begin
   if (rst) begin
-    o_wbs_dat <= 32'h0;
-    o_wbs_ack <= 0;
-    o_wbs_int <= 0;
+    o_wbs_int           <=  0;
+  end
+  else if (w_enable) begin
+    if (i_wbs_stb) begin
+      o_wbs_int         <=  0;
+    end
+    else if (w_memory_0_finished || w_memory_1_finished) begin
+      o_wbs_int         <=  1;
+    end
+    else if (!w_memory_0_finished && !w_memory_1_finished) begin
+      o_wbs_int         <=  0;
+    end
+  end
+  else begin
+    o_wbs_int           <=  0;
+  end
+end
+always @ (posedge clk) begin
+  if (rst) begin
+    o_wbs_dat           <= 32'h0;
+    o_wbs_ack           <= 0;
 
-    r_memory_0_base <=  w_default_mem_0_base;
-    r_memory_1_base <=  w_default_mem_1_base;
+    r_memory_0_base     <=  w_default_mem_0_base;
+    r_memory_1_base     <=  w_default_mem_1_base;
 
     //Nothing in the memory initially
-    r_memory_0_size <=  0;
-    r_memory_1_size <=  0;
+    r_memory_0_size     <=  0;
+    r_memory_1_size     <=  0;
 
-    r_memory_0_new_data <=  0;
-    r_memory_1_new_data <=  0;
+    r_memory_0_ready    <=  0;
+    r_memory_1_ready    <=  0;
+
+    control             <=  0;
 
   end
-
   else begin
+    r_memory_0_ready    <=  0;
+    r_memory_1_ready    <=  0;
+
     //when the master acks our ack, then put our ack down
     if (o_wbs_ack && ~i_wbs_stb)begin
       o_wbs_ack <= 0;
@@ -243,6 +337,7 @@ always @ (posedge clk) begin
         case (i_wbs_adr)
           CONTROL: begin
             $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
+            control               <=  i_wbs_dat;
           end
           STATUS: begin
             $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
@@ -255,7 +350,7 @@ always @ (posedge clk) begin
           REG_MEM_0_SIZE: begin
             r_memory_0_size       <=  i_wbs_dat;
             if (i_wbs_dat > 0) begin
-              r_memory_0_new_data <=  1;
+              r_memory_0_ready    <=  1;
             end
           end
           REG_MEM_1_BASE: begin
@@ -264,7 +359,7 @@ always @ (posedge clk) begin
           REG_MEM_1_SIZE: begin
             r_memory_1_size       <=  i_wbs_dat;
             if (i_wbs_dat > 0) begin
-              r_memory_1_new_data <=  1;
+              r_memory_1_ready    <=  1;
             end
           end
 
@@ -279,13 +374,19 @@ always @ (posedge clk) begin
           case (i_wbs_adr)
             CONTROL: begin
               $display("user read %h", CONTROL);
-              o_wbs_dat <= CONTROL;
+              o_wbs_dat <= control;
             end
             STATUS: begin
               $display("user read %h", STATUS);
-              o_wbs_dat <=  {30'h00000000, w_memory_1_empty, w_memory_0_empty};
+              //o_wbs_dat <=  {30'h00000000, w_memory_1_finished, w_memory_0_finished};
+              o_wbs_dat   <= status;
             end
-
+            PIXEL_COUNT: begin
+              o_wbs_dat <=  w_pixel_count;
+            end
+            ROW_COUNT: begin
+              o_wbs_dat <=  w_row_count;
+            end
             REG_MEM_0_BASE: begin
               o_wbs_dat <=  r_memory_0_base;
             end

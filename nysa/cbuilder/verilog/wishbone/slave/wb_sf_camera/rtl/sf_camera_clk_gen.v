@@ -14,7 +14,7 @@ wire                  phy_bufout;
 //Submodules
 DCM_SP #(
   .CLKDV_DIVIDE         (2.500),
-  .CLKFX_DIVIDE         (5),
+  .CLKFX_DIVIDE         (10),
   .CLKFX_MULTIPLY       (2),
   .CLKIN_DIVIDE_BY_2    ("FALSE"),
   .CLKIN_PERIOD         (20.0),
