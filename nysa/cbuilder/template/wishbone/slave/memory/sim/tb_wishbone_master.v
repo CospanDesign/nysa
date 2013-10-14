@@ -393,7 +393,7 @@ always @ (posedge clk) begin
             timeout_count       <= `TIMEOUT_COUNT;
             state               <= EXECUTE;
           end
-        end
+        //end
         //else begin
         //  $display ("Waiting for SDRAM");
         //end
