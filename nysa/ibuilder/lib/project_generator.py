@@ -38,6 +38,7 @@ import sys
 import os
 import shutil
 import json
+import collections
 
 import utils
 import arbitor
@@ -68,7 +69,7 @@ class ProjectGenerator:
           TypeError
         """
         try:
-            self.project_tags = json.load(open(filename, "r"))
+            self.project_tags = json.load(open(filename, "r"), object_pairs_hook=collections.OrderedDict)
         except IOError as err:
             raise PGE("Error while loadng the project tags: %s" % str(err))
         except TypeError as err:
@@ -263,20 +264,7 @@ class ProjectGenerator:
           ProjectGeneratorError:
             Can't find the constraint file in the board directory
         """
-        board_name  = self.project_tags["board"]
-
-        #Check in this directory
-        test_path = os.path.join(os.getcwd(), constraint_fname)
-        if os.path.exists(test_path):
-            return test_path
-
-        #search through the board directory
-        board_dir = os.path.join(utils.get_nysa_base(), "ibuilder", "boards", board_name, constraint_fname)
-        if debug: print "Board Dir: %s" % board_dir
-        if os.path.exists(board_dir):
-            return board_dir
-       
-        raise IOError ("Path for the constraint file %s not found" % constraint_fname)
+        return utils.get_constraint_file_path(constraint_fname)
 
     def recursive_structure_generator(self,
                     parent_dict = {},
