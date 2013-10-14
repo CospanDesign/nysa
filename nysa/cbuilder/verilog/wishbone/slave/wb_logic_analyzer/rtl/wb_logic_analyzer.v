@@ -52,7 +52,9 @@ SOFTWARE.
 
 `define STATUS_FINISHED           0
 
-module wb_logic_analyzer(
+module wb_logic_analyzer #(
+  parameter DEPTH = 10
+)(
   input                                 clk,
   input                                 rst,
 
@@ -172,7 +174,7 @@ uart_la_interface ulac (
 
 logic_analyzer #(
   .CAPTURE_WIDTH(`CAP_DAT_WIDTH),
-  .CAPTURE_DEPTH(`CAP_MEM_SIZE)
+  .CAPTURE_DEPTH(DEPTH)
 )la (
   .clk(clk),
   .rst(reset),
