@@ -168,7 +168,10 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
                 print "substring: " + substring
             substring = substring.partition(io)[2]
             if (len(substring.partition("reg")[1]) != 0):
-                substring = substring.partition("reg")[2]
+                if (len(substring.partition("reg")[0]) > 0) and  \
+                        (substring.partition("reg")[0][-1].isspace()):
+                    #print "Substring: %s" % substring
+                    substring = substring.partition("reg")[2]
             substring = substring.strip()
             max_val = -1
             min_val = -1
