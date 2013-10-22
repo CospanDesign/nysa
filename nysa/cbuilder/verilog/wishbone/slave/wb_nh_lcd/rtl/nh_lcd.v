@@ -12,12 +12,17 @@ module nh_lcd #(
   input               i_enable,
   input               i_reset_display,
   input               i_data_command_mode,
+
+  input               i_cmd_parameter,
+
   input               i_cmd_write_stb,
   input               i_cmd_read_stb,
   input       [7:0]   i_cmd_data,
   output      [7:0]   o_cmd_data,
   output              o_cmd_finished,
   input               i_backlight_enable,
+  input               i_write_override,
+  input               i_chip_select,
   input       [31:0]  i_num_pixels,
 
   //FIFO Signals
@@ -35,7 +40,7 @@ module nh_lcd #(
   inout       [7:0]   io_data,
   output              o_cs_n,
   output              o_reset_n,
-  input               i_tearing_effect,
+//  input               i_tearing_effect,
   output              o_display_on
 );
 
@@ -47,6 +52,7 @@ wire  [7:0]           w_data_in;
 wire                  w_cmd_write;
 wire                  w_cmd_read;
 wire  [7:0]           w_cmd_data;
+wire                  w_cmd_cmd_mode;
 
 wire                  w_cmd_en_write;
 
@@ -65,6 +71,7 @@ nh_lcd_command lcd_commander (
 //  .debug              (debug                ),
 
   .i_enable             (i_enable             ),
+  .i_cmd_parameter      (i_cmd_parameter      ),
   .i_cmd_write_stb      (i_cmd_write_stb      ),
   .i_cmd_read_stb       (i_cmd_read_stb       ),
   .i_cmd_data           (i_cmd_data           ),
@@ -73,6 +80,7 @@ nh_lcd_command lcd_commander (
   //Control Signals
   .o_cmd_en_write       (w_cmd_en_write       ),
   .o_cmd_finished       (o_cmd_finished       ),
+  .o_cmd_mode           (w_cmd_cmd_mode       ),
 
 
   .o_write              (w_cmd_write          ),
@@ -98,7 +106,7 @@ nh_lcd_data_writer #(
   .o_fifo_size          (o_fifo_size          ),
   .i_fifo_data          (i_fifo_data          ),
 
-  .i_tearing_effect     (i_tearing_effect     ),
+//  .i_tearing_effect     (i_tearing_effect     ),
   .o_data_cmd_mode      (w_data_cmd_mode      ),
   .o_data               (w_data_data          ),
   .o_write              (w_data_write         )
@@ -112,7 +120,7 @@ assign  o_backlight_enable  = i_backlight_enable;
 assign  o_display_on        = i_enable;
 assign  o_reset_n           = ~i_reset_display;
 
-assign  o_register_data_sel = i_data_command_mode && !w_data_cmd_mode;
+assign  o_register_data_sel = (i_data_command_mode) ? w_data_cmd_mode : w_cmd_cmd_mode;
 
 
 assign  w_data_dir          = (i_data_command_mode || w_cmd_en_write);
@@ -121,10 +129,11 @@ assign  w_data_in           = (w_data_dir) ? 8'hZZ: io_data;
 
 assign  w_data_out          = (i_data_command_mode) ? w_data_data   : w_cmd_data;
 
-assign  o_write_n           = (i_data_command_mode) ? ~w_data_write : ~w_cmd_write;
+assign  o_write_n           = (i_write_override) ? 0 : 
+                                (i_data_command_mode) ? ~w_data_write : ~w_cmd_write;
 assign  o_read_n            = (i_data_command_mode) ? 1             : ~w_cmd_read;
 
-assign  o_cs_n              = ~i_enable;
+assign  o_cs_n              = ~i_chip_select;
 
 //Synchronous Logic
 endmodule

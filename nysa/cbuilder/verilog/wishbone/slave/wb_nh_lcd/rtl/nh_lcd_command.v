@@ -9,7 +9,9 @@ module nh_lcd_command (
   input               i_cmd_read_stb,
   input       [7:0]   i_cmd_data,
   output  reg [7:0]   o_cmd_data,
+  output              o_cmd_mode,
   input               i_enable,
+  input               i_cmd_parameter,
 
   output  reg         o_cmd_en_write,
   output  reg         o_cmd_finished,
@@ -29,6 +31,7 @@ localparam  FINISHED  = 4'h1;
 reg           [3:0]   state;
 //Submodules
 //Asynchronous Logic
+assign  o_cmd_mode    = i_cmd_parameter;
 
 //Synchronous Logic
 always @ (posedge clk) begin

@@ -54,6 +54,9 @@ SOFTWARE.
 `define CONTROL_RESET_DISPLAY     4
 `define CONTROL_COMMAND_WRITE     5
 `define CONTROL_COMMAND_READ      6
+`define CONTROL_COMMAND_PARAMETER 7
+`define CONTROL_WRITE_OVERRIDE    8
+`define CONTROL_CHIP_SELECT       9
 
 //status bit definition
 `define STATUS_MEMORY_0_EMPTY     0
@@ -98,7 +101,7 @@ module wb_nh_lcd #(
   inout       [7:0]   io_data,
   output              o_cs_n,
   output              o_reset_n,
-  input               i_tearing_effect,
+//  input               i_tearing_effect,
   output              o_display_on
 );
 
@@ -161,6 +164,9 @@ wire                w_command_mode;
 wire                w_backlight_enable;
 wire                w_cmd_write_stb;
 wire                w_cmd_read_stb;
+wire                w_cmd_parameter;
+wire                w_write_override;
+wire                w_chip_select;
 
 wire                w_cmd_finished;
 reg         [7:0]   r_cmd_data_out;
@@ -191,12 +197,15 @@ nh_lcd #(
   .i_enable            (w_enable            ),
   .i_reset_display     (w_reset_display     ),
   .i_data_command_mode (~w_command_mode     ),
+  .i_cmd_parameter     (w_cmd_parameter     ),
   .i_cmd_write_stb     (w_cmd_write_stb     ),
   .i_cmd_read_stb      (w_cmd_read_stb      ),
   .i_cmd_data          (r_cmd_data_out      ),
   .o_cmd_data          (w_cmd_data_in       ),
   .o_cmd_finished      (w_cmd_finished      ),
   .i_backlight_enable  (w_backlight_enable  ),
+  .i_write_override    (w_write_override    ),
+  .i_chip_select       (w_chip_select       ),
   .i_num_pixels        (r_num_pixels        ),
 
   .o_fifo_rdy          (wfifo_ready         ),
@@ -213,7 +222,7 @@ nh_lcd #(
   .io_data             (io_data             ),
   .o_cs_n              (o_cs_n              ),
   .o_reset_n           (o_reset_n           ),
-  .i_tearing_effect    (i_tearing_effect    ),
+//  .i_tearing_effect    (i_tearing_effect    ),
   .o_display_on        (o_display_on        )
 );
 
@@ -274,6 +283,9 @@ assign        w_backlight_enable      = control[`CONTROL_BACKLIGHT_ENABLE];
 assign        w_reset_display         = control[`CONTROL_RESET_DISPLAY];
 assign        w_cmd_write_stb         = control[`CONTROL_COMMAND_WRITE];
 assign        w_cmd_read_stb          = control[`CONTROL_COMMAND_READ];
+assign        w_cmd_parameter         = control[`CONTROL_COMMAND_PARAMETER];
+assign        w_write_override        = control[`CONTROL_WRITE_OVERRIDE];
+assign        w_chip_select           = control[`CONTROL_CHIP_SELECT];
 
 
 assign        status[`STATUS_MEMORY_0_EMPTY]  = w_memory_0_empty;
@@ -322,9 +334,6 @@ always @ (posedge clk) begin
     if (w_cmd_read_stb) begin
       control[`CONTROL_COMMAND_READ] <=  0;
     end
-
-
-
 
     //when the master acks our ack, then put our ack down
     if (o_wbs_ack & ~ i_wbs_stb)begin

@@ -20,7 +20,7 @@ module nh_lcd_data_writer#(
   input       [31:0]  i_fifo_data,
 
   //Physical Signals
-  input               i_tearing_effect,
+//  input               i_tearing_effect,
   output  reg         o_data_cmd_mode,
   output  reg [7:0]   o_data,
   output  reg         o_write
@@ -97,7 +97,7 @@ always @ (posedge clk) begin
     o_data              <=  0;
     o_write             <=  0;
     state               <=  IDLE;
-    o_data_cmd_mode     <=  0;
+    o_data_cmd_mode     <=  1;
 
     r_read_count        <=  0;
     r_read_stb          <=  0;
@@ -108,6 +108,7 @@ always @ (posedge clk) begin
     //Strobes
     o_write             <=  0;
     r_read_stb          <=  0;
+    o_data_cmd_mode     <=  1;
 
     //Get a ping pong FIFO
     if (w_read_rdy && !r_read_act) begin
@@ -126,7 +127,7 @@ always @ (posedge clk) begin
           if (r_pixel_count == 0) begin
             //We are at the beginning of a Frame, need to start writing to the
             //first address
-            o_data_cmd_mode <=  1;
+            o_data_cmd_mode <=  0;
             o_write         <=  1;
             o_data          <=  `CMD_START_MEM_WRITE;
             state           <=  WRITE_ADDRESS;
@@ -140,31 +141,31 @@ always @ (posedge clk) begin
         state               <=  WRITE_RED_START;
       end
       WRITE_RED_START: begin
-        if (i_tearing_effect) begin
+//        if (i_tearing_effect) begin
           o_write             <=  1;
           o_data              <=  w_red;
           state               <=  WRITE_RED;
-        end
+//        end
       end
       WRITE_RED: begin
         state               <=  WRITE_GREEN_START;
       end
       WRITE_GREEN_START: begin
-        if (i_tearing_effect) begin
+//        if (i_tearing_effect) begin
           o_write             <=  1;
           o_data              <=  w_green;
           state               <=  WRITE_GREEN;
-        end
+//        end
       end
       WRITE_GREEN: begin
         state               <=  WRITE_BLUE_START;
       end
       WRITE_BLUE_START: begin
-        if (i_tearing_effect) begin
+//        if (i_tearing_effect) begin
           o_write             <=  1;
           o_data              <=  w_blue;
           state               <=  WRITE_BLUE;
-        end
+//        end
       end
       WRITE_BLUE: begin
         r_pixel_count       <=  r_pixel_count + 1;
