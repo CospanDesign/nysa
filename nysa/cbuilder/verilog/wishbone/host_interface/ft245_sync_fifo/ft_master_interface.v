@@ -3,11 +3,11 @@ Distributed under the MIT licesnse.
 Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
-this start_of_frametware and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
+this start_of_frametware and associated documentation files (the "Software"), 
+to deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is furnished
+to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
@@ -22,6 +22,15 @@ SOFTWARE.
 */
 
 //ft_master_interface.v
+
+/*
+ * Change log
+ * 10/23/2013
+ *  -Fixed a bug in the response where the full response is always sent even
+ *  when a Ping was returned
+ *  -Added interrupts to the full 13 charater response type
+ *
+ */
 
 `timescale 1ns/1ps
 
@@ -463,7 +472,7 @@ always @ (posedge clk ) begin
           if (  (i_out_status[3:0] == `READ_RESP)        ||
                 (i_out_status[3:0] == `WRITE_RESP)       ||
                 (i_out_status[3:0] == `MASTER_ADDR_RESP) ||
-                (i_out_status[3:0] == `PING_RESP) ||
+                (i_out_status[3:0] == `PERIPH_INTERRUPT) ||
                 (i_out_status[3:0] == `CORE_DUMP_RESP) ) begin
 
             out_packet[2]       <=  i_out_data_count[23:16];
