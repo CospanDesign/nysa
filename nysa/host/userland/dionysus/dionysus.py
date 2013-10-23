@@ -54,6 +54,7 @@ class Dionysus (Nysa):
         self.product = idProduct
         self.dev = Ftdi()
         self._open_dev()
+        self.name = "Dionysus"
 
 
     def __del__(self):
@@ -74,7 +75,10 @@ class Dionysus (Nysa):
         Raises:
             Exception
         """
+        #This frequency should go up to 60MHz
         frequency = 30.0E6
+        #Latency can go down to 2 but there is a small chance there will be a
+        #crash
         latency  = 4
         self.dev.open(self.vendor, self.product, 0)
 
@@ -85,14 +89,13 @@ class Dionysus (Nysa):
         #Enable MPSSE Mode
         self.dev.set_bitmode(0x00, Ftdi.BITMODE_SYNCFF)
 
-
         #Configure Clock
         frequency = self.dev._set_frequency(frequency)
 
         #Set Latency Timer
         self.dev.set_latency_timer(latency)
 
-        #Set Chunk Size
+        #Set Chunk Size (Maximum Chunk size)
         self.dev.write_data_set_chunksize(0x10000)
         self.dev.read_data_set_chunksize(0x10000)
 
@@ -105,6 +108,18 @@ class Dionysus (Nysa):
         """read
 
         read data from Dionysus
+
+        Command Format
+
+        ID 02 NN NN NN OO AA AA AA
+           ID: ID Byte (0xCD)
+           02: Read Command (12 for memory read)
+           NN: Size of Read (3 Bytes)
+           OO: Offset (for peripheral, part of address for mem)
+           AA: Address (3 bytes for peripheral,
+               (4 bytes including offset for mem)
+
+
 
         Args:
             device_id (int): Device Identification number, found in the DRT
@@ -120,6 +135,8 @@ class Dionysus (Nysa):
         Raises:
             NysaCommError
         """
+
+
         read_data = Array('B')
         #Set up the ID and the 'Read command (0x02)'
         write_data = Array('B', [0xCD, 0x02])
@@ -199,6 +216,7 @@ class Dionysus (Nysa):
             print "Response Status: %s" % str(rsp[:8])
             print "Response Data:\n\t%s" % str(rsp[8:])
 
+        #Strip away the communication status information
         return rsp[8:]
 
 
@@ -206,6 +224,19 @@ class Dionysus (Nysa):
         """write
 
         Write data to a Nysa image
+
+        Command Format
+
+        ID 01 NN NN NN OO AA AA AA DD DD DD DD
+           ID: ID Byte (0xCD)
+           01: Write Command (11 for Memory Write)
+           NN: Size of Write (3 Bytes)
+           OO: Offset (for peripheral, part of address for mem)
+           AA: Address (3 bytes for peripheral,
+             #(4 bytes including offset for mem)
+           DD: Data (4 bytes)
+
+
 
         Args:
             device_id (int): Device identification number, found in the DRT
@@ -220,17 +251,8 @@ class Dionysus (Nysa):
         Raises:
             NysaCommError
         """
+
         length = len(data) / 4
-
-        #ID 01 NN NN NN OO AA AA AA DD DD DD DD
-            # ID: ID Byte (0xCD)
-            # 01: Write Command
-            # NN: Size of Write (3 Bytes)
-            # OO: Offset (for peripheral, part of address for mem)
-            # AA: Address (3 bytes for peripheral,
-                #(4 bytes including offset for mem)
-            # DD: Data (4 bytes)
-
         #Create an Array with the identification byte and code for writing
         data_out = Array ('B', [0xCD, 0x01])
         if mem_device:
@@ -291,6 +313,13 @@ class Dionysus (Nysa):
     def ping (self):
         """ping
 
+        Command Format
+
+        ID 00 00 00 00 00 00 00 00
+            ID: ID Byte (0xCD)
+            00: Ping Command
+            00 00 00 00 00 00 00: Zeros
+
         Args:
             Nothing
 
@@ -328,7 +357,7 @@ class Dionysus (Nysa):
         if not 0xDC in rsp:
             if self.debug:
                 print "ID byte not found in response"
-            raise NysaCommError("Ping response did not contain ID: %s" str(temp))
+            raise NysaCommError("Ping response did not contain ID: %s" % str(temp))
 
         index = rsp.index (0xDC) + 1
         read_data = Array('B')
@@ -347,6 +376,11 @@ def reset (self):
 
     Software reset the Nysa FPGA Master, this may not actually reset the entire
     FPGA image
+
+    ID 03 00 00 00
+        ID: ID Byte (0xCD)
+        00: Reset Command
+        00 00 00: Zeros
 
     Args:
         Nothing
@@ -370,6 +404,13 @@ def dump_core(self):
 
     Returns the state of the wishbone master priorto a reset, this is usefu for
     debugging a crash
+
+    Command Format
+
+    ID 0F 00 00 00 00 00 00 00
+        ID: ID Byte (0xCD)
+        0F: Dump Core Command
+        00 00 00 00 00 00 00 00 00 00 00: Zeros
 
     Args:
         Nothing
@@ -410,9 +451,10 @@ def dump_core(self):
     read_total = 4
     read_count = len(rsp)
 
-    #Get the number of items from the address
+    #Get the number of items from the incomming data, This size is set by the
+    #Wishbone Master
     timeout = time.time() + wait_time
-    while (time.time() < timeout) and read_count < read_total):
+    while (time.time() < timeout) and (read_count < read_total):
         response = self.dev.read_data(read_total - read_count)
         temp = Array('B')
         temp.fromstring(response)
@@ -461,6 +503,17 @@ def wait_for_interrupts(self, wait_time = 1):
     """ wait_for_interrupts
 
     listen for interrupts for the user specified amount of time
+
+    The Nysa image will send a small packet of info to the host when a slave
+    needs to send information to the host
+
+    Response Format
+    DC 01 00 00 00 II II II II
+        DC: Inverted CD is the start of a response
+        01: Interrupt ID
+        00 00 00 00: Zeros, reserved for future use
+        II II II II: 32-bit interrupts
+
 
     Args:
         wait_time (Integer): the amount of time in seconds to wait for an
