@@ -460,10 +460,11 @@ always @ (posedge clk ) begin
           out_packet[0]         <=  8'hDC;
           out_packet[1]         <=  i_out_status[7:0];
           oh_status             <=  i_out_status[3:0];
-          if (  (oh_status == `READ_RESP)        ||
-                (oh_status == `WRITE_RESP)       ||
-                (oh_status == `MASTER_ADDR_RESP) ||
-                (oh_status == `CORE_DUMP_RESP) ) begin
+          if (  (i_out_status[3:0] == `READ_RESP)        ||
+                (i_out_status[3:0] == `WRITE_RESP)       ||
+                (i_out_status[3:0] == `MASTER_ADDR_RESP) ||
+                (i_out_status[3:0] == `PING_RESP) ||
+                (i_out_status[3:0] == `CORE_DUMP_RESP) ) begin
 
             out_packet[2]       <=  i_out_data_count[23:16];
             out_packet[3]       <=  i_out_data_count[15:8];
