@@ -269,8 +269,8 @@ sf_camera#(
 
 //Asynchronous Logic
 assign  w_enable            = control[`CONTROL_ENABLE];
-assign  w_auto_flash        = control[`CONTROL_AUTO_FLASH];
 assign  w_enable_interrupt  = control[`CONTROL_ENABLE_INTERRUPT];
+assign  w_auto_flash        = control[`CONTROL_AUTO_FLASH];
 assign  w_manual_flash_on   = control[`CONTROL_MANUAL_FLASH_ON];
 assign  w_camera_reset      = control[`CONTROL_CAMERA_RESET];
 assign  w_reset_counts      = control[`CONTROL_RESET_COUNTS];

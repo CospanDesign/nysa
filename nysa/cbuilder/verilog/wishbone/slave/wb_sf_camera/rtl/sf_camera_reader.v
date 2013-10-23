@@ -61,7 +61,6 @@ reg   [7:0]           r_byte_data [3:0];
 reg                   r_prev_vsync;
 reg                   r_pre_write_strobe;
 
-reg                   r_capture_image_start;
 reg                   r_capture_image;
 
 //Submodules
@@ -121,7 +120,6 @@ always @ (posedge i_pix_clk) begin
     o_captured                    <=  0;
     o_busy                        <=  0;
 
-    r_capture_image_start         <=  0;
     r_capture_image               <=  0;
 
   end
@@ -131,21 +129,15 @@ always @ (posedge i_pix_clk) begin
     r_pre_write_strobe            <=  0;
     o_captured                    <=  0;
     o_busy                        <=  0;
-    r_capture_image_start         <=  0;
 
-    if (i_enable && !r_capture_image && !r_capture_image_start && i_vsync) begin
-      r_capture_image_start       <=  1;
-    end
-
-    if (r_capture_image_start && !r_capture_image) begin
+    if (i_enable && !r_capture_image && !i_vsync) begin
       r_capture_image             <=  1;
     end
-
 
     if (i_vsync) begin
       o_busy                      <=  1;
     end
-    else if (o_busy && !i_vsync) begin
+    else if (o_busy && !i_vsync && r_capture_image) begin
       o_captured                  <=  1;
       r_hcount                    <=  0;
       r_capture_image             <=  0;
@@ -173,7 +165,7 @@ always @ (posedge i_pix_clk) begin
     end
 
     //Capture Pixels when hsync is high
-    if (i_enable && (r_write_activate > 0)) begin
+    if (i_enable && (r_write_activate > 0) && r_capture_image) begin
       if (i_hsync) begin
         r_byte_data[r_byte_index]   <=  i_pix_data;
         if (r_byte_index == 3)begin
