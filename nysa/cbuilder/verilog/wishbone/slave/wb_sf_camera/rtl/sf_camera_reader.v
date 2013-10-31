@@ -8,11 +8,14 @@ output      [31:0]    debug,
 
 input                 i_camera_reset,
 input                 i_clk_locked,
+input                 i_memory_ready,
+input                 i_image_debug_en,
+output                o_inactive,
 
 //Configuration Registers
 input                 i_enable,
 input                 i_reset_counts,
-output  reg           o_captured,
+output                o_captured,
 output  reg           o_busy,
 output  reg [31:0]    o_pixel_count,
 output  reg [31:0]    o_row_count,
@@ -62,8 +65,31 @@ reg                   r_prev_vsync;
 reg                   r_pre_write_strobe;
 
 reg                   r_capture_image;
+reg                   r_capture_strobe;
+
+wire                  w_inactive;
+reg                   r_image_debugger;
+
+
 
 //Submodules
+cross_clock_strobe ccs(
+  .rst              (rst || !i_clk_locked),
+  .in_clk           (i_pix_clk          ),
+  .in_stb           (r_capture_strobe   ),
+
+  .out_clk          (clk                ),
+  .out_stb          (o_captured         )
+);
+
+cross_clock_enable cce(
+  .rst              (rst || !i_clk_locked),
+  .in_en            (w_inactive         ),
+
+  .out_clk          (clk                ),
+  .out_en           (o_inactive         )
+);
+
 ppfifo # (
   .DATA_WIDTH       (32                 ),
   .ADDRESS_WIDTH    (BUFFER_SIZE        )
@@ -79,6 +105,8 @@ ppfifo # (
   .write_fifo_size  (w_write_fifo_size  ),
   .write_strobe     (r_write_strobe     ),
   .write_data       (r_write_data       ),
+
+  .inactive          (w_inactive          ),
 
   //read side
   .read_clock       (clk                ),
@@ -117,28 +145,36 @@ always @ (posedge i_pix_clk) begin
     r_byte_data[3]                <=  0;
 
     r_hcount                      <=  0;
-    o_captured                    <=  0;
+    r_capture_strobe              <=  0;
     o_busy                        <=  0;
 
     r_capture_image               <=  0;
+    r_image_debugger              <=  0;
 
   end
   else begin
     //Strobes
     r_write_strobe                <=  0;
     r_pre_write_strobe            <=  0;
-    o_captured                    <=  0;
-    o_busy                        <=  0;
+    r_capture_strobe              <=  0;
 
-    if (i_enable && !r_capture_image && !i_vsync) begin
+    //Detect the start of a frame
+    //Only attempt to start a frame when we have an active FIFO
+    if (i_enable && !r_capture_image && !i_vsync && (r_write_activate > 0) && i_memory_ready) begin
       r_capture_image             <=  1;
+      r_image_debugger            <=  ~r_image_debugger;
+    end
+    else if (!i_vsync && !i_memory_ready) begin
+      r_capture_image             <=  0;
+      r_image_debugger            <=  ~r_image_debugger;
     end
 
     if (i_vsync) begin
       o_busy                      <=  1;
     end
-    else if (o_busy && !i_vsync && r_capture_image) begin
-      o_captured                  <=  1;
+    else if (o_busy && w_inactive && r_capture_image) begin
+      o_busy                      <=  0;
+      r_capture_strobe            <=  1;
       r_hcount                    <=  0;
       r_capture_image             <=  0;
     end
@@ -166,13 +202,33 @@ always @ (posedge i_pix_clk) begin
 
     //Capture Pixels when hsync is high
     if (i_enable && (r_write_activate > 0) && r_capture_image) begin
-      if (i_hsync) begin
+      if (i_hsync && i_vsync) begin
         r_byte_data[r_byte_index]   <=  i_pix_data;
         if (r_byte_index == 3)begin
           //if we hit the double word boundary send this peice of data to the
           //FIFO
           r_write_count               <=  r_write_count + 1;
-          r_write_data                <=  {r_byte_data[0], r_byte_data[1], r_byte_data[2], i_pix_data};
+          if (i_image_debug_en) begin
+            if (r_image_debugger) begin
+              if (r_write_count == 0) begin
+                r_write_data            <=  32'h001F001F;
+              end
+              else begin
+                r_write_data            <=  32'h07D007D0;
+              end
+            end
+            else begin
+              if (r_write_count == 0) begin
+                r_write_data            <=  32'hFFFFFFFF;
+              end
+              else begin
+                r_write_data            <=  32'hF800F800;
+              end
+            end
+          end
+          else begin
+            r_write_data                <=  {r_byte_data[0], r_byte_data[1], r_byte_data[2], i_pix_data};
+          end
           r_pre_write_strobe          <=  1;
           r_byte_index                <=  0;
         end

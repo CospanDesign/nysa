@@ -171,6 +171,12 @@ wire                w_locked;
 
 wire        [31:0]  w_row_count;
 wire        [31:0]  w_pixel_count;
+reg                 r_flush_memory;
+wire                w_inactive;
+
+wire                w_memory_idle;
+wire                w_image_debug_en;
+
 
 
 //Submodules
@@ -180,9 +186,9 @@ wb_ppfifo_2_mem p2m(
   .rst                  (rst  || !w_camera_reset  ),
   .debug                (debug                    ),
 
-
   //Control
   .i_enable             (w_enable                 ),
+  .i_flush              (r_flush_memory           ),
 
   .i_memory_0_base      (r_memory_0_base          ),
   .i_memory_0_size      (r_memory_0_size          ),
@@ -243,6 +249,9 @@ sf_camera#(
   .i_manual_flash_on    (w_manual_flash_on        ),
   .i_enable             (w_enable                 ),
   .i_reset_counts       (w_reset_counts           ),
+  .i_memory_ready       (w_memory_ready           ),
+  .o_inactive           (w_inactive               ),
+  .i_image_debug_en     (w_image_debug_en         ),
 
   //Status
   .o_captured           (w_captured               ),
@@ -274,14 +283,29 @@ assign  w_auto_flash        = control[`CONTROL_AUTO_FLASH];
 assign  w_manual_flash_on   = control[`CONTROL_MANUAL_FLASH_ON];
 assign  w_camera_reset      = control[`CONTROL_CAMERA_RESET];
 assign  w_reset_counts      = control[`CONTROL_RESET_COUNTS];
+assign  w_image_debug_en    = control[`CONTROL_IMAGE_DEBUG];
 
 
-assign  status[`STATUS_MEMORY_0_FINISHED]   = w_memory_0_empty;
-assign  status[`STATUS_MEMORY_1_FINISHED]   = w_memory_1_empty;
-assign  status[`STATUS_IMAGE_CAPTURED]      = w_captured;
-assign  status[`STATUS_BUSY]                = w_busy;
-assign  status[`STATUS_DCM_LOCKED]          = w_locked;
-assign  status[`STATUS_ENABLE]              = w_enable;
+//assign  status[`STATUS_MEMORY_0_FINISHED]   = w_memory_0_finished;
+//assign  status[`STATUS_MEMORY_1_FINISHED]   = w_memory_1_finished;
+//assign  status[`STATUS_IMAGE_CAPTURED]      = w_captured;
+//assign  status[`STATUS_BUSY]                = w_busy;
+//assign  status[`STATUS_DCM_LOCKED]          = w_locked;
+//assign  status[`STATUS_ENABLE]              = w_enable;
+//assign  status[`STATUS_MEMORY_0_EMPTY]      = w_memory_0_empty;
+//assign  status[`STATUS_MEMORY_1_EMPTY]      = w_memory_1_empty;
+assign  status                              = { 24'h0,
+                                                (r_memory_0_size > 0),
+                                                (r_memory_1_size > 0),
+                                                w_captured,
+                                                w_busy,
+                                                w_locked,
+                                                w_enable,
+                                                w_memory_1_finished,
+                                                w_memory_0_finished
+                                              };
+
+assign w_memory_ready                       = (!w_memory_0_empty) || (!w_memory_1_empty);
 
 //Synchronous Logic
 always @ (posedge clk) begin
@@ -342,8 +366,6 @@ always @ (posedge clk) begin
           STATUS: begin
             $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
           end
-
-
           REG_MEM_0_BASE: begin
             r_memory_0_base       <=  i_wbs_dat;
           end
@@ -374,12 +396,19 @@ always @ (posedge clk) begin
           case (i_wbs_adr)
             CONTROL: begin
               $display("user read %h", CONTROL);
-              o_wbs_dat <= control;
+              o_wbs_dat           <= control;
             end
             STATUS: begin
               $display("user read %h", STATUS);
-              //o_wbs_dat <=  {30'h00000000, w_memory_1_finished, w_memory_0_finished};
-              o_wbs_dat   <= status;
+              o_wbs_dat           <= status;
+              if (w_memory_0_finished) begin
+                $display ("Reset size 0");
+                r_memory_0_size   <=  0;
+              end
+              if (w_memory_1_finished) begin
+                $display ("Reset size 1");
+                r_memory_1_size   <=  0;
+              end
             end
             PIXEL_COUNT: begin
               o_wbs_dat <=  w_pixel_count;
@@ -406,6 +435,34 @@ always @ (posedge clk) begin
         end
       end
       o_wbs_ack <= 1;
+    end
+  end
+end
+
+reg r_captured_en;
+
+assign w_memory_idle = (r_memory_0_size > 32'h0) ? (w_memory_0_count == 32'h0):
+                       (r_memory_1_size > 32'h0) ? (w_memory_1_count == 32'h0):
+                       1;
+
+
+always @ (posedge clk) begin
+  if (rst) begin
+    r_flush_memory      <=  0;
+    r_captured_en       <=  0;
+  end
+  else begin
+    r_flush_memory      <=  0;
+    if (w_captured) begin
+      r_captured_en     <=  1;
+    end
+    //Find the conditions in which we need to strobe r_flush_memory
+    if (w_inactive && r_captured_en) begin
+      r_flush_memory      <=  1;
+      if (w_memory_idle) begin
+        r_flush_memory    <=  1;
+        r_captured_en     <=  0;
+      end
     end
   end
 end

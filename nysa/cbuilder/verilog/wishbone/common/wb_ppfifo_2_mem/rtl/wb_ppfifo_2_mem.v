@@ -28,6 +28,8 @@ module wb_ppfifo_2_mem(
 
   output  reg         o_write_finished,
 
+  input               i_flush,
+
   //master control signal for memory arbitration
   output  reg         o_mem_we,
   output  reg         o_mem_stb,
@@ -82,8 +84,8 @@ assign  o_default_mem_1_base  = 32'h00200000;
 
 assign  o_mem_adr             = w_mem_base[r_active_bank] + r_mem_ptr[r_active_bank];
 
-assign  r_mem_count[0]        = i_memory_0_size - r_mem_ptr[0];
-assign  r_mem_count[1]        = i_memory_1_size - r_mem_ptr[1];
+assign  r_mem_count[0]        = (i_memory_0_size > 0) ? i_memory_0_size - r_mem_ptr[0] : 32'h0;
+assign  r_mem_count[1]        = (i_memory_1_size > 0) ? i_memory_1_size - r_mem_ptr[1] : 32'h0;
 
 assign  o_memory_0_empty      = (r_mem_count[0] == 0) || (i_memory_0_size == 0);
 assign  o_memory_1_empty      = (r_mem_count[1] == 0) || (i_memory_1_size == 0);
@@ -141,6 +143,7 @@ always @ (posedge clk) begin
     r_mem_ptr[0]          <=  0;
     r_mem_ptr[1]          <=  0;
 
+
     state                 <=  IDLE;
   end
   else begin
@@ -173,8 +176,10 @@ always @ (posedge clk) begin
         //Check if there is a memory block available
         //If so get a reference to it
         if (r_memory_ready) begin
-          r_mem_read_size <=  r_mem_count[r_active_bank];
-          state           <=  WRITE_DATA;
+          r_mem_read_size             <=  r_mem_count[r_active_bank];
+          state                       <=  WRITE_DATA;
+          r_mem_ptr[r_active_bank]    <=  0;
+
         end
         else begin
 
@@ -184,7 +189,7 @@ always @ (posedge clk) begin
         end
       end
       WRITE_DATA: begin
-        if (r_mem_ptr[r_active_bank] < r_mem_read_size) begin
+        if ((r_mem_ptr[r_active_bank] < r_mem_read_size) && r_memory_ready) begin
           if (o_ppfifo_act) begin
             //If the FIFO has data
             //if (r_mem_ptr[r_active_bank] < i_ppfifo_size) begin
@@ -194,7 +199,7 @@ always @ (posedge clk) begin
               o_mem_stb   <=  1;
 
               //Ping Pong FIFO has room
-              //if we received data from the memory bus, read them in
+              //if we received an ack, we have written a peice of data
               if (i_mem_ack && o_mem_stb) begin
                 r_ppfifo_count            <=  r_ppfifo_count + 1;
                 r_mem_ptr[r_active_bank]  <=  r_mem_ptr[r_active_bank] + 1;
@@ -236,10 +241,10 @@ always @ (posedge clk) begin
   end
 
   //Reset the pointers
-  if (i_memory_0_ready) begin
+  if (i_memory_0_ready || (i_memory_0_size == 0)) begin
     r_mem_ptr[0]          <=  0;
   end
-  if (i_memory_1_ready) begin
+  if (i_memory_1_ready || (i_memory_1_size == 0)) begin
     r_mem_ptr[1]          <=  0;
   end
 end
@@ -280,7 +285,7 @@ end
 //Simulation information
 always @ (posedge clk) begin
   if (o_ppfifo_stb) begin
-    $display ("\t__wb_ppfifo_2_mem: Wrote: %h: Write Count: %h", i_ppfifo_data, r_ppfifo_count);
+    $display ("\twb_ppfifo_2_mem: Wrote: %h: Write Count: %h", i_ppfifo_data, r_ppfifo_count);
   end
 end
 

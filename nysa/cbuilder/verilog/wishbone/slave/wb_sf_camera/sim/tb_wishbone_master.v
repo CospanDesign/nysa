@@ -239,6 +239,8 @@ wire  [7:0]       w_pix_data;
 
 wire              start;
 
+assign            w_wbs0_int  = 0;
+
 //Submodules
 wishbone_master wm (
   .clk            (clk              ),
@@ -523,6 +525,7 @@ sim_camera cam (
 assign  w_wbs0_ack   = 0;
 assign  w_wbs0_dat_o = 0;
 assign  start = sdram_ready;
+
 
 
 

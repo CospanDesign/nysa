@@ -11,6 +11,9 @@ input                 i_auto_flash,
 input                 i_manual_flash_on,
 input                 i_reset_counts,
 input                 i_enable,
+input                 i_memory_ready,
+output                o_inactive,
+input                 i_image_debug_en,
 
 output                o_captured,
 output                o_clk_locked,
@@ -62,10 +65,13 @@ sf_camera_reader#(
 
   .i_camera_reset       (i_camera_reset           ),
   .i_clk_locked         (o_clk_locked             ),
+  .i_memory_ready       (i_memory_ready           ),
+  .o_inactive           (o_inactive               ),
 
   //Control
   .i_enable             (i_enable                 ),
   .i_reset_counts       (i_reset_counts           ),
+  .i_image_debug_en     (i_image_debug_en         ),
 
   //Status
   .o_captured           (o_captured               ),

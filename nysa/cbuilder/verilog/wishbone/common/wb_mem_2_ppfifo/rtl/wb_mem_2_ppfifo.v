@@ -300,7 +300,7 @@ end
 //Simulation information
 always @ (posedge clk) begin
   if (o_ppfifo_stb) begin
-    $display ("\t__wb_mem_2_ppfifo: Wrote: %h: Write Count: %h", o_ppfifo_data, r_ppfifo_count);
+    $display ("\twb_mem_2_ppfifo: Wrote: %h: Write Count: %h", o_ppfifo_data, r_ppfifo_count);
   end
 end
 

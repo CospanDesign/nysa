@@ -31,6 +31,7 @@ ${NYSA}/cbuilder/verilog/wishbone/master/wishbone_master.v
 ${NYSA}/cbuilder/verilog/generic/ppfifo.v
 ${NYSA}/cbuilder/verilog/generic/blk_mem.v
 ${NYSA}/cbuilder/verilog/generic/cross_clock_enable.v
+${NYSA}/cbuilder/verilog/generic/cross_clock_strobe.v
 
 #SDRAM
 ../wb_sdram/rtl/sdram.v
