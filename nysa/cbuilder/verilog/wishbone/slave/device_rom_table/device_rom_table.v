@@ -107,25 +107,22 @@ always @ (posedge clk) begin
     o_wbs_ack <= 0;
     o_wbs_int <= 0;
   end
-
-  //when the master acks our ack, then put our ack down
-  if (o_wbs_ack & ~ i_wbs_stb)begin
-    o_wbs_ack <= 0;
-  end
-
-  if (i_wbs_stb & i_wbs_cyc) begin
-    //master is requesting somethign
-    if (i_wbs_we) begin
-      //ROMS can't be written to
+  else begin
+    //when the master acks our ack, then put our ack down
+    if (o_wbs_ack & ~ i_wbs_stb)begin
+      o_wbs_ack <= 0;
     end
-
-    else begin
-      //read request
-      o_wbs_dat <= drt[i_wbs_adr];
+    if (i_wbs_stb & i_wbs_cyc) begin
+      //master is requesting somethign
+      if (i_wbs_we) begin
+        //ROMS can't be written to
+      end
+      else begin
+        //read request
+        o_wbs_dat <= drt[i_wbs_adr];
+      end
+      o_wbs_ack <= 1;
     end
-    o_wbs_ack <= 1;
   end
 end
-
-
 endmodule
