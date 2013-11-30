@@ -27,63 +27,37 @@ module logic_analyzer #(
   parameter CAPTURE_WIDTH    = 32,
   parameter CAPTURE_DEPTH    = 10
 )(
-  rst,
-  clk,
 
-  cap_clk,
-  cap_external_trigger,
-  cap_data,
-  clk_div,
-  clk_select,
+  input                               rst,
+  input                               clk,
+
+  //logic analyzer capture data
+  input                               cap_clk,
+  input                               cap_external_trigger,
+  input       [31:0]                  cap_data,
+  input       [31:0]                  clk_div,
+  input                               clk_select,
 
   //logic analyzer control
-  trigger,
-  trigger_mask,
-  trigger_after,
-  trigger_edge,
-  both_edges,
-  repeat_count,
-  set_strobe,
-  enable,
-  restart,
-  finished,
+  input       [31:0]                  trigger,
+  input       [31:0]                  trigger_mask,
+  input       [31:0]                  trigger_after,
+  input       [31:0]                  trigger_edge,
+  input       [31:0]                  both_edges,
+  input       [31:0]                  repeat_count,
+  input                               set_strobe,
+  input                               enable,
+  input                               restart,
+  output                              finished,
 
-  //data output interface
-  start,
-  data_out_read_strobe,
-  data_out_read_size,
-  data_out
+  output  reg [CAPTURE_DEPTH - 1: 0]  capture_start,
+  input                               data_out_read_strobe,
+  output      [31:0]                  data_out_read_size,
+  output      [31:0]                  data_out
+
 );
 localparam FIFO_WIDTH = (1 << CAPTURE_DEPTH);
-
-input           rst;
-input           clk;
-
-//logic analyzer capture data
-input           cap_clk;
-input           cap_external_trigger;
-input [31:0]    cap_data;
-input [31:0]    clk_div;
-input           clk_select;
-
-//logic analyzer control
-input [31:0]    trigger;
-input [31:0]    trigger_mask;
-input [31:0]    trigger_after;
-input [31:0]    trigger_edge;
-input [31:0]    both_edges;
-input [31:0]    repeat_count;
-input           set_strobe;
-input           enable;
-input           restart;
-output          finished;
-
-output  reg     [CAPTURE_DEPTH - 1: 0]        start;
-input           data_out_read_strobe;
-output  [31:0]  data_out_read_size;
-output  [31:0]  data_out;
-
-
+localparam FIFO_DEPTH = (FIFO_WIDTH - 1);
 //localparams
 
 //capture states
@@ -101,6 +75,7 @@ localparam       READ      = 1;
 //reg/wires
 reg     [CAPTURE_DEPTH - 1: 0]        in_pointer;
 reg     [CAPTURE_DEPTH - 1: 0]        out_pointer;
+reg     [CAPTURE_DEPTH - 1: 0]        start;
 wire    [CAPTURE_DEPTH - 1: 0]        last;
 wire                                  full;
 wire                                  empty;
@@ -116,7 +91,6 @@ wire                                  out_clk;
 reg     [31:0]                        clk_count;
 
 reg     [3:0]                         read_state;
-reg     [31:0]                        trigger_after_count;
 reg     [31:0]                        rep_count;
 reg     [31:0]                        prev_cap;
 wire    [31:0]                        cap_pos_edge;
@@ -131,25 +105,27 @@ dual_port_bram #(
   .ADDR_WIDTH(CAPTURE_DEPTH)
 ) dpb (
   //Port A
-  .a_clk(cap_clk),
-  .a_wr(cap_write_strobe),
-  .a_addr(in_pointer),
-  .a_din(prev_cap),
+  .a_clk     (cap_clk          ),
+  .a_wr      (cap_write_strobe ),
+  .a_addr    (in_pointer       ),
+  .a_din     (prev_cap         ),
 
-  .b_clk(clk),
-  .b_wr(1'b0),
-  .b_addr(out_pointer),
-  .b_din(0),
-  .b_dout(data_out)
+  //Port B
+  .b_clk     (clk              ),
+  .b_wr      (1'b0             ),
+  .b_addr    (out_pointer      ),
+  .b_din     (0                ),
+  .b_dout    (data_out         )
 
 );
 
 //asynchronous logic
 
 assign  data_out_read_size  = (FIFO_WIDTH);
-assign  last                = start - 1;
+//assign  last                = start - 1;
+assign  last                = start + (FIFO_DEPTH - trigger_after);
 assign  full                = (in_pointer == last);
-assign  empty               = ((out_pointer == start) && (finished));
+assign  empty               = ((out_pointer == last) && (finished));
 //this may not be the best place for this
 assign  finished            = (cap_state == FINISHED);
 
@@ -169,41 +145,12 @@ generate
   end
 endgenerate
 
-
-
-/*
-assign  out_clk             = (clk_div > 0) ? div_clk : cap_clk;
-
-
-//clock divider
-always @ (posedge cap_clk) begin
-  if (rst) begin
-    //the out clock needs to keep going during reset
-    div_clk   <=  0;
-    clk_count <=  0;
-  end
-  else begin
-    if (clk_div > 0) begin
-      clk_count <=  clk_count + 1;
-      if (clk_count == clk_div) begin
-        clk_count <=  0;
-        div_clk <=  ~div_clk;
-      end
-    end
-    else begin
-      div_clk <= ~div_clk;
-    end
-  end
-end
-*/
-
-
 always @ (posedge cap_clk) begin
   if (rst) begin
     in_pointer            <=  0;
     start                 <=  0;
+    capture_start         <=  0;
     cap_state             <=  IDLE;
-    trigger_after_count   <=  0;
     rep_count             <=  0;
     cap_write_strobe      <=  0;
     prev_cap              <=  0;
@@ -225,6 +172,7 @@ always @ (posedge cap_clk) begin
           else begin
             start               <=  0;
             in_pointer          <=  0;
+            capture_start       <=  0;
             if (cap_start) begin
               cap_state         <=  CAPTURE;
               cap_write_strobe  <=  1;
@@ -239,31 +187,31 @@ always @ (posedge cap_clk) begin
         end
 
         if (set_strobe) begin
-          cap_state           <=  SETUP;
+          cap_state             <=  SETUP;
         end
       end
       SETUP: begin
-        rep_count             <=  repeat_count;
-        start                 <=  0;
-        in_pointer            <=  0;
-        cap_state             <=  IDLE;
+        rep_count               <=  repeat_count;
+        start                   <=  0;
+        in_pointer              <=  0;
+        cap_state               <=  IDLE;
       end
       CONT_READ: begin
         if (set_strobe) begin
-          cap_state           <=  SETUP;
+          cap_state             <=  SETUP;
         end
         else if (enable) begin
-          cap_write_strobe  <=  1;
-//XXX: I don't know if this will wrap around when the in_pointer goes around the '0' mark
-          start             <=  start + 1;
-          in_pointer         <=  start + trigger_after;
+          cap_write_strobe      <=  1;
+          start                 <=  start + 1;
+          //in_pointer            <=  start + trigger_after;
+          in_pointer            <=  start;
           if (cap_start) begin
             if (rep_count == 0) begin
+              $display ("logic_analyzer: Capture! @ %t", $time);
               cap_state         <=  CAPTURE;
-              cap_write_strobe  <=  1;
             end
             else begin
-              rep_count     <=  rep_count - 1;
+              rep_count         <=  rep_count - 1;
             end
           end
         end
@@ -271,11 +219,13 @@ always @ (posedge cap_clk) begin
       CAPTURE: begin
         if (enable) begin
           if (full) begin
-            cap_state         <=  FINISHED;
+            cap_state           <=  FINISHED;
+            //capture_start       <=  last - data_out_read_size;
+            capture_start       <=  last + 1;
           end
           else begin
-            cap_write_strobe  <=  1;
-            in_pointer        <=  in_pointer + 1;
+            cap_write_strobe    <=  1;
+            in_pointer          <=  in_pointer + 1;
           end
         end
       end
@@ -285,7 +235,7 @@ always @ (posedge cap_clk) begin
         end
       end
       default: begin
-        cap_state             <=  IDLE;
+        cap_state               <=  IDLE;
       end
     endcase
   end
@@ -295,23 +245,31 @@ end
 //Reading state
 always @ (posedge clk) begin
   if (rst) begin
-    out_pointer               <=  0;
-    read_state                <=  IDLE;
+    out_pointer                 <=  0;
+    read_state                  <=  IDLE;
   end
   else begin
+    
     case (read_state)
       IDLE: begin
         if (finished) begin
-          out_pointer         <=  start + 1;
-          read_state          <=  READ;
+          //out_pointer           <=  capture_start;
+          out_pointer           <=  last + 1;
+          //out_pointer           <=  in_pointer - data_out_read_size;
+          read_state            <=  READ;
         end
       end
       READ: begin
-        if (data_out_read_strobe) begin
-          out_pointer         <=  out_pointer + 1;
+        if (cap_state == FINISHED && enable) begin
+          if (data_out_read_strobe) begin
+            out_pointer         <=  out_pointer + 1;
+          end
+          if (empty) begin
+            read_state               <=  IDLE;
+          end
         end
-        if (empty) begin
-          read_state               <=  IDLE;
+        else begin
+          read_state                 <=  IDLE;
         end
       end
       default: begin

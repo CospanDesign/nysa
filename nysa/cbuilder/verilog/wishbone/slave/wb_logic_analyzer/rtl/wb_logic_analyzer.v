@@ -94,6 +94,7 @@ localparam     REPEAT_COUNT  = 32'h00000007;
 localparam     DATA_COUNT    = 32'h00000008;
 localparam     CLOCK_DIVIDER = 32'h00000009;
 localparam     READ_DATA     = 32'h00000010;
+localparam     START_POS     = 32'h00000011;
 
 
 
@@ -147,57 +148,62 @@ wire                        udata_read_strobe;
 wire                        w_la_data_read_strobe;
 wire  [31:0]                w_la_data_read_size;
 wire  [31:0]                w_la_data_out;
+wire  [DEPTH - 1: 0]        w_start;
+
+wire  [31:0]                w_uart_start_pos;
 
 //submodule
 uart_la_interface ulac (
-  .rst(reset),
-  .clk(clk),
+  .rst                  (reset                  ),
+  .clk                  (clk                    ),
 
-  .trigger(uart_trigger),
-  .trigger_mask(uart_trigger_mask),
-  .trigger_after(uart_trigger_after),
-  .trigger_edge(uart_trigger_edge),
-  .both_edges(uart_both_edges),
-  .repeat_count(uart_repeat_count),
-  .set_strobe(uart_set_strobe),
-  .disable_uart(disable_uart),
-  .enable(uart_enable),
-  .finished(finished),
+  .trigger              (uart_trigger           ),
+  .trigger_mask         (uart_trigger_mask      ),
+  .trigger_after        (uart_trigger_after     ),
+  .trigger_edge         (uart_trigger_edge      ),
+  .both_edges           (uart_both_edges        ),
+  .repeat_count         (uart_repeat_count      ),
+  .set_strobe           (uart_set_strobe        ),
+  .disable_uart         (disable_uart           ),
+  .enable               (uart_enable            ),
+  .finished             (finished               ),
+  .start                (w_uart_start_pos       ),
 
-  .data_read_strobe(udata_read_strobe),
-  .data_read_size(w_la_data_read_size),
-  .data(w_la_data_out),
+  .data_read_strobe     (udata_read_strobe      ),
+  .data_read_size       (w_la_data_read_size    ),
+  .data                 (w_la_data_out          ),
 
-  .phy_rx(i_la_uart_rx),
-  .phy_tx(o_la_uart_tx)
+  .phy_rx               (i_la_uart_rx           ),
+  .phy_tx               (o_la_uart_tx           )
 );
 
 logic_analyzer #(
-  .CAPTURE_WIDTH(`CAP_DAT_WIDTH),
-  .CAPTURE_DEPTH(DEPTH)
+  .CAPTURE_WIDTH        (`CAP_DAT_WIDTH         ),
+  .CAPTURE_DEPTH        (DEPTH                  )
 )la (
-  .clk(clk),
-  .rst(reset),
+  .clk                  (clk                    ),
+  .rst                  (reset                  ),
 
-  .cap_clk(i_la_clk),
-  .cap_external_trigger(i_la_ext_trig),
-  .cap_data(i_la_data),
-  .clk_div(clock_divider),
+  .cap_clk              (i_la_clk               ),
+  .cap_external_trigger (i_la_ext_trig          ),
+  .cap_data             (i_la_data              ),
+  .clk_div              (clock_divider          ),
 
-  .trigger(trigger),
-  .trigger_mask(trigger_mask),
-  .trigger_after(trigger_after),
-  .trigger_edge(trigger_edge),
-  .both_edges(both_edges),
-  .repeat_count(repeat_count),
-  .set_strobe(set_strobe),
-  .enable(enable),
-  .restart(control_restart_la),
-  .finished(finished),
+  .trigger              (trigger                ),
+  .trigger_mask         (trigger_mask           ),
+  .trigger_after        (trigger_after          ),
+  .trigger_edge         (trigger_edge           ),
+  .both_edges           (both_edges             ),
+  .repeat_count         (repeat_count           ),
+  .set_strobe           (set_strobe             ),
+  .enable               (enable                 ),
+  .restart              (control_restart_la     ),
+  .capture_start        (w_start                ),
+  .finished             (finished               ),
 
-  .data_out_read_strobe(w_la_data_read_strobe),
-  .data_out_read_size(w_la_data_read_size),
-  .data_out(w_la_data_out)
+  .data_out_read_strobe (w_la_data_read_strobe  ),
+  .data_out_read_size   (w_la_data_read_size    ),
+  .data_out             (w_la_data_out          )
 
 );
 
@@ -214,6 +220,7 @@ assign  status[31:1]              = 31'h0000000;
 
 assign  w_la_data_read_strobe = (udata_read_strobe || wb_data_read_strobe);
 assign  enable              = (uart_enable | control_enable_la);
+assign  w_uart_start_pos    = w_start;
 
 
 //synchronous logic
@@ -269,7 +276,7 @@ always @ (posedge clk) begin
 
   else begin
     control[`CONTROL_RESTART_LA]  <=  0;
-    disable_uart            <=  0;
+    disable_uart                  <=  0;
 
     if (~i_wbs_cyc) begin
       set_strobe                  <=  0;
@@ -396,6 +403,9 @@ always @ (posedge clk) begin
               //start a read cycle
               //the user can only read the data continuously from start to finish
               //the user can cancel if they deassert the cycle
+            end
+            START_POS: begin
+              o_wbs_dat   <=  w_start;
             end
             default: begin
             end

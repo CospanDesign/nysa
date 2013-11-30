@@ -140,5 +140,17 @@
 //LF:                   '\r'
 //CR:                   '\n'
 
+`define LA_GET_START_POS            (10 + `HEX_0)
+//get the start position
+//ID:                   'W'
+//Command               ':'
+//CR:                   '\n'
+
+//Response ID:          'R'
+//Response Start pos    'V' 'V' 'V' 'V' 'V' 'V' 'V' 'V'
+//LF:                   '\r'
+//CR:                   '\n'
+
+
 `endif
 

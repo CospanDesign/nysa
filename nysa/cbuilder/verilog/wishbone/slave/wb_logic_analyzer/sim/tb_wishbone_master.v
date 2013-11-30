@@ -51,7 +51,7 @@ SOFTWARE.
 `define OUTPUT_FILE "sim/master_output_test_data.txt"
 
 
-`define CLK_HALF_PERIOD 1
+`define CLK_HALF_PERIOD 10
 `define CLK_PERIOD (2 * `CLK_HALF_PERIOD)
 
 `define SLEEP_HALF_CLK #(`CLK_HALF_PERIOD)
@@ -116,13 +116,13 @@ wire  [31:0]      w_wbs1_dat_o;
 wire  [31:0]      w_wbs1_adr;
 wire              w_wbs1_int;
 
-reg               w_uart_finished;
+reg               uart_finished;
 
-reg               w_la_clk = 0;
-reg   [31:0]      w_la_data;
-reg               w_la_ext_trigger;
-wire              w_la_uart_tx;
-wire              w_la_uart_rx;
+reg               la_clk = 0;
+reg   [31:0]      la_data;
+reg               la_ext_trigger;
+wire              la_uart_tx;
+wire              la_uart_rx;
 
 reg               test_transmit = 0;
 reg   [7:0]       test_tx_byte  = 8'h55;
@@ -197,11 +197,13 @@ wishbone_master wm (
 );
 
 //slave 1
-wb_logic_analyzer s1 (
+wb_logic_analyzer #(
+  .DEPTH            (4                    )
+)s1(
 
   .clk              (clk                  ),
   .rst              (rst                  ),
-                                          
+
   .i_wbs_we         (w_wbs1_we            ),
   .i_wbs_cyc        (w_wbs1_cyc           ),
   .i_wbs_dat        (w_wbs1_dat_i         ),
@@ -209,13 +211,22 @@ wb_logic_analyzer s1 (
   .o_wbs_ack        (w_wbs1_ack           ),
   .o_wbs_dat        (w_wbs1_dat_o         ),
   .i_wbs_adr        (w_wbs1_adr           ),
-  .o_wbs_int        (w_wbs1_int           )
+  .o_wbs_int        (w_wbs1_int           ),
+
+  .i_la_clk         (la_clk               ),
+  .i_la_data        (la_data              ),
+  .i_la_ext_trig    (la_ext_trigger       ),
+
+  //uart interface
+  .o_la_uart_tx     (la_uart_tx           ),
+  .i_la_uart_rx     (la_uart_rx           )
+
 );
 
 wishbone_interconnect wi (
   .clk              (clk                  ),
   .rst              (rst                  ),
-                                          
+
   .i_m_we           (w_wbm_we             ),
   .i_m_cyc          (w_wbm_cyc            ),
   .i_m_stb          (w_wbm_stb            ),
@@ -224,7 +235,7 @@ wishbone_interconnect wi (
   .o_m_dat          (w_wbm_dat_o          ),
   .i_m_adr          (w_wbm_adr            ),
   .o_m_int          (w_wbm_int            ),
-                                          
+
   .o_s0_we          (w_wbs0_we            ),
   .o_s0_cyc         (w_wbs0_cyc           ),
   .o_s0_stb         (w_wbs0_stb           ),
@@ -233,7 +244,7 @@ wishbone_interconnect wi (
   .i_s0_dat         (w_wbs0_dat_o         ),
   .o_s0_adr         (w_wbs0_adr           ),
   .i_s0_int         (w_wbs0_int           ),
-                                          
+
   .o_s1_we          (w_wbs1_we            ),
   .o_s1_cyc         (w_wbs1_cyc           ),
   .o_s1_stb         (w_wbs1_stb           ),
@@ -265,6 +276,7 @@ uart_v2  u_test (
 
 
 always #`CLK_HALF_PERIOD      clk = ~clk;
+always #5 la_clk = ~la_clk;
 
 initial begin
   fd_out                      = 0;
@@ -303,10 +315,10 @@ initial begin
     //while there is still data to be read from the file
     while (!$feof(fd_in)) begin
       //read in a command
-      read_count = $fscanf (fd_in, "%h:%h:%h:%h\n", 
-                                  r_in_data_count, 
-                                  r_in_command, 
-                                  r_in_address, 
+      read_count = $fscanf (fd_in, "%h:%h:%h:%h\n",
+                                  r_in_data_count,
+                                  r_in_command,
+                                  r_in_address,
                                   r_in_data);
 
       //Handle Frindge commands/comments
@@ -350,7 +362,7 @@ initial begin
         `SLEEP_CLK(1);
         while (~command_finished) begin
           request_more_data_ack         <= 0;
-      
+
           if ((r_in_command & 32'h0000FFFF) == 1) begin
             if (request_more_data && ~request_more_data_ack) begin
               read_count      = $fscanf(fd_in, "%h\n", r_in_data);
@@ -358,7 +370,7 @@ initial begin
               request_more_data_ack     <= 1;
             end
           end
-      
+
           //so time porgresses wait a tick
           `SLEEP_CLK(1);
           //this doesn't need to be here, but there is a weird behavior in iverilog
@@ -374,10 +386,16 @@ initial begin
       end //end read_count == 4
     end //end while ! eof
   end //end not reset
-  `SLEEP_CLK(50);
+
+
+  while (!uart_finished) begin
+    #100;
+  end
+  #10000
   $fclose (fd_in);
   $fclose (fd_out);
   $finish();
+
 end
 //initial begin
 //    $monitor("%t, state: %h", $time, state);
@@ -565,5 +583,151 @@ always @ (posedge clk) begin
     end
   end//not reset
 end
+
+always @ (posedge la_clk) begin
+  if (rst) begin
+    la_data         <=  0;
+    la_ext_trigger  <=  0;
+  end
+  else begin
+    la_data         <=  la_data + 1;
+  end
+end
+
+reg [7:0] rbyte;
+initial begin
+//Ping
+rbyte = 0;
+#20;
+
+uart_finished   <=  0;
+/*
+write_byte(`START_ID);
+write_byte(`LA_PING);
+write_byte(`LINE_FEED);
+
+read_byte(); $display ("Reading: %c", test_rx_byte);
+read_byte(); $display ("Reading: %c", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+
+$display ("Writing Trigger After");
+write_byte(`START_ID);
+write_byte(`LA_WRITE_TRIGGER_AFTER);
+write_byte(0);
+write_byte(0);
+write_byte(0);
+write_byte(0);
+write_byte(0);
+write_byte(0);
+write_byte(0);
+write_byte(1);
+write_byte(`LINE_FEED);
+
+read_byte(); $display ("Reading: %c", test_rx_byte);
+read_byte(); $display ("Reading: %c", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+
+
+$display ("Writing Trigger");
+write_byte(`START_ID);
+write_byte(`LA_WRITE_TRIGGER);
+write_byte(0);
+write_byte(0);
+write_byte(0);
+write_byte(0);
+write_byte(0);
+write_byte(1);
+write_byte(0);
+write_byte(0);
+write_byte(`LINE_FEED);
+
+read_byte(); $display ("Reading: %c", test_rx_byte);
+read_byte(); $display ("Reading: %c", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+
+$display ("Writing Mask");
+write_byte(`START_ID);
+write_byte(`LA_WRITE_MASK);
+write_byte(0);
+write_byte(0);
+write_byte(0);
+write_byte(0);
+write_byte(0);
+write_byte(1);
+write_byte(0);
+write_byte(0);
+write_byte(`LINE_FEED);
+
+read_byte(); $display ("Reading: %c", test_rx_byte);
+read_byte(); $display ("Reading: %c", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+
+write_byte(`START_ID);
+write_byte(`LA_SET_ENABLE);
+write_byte(1 + `HEX_0);
+write_byte(`LINE_FEED);
+
+read_byte(); $display ("Reading: %c", test_rx_byte);
+read_byte(); $display ("Reading: %c", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+
+
+$display ("Waiting for a trigger");
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %h", test_rx_byte);
+read_byte(); $display ("Reading: %c", test_rx_byte);
+
+
+  #10000;
+*/
+  uart_finished   <=  1;
+
+end
+
+task write_byte;
+  input [7:0] in_byte;
+  begin
+    $display (".");
+    test_transmit       <=  0;
+    //initiate a write
+    test_tx_byte        <=  in_byte;
+    #1000;
+
+    test_transmit       <=  1;
+    #20;
+    test_transmit       <=  0;
+    #20;
+    while (test_is_transmitting) begin
+    #20;
+    end
+    #20;
+ 
+  end
+endtask
+
+task read_byte;
+  begin
+    while (!test_received) begin
+    #20;
+    end
+    #20;
+  end
+endtask
+
 
 endmodule

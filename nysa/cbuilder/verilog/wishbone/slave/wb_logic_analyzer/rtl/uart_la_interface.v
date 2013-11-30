@@ -3,73 +3,52 @@ Distributed under the MIT license.
 Copyright (c) 2012 Dave McCoy (dave.mccoy@cospandesign.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all 
+The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
 `include "logic_analyzer_defines.v"
 
 module uart_la_interface (
-  rst,
-  clk,
+
+  input                       rst,
+  input                       clk,
 
   //logic analyzer control
-  trigger,
-  trigger_mask,
-  trigger_after,
-  trigger_edge,
-  both_edges,
-  repeat_count,
-  set_strobe,
-
-  disable_uart,
-  enable,
-  finished,
+  output reg  [31:0]          trigger,
+  output reg  [31:0]          trigger_mask,
+  output reg  [31:0]          trigger_after,
+  output reg  [31:0]          trigger_edge,
+  output reg  [31:0]          both_edges,
+  output reg  [31:0]          repeat_count,
+  output reg                  set_strobe,
+  input                       disable_uart,
+  output reg                  enable,
+  input                       finished,
+  input       [31:0]          start,
 
   //data interface
-  data_read_strobe,
-  data_read_size,
-  data,
+  input       [31:0]          data_read_size,
+  output reg                  data_read_strobe,
+  input       [31:0]          data,
 
-  phy_rx,
-  phy_tx
-
+  input                       phy_rx,
+  output                      phy_tx
 );
-
-input                       rst;
-input                       clk;
-                           
-output reg  [31:0]          trigger;
-output reg  [31:0]          trigger_mask;
-output reg  [31:0]          trigger_after;
-output reg  [31:0]          trigger_edge;
-output reg  [31:0]          both_edges;
-output reg  [31:0]          repeat_count;
-output reg                  set_strobe;
-input                       disable_uart;
-output reg                  enable;
-input                       finished;
-                           
-input       [31:0]          data_read_size;
-output reg                  data_read_strobe;
-input       [31:0]          data;
-                           
-input                       phy_rx;
-output                      phy_tx;
 
 
 
@@ -124,6 +103,7 @@ reg   [3:0]                 in_nibble;
 reg   [3:0]                 size_count;
 wire  [31:0]                readible_write_size;
 reg   [31:0]                la_write_size;
+reg   [31:0]                la_start_pos;
 
 reg   [7:0]                 command;
 wire                        init_packet_read;
@@ -141,7 +121,7 @@ uart_controller uc (
   .rx(phy_rx),
   .tx(phy_tx),
   .rts(0),
-  
+
   .control_reset(rst),
   .cts_rts_flowcontrol(0),
   .read_overflow(read_overflow),
@@ -165,7 +145,7 @@ uart_controller uc (
 
 
 //asynchronous logic
-//assign  nibble              = decode_ascii(read_data); 
+//assign  nibble              = decode_ascii(read_data);
 //assign  hex_value           = encode_ascii(in_nibble);
 assign  hex_value             = (nibble_value >= 8'hA) ? (nibble_value + 8'h37) : (nibble_value + 8'h30);
 assign  nibble                = (read_data >= 8'h41) ? (read_data - 8'h37) : (read_data - 8'h30);
@@ -210,14 +190,11 @@ always @ (posedge clk) begin
     command                 <=  0;
     response_status         <=  0;
     write_status            <=  0;
-
   end
   else begin
     if (disable_uart) begin
       enable                <=  0;
     end
-
-
     //read commands from the host computer
     read_strobe             <=  0;
     process_byte            <=  0;
@@ -260,11 +237,10 @@ always @ (posedge clk) begin
       READ_COMMAND: begin
         ready               <=  1;
         if (process_byte) begin
-          
-          command                 <=  read_data; 
+          command                 <=  read_data;
           case (read_data)
             `LA_PING: begin
-              command_response    <=  `RESPONSE_SUCCESS; 
+              command_response    <=  `RESPONSE_SUCCESS;
               read_state          <=  READ_LINE_FEED;
             end
             `LA_WRITE_TRIGGER: begin
@@ -309,12 +285,11 @@ always @ (posedge clk) begin
               read_state          <=  READ_REPEAT_COUNT;
               read_count          <=  7;
             end
- 
             `LA_SET_ENABLE: begin
-              read_state          <=  READ_ENABLE_SET; 
+              read_state          <=  READ_ENABLE_SET;
             end
             `LA_GET_ENABLE: begin
-              command_response    <=  `RESPONSE_SUCCESS; 
+              command_response    <=  `RESPONSE_SUCCESS;
               read_state          <=  READ_LINE_FEED;
               response_status     <=  enable + `HEX_0;
             end
@@ -332,7 +307,7 @@ always @ (posedge clk) begin
       READ_TRIGGER: begin
         ready <=  1;
         if (process_byte) begin
-          trigger                 <=  {trigger[27:0], nibble}; 
+          trigger                 <=  {trigger[27:0], nibble};
           read_count              <=  read_count -  1;
           if (read_count == 0) begin
             set_strobe            <=  1;
@@ -344,7 +319,7 @@ always @ (posedge clk) begin
       READ_TRIGGER_MASK: begin
         ready <=  1;
         if (process_byte) begin
-          trigger_mask            <=  {trigger_mask[27:0], nibble}; 
+          trigger_mask            <=  {trigger_mask[27:0], nibble};
           read_count              <=  read_count -  1;
           if (read_count == 0) begin
             set_strobe            <=  1;
@@ -356,7 +331,7 @@ always @ (posedge clk) begin
       READ_TRIGGER_AFTER: begin
         ready <=  1;
         if (process_byte) begin
-          trigger_after           <=  {trigger_after[27:0], nibble}; 
+          trigger_after           <=  {trigger_after[27:0], nibble};
           read_count              <=  read_count -  1;
           if (read_count == 0) begin
             set_strobe            <=  1;
@@ -368,7 +343,7 @@ always @ (posedge clk) begin
       READ_TRIGGER_EDGE: begin
         ready <=  1;
         if (process_byte) begin
-          trigger_edge            <=  {trigger_edge[27:0], nibble}; 
+          trigger_edge            <=  {trigger_edge[27:0], nibble};
           read_count              <=  read_count -  1;
           if (read_count == 0) begin
             set_strobe            <=  1;
@@ -380,7 +355,7 @@ always @ (posedge clk) begin
       READ_BOTH_EDGES: begin
         ready <=  1;
         if (process_byte) begin
-          both_edges            <=  {both_edges[27:0], nibble}; 
+          both_edges              <=  {both_edges[27:0], nibble};
           read_count              <=  read_count -  1;
           if (read_count == 0) begin
             set_strobe            <=  1;
@@ -393,7 +368,7 @@ always @ (posedge clk) begin
       READ_REPEAT_COUNT: begin
         ready <=  1;
         if (process_byte) begin
-          repeat_count            <=  {repeat_count[27:0], nibble}; 
+          repeat_count            <=  {repeat_count[27:0], nibble};
           read_count              <=  read_count -  1;
           if (read_count == 0) begin
             set_strobe            <=  1;
@@ -444,14 +419,16 @@ always @ (posedge clk) begin
   end
 end
 
-parameter                   RESPONSE_WRITE_ID     = 1;
-parameter                   RESPONSE_WRITE_STATUS = 2;
-parameter                   RESPONSE_WRITE_ARG    = 3;
-parameter                   RESPONSE_WRITE_SIZE   = 4;
-parameter                   GET_DATA_PACKET       = 5;
-parameter                   SEND_DATA_PACKET      = 6;
-parameter                   SEND_CARRIAGE_RETURN  = 7;
-parameter                   SEND_LINE_FEED        = 8;
+localparam                   RESPONSE_WRITE_ID     = 1;
+localparam                   RESPONSE_WRITE_STATUS = 2;
+localparam                   RESPONSE_WRITE_ARG    = 3;
+localparam                   RESPONSE_WRITE_SIZE   = 4;
+localparam                   RESPONSE_START_POS    = 5;
+localparam                   GET_DATA_PACKET       = 6;
+localparam                   SEND_START_POS        = 7;
+localparam                   SEND_DATA_PACKET      = 8;
+localparam                   SEND_CARRIAGE_RETURN  = 9;
+localparam                   SEND_LINE_FEED        = 10;
 
 
 //write data state machine
@@ -465,12 +442,13 @@ always @ (posedge clk) begin
     la_data                     <=  0;
     size_count                  <=  0;
     byte_count                  <=  0;
+    la_start_pos                <=  0;
   end
   else begin
     write_strobe                <=  0;
     status_written              <=  0;
     data_read_strobe            <=  0;
-   
+
     case (write_state)
       IDLE: begin
         if (write_status) begin
@@ -485,7 +463,7 @@ always @ (posedge clk) begin
       end
       RESPONSE_WRITE_ID: begin
         if (!write_full) begin
-          write_data            <=  `RESPONSE_ID;  
+          write_data            <=  `RESPONSE_ID;
           write_strobe          <=  1;
           write_state           <=  RESPONSE_WRITE_STATUS;
         end
@@ -501,6 +479,12 @@ always @ (posedge clk) begin
             write_state         <=  RESPONSE_WRITE_SIZE;
             nibble_value        <=  readible_write_size[31:28];
             la_write_size       <=  {readible_write_size[27:0], 4'h0};
+            size_count          <=  0;
+          end
+          else if (command == `LA_GET_START_POS) begin
+            write_state         <=  RESPONSE_START_POS;
+            la_start_pos        <=  {start[27:0], 4'h0};
+            nibble_value        <=  start[31:28];
             size_count          <=  0;
           end
           else begin
@@ -531,6 +515,20 @@ always @ (posedge clk) begin
           end
         end
       end
+      RESPONSE_START_POS: begin
+        if (!write_full) begin
+          if (size_count == 8) begin
+            write_state         <=  SEND_CARRIAGE_RETURN;
+          end
+          else begin
+            nibble_value        <=  la_start_pos[31:28];
+            write_data          <=  hex_value;
+            la_start_pos        <=  {la_start_pos[27:0], 4'h0};
+            write_strobe        <=  1;
+            size_count          <= size_count + 1;
+          end
+        end
+      end
       GET_DATA_PACKET: begin
         if (sleep > 0) begin
           sleep   <=  sleep - 1;
@@ -539,7 +537,27 @@ always @ (posedge clk) begin
           byte_count              <=  0;
           la_data                 <=  data;
           data_read_strobe        <=  1;
-          write_state             <=  SEND_DATA_PACKET;
+          //write_state             <=  SEND_DATA_PACKET;
+
+          la_start_pos            <=  {start[27:0], 4'h0};
+          nibble_value            <=  start[31:28];
+          size_count              <=  0;
+          write_state             <=  SEND_START_POS;
+
+        end
+      end
+      SEND_START_POS: begin
+        if (!write_full) begin
+          if (size_count == 8) begin
+            write_state         <=  SEND_DATA_PACKET;
+          end
+          else begin
+            nibble_value        <=  la_start_pos[31:28];
+            write_data          <=  hex_value;
+            la_start_pos        <=  {la_start_pos[27:0], 4'h0};
+            write_strobe        <=  1;
+            size_count          <= size_count + 1;
+          end
         end
       end
       SEND_DATA_PACKET: begin
@@ -595,7 +613,7 @@ begin
   if (raw_nibble >= 10) begin
     encode_ascii  = raw_nibble + 55;
   end
-  else begin 
+  else begin
     encode_ascii  = raw_nibble + 32;
   end
 end
