@@ -294,10 +294,6 @@ assign  wdebug[14]            =   write_busy;
 assign  wdebug[15]            =   ftdi_start_of_frame;
 
 
-
-
-
-
 //logic for detecting the start of a frame detect
 always @ (posedge ftdi_clk) begin
   if (rst) begin
