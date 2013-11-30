@@ -113,11 +113,11 @@
 					"loc":"dq[15:0]",
 					"direction":"inout"
 				},
-				"io_sdram_data_mask[1]":{
+				"o_sdram_data_mask[1]":{
 					"loc":"dqmh",
 					"direction":"output"
 				},
-				"io_sdram_data_mask[0]":{
+				"o_sdram_data_mask[0]":{
 					"loc":"dqml",
 					"direction":"output"
 				}
@@ -126,44 +126,52 @@
 		}
 	},
   "internal_bind":{
-    "lax1_la_clk" : {
+    "lax1_i_la_clk" : {
       "signal":"ftdi_clk"
     },
-    "lax1_la_data[7:0]":{
+    "lax1_i_la_data[7:0]":{
       "signal":"d[7:0]"
     },
-    "lax1_la_data[8]":{
+    "lax1_i_la_data[8]":{
       "signal":"txe_n"
     },
-    "lax1_la_data[9]":{
+    "lax1_i_la_data[9]":{
       "signal":"wr_n"
     },
-    "lax1_la_data[10]":{
+    "lax1_i_la_data[10]":{
       "signal":"rxe_n"
     },
-    "lax1_la_data[11]":{
+    "lax1_i_la_data[11]":{
       "signal":"rd_n"
     },
-    "lax1_la_data[12]":{
+    "lax1_i_la_data[12]":{
       "signal":"oe_n"
     },
-    "lax1_la_data[13]":{
+    "lax1_i_la_data[13]":{
       "signal":"siwua"
     },
-    "lax1_la_data[14]":{
+    "lax1_i_la_data[14]":{
       "signal":"suspend_n"
     },
-    "lax1_la_data[30:15]":{
-      "signal":"debug[15:0]"
+    "lax1_i_la_data[30:15]":{
+      "signal":"o_ftdi_debug[15:0]"
     },
-    "lax1_la_data[31]":{
+    "lax1_i_la_data[31]":{
       "signal":"button[0]"
     },
-    "lax1_la_ext_trig":{
+    "lax1_i_la_ext_trig":{
       "signal":"button[1]"
     }
   },
 	"bind":{
+    "clk":{
+      "direction":"input",
+      "loc":"clk"
+    },
+    "rst":{
+      "direction":"input",
+      "loc":"rst"
+    }
 	},
 	
 	"constraint_files":[

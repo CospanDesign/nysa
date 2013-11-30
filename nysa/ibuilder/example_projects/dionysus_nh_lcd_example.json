@@ -139,6 +139,7 @@
 	},
 
 	"bind":{
+
     "clk":{
       "direction":"input",
       "loc":"clk"

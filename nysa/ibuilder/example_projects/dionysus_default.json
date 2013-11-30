@@ -57,26 +57,12 @@
 					"direction":"input"
 				}
 			}
-  	},
-    "lax1":{
-      "filename":"wb_logic_analyzer.v",
-      "bind":{
-        "o_la_uart_tx":{
-          "loc":"s0",
-          "direction":"output"
-        },
-        "i_la_uart_rx":{
-          "loc":"s1",
-          "direction":"input"
-        }
-      }
-    }
-  },
+  	}
+	},
   "MEMORY":{
 		"mem1":{
 			"filename":"wb_sdram.v",
 			"bind":{
-
 				"o_sdram_clk":{
 					"loc":"sdram_clk",
 					"direction":"output"
@@ -121,36 +107,10 @@
 					"loc":"dqml",
 					"direction":"output"
 				}
-
 			}
 		}
 	},
-  "internal_bind":{
-    "lax1_i_la_clk" : {
-      "signal":"mem1_o_ext_sdram_clk"
-    },
-    "lax1_i_la_data[0]":{
-      "signal":"ras"
-    },
-    "lax1_i_la_data[1]":{
-      "signal":"cas"
-    },
-    "lax1_i_la_data[2]":{
-      "signal":"we"
-    },
-    "lax1_i_la_data[13:3]":{
-      "signal":"a[10:0]"
-    },
-    "lax1_i_la_data[15:14]":{
-      "signal":"ba[1:0]"
-    },
-    "lax1_i_la_data[31:16]":{
-      "signal":"dq[15:0]"
-    },
-    "lax1_i_la_ext_trig":{
-      "signal":"0"
-    }
-  },
+
 	"bind":{
     "clk":{
       "direction":"input",
@@ -161,8 +121,6 @@
       "loc":"rst"
     }
 	},
-
 	"constraint_files":[
 	]
-
 }
