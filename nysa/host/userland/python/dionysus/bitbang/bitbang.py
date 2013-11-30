@@ -58,7 +58,7 @@ class BitBangController(object):
     def soft_reset_low(self):
         pins = self.f.read_pins()
         pins &= ~(self.SOFT_RESET_PIN)
-        self.f.write_data(Array('B', [0x01, pins]))
+        self.f.write_data(Array('B', [0x00, pins]))
 
     def program_high(self):
         pins = self.f.read_pins()
@@ -68,7 +68,7 @@ class BitBangController(object):
     def program_low(self):
         pins = self.f.read_pins()
         pins &= ~(self.PROGRAM_PIN)
-        self.f.write_data(Array('B', [0x01, pins]))
+        self.f.write_data(Array('B', [0x00, pins]))
 
     def set_soft_reset_to_output(self):
         pin_dir = self.SOFT_RESET_PIN

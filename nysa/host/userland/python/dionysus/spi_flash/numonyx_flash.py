@@ -1,6 +1,6 @@
 import time
 from array import array as Array
-from serialflash import SerialFlash
+from serial_flash import SerialFlash
 from pyftdi.pyftdi.spi import SpiController
 
 class NumonyxFlashDevice(SerialFlash):

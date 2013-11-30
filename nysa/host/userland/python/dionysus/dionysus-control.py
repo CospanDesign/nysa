@@ -71,7 +71,7 @@ DESCRIPTION= "\n" \
 EPILOG = "\n" \
 "\n"\
 "Examples:\n"\
-"\tupdload the bin file and program the FPGA\n"\
+"\tupload the bin file and program the FPGA\n"\
 "\t\tdionysus-control.py bitfile.bin\n"\
 "\n"\
 "\treset the FPGA and program without loading a new bin file\n"\
