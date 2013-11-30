@@ -101,7 +101,7 @@
             "location":"${NYSA}/cbuilder/verilog/wishbone/host_interface/sim_interface"
           },
           "test.py":{
-            "location":"${NYSA}/host/userland/sim"
+            "location":"${NYSA}/host/userland/python/sim"
           },
           "top.v":{
             "location":"${NYSA}/cbuilder/template/top",
@@ -111,7 +111,7 @@
             "gen_script":"gen_sim_tb"
           },
           "Makefile":{
-            "location":"${NYSA}/host/userland/sim",
+            "location":"${NYSA}/host/userland/python/sim",
             "gen_script":"gen_sim_makefile"
           },
           "device_rom_table.txt":{
