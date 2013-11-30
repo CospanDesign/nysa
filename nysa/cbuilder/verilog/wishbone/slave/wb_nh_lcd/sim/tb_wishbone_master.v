@@ -240,17 +240,18 @@ wire              w_mem_int_i;
 
 reg               start = 0;
 
-wire              w_backlight_enable;  
-wire              w_register_data_sel; 
+wire              w_backlight_enable;
+wire              w_register_data_sel;
 //reg               r_tearing_effect;
-wire              w_write_n;           
-wire              w_read_n;            
-wire  [7:0]       w_data;              
-wire              w_cs_n;              
-wire              w_reset_n;           
-wire              w_display_on;        
+wire              w_write_n;
+wire              w_read_n;
+wire  [7:0]       w_data;
+wire              w_cs_n;
+wire              w_reset_n;
+wire              w_display_on;
 
 reg   [31:0]      r_tear_count;
+reg   [7:0]       r_tear_status;
 
 
 //Submodules
@@ -338,7 +339,7 @@ wb_nh_lcd s1 (
 wishbone_interconnect wi (
   .clk                 (clk                  ),
   .rst                 (rst                  ),
-                       
+
   .i_m_we              (w_wbp_we             ),
   .i_m_cyc             (w_wbp_cyc            ),
   .i_m_stb             (w_wbp_stb            ),
@@ -347,7 +348,7 @@ wishbone_interconnect wi (
   .o_m_dat             (w_wbp_dat_o          ),
   .i_m_adr             (w_wbp_adr            ),
   .o_m_int             (w_wbp_int            ),
-                       
+
   .o_s0_we             (w_wbs0_we            ),
   .o_s0_cyc            (w_wbs0_cyc           ),
   .o_s0_stb            (w_wbs0_stb           ),
@@ -356,7 +357,7 @@ wishbone_interconnect wi (
   .i_s0_dat            (w_wbs0_dat_o         ),
   .o_s0_adr            (w_wbs0_adr           ),
   .i_s0_int            (w_wbs0_int           ),
-                       
+
   .o_s1_we             (w_wbs1_we            ),
   .o_s1_cyc            (w_wbs1_cyc           ),
   .o_s1_stb            (w_wbs1_stb           ),
@@ -523,7 +524,7 @@ arbitor_2_masters arb0 (
 assign  w_wbs0_ack   = 0;
 assign  w_wbs0_dat_o = 0;
 
-assign  w_data  = (!w_read_n) ? r_tear_count[7:0]: 8'hZZ;
+assign  w_data  = (!w_read_n) ? r_tear_status: 8'hZZ;
 
 
 
@@ -845,23 +846,26 @@ always @ (posedge clk) begin
   end//not reset
 end
 
-/*
 always @ (posedge clk) begin
   if (rst) begin
     r_tear_count      <=  0;
-    r_tearing_effect  <=  0;
+    r_tear_status   <=  8'h00;
   end
   else begin
     if (r_tear_count < 100) begin
       r_tear_count    <=  r_tear_count + 1;
     end
     else begin
-      r_tearing_effect<=  ~r_tearing_effect;
+      if (r_tear_status == 8'h00) begin
+        r_tear_status   <=  8'h80;
+      end
+      else begin
+        r_tear_status   <=  8'h00;
+      end
       r_tear_count    <= 0;
     end
   end
 end
-*/
 
 
 endmodule

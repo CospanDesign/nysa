@@ -12,6 +12,7 @@ module nh_lcd #(
   input               i_enable,
   input               i_reset_display,
   input               i_data_command_mode,
+  input               i_enable_tearing,
 
   input               i_cmd_parameter,
 
@@ -54,13 +55,15 @@ wire                  w_cmd_read;
 wire  [7:0]           w_cmd_data;
 wire                  w_cmd_cmd_mode;
 
-wire                  w_cmd_en_write;
+wire                  w_cmd_data_out_en;
 
 wire                  w_data_dir;
 
 wire                  w_data_cmd_mode;
 wire  [7:0]           w_data_data;
 wire                  w_data_write;
+wire                  w_data_read;
+wire                  w_data_data_out_en;
 
 //Submodules
 nh_lcd_command lcd_commander (
@@ -78,11 +81,9 @@ nh_lcd_command lcd_commander (
   .o_cmd_data           (o_cmd_data           ),
 
   //Control Signals
-  .o_cmd_en_write       (w_cmd_en_write       ),
+  .o_data_out_en        (w_cmd_data_out_en    ),
   .o_cmd_finished       (o_cmd_finished       ),
   .o_cmd_mode           (w_cmd_cmd_mode       ),
-
-
   .o_write              (w_cmd_write          ),
   .o_read               (w_cmd_read           ),
   .o_data_out           (w_cmd_data           ),
@@ -95,9 +96,10 @@ nh_lcd_data_writer #(
   .rst                  (rst                  ),
   .clk                  (clk                  ),
 
-//  .debug              (debug                ),
+  .debug              (debug                ),
 
   .i_enable             (i_enable             ),
+  .i_enable_tearing     (i_enable_tearing     ),
   .i_num_pixels         (i_num_pixels         ),
 
   .o_fifo_rdy           (o_fifo_rdy           ),
@@ -106,34 +108,44 @@ nh_lcd_data_writer #(
   .o_fifo_size          (o_fifo_size          ),
   .i_fifo_data          (i_fifo_data          ),
 
-//  .i_tearing_effect     (i_tearing_effect     ),
-  .o_data_cmd_mode      (w_data_cmd_mode      ),
-  .o_data               (w_data_data          ),
-  .o_write              (w_data_write         )
-
-
-
+  .o_cmd_mode           (w_data_cmd_mode      ),
+  .o_data_out           (w_data_data          ),
+  .i_data_in            (w_data_in            ),
+  .o_write              (w_data_write         ),
+  .o_read               (w_data_read          ),
+  .o_data_out_en        (w_data_data_out_en   )
 );
 
 //Asynchronous Logic
 assign  o_backlight_enable  = i_backlight_enable;
 assign  o_display_on        = i_enable;
 assign  o_reset_n           = ~i_reset_display;
+assign  o_cs_n              = ~i_chip_select;
+assign  w_data_in           = io_data;
 
+//Select control between the Command controller and the Data Controller
 assign  o_register_data_sel = (i_data_command_mode) ? w_data_cmd_mode : w_cmd_cmd_mode;
+assign  o_write_n           = (i_data_command_mode) ? ~w_data_write : ~w_cmd_write;
+assign  o_read_n            = (i_data_command_mode) ? ~w_data_read : ~w_cmd_read;
+assign  w_data_dir          = (i_data_command_mode) ? w_data_data_out_en : w_cmd_data_out_en;
+assign  io_data             = (w_data_dir) ? (i_data_command_mode) ?
+                                w_data_data : w_cmd_data :
+                              8'hZZ;
 
+/*
+assign  w_data_dir          = (w_data_data_out_en) || (w_cmd_data_out_en); //this doesn't
 
-assign  w_data_dir          = (i_data_command_mode || w_cmd_en_write);
 assign  io_data             = (w_data_dir) ? w_data_out : 8'hZZ;
-assign  w_data_in           = (w_data_dir) ? 8'hZZ: io_data;
+assign  w_data_in           = io_data;
 
 assign  w_data_out          = (i_data_command_mode) ? w_data_data   : w_cmd_data;
 
-assign  o_write_n           = (i_write_override) ? 0 : 
-                                (i_data_command_mode) ? ~w_data_write : ~w_cmd_write;
-assign  o_read_n            = (i_data_command_mode) ? 1             : ~w_cmd_read;
+assign  o_write_n           = (i_write_override) ? 0 :
+                              (i_data_command_mode) ? ~w_data_write : ~w_cmd_write;
+assign  o_read_n            = (i_data_command_mode) ? ~w_data_read  : ~w_cmd_read;
+*/
 
-assign  o_cs_n              = ~i_chip_select;
+
 
 //Synchronous Logic
 endmodule

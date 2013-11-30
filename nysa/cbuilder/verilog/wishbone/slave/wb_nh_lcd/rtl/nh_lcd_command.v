@@ -9,18 +9,17 @@ module nh_lcd_command (
   input               i_cmd_read_stb,
   input       [7:0]   i_cmd_data,
   output  reg [7:0]   o_cmd_data,
-  output              o_cmd_mode,
   input               i_enable,
   input               i_cmd_parameter,
-
-  output  reg         o_cmd_en_write,
   output  reg         o_cmd_finished,
 
   //Physical Signals
+  output              o_cmd_mode,
   output  reg         o_write,
   output  reg         o_read,
   output  reg [7:0]   o_data_out,
-  input       [7:0]   i_data_in
+  input       [7:0]   i_data_in,
+  output  reg         o_data_out_en
 );
 
 //Local Parameters
@@ -37,7 +36,7 @@ assign  o_cmd_mode    = i_cmd_parameter;
 always @ (posedge clk) begin
   if (rst) begin
     state                   <=  IDLE;
-    o_cmd_en_write          <=  0;
+    o_data_out_en           <=  0;
     o_data_out              <=  0;
     o_cmd_finished          <=  0;
     o_cmd_data              <=  0;
@@ -55,10 +54,10 @@ always @ (posedge clk) begin
         o_write             <=  0;
         o_read              <=  0;
 
-        o_cmd_en_write      <=  0;
+        o_data_out_en      <=  0;
         if (i_cmd_write_stb) begin
           //Change the bus to an output
-          o_cmd_en_write    <=  1;
+          o_data_out_en    <=  1;
           //Put the data on the bus
           o_data_out        <=  i_cmd_data;
           o_write           <=  1;
@@ -66,7 +65,7 @@ always @ (posedge clk) begin
         end
         else if (i_cmd_read_stb) begin
           //Change the bus to an input
-          o_cmd_en_write    <=  0;
+          o_data_out_en    <=  0;
           o_read            <=  1;
           state             <=  FINISHED;
         end
@@ -74,7 +73,7 @@ always @ (posedge clk) begin
       FINISHED: begin
         o_write             <=  0;
         o_read              <=  0;
-        if (!o_cmd_en_write) begin
+        if (!o_data_out_en) begin
           //XXX: The appliction note doesn't describe how to explicitly read
           //and the protocol is different from the 8080 MCU interface
           o_cmd_data        <=  i_data_in;

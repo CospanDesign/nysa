@@ -15,6 +15,7 @@
 
 //Command Registers
 `define CMD_START_MEM_WRITE 8'h2C
+`define CMD_GET_TEAR_STATUS 8'h0E
 
 
 

@@ -57,6 +57,7 @@ SOFTWARE.
 `define CONTROL_COMMAND_PARAMETER 7
 `define CONTROL_WRITE_OVERRIDE    8
 `define CONTROL_CHIP_SELECT       9
+`define CONTROL_ENABLE_TEARING    10
 
 //status bit definition
 `define STATUS_MEMORY_0_EMPTY     0
@@ -167,6 +168,7 @@ wire                w_cmd_read_stb;
 wire                w_cmd_parameter;
 wire                w_write_override;
 wire                w_chip_select;
+wire                w_enable_tearing;
 
 wire                w_cmd_finished;
 reg         [7:0]   r_cmd_data_out;
@@ -191,10 +193,11 @@ nh_lcd #(
   .rst                 (rst                 ),
   .clk                 (clk                 ),
 
-  //.debug               (debug               ),
+  .debug               (debug               ),
 
 
   .i_enable            (w_enable            ),
+  .i_enable_tearing    (w_enable_tearing    ),
   .i_reset_display     (w_reset_display     ),
   .i_data_command_mode (~w_command_mode     ),
   .i_cmd_parameter     (w_cmd_parameter     ),
@@ -230,7 +233,7 @@ wb_mem_2_ppfifo m2p(
 
   .clk                  (clk                      ),
   .rst                  (rst                      ),
-  .debug                (debug                    ),
+  //.debug                (debug                    ),
 
   //Control
   .i_enable             (w_enable                 ),
@@ -273,8 +276,6 @@ wb_mem_2_ppfifo m2p(
 );
 
 
-
-
 //Asynchronous Logic
 assign        w_enable                = control[`CONTROL_ENABLE];
 assign        w_enable_interrupt      = control[`CONTROL_ENABLE_INTERRUPT];
@@ -286,6 +287,7 @@ assign        w_cmd_read_stb          = control[`CONTROL_COMMAND_READ];
 assign        w_cmd_parameter         = control[`CONTROL_COMMAND_PARAMETER];
 assign        w_write_override        = control[`CONTROL_WRITE_OVERRIDE];
 assign        w_chip_select           = control[`CONTROL_CHIP_SELECT];
+assign        w_enable_tearing        = control[`CONTROL_ENABLE_TEARING];
 
 
 assign        status[`STATUS_MEMORY_0_EMPTY]  = w_memory_0_empty;
