@@ -37,7 +37,7 @@ SOFTWARE.
 
   number of registers this should be equal to the nubmer of ADDR_???
   parameters
-  DRT_SIZE:  8388607
+  DRT_SIZE:  8388608
 
 */
 `timescale 1 ns/1 ps
