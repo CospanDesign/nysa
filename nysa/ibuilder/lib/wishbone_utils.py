@@ -138,15 +138,24 @@ def is_wishbone_bus_signal(signal):
     return False
 
 
+def generate_startup():
+    buf = "//Startup reset\n\n"
+    buf +=create_wire_buf("startup_rst", 1, 0, 0)
+    buf += "\n"
+    buf += "startup start(\n"
+    buf += "\t.{0:20}({1:20}),\n".format("clk", "clk")
+    buf += "\t.{0:20}({1:20})\n".format("startup_rst", "startup_rst")
+    buf += ");\n"
+    return string.expandtabs(buf, 2)
 
 def generate_peripheral_wishbone_interconnect_buffer(num_slaves, invert_reset):
     buf = "//Wishbone Memory Interconnect\n\n"
     buf += "wishbone_interconnect wi (\n"
     buf += "\t.{0:20}({1:20}),\n".format("clk", "clk")
     if invert_reset:
-        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst_n")
+        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst_n | startup_rst")
     else:
-        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst")
+        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst | startup_rst")
     buf += "\n"
 
     buf += "\t//master\n"
@@ -190,9 +199,9 @@ def generate_memory_wishbone_interconnect_buffer(num_mem_slaves, invert_reset):
     buf += "wishbone_mem_interconnect wmi (\n"
     buf += "\t.{0:20}({1:20}),\n".format("clk", "clk")
     if invert_reset:
-        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst_n")
+        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst_n | startup_rst")
     else:
-        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst")
+        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst | startup_rst")
     buf += "\n"
 
     buf += "\t//master\n"
@@ -233,9 +242,9 @@ def generate_master_buffer(invert_reset):
     buf += "\t.{0:20}({1:20}),\n".format("clk","clk")
 
     if invert_reset:
-        buf += "\t.{0:20}({1:20}),\n\n".format("rst", "rst_n")
+        buf += "\t.{0:20}({1:20}),\n\n".format("rst", "rst_n | startup_rst")
     else:
-        buf += "\t.{0:20}({1:20}),\n\n".format("rst", "rst")
+        buf += "\t.{0:20}({1:20}),\n\n".format("rst", "rst | startup_rst")
 
     buf += "\t//input handler signals\n"
     buf += "\t.{0:20}({1:20}),\n".format("i_ready", "ih_ready")
@@ -315,9 +324,9 @@ def generate_module_port_signals(invert_reset,
     #Add the port declarations
     buf += "\t.{0:<20}({1:<20}),\n".format("clk", "clk")
     if invert_reset:
-        buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst_n")
+        buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst_n | startup_rst")
     else:
-        buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst")
+        buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst | startup_rst")
 
     #Keep track of the port count so the last one won't have a comma
     port_max = get_port_count(module_tags)
@@ -591,6 +600,9 @@ class WishboneTopGenerator(object):
         #Add the boiler plate register/wires
         buf += bp_buf
         buf += "\n\n"
+        #Add the startup
+        buf += generate_startup()
+        buf += "\n\n"
         #Add the master
         buf += generate_master_buffer(invert_reset)
         buf += "\n\n"
@@ -635,7 +647,7 @@ class WishboneTopGenerator(object):
 
         buf =  "//General Signals\n"
         #buf +=  "{0:<20}{1};\n".format("wire", "clk")
-        #buf +=  "{0:<20}{1};\n".format("wire", "rst")
+        #buf +=  "{0:<20}{1};\n".format("wire", "rst | startup_rst")
 
         self.wires.append("clk")
         self.wires.append("rst")

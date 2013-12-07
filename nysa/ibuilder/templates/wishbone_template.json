@@ -39,7 +39,12 @@
             "location":"${NYSA}/cbuilder/verilog"
           },
           "dependencies":{
-            "dir":true
+            "dir":true,
+            "files":{
+              "startup.v":{
+                "location":"${NYSA}/cbuilder/verilog/generic"
+              }
+            }
           },
           "top.v":{
             "location":"${NYSA}/cbuilder/template/top",

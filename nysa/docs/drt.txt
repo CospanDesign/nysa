@@ -70,7 +70,8 @@ Organization of the ROM 32 bit address location
 DRT_DEV_OFFSET[x * 8] + 0:    Device ID (this is associated with the flags
                               register bit 0 to indicate this is a standard
                               device or not)
-  (Addr: 31-0 ) : device ID number (see below)
+  (Addr: 31-16) : device Sub ID number (see below)
+  (Addr: 15-0 ) : device ID number (see below)
 DRT_DEV_OFFSET[x * 8] + 1:    FLAGS
     Note: bit 31:16 are set by cbuilder
   (Addr: 31-16)   : memory device (access this device in the memory bus)
@@ -78,12 +79,20 @@ DRT_DEV_OFFSET[x * 8] + 1:    FLAGS
   (Addr: 15-0 )   :
                   BIT: 1      Memory Slave
                   BIT: 0      Standard device (can use generic drivers)
-DRT_DEV_OFFSET[x * 8] + 2:    Offset from 0x00  (NEED A NAME, not used yet)
-DRT_DEV_OFFSET[x * 8] + 3:    Size of address space for device (NEED A NAME)
-DRT_DEV_OFFSET[x * 8] + 4:    Size of address space for device (NEED A NAME)
-DRT_DEV_OFFSET[x * 8] + 5:    Size of address space for device (NEED A NAME)
-DRT_DEV_OFFSET[x * 8] + 6:    Size of address space for device (NEED A NAME)
-DRT_DEV_OFFSET[x * 8] + 7:    Size of address space for device (NEED A NAME)
+DRT_DEV_OFFSET[x * 8] + 2:    Size
+                                Size of address space for device
+                                  For a peripheral this is the number of
+                                    registers
+                                  For a memory device this is the size of the
+                                    Memory
+DRT_DEV_OFFSET[x * 8] + 3:    User ID
+  (Addr: 31-16)   : RFU
+  (Addr: 15-0 )   : If there are two devices with the same unique
+                    IDs and Sub IDs this will differentiate the two
+DRT_DEV_OFFSET[x * 8] + 4:    RFU
+DRT_DEV_OFFSET[x * 8] + 5:    RFU
+DRT_DEV_OFFSET[x * 8] + 6:    RFU
+DRT_DEV_OFFSET[x * 8] + 7:    RFU
 
 
 
