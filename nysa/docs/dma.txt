@@ -1,0 +1,241 @@
+
+DMA Controller
+
+Use this to control Direct Memory Access transfers
+
+Because FPGAs have a relatively small amount of storage space employing
+alternative storage mechanisms is necessary to realize various applications
+including audio and video applications.
+
+In general a DMA enabled core can be thought of as two controllers. The
+first is used to manipulate and read from the core directly. The second
+is a memory controller that can interface with the storage mechanism. The
+core has four registers to control the DMA controller and most often
+requires a interrupt to be used in order for the host to be notified if the
+memory is full or empty (depending on if it is a read or write)
+
+The four registers are:
+
+1. Memory Base[0]
+2. Memory Size[0]
+3. Memory Base[1]
+4. Memory Size[1]
+
+Users can both read and write using DMA. The implementation is uniform
+acrross cores but the register locations are core specific (some may start
+at 0x004 while others start at 0x020) especially if the core manages multiple
+memory regions. It is good practice to use a status register to determine
+the state of the core and the DMA controller was designed to use this
+status register to indicate to the user that the memory is free (for writes)
+or full and ready (for reads).
+
+NOTE: The following is how the DMA controller handles the memory the user
+interface for the DMA is simplified
+
+
+
+Setup:
+  -Setup the core with the correct bases. The bases are the inital location
+    where the core will read or write data. This only needs to be done once.
+    In general the second base will be located at the end of the first base.
+
+    An example of setting up the memory bases at the beginning of the memory
+    with a buffer size of 0x00002000:
+
+     #define SIZE  0x00002000
+     #define TOTAL_SIZE 2 * SIZE
+
+     #define BASE0 0x00000000
+     #define BASE1 BASE0 + SIZE
+
+      //nysa write register command
+      write_register(DEV_ADDR, REG_MEM_BASE0, BASE0);
+      write_register(DEV_ADDR, REG_MEM_BASE1, BASE1);
+
+      DEV_ADDR is the address of the device to write to
+      REG_MEM_BASE0 and REG_MEM_BASE1 are specific to a partiular core, for
+        example wb_sf_camera memory bases are located at 0x04 and 0x06
+        respectively
+
+How to write using DMA Write:
+
+  -Write the data to send to the core directly to memory
+  -Write the size of data that was sent to memory into the the REG_MEM_SIZE_#
+    Where # is either 0 or 1
+    -if both memory blocks are available the user can write both memory
+    blocks at one time. Although it is good practice to write to a base,
+    write the size and then write to second memory while the core is working
+    on the first memory block. This way the core will be start working before
+    the second core is finished and a cannon can be setup.
+  -Either poll the status registers to determine if one or both of the memory
+  blocks are available or use an interrupt to respond immediately (this is
+  the fastest and perferred method of writing)
+
+    An example of writing
+    //buffer0 and buffer1 are buffers of size 'SIZE'
+    uint32_t status;
+
+    read_register(DEV_ADDR, REG_STATUS, &status);
+    if (status & BASE_0_READY) {
+     //Base 0 is ready
+     write_memory(BASE0, buffer0, SIZE);
+     return 0;
+    }
+    else if (status & BASE_1_READY) {
+     write_memory(BASE1, buffer1, SIZE);
+     return 0;
+    }
+    else {
+     //Nothing is availabe, wait for a second for the next available buffer
+     wait_for_interrupts(1000);
+     read_register(DEV_ADDR, REG_STATUS, &status);
+
+      if (status & BASE_0_READY) {
+       //Base 0 is ready
+       write_memory(BASE0, buffer0, SIZE);
+       return 0;
+      }
+      else if (status & BASE_1_READY) {
+       write_memory(BASE1, buffer1, SIZE);
+       return 0;
+      }
+    }
+    //Unable to write to memory
+    return -1;
+
+How to read using DMA Read:
+
+  -Write the size of the memory read that the core should fill up. When the
+  core has filled up the memory it will raise an interrupt and set the
+  associated status flag to indicate that the memory has data. A write to
+  the 'REG_MEM_SIZE#' register will enable the memory controller to start
+  writing to the memory. The user can either write to the other REG_MEM_SIZE#
+  to allow the core to write the next pecie of data or simply wait for the
+  read to finish before allow the core to write more data to memory
+    -CAUTION: allowing a core to write to both memory location may lead to
+    uneven data reads. For example if a camera core can write data to memory
+    faster than the host can read data from memory then allowing the core to
+    write to both memory locations will result in two consecutive frames
+    followed by a possible noticeable gap in the data) it is advisable to
+    either allow the core to write to one location when an interrupt occures
+    (indicating data is available) read the data from memory and
+    write the size of the next transfer (allowing the core to start writng to
+    the next location):
+  -Wait for a core to indicate that data is available by either polling the
+  status flag or listening for an interrupt
+  -Read the data from memory
+
+    //User must keep track of the whih buffer has the most recent data
+
+    An example of a blocking read
+      //buffer is a buffer of size SIZE
+
+      //Class Vaiables
+      bool    next_buffer;        //this is set to 0 or 1 to indicate the next
+                                  //buffer to read when both buffers are ready
+      bool    buffer_available[2];
+      bool    continuous_read;    //tells the core to start the next write
+                                  //when finished reading so we are not
+                                  //starting and then waiting for a read to
+                                  //finish
+      bool    immediate_read;     //Allows the cores to fill up memory as fast
+                                  //as possible
+      bool    blocking;           //Wait for a response
+      uint32_t  timeout;          //timeout for interrupts
+
+
+      //Function variables
+      uint32_t status;
+      uint32_t reg;
+
+      //No buffers are currently reading anything
+      if ((buffer_available[0]) && (buffer_available[1])){
+        //we are not currently reading anything
+        //request data from the core to one buffer
+        write_register(DEV_ADDR, REG_MEM_SIZE0, SIZE);
+        buffer_available[0] = false;
+        next_buffer = 0;
+        if (continuous_read && immediate_read){
+          //Allows the core to read the next peice of data immediately
+          write_register(DEV_ADDR, REG_MEM_SIZE1, SIZE);
+          buffer_available[1] = false;
+        }
+      }
+
+      //Check if any of the buffers have data
+      read_register(DEV_ADDR, REG_STATUS, &status);
+      if (status & (BASE_0_READY | BASE_1_READY) == 0){
+        if (blocking){
+          wait_for_interrupts(timeout);
+          read_register(DEV_ADDR, REG_STATUS, &status);
+          if (status & (BASE_0_READY | BASE_1_READY) == 0){
+            //Even after blocking we didn't get a response
+            return 2;
+          }
+        }
+        else {
+          //Non blocking read
+          return 1;
+        }
+      }
+
+
+      //Both Buffers have data
+      if ((!buffer_available[0] && (status & BASE_0_READY)) ||
+          (!buffer_available[1] && (status & BASE_1_READY))){
+
+        //there is some data ready
+        //Check if both the the buffers have some data
+        if (!buffer_available[0] && !buffer_available[1]){
+          //We have a tie, use the 'next_buffer' to determine which to use next
+          if (next_buffer == 0)}{
+            //read from buffer location 0
+            read_memory(BASE0, buffer, SIZE);
+            next_buffer = 1;
+            if (continuous_read){
+              //tell the core to start filling the next buffer immeditely
+              write_register(DEV_ADDR, REG_MEM_SIZE0, SIZE);
+            }
+            else {
+              buffer_available[0] = true;
+            }
+          }
+          else {
+            //read from buffer location 1
+            read_memory(BASE1, buffer, SIZE);
+            next_buffer = 0;
+            if (continuous_read){
+              //tell the core to start filling the next buffer immeditely
+              write_register(DEV_ADDR, REG_MEM_SIZE1, SIZE);
+            }
+            else {
+              buffer_available[1] = true;
+            }
+          }
+        }
+      }
+
+      //only one buffer has data
+      else if (!buffer_available[0] && (status & BASE_0_READY)){
+        read_memory(BASE0, buffer, SIZE);
+        next_buffer = 1;
+        if (read_continuous){
+          write_register(DEV_ADDR, REG_MEM_SIZE0, SIZE);
+        }
+        else {
+          buffer_available[0] = true;
+        }
+      }
+      else if(!buffer_available[1] && (status & BASE_1_READY)) {
+        //Base 1 is ready
+        read_memory(BASE1, buffer, SIZE);
+        next_buffer = 0;
+        if (read_continous){
+          write_register(DEV_ADDR, REG_MEM_SIZE0, SIZE);
+        }
+        else {
+          buffer_available[0] = false;
+        }
+      }
+      return 0;
+
