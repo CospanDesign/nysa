@@ -264,8 +264,8 @@ module mt48lc4m16
             DQ0_zd } = DQ_zd;
 
     parameter UserPreload   = 1'b1;
-//    parameter mem_file_name = "none";  //"mt48lc4m16.mem";
-    parameter mem_file_name = "mt48lc4m16.mem";
+    parameter mem_file_name = "none";  //"mt48lc4m16.mem";
+    //parameter mem_file_name = "mt48lc4m16.mem";
     parameter TimingModel   = "DefaultTimingModel";
     parameter PartID        = "mt48lc4m16";
     parameter hi_bank       = 3;
