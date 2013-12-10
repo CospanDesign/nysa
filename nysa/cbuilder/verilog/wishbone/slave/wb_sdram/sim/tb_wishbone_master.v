@@ -227,7 +227,6 @@ wire                w_mem_int_i;
 wire                start;
 
 //Submodules
-
 wishbone_master wm (
   .clk            (clk              ),
   .rst            (rst              ),
@@ -268,45 +267,43 @@ wishbone_master wm (
   .o_mem_sel      (w_mem_sel_o         ),
   .i_mem_ack      (w_mem_ack_i         ),
   .i_mem_int      (w_mem_int_i         )
-
-
 );
 
 wishbone_interconnect wi (
-  .clk        (clk                  ),
-  .rst        (rst                  ),
+  .clk                 (clk                  ),
+  .rst                 (rst                  ),
 
-  .i_m_we     (w_wbp_we             ),
-  .i_m_cyc    (w_wbp_cyc            ),
-  .i_m_stb    (w_wbp_stb            ),
-  .o_m_ack    (w_wbp_ack            ),
-  .i_m_dat    (w_wbp_dat_i          ),
-  .o_m_dat    (w_wbp_dat_o          ),
-  .i_m_adr    (w_wbp_adr            ),
-  .o_m_int    (w_wbp_int            ),
+  .i_m_we              (w_wbp_we             ),
+  .i_m_cyc             (w_wbp_cyc            ),
+  .i_m_stb             (w_wbp_stb            ),
+  .o_m_ack             (w_wbp_ack            ),
+  .i_m_dat             (w_wbp_dat_i          ),
+  .o_m_dat             (w_wbp_dat_o          ),
+  .i_m_adr             (w_wbp_adr            ),
+  .o_m_int             (w_wbp_int            ),
 
-  .o_s0_we    (w_wbs0_we            ),
-  .o_s0_cyc   (w_wbs0_cyc           ),
-  .o_s0_stb   (w_wbs0_stb           ),
-  .i_s0_ack   (w_wbs0_ack           ),
-  .o_s0_dat   (w_wbs0_dat_i         ),
-  .i_s0_dat   (w_wbs0_dat_o         ),
-  .o_s0_adr   (w_wbs0_adr           ),
-  .i_s0_int   (w_wbs0_int           ),
+  .o_s0_we             (w_wbs0_we            ),
+  .o_s0_cyc            (w_wbs0_cyc           ),
+  .o_s0_stb            (w_wbs0_stb           ),
+  .i_s0_ack            (w_wbs0_ack           ),
+  .o_s0_dat            (w_wbs0_dat_i         ),
+  .i_s0_dat            (w_wbs0_dat_o         ),
+  .o_s0_adr            (w_wbs0_adr           ),
+  .i_s0_int            (w_wbs0_int           ),
 
-  .o_s1_we    (w_wbs1_we            ),
-  .o_s1_cyc   (w_wbs1_cyc           ),
-  .o_s1_stb   (w_wbs1_stb           ),
-  .i_s1_ack   (w_wbs1_ack           ),
-  .o_s1_dat   (w_wbs1_dat_i         ),
-  .i_s1_dat   (w_wbs1_dat_o         ),
-  .o_s1_adr   (w_wbs1_adr           ),
-  .i_s1_int   (w_wbs1_int           )
+  .o_s1_we             (w_wbs1_we            ),
+  .o_s1_cyc            (w_wbs1_cyc           ),
+  .o_s1_stb            (w_wbs1_stb           ),
+  .i_s1_ack            (w_wbs1_ack           ),
+  .o_s1_dat            (w_wbs1_dat_i         ),
+  .i_s1_dat            (w_wbs1_dat_o         ),
+  .o_s1_adr            (w_wbs1_adr           ),
+  .i_s1_int            (w_wbs1_int           )
 );
 
 wishbone_mem_interconnect wmi (
   .clk                 (clk                 ),
-  .rst                 (rst_n               ),
+  .rst                 (rst                 ),
 
   //master
   .i_m_we              (w_mem_we_o          ),
@@ -339,79 +336,77 @@ mt48lc4m16
 //  tdevice_TRCD = 10
 //)
 ram (
-  .A11  (sdram_addr[11]),
-  .A10  (sdram_addr[10]),
-  .A9   (sdram_addr[9]),
-  .A8   (sdram_addr[8]),
-  .A7   (sdram_addr[7]),
-  .A6   (sdram_addr[6]),
-  .A5   (sdram_addr[5]),
-  .A4   (sdram_addr[4]),
-  .A3   (sdram_addr[3]),
-  .A2   (sdram_addr[2]),
-  .A1   (sdram_addr[1]),
-  .A0   (sdram_addr[0]),
+  .A11                 (sdram_addr[11]      ),
+  .A10                 (sdram_addr[10]      ),
+  .A9                  (sdram_addr[9]       ),
+  .A8                  (sdram_addr[8]       ),
+  .A7                  (sdram_addr[7]       ),
+  .A6                  (sdram_addr[6]       ),
+  .A5                  (sdram_addr[5]       ),
+  .A4                  (sdram_addr[4]       ),
+  .A3                  (sdram_addr[3]       ),
+  .A2                  (sdram_addr[2]       ),
+  .A1                  (sdram_addr[1]       ),
+  .A0                  (sdram_addr[0]       ),
 
-  .DQ15 (sdram_data[15]),
-  .DQ14 (sdram_data[14])  ,
-  .DQ13 (sdram_data[13]),
-  .DQ12 (sdram_data[12]),
-  .DQ11 (sdram_data[11]),
-  .DQ10 (sdram_data[10]),
-  .DQ9  (sdram_data[9]),
-  .DQ8  (sdram_data[8]),
-  .DQ7  (sdram_data[7]),
-  .DQ6  (sdram_data[6]),
-  .DQ5  (sdram_data[5]),
-  .DQ4  (sdram_data[4]),
-  .DQ3  (sdram_data[3]),
-  .DQ2  (sdram_data[2]),
-  .DQ1  (sdram_data[1]),
-  .DQ0  (sdram_data[0]),
+  .DQ15                (sdram_data[15]      ),
+  .DQ14                (sdram_data[14]      ),
+  .DQ13                (sdram_data[13]      ),
+  .DQ12                (sdram_data[12]      ),
+  .DQ11                (sdram_data[11]      ),
+  .DQ10                (sdram_data[10]      ),
+  .DQ9                 (sdram_data[9]       ),
+  .DQ8                 (sdram_data[8]       ),
+  .DQ7                 (sdram_data[7]       ),
+  .DQ6                 (sdram_data[6]       ),
+  .DQ5                 (sdram_data[5]       ),
+  .DQ4                 (sdram_data[4]       ),
+  .DQ3                 (sdram_data[3]       ),
+  .DQ2                 (sdram_data[2]       ),
+  .DQ1                 (sdram_data[1]       ),
+  .DQ0                 (sdram_data[0]       ),
 
-  .BA0  (sdram_bank[0]),
-  .BA1  (sdram_bank[1]),
-  .DQMH (sdram_data_mask[1]),
-  .DQML (sdram_data_mask[0]),
-  .CLK  (sdram_clk),
-  .CKE  (sdram_cke),
-  .WENeg  (sdram_we),
-  .RASNeg (sdram_ras),
-  .CSNeg  (sdram_cs_n),
-  .CASNeg (sdram_cas)
+  .BA0                 (sdram_bank[0]       ),
+  .BA1                 (sdram_bank[1]       ),
+  .DQMH                (sdram_data_mask[1]  ),
+  .DQML                (sdram_data_mask[0]  ),
+  .CLK                 (sdram_clk           ),
+  .CKE                 (sdram_cke           ),
+  .WENeg               (sdram_we            ),
+  .RASNeg              (sdram_ras           ),
+  .CSNeg               (sdram_cs_n          ),
+  .CASNeg              (sdram_cas           )
 );
 
 
 //mem 0
 wb_sdram m0 (
 
-  .clk(clk),
-  .rst(rst),
+  .clk                 (clk                 ),
+  .rst                 (rst                 ),
 
+  .i_wbs_cyc           (w_sm0_i_wbs_cyc     ),
+  .i_wbs_dat           (w_sm0_i_wbs_dat     ),
+  .i_wbs_we            (w_sm0_i_wbs_we      ),
+  .i_wbs_stb           (w_sm0_i_wbs_stb     ),
+  .i_wbs_sel           (w_sm0_i_wbs_sel     ),
+  .i_wbs_adr           (w_sm0_i_wbs_adr     ),
+  .o_wbs_dat           (w_sm0_o_wbs_dat     ),
+  .o_wbs_ack           (w_sm0_o_wbs_ack     ),
+  .o_wbs_int           (w_sm0_o_wbs_int     ),
 
-  .i_wbs_cyc           (w_sm0_i_wbs_cyc    ),
-  .i_wbs_dat           (w_sm0_i_wbs_dat    ),
-  .i_wbs_we            (w_sm0_i_wbs_we     ),
-  .i_wbs_stb           (w_sm0_i_wbs_stb    ),
-  .i_wbs_sel           (w_sm0_i_wbs_sel    ),
-  .i_wbs_adr           (w_sm0_i_wbs_adr    ),
-  .o_wbs_dat           (w_sm0_o_wbs_dat    ),
-  .o_wbs_ack           (w_sm0_o_wbs_ack    ),
-  .o_wbs_int           (w_sm0_o_wbs_int    ),
+  .o_sdram_clk         (sdram_clk           ),
+  .o_sdram_cke         (sdram_cke           ),
+  .o_sdram_cs_n        (sdram_cs_n          ),
+  .o_sdram_ras         (sdram_ras           ),
+  .o_sdram_cas         (sdram_cas           ),
+  .o_sdram_we          (sdram_we            ),
 
-  .o_sdram_clk         (sdram_clk          ),
-  .o_sdram_cke         (sdram_cke          ),
-  .o_sdram_cs_n        (sdram_cs_n         ),
-  .o_sdram_ras         (sdram_ras          ),
-  .o_sdram_cas         (sdram_cas          ),
-  .o_sdram_we          (sdram_we           ),
-
-  .o_sdram_addr        (sdram_addr         ),
-  .o_sdram_bank        (sdram_bank         ),
-  .io_sdram_data       (sdram_data         ),
-  .o_sdram_data_mask   (sdram_data_mask    ),
-  .o_sdram_ready       (sdram_ready        )
-
+  .o_sdram_addr        (sdram_addr          ),
+  .o_sdram_bank        (sdram_bank          ),
+  .io_sdram_data       (sdram_data          ),
+  .o_sdram_data_mask   (sdram_data_mask     ),
+  .o_sdram_ready       (sdram_ready         )
 );
 
 
@@ -421,25 +416,25 @@ assign  start = sdram_ready;
 
 
 
-always #`CLK_HALF_PERIOD      clk = ~clk;
+always #`CLK_HALF_PERIOD        clk = ~clk;
 
 initial begin
-  fd_out                      = 0;
-  read_count                  = 0;
-  data_count                  = 0;
-  timeout_count               = 0;
-  request_more_data_ack       <=  0;
-  execute_command             <=  0;
+  fd_out                        = 0;
+  read_count                    = 0;
+  data_count                    = 0;
+  timeout_count                 = 0;
+  request_more_data_ack         <=  0;
+  execute_command               <=  0;
 
   $dumpfile ("design.vcd");
   $dumpvars (0, wishbone_master_tb);
-  fd_in                       = $fopen(`INPUT_FILE, "r");
-  fd_out                      = $fopen(`OUTPUT_FILE, "w");
+  fd_in                         = $fopen(`INPUT_FILE, "r");
+  fd_out                        = $fopen(`OUTPUT_FILE, "w");
   `SLEEP_HALF_CLK;
 
-  rst                         <= 0;
+  rst                           <= 0;
   `SLEEP_CLK(100);
-  rst                         <= 1;
+  rst                           <= 1;
 
   //clear the handler signals
   r_in_ready                    <= 0;
@@ -597,6 +592,7 @@ always @ (posedge clk) begin
         //Uncomment 'start' conditional to wait for SDRAM  to finish starting
         //up
         if (start) begin
+          $display            ("TB: sdram is ready");
           state                 <=  IDLE;
         end
       end
