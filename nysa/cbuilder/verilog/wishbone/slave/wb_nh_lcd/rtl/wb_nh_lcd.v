@@ -61,7 +61,7 @@ SOFTWARE.
 
 //status bit definition
 `define STATUS_MEMORY_0_EMPTY     0
-`define STATUS_MEMORY_1_EMPTY     1 
+`define STATUS_MEMORY_1_EMPTY     1
 
 
 
