@@ -36,7 +36,7 @@ localparam           REG_MEM_1_SIZE     = 32'h00000005;
 localparam           CLOCK_DIVISOR      = 32'h00000006;
 
 //Wires/Registers
-reg                   r_enable;
+reg                 r_enable;
 reg         [31:0]  r_clock_divisor = 0;
 reg         [31:0]  r_clock_count;
 reg                 dclock;
