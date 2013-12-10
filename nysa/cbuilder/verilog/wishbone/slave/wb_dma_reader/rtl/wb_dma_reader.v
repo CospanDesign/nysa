@@ -221,6 +221,11 @@ wb_ppfifo_2_mem p2m(
   .i_ppfifo_data        (w_rfifo_data             )
 );
 
+/*
+* It might make sense to move the PPFIFO into a sub core. This is useful if
+* thecore will be operating at a different frequency than other parts
+*/
+
 ppfifo #(
   .DATA_WIDTH           (32                       ),
                         //Size will always be 32 bits for mem
