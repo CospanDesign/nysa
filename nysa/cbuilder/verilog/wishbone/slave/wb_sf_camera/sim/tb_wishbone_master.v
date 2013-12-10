@@ -522,9 +522,9 @@ sim_camera cam (
 );
 
 
-assign  w_wbs0_ack   = 0;
-assign  w_wbs0_dat_o = 0;
-assign  start = sdram_ready;
+assign  w_wbs0_ack            = 0;
+assign  w_wbs0_dat_o          = 0;
+assign  start                 = sdram_ready;
 
 
 

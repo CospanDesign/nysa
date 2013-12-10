@@ -81,10 +81,7 @@ module wb_sf_camera #(
   output  reg         o_wbs_ack,
   output  reg [31:0]  o_wbs_dat,
   input       [31:0]  i_wbs_adr,
-
-  //This interrupt can be controlled from this module or a submodule
   output  reg         o_wbs_int,
-  //output              o_wbs_int
 
   //master control signal for memory arbitration
   output              mem_o_we,
@@ -139,7 +136,6 @@ wire                w_reset_counts;
 
 //Get the Memory write controller
 //nysa/cbuilder/verilog/wishbone/wb_ppfifo_2_mem/sim/test_wb_ppfifo_2_mem.v
-
 reg         [31:0]  r_memory_0_base;
 reg         [31:0]  r_memory_0_size;
 wire        [31:0]  w_memory_0_count;
@@ -306,6 +302,10 @@ assign  status                              = { 24'h0,
                                               };
 
 assign w_memory_ready                       = (!w_memory_0_empty) || (!w_memory_1_empty);
+
+
+assign w_default_mem_0_base                 = `DEFAULT_MEM_0_BASE;
+assign w_default_mem_1_base                 = `DEFAULT_MEM_1_BASE;
 
 //Synchronous Logic
 always @ (posedge clk) begin
