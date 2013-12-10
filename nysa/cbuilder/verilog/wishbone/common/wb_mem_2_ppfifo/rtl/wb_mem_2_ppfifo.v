@@ -14,7 +14,7 @@ module wb_mem_2_ppfifo(
   input               i_memory_0_new_data,
   output              o_memory_0_empty,
 
-  output      [31:0]  o_default_mem_0_base,
+  input       [31:0]  o_default_mem_0_base,
 
   input       [31:0]  i_memory_1_base,
   input       [31:0]  i_memory_1_size,
@@ -22,7 +22,7 @@ module wb_mem_2_ppfifo(
   input               i_memory_1_new_data,
   output              o_memory_1_empty,
 
-  output      [31:0]  o_default_mem_1_base,
+  input       [31:0]  o_default_mem_1_base,
 
   output  reg         o_read_finished,
 
@@ -110,8 +110,8 @@ assign  debug[31:16]            = i_mem_dat[23:8];
 
 
 
-assign  o_default_mem_0_base  = 32'h00000000;
-assign  o_default_mem_1_base  = 32'h00080000;
+//assign  o_default_mem_0_base  = 32'h00000000;
+//assign  o_default_mem_1_base  = 32'h00080000;
 
 assign  o_ppfifo_data         = i_mem_dat;
 assign  o_mem_adr             = w_mem_base[r_active_bank] + r_mem_ptr[r_active_bank];
