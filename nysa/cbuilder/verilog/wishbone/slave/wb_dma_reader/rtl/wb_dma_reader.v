@@ -161,7 +161,7 @@ wire        [31:0]  w_rfifo_data;
 //with your interface
 ppfifo_data_generator dg(
   .clk                  (clk                      ),
-  .rst                  (rst || !w_control_reset  ),
+  .rst                  (rst |  w_control_reset   ),
 
   .i_enable             (w_enable                 ),
 
@@ -176,7 +176,7 @@ ppfifo_data_generator dg(
 wb_ppfifo_2_mem p2m(
 
   .clk                  (clk                      ),
-  .rst                  (rst | !w_control_reset   ),
+  .rst                  (rst |  w_control_reset   ),
 
   //Control
   .i_enable             (w_enable                 ),
@@ -227,7 +227,7 @@ ppfifo #(
   .ADDRESS_WIDTH        (BUFFER_SIZE              )
                         //Parameterize the depth of the PPFIFO
 ) ping_pong (
-  .reset                (rst | !w_control_reset   ),
+  .reset                (rst |  w_control_reset   ),
 
   //write
   .write_clock          (clk                      ),
