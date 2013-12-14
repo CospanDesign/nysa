@@ -389,7 +389,6 @@ always @ (posedge clk) begin
           end
         endcase
       end
-
       else begin
         if (!o_wbs_ack) begin //Fix double reads
           //read request
