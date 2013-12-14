@@ -68,6 +68,7 @@ module wb_gpio#(
   input               clk,
   input               rst,
 
+  output      [31:0]  debug,
   //Add signals to control your device here
 
   //Wishbone Bus Signals
@@ -103,7 +104,7 @@ wire    [31:0]  gpio;
 
 //interrupt registers
 reg			[31:0]	interrupts;
-reg			[31:0]	interrupt_mask;
+reg			[31:0]	interrupt_enable;
 reg			[31:0]	interrupt_edge;
 reg					    clear_interrupts;
 
@@ -117,9 +118,6 @@ endgenerate
 
 //blocks
 always @ (posedge clk) begin
-
-	clear_interrupts 	    <= 0;
-
 	if (rst) begin
 		o_wbs_dat	          <= 32'h00000000;
 		o_wbs_ack	          <= 0;
@@ -130,11 +128,12 @@ always @ (posedge clk) begin
 
 
 		//reset interrupts
-		interrupt_mask		  <= DEFAULT_INTERRUPT_MASK;
+		interrupt_enable		  <= DEFAULT_INTERRUPT_MASK;
 		interrupt_edge		  <= DEFAULT_INTERRUPT_EDGE;
+	  clear_interrupts 	  <= 0;
 	end
-
 	else begin
+	  clear_interrupts 	  <= 0;
 		//when the master acks our ack, then put our ack down
 		if (o_wbs_ack & ~ i_wbs_stb)begin
 			o_wbs_ack <= 0;
@@ -159,7 +158,7 @@ always @ (posedge clk) begin
 					end
 					INTERRUPT_ENABLE: begin
 						$display("%h -> interrupt enable", i_wbs_dat);
-						interrupt_mask	<= i_wbs_dat;
+						interrupt_enable	<= i_wbs_dat;
 					end
 					INTERRUPT_EDGE: begin
 						$display("%h -> interrupt_edge", i_wbs_dat);
@@ -169,34 +168,36 @@ always @ (posedge clk) begin
 					end
 				endcase
 			end
-
 			else begin 
-				//read request
-				case (i_wbs_adr)
-					GPIO: begin
-						$display("user read %h", i_wbs_adr);
-						o_wbs_dat <= gpio;
-					end
-					GPIO_OUTPUT_ENABLE: begin
-						$display("user read %h", i_wbs_adr);
-						o_wbs_dat <= gpio_direction;
-					end
-					INTERRUPTS: begin
-						$display("user read %h", i_wbs_adr);
-						o_wbs_dat 			<= interrupts;
-						clear_interrupts	<= 1;
-					end
-					INTERRUPT_ENABLE: begin
-						$display("user read %h", i_wbs_adr);
-						o_wbs_dat			<= interrupt_mask;
-					end
-					INTERRUPT_EDGE: begin
-						$display("user read %h", i_wbs_adr);
-						o_wbs_dat			<= interrupt_edge;
-					end
-					default: begin
-					end
-				endcase
+        if (!o_wbs_ack) begin //Fix double reads
+			  	//read request
+			  	case (i_wbs_adr)
+			  		GPIO: begin
+			  			$display("user read %h", i_wbs_adr);
+			  			o_wbs_dat <= gpio;
+			  		end
+			  		GPIO_OUTPUT_ENABLE: begin
+			  			$display("user read %h", i_wbs_adr);
+			  			o_wbs_dat <= gpio_direction;
+			  		end
+			  		INTERRUPTS: begin
+			  			$display("user read %h", i_wbs_adr);
+			  			o_wbs_dat 			<= interrupts;
+			  			clear_interrupts	<= 1;
+			  		end
+			  		INTERRUPT_ENABLE: begin
+			  			$display("user read %h", i_wbs_adr);
+			  			o_wbs_dat			<= interrupt_enable;
+			  		end
+			  		INTERRUPT_EDGE: begin
+			  			$display("user read %h", i_wbs_adr);
+			  			o_wbs_dat			<= interrupt_edge;
+			  		end
+			  		default: begin
+              o_wbs_dat <=  32'h00;
+			  		end
+			  	endcase
+        end
 			end
 			o_wbs_ack <= 1;
 		end
@@ -207,40 +208,61 @@ end
 reg	[31:0]	prev_gpio_in;
 
 //this is the change
-wire [31:0]	gpio_edge;
-assign gpio_edge	= prev_gpio_in ^ gpio_in;
+wire [31:0] pos_gpio_edge;
+wire [31:0] neg_gpio_edge;
+assign neg_gpio_edge = (~interrupt_edge & (interrupt_enable & ( prev_gpio_in & ~gpio_in)));
+assign pos_gpio_edge = ( interrupt_edge & (interrupt_enable & (~prev_gpio_in &  gpio_in)));
 
 /*
 initial begin
-	$monitor ("%t, interrupts: %h, mask: %h, edge: %h, gpio_edge: %h", $time, interrupts, interrupt_mask, interrupt_edge, gpio_edge);
+	$monitor ("%t, interrupts: %h, mask: %h, edge: %h, gpio_edge: %h", $time, interrupts, interrupt_enable, interrupt_edge, gpio_edge);
 end
 */
 
+assign  debug[0]  = gpio[2];
+assign  debug[1]  = gpio[3];
+
+assign  debug[2]  = interrupt_enable[2];
+assign  debug[3]  = interrupt_enable[3];
+
+assign  debug[4]  = interrupt_edge[2];
+assign  debug[5]  = interrupt_edge[3];
+
+assign  debug[6]  = prev_gpio_in[2];
+assign  debug[7]  = prev_gpio_in[3];
+
+assign  debug[8]  = pos_gpio_edge[2];
+assign  debug[9]  = pos_gpio_edge[3];
+
+assign  debug[10]  = neg_gpio_edge[2];
+assign  debug[11]  = neg_gpio_edge[3];
+
+assign  debug[12]  = interrupts[2];
+assign  debug[13]  = interrupts[3];
+
+assign  debug[14]  = clear_interrupts;
+
 
 always @ (posedge clk) begin
-
 	if (rst) begin
-		interrupts	<= 32'h00000000;
-		o_wbs_int	<= 0;
+		interrupts	    <= 32'h00000000;
+		o_wbs_int	      <= 0;
 	end
 	else begin
 		if (clear_interrupts) begin
-			interrupts <= 32'h00000000;
+			interrupts    <= 32'h00000000;
+			o_wbs_int	    <= 0;
 		end
-		else begin
+		if ((pos_gpio_edge > 0) || (neg_gpio_edge > 0)) begin
 			//check to see if there was a negative or postive edge that occured
-			interrupts	<= interrupt_mask & (interrupt_edge ^~ gpio_edge);
+      interrupts    <= (pos_gpio_edge | neg_gpio_edge);
+  		$display ("found an interrupt in the slave");
 		end
-		if (interrupts != 0) begin
-			//tell the master that we have interrupts
-//			$display ("found an interrupt in the slave");
-			o_wbs_int	<= 1;
-		end
-		else begin
-			o_wbs_int	<= 0;
-		end
+    if (interrupts > 0) begin
+		  o_wbs_int	    <= 1;
+    end
+	  prev_gpio_in	  <= gpio_in;
 	end
-	prev_gpio_in	<= gpio_in;
 end
 
 endmodule
