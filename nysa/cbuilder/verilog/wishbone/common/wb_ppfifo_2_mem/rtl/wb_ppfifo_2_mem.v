@@ -37,6 +37,7 @@ module wb_ppfifo_2_mem(
   output  reg [3:0]   o_mem_sel,
   output      [31:0]  o_mem_adr,
   output  reg [31:0]  o_mem_dat,
+  //output      [31:0]  o_mem_dat,
   input       [31:0]  i_mem_dat,
   input               i_mem_ack,
   input               i_mem_int,
@@ -82,6 +83,7 @@ reg           [3:0]   state;
 assign  o_default_mem_0_base  = 32'h00000000;
 assign  o_default_mem_1_base  = 32'h00200000;
 
+//assign  o_mem_dat             = i_ppfifo_data;
 assign  o_mem_adr             = w_mem_base[r_active_bank] + r_mem_ptr[r_active_bank];
 
 assign  r_mem_count[0]        = (i_memory_0_size > 0) ? i_memory_0_size - r_mem_ptr[0] : 32'h0;
@@ -123,68 +125,68 @@ assign  debug[23:16]          = o_mem_adr;
 //Synchronous Logic
 always @ (posedge clk) begin
   if (rst) begin
-    o_write_finished       <=  0;
+    o_write_finished                      <=  0;
 
     //Wishbone Bus Signals
-    o_mem_we              <=  0;
-    o_mem_stb             <=  0;
-    o_mem_cyc             <=  0;
-    o_mem_sel             <=  4'b1111;
-    o_mem_dat             <=  32'h00000000;
+    o_mem_we                              <=  0;
+    o_mem_stb                             <=  0;
+    o_mem_cyc                             <=  0;
+    o_mem_sel                             <=  4'b1111;
+    o_mem_dat                             <=  32'h00000000;
 
     //Ping Pong FIFO Signals
-    o_ppfifo_act          <=  0;
-    o_ppfifo_stb          <=  0;
-    r_ppfifo_count        <=  0;
+    o_ppfifo_act                          <=  0;
+    o_ppfifo_stb                          <=  0;
+    r_ppfifo_count                        <=  0;
 
     //Memory Interface
-    r_mem_read_size       <=  0;
+    r_mem_read_size                       <=  0;
 
-    r_mem_ptr[0]          <=  0;
-    r_mem_ptr[1]          <=  0;
+    r_mem_ptr[0]                          <=  0;
+    r_mem_ptr[1]                          <=  0;
 
 
-    state                 <=  IDLE;
+    state                                 <=  IDLE;
   end
   else begin
     //De-assert Strobes
-    o_ppfifo_stb          <=  0;
-    o_write_finished      <=  0;
+    o_ppfifo_stb                          <=  0;
+    o_write_finished                      <=  0;
 
     //Grab an Available FIFO if the core is activated
     if (i_enable) begin
       if (i_ppfifo_rdy && !o_ppfifo_act) begin
-        r_ppfifo_count    <=  0;
-        o_ppfifo_act      <=  1;
+        r_ppfifo_count                    <=  0;
+        o_ppfifo_act                      <=  1;
       end
     end
 
     case (state)
       IDLE: begin
-        o_mem_cyc         <=  0;
-        o_mem_stb         <=  0;
-        o_mem_we          <=  1;
+        o_mem_cyc                         <=  0;
+        o_mem_stb                         <=  0;
+        o_mem_we                          <=  1;
         if (i_enable) begin
-          state           <=  GET_MEMORY_BLOCK;
+          state                           <=  GET_MEMORY_BLOCK;
         end
       end
       GET_MEMORY_BLOCK: begin
-        o_mem_cyc         <=  0;
-        o_mem_stb         <=  0;
-        o_mem_we          <=  1;
+        o_mem_cyc                         <=  0;
+        o_mem_stb                         <=  0;
+        o_mem_we                          <=  1;
 
         //Check if there is a memory block available
         //If so get a reference to it
         if (r_memory_ready) begin
-          r_mem_read_size             <=  r_mem_count[r_active_bank];
-          state                       <=  WRITE_DATA;
-          r_mem_ptr[r_active_bank]    <=  0;
+          r_mem_read_size                 <=  r_mem_count[r_active_bank];
+          state                           <=  WRITE_DATA;
+          r_mem_ptr[r_active_bank]        <=  0;
 
         end
         else begin
 
           if (!i_enable) begin
-            state         <=  IDLE;
+            state                         <=  IDLE;
           end
         end
       end
@@ -194,9 +196,9 @@ always @ (posedge clk) begin
             //If the FIFO has data
             //if (r_mem_ptr[r_active_bank] < i_ppfifo_size) begin
             if (r_ppfifo_count < i_ppfifo_size) begin
-              o_mem_dat   <=  i_ppfifo_data;
-              o_mem_cyc   <=  1;
-              o_mem_stb   <=  1;
+              o_mem_dat                   <=  i_ppfifo_data;
+              o_mem_cyc                   <=  1;
+              o_mem_stb                   <=  1;
 
               //Ping Pong FIFO has room
               //if we received an ack, we have written a peice of data
@@ -211,41 +213,41 @@ always @ (posedge clk) begin
               //Release the Activate
               //Release the Wishbone cycle so the host has a chance to write
               //data
-              o_mem_cyc                 <=  0;
-              o_mem_stb                 <=  0;
-              o_ppfifo_act              <=  0;
+              o_mem_cyc                   <=  0;
+              o_mem_stb                   <=  0;
+              o_ppfifo_act                <=  0;
             end
           end
           else begin
-            o_mem_cyc     <=  0;
-            o_mem_stb     <=  0;
+            o_mem_cyc                     <=  0;
+            o_mem_stb                     <=  0;
           end
         end
         else begin
-          o_mem_cyc       <=  0;
-          o_mem_stb       <=  0;
-          state           <=  FINISHED;
+          o_mem_cyc                       <=  0;
+          o_mem_stb                       <=  0;
+          state                           <=  FINISHED;
         end
       end
       FINISHED: begin
-        o_mem_cyc         <=  0;
-        o_mem_stb         <=  0;
+        o_mem_cyc                         <=  0;
+        o_mem_stb                         <=  0;
         //If a memory block is not active but there is data in a PPFIFO
         //Then we need to flush it, this usually happens at the end of
         //a write
-        o_write_finished   <=  1; //Launch a signal to indicate that we
-                                  //consumed a block of memory
-        state              <=  GET_MEMORY_BLOCK;
+        o_write_finished                  <=  1; //Launch a signal to indicate that we
+                                                 //consumed a block of memory
+        state                             <=  GET_MEMORY_BLOCK;
       end
     endcase
   end
 
   //Reset the pointers
   if (i_memory_0_ready || (i_memory_0_size == 0)) begin
-    r_mem_ptr[0]          <=  0;
+    r_mem_ptr[0]                          <=  0;
   end
   if (i_memory_1_ready || (i_memory_1_size == 0)) begin
-    r_mem_ptr[1]          <=  0;
+    r_mem_ptr[1]                          <=  0;
   end
 end
 
