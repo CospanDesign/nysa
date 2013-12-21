@@ -81,7 +81,7 @@ class DRTManager():
     """
     return self.num_of_devices
 
-  def is_device_attached(self, device_id):
+  def is_device_attached(self, device_id, subdevice_id=None):
     """is_device_attached
 
     Determine if the device with the specified ID exists
@@ -99,12 +99,21 @@ class DRTManager():
       Nothing
     """
     for dev_index in range (0, self.num_of_devices):
-      dev_id = string.atoi(self.drt_lines[((dev_index + 1) * 8)], 16)
+      id_string = self.drt_lines[((dev_index + 1) * 8)]
+      dev_id = string.atoi(id_string[4:])
+      dev_sub_id = string.atoi(id_string[:4])
       if (self.dbg):
         print "dev_id: " + str(dev_id)
       if (dev_id == device_id):
-        return True
+        if (subdevice_id is not None):
+            if (subdevice_id == dev_sub_id):
+                return True
+            else:
+                return False
+        else:
+            return True
     return False
+ 
   
   def get_address_from_index(self, device_index):
     """get_address_from_index
@@ -121,8 +130,12 @@ class DRTManager():
     Raises:
       Nothing
     """
-    return (string.atoi(self.drt_lines[((device_index + 1) * 8) + 2], 16)) >> 24
-
+    id_string = self.drt_lines[((device_index + 1) * 8)]
+    sub_id_string = id_string[:4]
+    dev_id_string = id_string[4:]
+    dev_id = string.atoi(dev_id_string, 16)
+    dev_sub_id = string.atoi(sub_id_string, 16)
+    return dev_id
 
   def get_id_from_index(self, device_index):
     """get_id_from_index
@@ -138,7 +151,30 @@ class DRTManager():
     Raises:
       Nothing
     """
-    return string.atoi(self.drt_lines[((device_index + 1) * 8)], 16)
+    id_string = self.drt_lines[((device_index + 1) * 8)]
+    dev_id = string.atoi(id_string[4:], 16)
+    dev_sub_id = string.atoi(id_string[:4], 16)
+    return dev_id
+
+  def det_sub_id_from_index(self, sub_device_index):
+    """get_sub_id_from_index
+
+    From the index within the DRT return the Sub ID of this device
+
+    Args:
+      device_index: index of the device
+
+    Returns:
+      Standard device ID
+
+    Raises:
+      Nothing
+    """
+    id_string = self.drt_lines[((dev_index + 1) * 8)]
+    dev_id = string.atoi(id_string[4:], 16)
+    dev_sub_id = string.atoi(id_string[:4], 16)
+    return dev_sub_id
+
 
 
   def get_size_from_index(self, device_index):
@@ -223,7 +259,7 @@ class DRTManager():
       print ""
       print red,
       print "Device %d" % i
-      type_value = int(self.drt_lines[(i + 1) * 8], 16)
+      type_value = (int(self.drt_lines[(i + 1) * 8], 16) & 0xFFFF)
       type_name = get_device_type(type_value)
       print "%s%s:%sDevice Type: %s" % (blue, self.drt_lines[(i + 1) * 8], green, type_name) 
       print "%s%s:%sDevice Flags:" % (blue, self.drt_lines[((i + 1) * 8) + 1], green)

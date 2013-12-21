@@ -95,22 +95,26 @@ class GenDRT(Gen):
             slave_keywords = [
                 "DRT_ID",
                 "DRT_FLAGS",
-                "DRT_SIZE"
+                "DRT_SIZE",
+                "DRT_SUB_ID"
             ]
             slave_tags = vutils.get_module_tags(filename = absfilename, bus = "wishbone", keywords = slave_keywords)
 
-            drt_id_buffer = "{0:0=8X}"
+            drt_id_buffer = "{0:0=4X}"
+            drt_sub_id_buffer = "{0:0=4X}"
             drt_flags_buffer = "{0:0=8X}"
             drt_offset_buffer = "{0:0=8X}"
             drt_size_buffer = "{0:0=8X}"
 
             offset = 0x01000000 * (i + 1)
             drt_id_buffer = drt_id_buffer.format(atoi(slave_tags["keywords"]["DRT_ID"].strip()))
+            drt_sub_id_buffer = drt_sub_id_buffer.format(atoi(slave_tags["keywords"]["DRT_SUB_ID"].strip()))
+            #print "DRT_SUB_ID: %s" % drt_sub_id_buffer
             drt_flags_buffer = drt_flags_buffer.format(0x00000000 + atoi(slave_tags["keywords"]["DRT_FLAGS"]))
             drt_offset_buffer = drt_offset_buffer.format(offset)
             drt_size_buffer = drt_size_buffer.format(atoi(slave_tags["keywords"]["DRT_SIZE"]))
 
-            out_buf += drt_id_buffer + "\n"
+            out_buf += drt_sub_id_buffer + drt_id_buffer + "\n"
             out_buf += drt_flags_buffer + "\n"
             out_buf += drt_offset_buffer + "\n"
             out_buf += drt_size_buffer + "\n"
