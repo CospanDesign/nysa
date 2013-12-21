@@ -343,7 +343,9 @@ wishbone_mem_interconnect wmi (
 );
 
 //slave 1
-wb_dma_reader s1 (
+wb_dma_reader #(
+  .BUFFER_SIZE         (4                   )
+)s1 (
 
   .clk                 (clk                 ),
   .rst                 (rst                 ),

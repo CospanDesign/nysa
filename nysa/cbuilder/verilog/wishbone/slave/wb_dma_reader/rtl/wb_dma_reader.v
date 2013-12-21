@@ -263,6 +263,24 @@ assign  w_status            = { 28'h00,
                                 w_memory_1_finished,
                                 w_memory_0_finished
                               };
+assign  debug               = {
+                                14'h0,
+                                r_memory_1_ready,       //  16
+                                r_memory_0_ready,       //  15
+                                w_rfifo_strobe,         //  14
+                                w_rfifo_activate,       //  13
+                                w_rfifo_ready,          //  12
+                                w_wfifo_strobe,         //  11
+                                w_wfifo_activate,       //  10:9
+                                w_wfifo_ready,          //  8:7
+                                w_control_reset,        //  6
+                                w_enable_interrupt,     //  5
+                                w_enable,               //  4
+                                w_memory_1_empty,       //  3
+                                w_memory_0_empty,       //  2
+                                w_memory_1_finished,    //  1
+                                w_memory_0_finished     //  0
+                              };
 //Synchronous Logic
 always @ (posedge clk) begin
   if (rst) begin
@@ -327,10 +345,10 @@ always @ (posedge clk) begin
         //Reading
         case (i_wbs_adr)
           REG_CONTROL: begin
-            o_wbs_dat           <=  r_control;
+            o_wbs_dat <=  r_control;
           end
           REG_STATUS: begin
-            o_wbs_dat           <=  w_status;
+            o_wbs_dat <=  w_status;
           end
           REG_MEM_0_BASE: begin
             o_wbs_dat <=  r_memory_0_base;

@@ -32,11 +32,11 @@ always @ (posedge clk) begin
         r_count     <=  0;
         if (i_wr_rdy[0]) begin
           //Channel 0 is open
-          o_wr_act  <=  1;
+          o_wr_act[0]  <=  1;
         end
         else begin
           //Channel 1 is open
-          o_wr_act  <=  1;
+          o_wr_act[1]  <=  1;
         end
       end
       else begin
