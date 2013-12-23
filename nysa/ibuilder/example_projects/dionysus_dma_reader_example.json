@@ -1,6 +1,7 @@
 {
 	"BASE_DIR":"~/projects/ibuilder_project",
 	"board":"dionysus",
+  "IMAGE_ID":0,
 	"PROJECT_NAME":"example_project",
 	"TEMPLATE":"wishbone_template.json",
 	"INTERFACE":{

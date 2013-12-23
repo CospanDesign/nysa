@@ -1,6 +1,7 @@
 {
 	"BASE_DIR":"~/projects/ibuilder_project",
 	"board":"dionysus",
+  "IMAGE_ID":256,
 	"PROJECT_NAME":"example_project",
 	"TEMPLATE":"wishbone_template.json",
 	"INTERFACE":{
@@ -47,6 +48,7 @@
 	"SLAVES":{
 		"gpio1":{
 			"filename":"wb_gpio.v",
+      "unique_id":1,
 			"bind":{
 				"gpio_out[1:0]":{
 					"loc":"led[1:0]",
@@ -58,11 +60,12 @@
 				}
 			}
   	}
-	},
+  },
   "MEMORY":{
 		"mem1":{
 			"filename":"wb_sdram.v",
 			"bind":{
+
 				"o_sdram_clk":{
 					"loc":"sdram_clk",
 					"direction":"output"
@@ -107,10 +110,10 @@
 					"loc":"dqml",
 					"direction":"output"
 				}
+
 			}
 		}
 	},
-
 	"bind":{
     "clk":{
       "direction":"input",
@@ -121,6 +124,8 @@
       "loc":"rst"
     }
 	},
+
 	"constraint_files":[
 	]
+
 }

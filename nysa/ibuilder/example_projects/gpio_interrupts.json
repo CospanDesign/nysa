@@ -1,6 +1,7 @@
 {
-	"BASE_DIR":"~/projects/sycamore_projects",
+	"BASE_DIR":"~/projects/ibuilder_project",
 	"board":"xilinx-s3esk",
+  "IMAGE_ID":0,
 	"PROJECT_NAME":"example_project",
 	"TEMPLATE":"wishbone_template.json",
 	"INTERFACE":{

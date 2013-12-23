@@ -37,3 +37,6 @@ sed -i 's/\"port/\"loc/g' *.json
 sed -i 's/:\"i_ftdi_clk\"/:\"ftdi_clk\"/g' *.json
 sed -i 's/:\"o_sdram_clk\"/:\"sdram_clk\"/g' *.json
 
+#sed -i 'a/\"board\"/\"IMAGE_ID\":0,/g dionysus_gpio_mem.json
+
+sed -i 's/sycamore_projects/ibuilder_project/g' *.json
