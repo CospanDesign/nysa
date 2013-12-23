@@ -37,8 +37,8 @@ __author__ "dave.mccoy@cospandesign.com (Dave McCoy)"
 import time
 from array import array as Array
 
-from userland import nysa
-from userland.nysa import NysaCommError
+from userland.python import nysa
+from userland.python.nysa import NysaCommError
 
 #Register Constants
 GPIO_PORT           =   0x00000000
@@ -179,9 +179,6 @@ class GPIO(object):
             return 1
 
         return 0
-
-
-
 
     def set_interrupt_enable(self, interrupt_enable):
         """set_interrupt_enable

@@ -214,6 +214,30 @@ class Nysa(object):
         register_array[3]  = (value) & 0xFF
         self.write(device_id, address, register_array)
 
+    def enable_register_bit(self, device_id, address, bit, enable):
+        """enable_register_bit
+
+        Pass a bool value to set/clear a bit
+
+        Args:
+          device_id (int): Device identification number, this number is found
+                           in the DRT
+          address (int): Address of the register/memory to modify
+          bit (int): Address of bit to set (31 - 0)
+          enable (bool): set or clear a bit
+
+        Returns:
+          Nothing
+
+        Raises:
+          NysaCommError: Error in communication
+        """
+        if enable:
+            self.set_register_bit(device_id, address, bit)
+        else:
+            self.clear_register_bit(device_id, address, bit)
+
+
     def set_register_bit(self, device_id, address, bit):
         """set_register_bit
 
