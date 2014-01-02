@@ -130,12 +130,10 @@ class DRTManager():
     Raises:
       Nothing
     """
-    id_string = self.drt_lines[((device_index + 1) * 8)]
-    sub_id_string = id_string[:4]
-    dev_id_string = id_string[4:]
-    dev_id = string.atoi(dev_id_string, 16)
-    dev_sub_id = string.atoi(sub_id_string, 16)
-    return dev_id
+    addr_string = self.drt_lines[((device_index + 1) * 8) + 2]
+    addr = string.atoi(addr_string, 16) >> 24
+    print "Device Address: 0x%08X" % addr
+    return addr
 
   def get_id_from_index(self, device_index):
     """get_id_from_index
