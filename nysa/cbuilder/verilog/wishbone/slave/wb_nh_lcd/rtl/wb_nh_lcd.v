@@ -47,7 +47,7 @@ SOFTWARE.
   number of registers this should be equal to the nubmer of ADDR_???
   parameters
 
-    DRT_SIZE: 3
+    DRT_SIZE: 8
 
 */
 
@@ -348,7 +348,7 @@ always @ (posedge clk) begin
     end
 
     //when the master acks our ack, then put our ack down
-    if (o_wbs_ack & ~ i_wbs_stb)begin
+    if (o_wbs_ack & ~i_wbs_stb)begin
       o_wbs_ack <= 0;
     end
 
