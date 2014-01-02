@@ -95,12 +95,13 @@ module wb_dma_writer #(
 );
 
 //Local Parameters
-localparam           REG_CONTROL        = 32'h00000000;
-localparam           REG_STATUS         = 32'h00000001;
-localparam           REG_MEM_0_BASE     = 32'h00000002;
-localparam           REG_MEM_0_SIZE     = 32'h00000003;
-localparam           REG_MEM_1_BASE     = 32'h00000004;
-localparam           REG_MEM_1_SIZE     = 32'h00000005;
+localparam           REG_CONTROL          = 32'h00000000;
+localparam           REG_STATUS           = 32'h00000001;
+localparam           REG_MEM_0_BASE       = 32'h00000002;
+localparam           REG_MEM_0_SIZE       = 32'h00000003;
+localparam           REG_MEM_1_BASE       = 32'h00000004;
+localparam           REG_MEM_1_SIZE       = 32'h00000005;
+localparam           REG_TOTAL_WRITE_SIZE = 32'h00000006;
 
 //Local Registers/Wires
 reg         [31:0]  r_control;
@@ -123,6 +124,8 @@ wire                w_rfifo_ready;
 wire                w_rfifo_activate;
 wire                w_rfifo_strobe;
 wire        [31:0]  w_rfifo_data;
+
+reg         [31:0]  r_ppfifo_size_request;
 
 //Mem 2 PPFIFO
 reg         [31:0]  r_memory_0_base;
@@ -264,6 +267,7 @@ always @ (posedge clk) begin
     r_memory_0_new_data   <=  0;
     r_memory_1_new_data   <=  0;
 
+    r_ppfifo_size_request <=  0;
 
   end
 
@@ -290,6 +294,7 @@ always @ (posedge clk) begin
           end
           REG_MEM_0_SIZE: begin
             r_memory_0_size       <=  i_wbs_dat;
+            r_ppfifo_size_request <=  i_wbs_dat;
             if (i_wbs_dat > 0) begin
               r_memory_0_new_data <=  1;
             end
@@ -299,9 +304,12 @@ always @ (posedge clk) begin
           end
           REG_MEM_1_SIZE: begin
             r_memory_1_size       <=  i_wbs_dat;
+            r_ppfifo_size_request <=  i_wbs_dat;
             if (i_wbs_dat > 0) begin
               r_memory_1_new_data <=  1;
             end
+          end
+          REG_TOTAL_WRITE_SIZE: begin
           end
           default: begin
           end
@@ -328,6 +336,9 @@ always @ (posedge clk) begin
             end
             REG_MEM_1_SIZE: begin
               o_wbs_dat           <=  w_memory_1_count;
+            end
+            REG_TOTAL_WRITE_SIZE: begin
+              o_wbs_dat           <=  r_ppfifo_size_request;
             end
             default: begin
               o_wbs_dat           <=  32'h00;
