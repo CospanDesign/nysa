@@ -117,9 +117,15 @@ ppfifo #(
 );
 
 //Asynchronous Logic
-assign  w_red   = w_read_data[23:16];
-assign  w_green = w_read_data[15:8];
-assign  w_blue  = w_read_data[7:0];
+//assign  w_red   = w_read_data[23:16];
+//assign  w_green = w_read_data[15:8];
+//assign  w_blue  = w_read_data[7:0];
+
+assign  w_red   = w_read_data[31:24];
+assign  w_green = w_read_data[23:16];
+assign  w_blue  = w_read_data[15:8];
+
+
 
 
 assign  o_cmd_mode      = (r_tmode) ? r_tcmd_mode     : r_cmd_mode;
@@ -199,7 +205,7 @@ always @ (posedge clk) begin
       end
       WRITE_RED_START: begin
         r_write             <=  1;
-        r_data_out          <=  w_red;
+        r_data_out          <=  {w_red[7:2], 2'b00};
         state               <=  WRITE_RED;
       end
       WRITE_RED: begin
@@ -207,7 +213,7 @@ always @ (posedge clk) begin
       end
       WRITE_GREEN_START: begin
         r_write             <=  1;
-        r_data_out          <=  w_green;
+        r_data_out          <=  {w_green[7:2], 2'b00};
         state               <=  WRITE_GREEN;
       end
       WRITE_GREEN: begin
@@ -219,7 +225,7 @@ always @ (posedge clk) begin
         end
   
         r_write             <=  1;
-        r_data_out          <=  w_blue;
+        r_data_out          <=  {w_blue[7:2], 2'b00};
         state               <=  WRITE_BLUE;
       end
       WRITE_BLUE: begin
