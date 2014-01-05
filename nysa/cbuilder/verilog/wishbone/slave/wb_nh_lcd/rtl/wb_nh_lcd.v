@@ -35,7 +35,7 @@ SOFTWARE.
   sub-identification of the device
   for example
       ID = 1    : GPIO
-      sub-id 0  : Cospan Design Implementation
+      sub-id 1  : Cospan Design Implementation
 
     DRT_SUB_ID: 1
 
