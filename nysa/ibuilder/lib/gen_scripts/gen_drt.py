@@ -77,7 +77,9 @@ class GenDRT(Gen):
             print "number of entities: " + str(number_of_devices)
         num_dev_string = "{0:0=8X}".format(number_of_devices)
         board_string = "{0:0=8X}".format(board_id)
-        image_string = "{0:0=8X}".format(tags["IMAGE_ID"])
+        image_string = "{0:0=8X}".format(0)
+        if "IMAGE_ID" in tags:
+            image_string = "{0:0=8X}".format(tags["IMAGE_ID"])
 
         #header
         out_buf = version_string + id_string + "\n"
