@@ -13,7 +13,6 @@ class Icon:
     self.slave_name = ""
 
 class Box(QGraphicsItem):
-
  
   def __init__(self, parent = None, graphicView = None, graphicsScene=None):
     QGraphicsItem.__init__(self, parent)
@@ -32,10 +31,6 @@ class Box(QGraphicsItem):
     self.arb_slave = False
     self.arb_slave_ratio = 0.2
     self.arb_slave_width = 0.0
-
-
-
-
 
   def set_location_and_size(self, x, y, width, height):
     self.x = x
