@@ -47,3 +47,5 @@ nosetests.xml
 .pydevproject
 
 
+# Documentation Output
+docs/html
