@@ -5,6 +5,21 @@ import json
 import string
 from array import array as Array
 
+
+""" @package docstring
+Python DRT (Device ROM Table) interpreter
+
+Parses a DRT read in by Nysa and returns information about the cores within
+the FPGA
+
+User must read the DRT through an implimentation specific way and load the DRT
+manager with the read DRT file.
+
+The DRT Manager can be used to determine the content of the DRT
+
+Pretty Print an annotated representation of the Devcie Rom Table within the
+FPGA
+"""
 #sys.path.append(os.path.join(os.path.dirname(__file__)))
 
 class DRTError(Exception):
@@ -21,14 +36,49 @@ class DRTError(Exception):
     return repr(self.value)
 
 class DRTManager():
+  """Manages DRT (Device ROM Table) and presents a DRT object to the user.
+
+  After setting the DRT with 'set_drt' the user can extract image information
+  such as:
+  
+    - how many cores are in the FPGA.
+    - Image identification number
+    - core specific information such as:
+        - core id number
+            - A JSON file called drt.json can be used
+                to determine the type of core from the index
+                EX: id = 1, device type = GPIO
+        - core sub id number: a vendor specific implementation of a core
+        - core unique id: if there are many similar cores this number can be
+            used to differentiate different cores
+        - size of the core
+        - core flags
+            - if this is a device on the peripheral or memory bus
+            - standard device
+            - etc...
+  """
 
   def __init__(self):
-    self.drt_lines = []
-    self.drt_string = ""
-    self.drt = Array('B')
+    self.drt_lines = [] #DRT Broken up in to lines
+    self.drt_string = "" #DRT Parsed as a string
+    self.drt = Array('B') #DRT as an Array of Unsigned Bytes
     self.num_of_devices = 0
 
   def set_drt(self, drt):
+    """
+    Sets the DRT or the numeric representation of the ROM table within the FPGA
+    to this class.
+
+    Args:
+        drt (Array of 8-bit unsigned int) This a byte array reference to the
+        DRT Found in the FPGA
+
+    Returns:
+        Nothing
+
+    Raises:
+        Nothing
+    """
     self.drt = drt
     self.drt_string = ""
     self.num_of_devices = get_number_of_devices(drt)
@@ -41,15 +91,14 @@ class DRTManager():
 
 
   def is_memory_device(self, device_index):
-    """is_memory_device
-    
+    """
     Queries the DRT to see if the device is on the memory bus or the 
     peripheral bus
 
     Args:
-      device_index: Index of the device to test
+      device_index (unsigned integer): Index of the device to test
 
-    Returns:
+    Returns (boolean):
       True: Device is on the memory bus
       False: Device is on the peripheral bus
 
@@ -65,15 +114,14 @@ class DRTManager():
     
 
   def get_number_of_devices(self):
-    """get_number_of_devices
-
+    """
     Can be used to get the number of devices from the pre-existing DRT stored
     in this class
 
     Args:
       Nothing
 
-    Returns:
+    Returns: (unsigned integer)
       Number of devices on the DRT
 
     Raises:
@@ -82,16 +130,15 @@ class DRTManager():
     return self.num_of_devices
 
   def is_device_attached(self, device_id, subdevice_id=None):
-    """is_device_attached
-
+    """
     Determine if the device with the specified ID exists
 
     Check if something like a UART is attached to the bus
 
     Args:
-      device_id: device identification number
+      device_id (unsigned integer): device identification number
 
-    Returns:
+    Returns (boolean):
       True: the device is attached to the bus
       False: the device is not attached to the bus
     
@@ -116,15 +163,14 @@ class DRTManager():
  
   
   def get_address_from_index(self, device_index):
-    """get_address_from_index
-
+    """
     From the index within the DRT return the address of where to find this 
     device
 
     Args:
-      device_index: index of the device
+      device_index (unsigned integer): index of the device
 
-    Returns:
+    Returns (32-bit unsigned int):
       32bit address of the device
 
     Raises:
@@ -136,14 +182,13 @@ class DRTManager():
     return addr
 
   def get_id_from_index(self, device_index):
-    """get_id_from_index
-
+    """
     From the index within the DRT return the ID of this device
 
     Args:
-      device_index: index of the device
+      device_index (unsigned integer): index of the device
 
-    Returns:
+    Returns (unsigned int):
       Standard device ID
 
     Raises:
@@ -154,15 +199,14 @@ class DRTManager():
     dev_sub_id = string.atoi(id_string[:4], 16)
     return dev_id
 
-  def det_sub_id_from_index(self, sub_device_index):
-    """get_sub_id_from_index
-
+  def get_sub_id_from_index(self, sub_device_index):
+    """
     From the index within the DRT return the Sub ID of this device
 
     Args:
-      device_index: index of the device
+      device_index (unsigned integer): index of the device
 
-    Returns:
+    Returns (unsigned integer):
       Standard device ID
 
     Raises:
@@ -176,16 +220,15 @@ class DRTManager():
 
 
   def get_size_from_index(self, device_index):
-    """get_size_from_index
-
+    """
     Depending on if this is a memory device or a peripheral device
     return either the number of registers associated with the peripheral or
     the size of the memory device
 
     Args:
-      device_index: index of the device
+      device_index (unsigned integer): index of the device
 
-    Returns:
+    Returns (unsigned integer):
       Either the number of registers or the size of the memory device
 
     Raises:
@@ -194,10 +237,18 @@ class DRTManager():
     return string.atoi(self.drt_lines[((device_index + 1) * 8) + 3], 16)
 
   def get_device_flags(self, device_index):
-    """get_device_flags
-
+    """
     Identifies the name of the flags with the device at the given
     device_index
+
+    Args:
+      device_index (unsigned int): device position in the DRT
+
+    Returns (string)
+      string of flags for the device
+
+    Raises:
+      Nothing
     """
     flag_strings = []
     flags = int(self.drt_lines[((device_index + 1) * 8) + 1], 16)
@@ -208,8 +259,7 @@ class DRTManager():
     return flag_strings
 
   def pretty_print_drt(self):
-    """pretty_print_drt
-
+    """
     Prints out the DRT in a pretty way
 
     Args:
@@ -285,8 +335,7 @@ class DRTManager():
 
   def get_total_memory_size(self):
   
-    """get_total_memory_size
-
+    """
     adds all the contiguous memory peripherals together and returns the
     total size
   
@@ -338,15 +387,14 @@ class DRTManager():
 Functions that can be called outside of the class
 """
 def get_number_of_devices(initial_block):
-  """get_number_of_devices
-
+  """
   Determine the number of devices that are available from
   the initial read (specify the first 8 32 bit words of a DRT in 
   'initial_block')
 
   Args:
-    initial_block: Initial block of the drt (if not specified the stored DRT
-      is used
+    initial_block (Array of 8-bit unsigned int): Initial block of the drt
+    (if not specified the stored DRT is used)
 
   Returns:
     Number of devices on the DRT
@@ -357,7 +405,19 @@ def get_number_of_devices(initial_block):
 
 
 def get_device_list():
-  """get a list of devices"""
+  """Return a list of device names where the index corresponds to the device
+  identification number
+
+  Args:
+    Nothing
+
+  Returns:
+    (list): List of devices
+        (index corresponds to devices identification number)
+
+  Raises:
+    Nothing
+  """
   drt_tags = {}
   dev_tags = {}
   dev_list = []
@@ -386,7 +446,22 @@ def get_device_list():
 
 
 def get_device_index(name):
-  """get the index of the device speicified by name"""
+  """return the index of the device speicified by name
+  
+  The name can be found in the drt.json file
+  
+  Example: if name == GPIO, then 1 will be returned
+
+  Args:
+    name (string): name of the core to identify
+
+  Return:
+    device identification number
+
+  Raises:
+    Nothing
+  
+  """
   dev_list = get_device_list()
     
   for i in range(0, len(dev_list)):
@@ -396,12 +471,26 @@ def get_device_index(name):
   raise DRTError("Name: %s is not a known type of devices" % name) 
 
 def get_device_type(index):
-  """Given a index return the name of the Device"""
+  """return the name of the device referenced by index"""
   dev_list = get_device_list()
   return dev_list[index]["name"]
 
 def get_flag_tags():
-  """Returns a listing of the Flags"""
+  """Returns a listing of the available Flags
+  
+  Args:
+    Nothing
+      
+  Returns:
+      Dictionary:
+          Keys: Flag Names
+          Values: Flag value
+
+  Raises:
+    Nothing
+
+  """
+
   drt_tags = {}
   flag_tags = {}
 
@@ -416,8 +505,17 @@ def get_flag_tags():
   return flag_tags
 
 def get_device_flag_names(flags_string):
-  """Reads in a flag string and returns the flags that are set
-  in a human readible view"""
+  """Returns a human readible representation of the flags
+
+  Args:
+    flags (32-bit unsigned int): flags read from the DRT
+
+  Return:
+    Nothing
+
+  Raises:
+    Nothing
+  """
 
   flag_tags = get_flag_tags()
   flags = int(flags_string, 16)
@@ -431,7 +529,18 @@ def get_device_flag_names(flags_string):
   
 
 def pretty_print_drt(drt):
-  """takes in a DRT string and prints it in a pretty way"""
+  """prints out an annotated and colored representation of the DRT
+
+  Args:
+    drt (Array of 8-bit unsigned int): representing the rom table read from the
+    FPGA
+
+  Returns:
+    Nothing
+
+  Raises:
+    Nothing
+  """
   drt_lines = drt.splitlines()
   num = int(drt_lines[1], 16)
 
@@ -492,9 +601,26 @@ def pretty_print_drt(drt):
     print "%s%s:%sReserved for future use" % (blue, drt_lines[((i + 1) * 8) + 7], green)
 
 
-  print white,
+    print white,
 
  
+def is_memory_core(core_id):
+    """Given the core identification number return true if the core is a memory
+    device
+    
+    Args:
+        core_id (16 bit unsigned int): Core identification number
+
+    Returns:
+        True: Is a memory device
+        False: Is not a memory device
+
+    Raises:
+        Nothing
+    """
+    if core_id == 5:
+      return True
+    return False
 
 if __name__ == "__main__":
   """test all functions"""
