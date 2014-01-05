@@ -1,5 +1,7 @@
 #! /usr/bin/python
 import os
+""" @package docstring
+"""
 
 from generic_slave_cbuilder import CBuilderSlave
 

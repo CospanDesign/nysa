@@ -8,9 +8,36 @@ from wishbone_memory_cbuilder import WishboneMemoryCBuilder
 from axi_peripheral_cbuilder import AxiPeripheralCBuilder
 from axi_memory_cbuilder import AxiMemoryCBuilder
 
+""" @package docstring
+CBuilder Factor Script
+
+"""
+
+
+
 class CBuilderFactory(object):
+    """
+    Factory core generator
+    
+    A factory Class to that looks at 3 different settings within the passed
+    dictionary: cb_dict
+
+    - bus_type:
+    -- slave: Generate a slave
+    -- host_interface: Generate a host interface
+    - type:
+    -- wishbone: Generate a wishbone style core
+    -- axi: Generate an Axi style core
+    - subtype:
+    -- peripheral: Generate a peripheral core
+    -- memory: Generate a memory core
+
+    """
 
     def __init__(self, cb_dict):
+      """
+      Pass in the cb_dict to generate the correct core
+      """
       #Go through the dictionary and call the appropriate cbuilder factory
       if cb_dict["bus_type"] == "slave":
         slave_project = None
