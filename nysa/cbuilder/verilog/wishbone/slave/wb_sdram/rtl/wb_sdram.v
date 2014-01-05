@@ -31,6 +31,15 @@ SOFTWARE.
   identification of your device 0 - 65536
   DRT_ID:  5
 
+  sub-identification of the device
+  for example
+      ID = 1    : GPIO
+      sub-id 1  : Cospan Design Implementation
+
+  DRT_SUB_ID: 1
+
+
+
   flags (read drt.txt in the slave/device_rom_table directory 1 means
   a standard device
   DRT_FLAGS:  3
