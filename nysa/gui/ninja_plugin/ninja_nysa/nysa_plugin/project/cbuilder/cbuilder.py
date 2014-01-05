@@ -298,7 +298,7 @@ class CBuilder (QObject):
         self.output.Debug(self, "Project Path: %s" % path)
 
     def is_cbuilder_project(self, item):
-        if item.isProject and item.projecType == PROJECT_TYPE:
+        if item.isProject and item.projectType == PROJECT_TYPE:
             return True
         return False
 

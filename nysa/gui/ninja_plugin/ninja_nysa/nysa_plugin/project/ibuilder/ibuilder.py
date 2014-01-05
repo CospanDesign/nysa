@@ -223,7 +223,8 @@ class IBuilder (QObject):
 
             if name not in self.designers.keys():
                 self.output.Debug(self, "Open up a new tab")
-                project = self.explorer._explorer.get_project_given_filename(filename)
+                #project = self.explorer._explorer.get_project_given_filename(filename)
+                project = self.explorer.get_project_item_by_name(name)
                 #Not Opened
                 fd = FPGADesigner(actions=self.nactions,
                                   commands = self.commands,
@@ -288,6 +289,7 @@ class IBuilder (QObject):
         user_paths = controller.get_user_dirs()
         self.generate_project(project, user_paths)
         loc = controller.get_project_location()
+        print "Project Location: %s" % loc
         #Now I have the path to a build
         self.console.run_command(loc, "scons", [])
 

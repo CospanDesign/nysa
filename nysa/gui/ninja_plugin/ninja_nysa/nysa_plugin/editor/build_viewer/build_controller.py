@@ -171,7 +171,7 @@ class BuildController(QObject):
                     "JSON Error: %s" % str(err))
 
         #print "ibuilder config: %s" % str(self.config)
-        self.gen_dir = self.config["BASE_DIR"]
+        self.gen_dir = os.path.expanduser(self.config["BASE_DIR"])
         #Check for _xmsgs directory
         self.xmsgs_path = os.path.join(self.gen_dir, "_xmsgs")
         if os.path.exists(self.xmsgs_path):

@@ -320,12 +320,12 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
 
         for slave in slave_list:
             tags = vutils.get_module_tags(   filename = slave,
-                                            keywords=["DRT_FLAGS"],
+                                            keywords=["DRT_FLAGS", "DRT_ID"],
                                             bus = self.vc.get_bus(),
                                             user_paths = user_dirs)
             #print "Tags: %s" % str(tags)
-            flag = int(tags["keywords"]["DRT_FLAGS"])
-            if drt.is_memory_core(flag):
+            core_id = int(tags["keywords"]["DRT_ID"])
+            if drt.is_memory_core(core_id):
                 memory_dict[tags["module"]] = tags
             else:
                 peripheral_dict[tags["module"]] = tags

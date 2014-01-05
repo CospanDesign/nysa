@@ -80,7 +80,7 @@ class NysaPlugin(plugin.Plugin):
         self.toolbar_s = self.locator.get_service('toolbar')
         self.menuApp_s = self.locator.get_service('menuApp')
         self.misc_s = self.locator.get_service('misc')
-        self.explorer_s = self.locator.get_service('explorer')
+        self.explorer = self.locator.get_service('explorer')
 
         self.load_status()
         self.load_xmsg_viewer()
@@ -238,7 +238,7 @@ class NysaPlugin(plugin.Plugin):
             filename = widget.ID
 
             print "Filename: %s" % str(filename)
-            project_tree = self.explorer_s._explorer.get_project_given_filename(filename)
+            project_tree = self.explorer._explorer.get_project_given_filename(filename)
             project = project_tree.get_full_path()
             project = os.path.split(project)[0]
 
@@ -282,10 +282,11 @@ class NysaPlugin(plugin.Plugin):
         tab_manager = editor.get_tab_manager()
         widget = tab_manager.currentWidget()
         print "widget: %s" % str(widget)
-        filename = widget.ID
+        filename = widget.get_id()
+        print "Dir: %s" % str(dir(widget))
 
         print "Filename: %s" % str(filename)
-        project_tree = self.explorer_s._explorer.get_project_given_filename(filename)
+        project_tree = self.explorer._explorer.get_project_given_filename(filename)
         project = project_tree.get_full_path()
         project = os.path.split(project)[0]
 
@@ -382,12 +383,12 @@ class NysaPlugin(plugin.Plugin):
 
     def load_cbuilder_project(self):
         self.output.Info(self, "Loading cbuilder project")
-        self.explorer_s.set_project_type_handler(CBUILDER_PROJECT_TYPE,
+        self.explorer.set_project_type_handler(CBUILDER_PROJECT_TYPE,
         cbuilder_project.ProjectCbuilder(self.output, self.locator))
 
     def load_ibuilder_project(self):
         self.output.Info(self, "Loading ibuilder project")
-        self.explorer_s.set_project_type_handler(IBUILDER_PROJECT_TYPE,
+        self.explorer.set_project_type_handler(IBUILDER_PROJECT_TYPE,
         ibuilder_project.ProjectIbuilder(self.output, self.locator))
 
     def open_verilog(self, filename):
