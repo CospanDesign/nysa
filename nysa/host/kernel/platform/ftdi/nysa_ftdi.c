@@ -6,7 +6,7 @@
 #define DRIVER_DESC "nysa ftdi device"
 #define DRIVER_VERSION "v0.01"
 
-#define SYCAMORE_TTY_MAJOR 240
+#define NYSA_TTY_MAJOR 240
 
 /*
  * Revisions
@@ -87,7 +87,7 @@ static int nysa_platform_probe(struct platform_device *pdev){
 	nysa_ftdi_driver.ftdi_driver->owner = THIS_MODULE;
 	nysa_ftdi_driver.ftdi_driver->driver_name = "nysa_ftdi";
 	nysa_ftdi_driver.ftdi_driver->name = "nysa_ftdi";
-	nysa_ftdi_driver.ftdi_driver->major = SYCAMORE_TTY_MAJOR;
+	nysa_ftdi_driver.ftdi_driver->major = NYSA_TTY_MAJOR;
 
 	nysa_ftdi_driver.ftdi_driver->type = TTY_DRIVER_TYPE_SERIAL;
 	nysa_ftdi_driver.ftdi_driver->subtype = SERIAL_TYPE_NORMAL;
