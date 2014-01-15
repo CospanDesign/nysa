@@ -41,6 +41,7 @@ from array import array as Array
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir,
+                             os.pardir,
                              "cbuilder",
                              "drt"))
 import drt as drt_controller
