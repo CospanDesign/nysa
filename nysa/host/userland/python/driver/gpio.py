@@ -32,13 +32,14 @@ TODO: Implement Debounce
 
 """
 
-__author__ "dave.mccoy@cospandesign.com (Dave McCoy)"
+__author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
 import time
 from array import array as Array
 
-from userland.python import nysa
-from userland.python.nysa import NysaCommError
+import nysa
+from nysa.host.userland.python.nysa import Nysa
+from nysa.host.userland.python.nysa import NysaCommError
 
 #Register Constants
 GPIO_PORT           =   0x00000000
