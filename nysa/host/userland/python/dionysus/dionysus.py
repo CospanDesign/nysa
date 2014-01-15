@@ -34,8 +34,8 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 import time
 
-from userland.nysa import Nysa
-from userland.nysa import NysaCommError
+from nysa.host.userland.python.nysa import Nysa
+from nysa.host.userland.python.nysa import NysaCommError
 
 from pyftdi.pyftdi.ftdi import Ftdi
 from array import array as Array
@@ -104,7 +104,7 @@ class Dionysus (Nysa):
         self.dev.purge_buffers()
 
 
-    def read(self, device_id, addres, length = 1, mem_device = False):
+    def read(self, device_id, address, length = 1, mem_device = False):
         """read
 
         read data from Dionysus
@@ -168,14 +168,14 @@ class Dionysus (Nysa):
         self.dev.purge_buffers()
         self.dev.write_data(write_data)
 
-        timeout = time.time() + self.read_timeout
+        timeout = time.time() + self.timeout
         rsp = Array ('B')
         while time.time() < timeout:
             response = self.dev.read_data(1)
             if len(response) > 0:
                 rsp = Array('B')
                 rsp.fromstring(response)
-                if rsp[0] = 0xDC:
+                if rsp[0] == 0xDC:
                     if self.debug:
                         print "Got a response"
                     break
@@ -189,13 +189,13 @@ class Dionysus (Nysa):
         else:
             if self.debug:
                 print "Timed out while waiting for response"
-            raise: NysaCommError("Timeout while waiting for a response")
+            raise NysaCommError("Timeout while waiting for a response")
 
         #Watch out for the modem status bytes
         read_count = 0
         response = Array ('B')
         rsp = Array('B')
-        timeout = time.time() + self.read_timeout
+        timeout = time.time() + self.timeout
 
         total_length = length * 4 + 8
 
@@ -277,7 +277,7 @@ class Dionysus (Nysa):
         self.dev.write_data(data_out)
         rsp = Array ('B')
 
-        timeout = time.time() + self.read_timeout
+        timeout = time.time() + self.timeout
 
         while time.time() < timeout:
             response = self.dev.read_data(1)
@@ -339,7 +339,7 @@ class Dionysus (Nysa):
         rsp = Array('B')
         temp = Array('B')
 
-        timeout = time.time() + self.read_timeout
+        timeout = time.time() + self.timeout
 
         while time.time() < timeout:
             response = self.dev.read_data(5)
@@ -459,7 +459,7 @@ def dump_core(self):
         temp = Array('B')
         temp.fromstring(response)
         if len(temp) > 0:
-            rsp + = temp
+            rsp += temp
             read_count = len(rsp)
 
 
@@ -487,7 +487,7 @@ def dump_core(self):
         print "Data: %s" % str(rsp)
 
     core_data = Array('L')
-    for i in rage(0, count, 4)
+    for i in rage(0, count, 4):
         if self.debug:
             print "Count: %d" % i
             core_data.append(rsp[i] << 24 | rsp[i + 1] << 16 | rsp[i + 2] << 8 | rsp[i + 3])
