@@ -133,9 +133,9 @@ class ProjectCbuilder(plugin_interfaces.IProjectTypeHandler, QObject):
 
         #Create a dictionary to be fed into the cbuilder script
 
-        cb_dict["drt_id"] = 1,
-        cb_dict["drt_flags"] = 1,
-        cb_dict["drt_size"] = 3,
+        cb_dict["drt_id"] = 1
+        cb_dict["drt_flags"] = 1
+        cb_dict["drt_size"] = 3
 
         cb_dict["bus_type"] = "slave"
 
