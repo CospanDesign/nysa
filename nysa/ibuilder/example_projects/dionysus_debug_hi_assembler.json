@@ -72,12 +72,11 @@
         }
       }
     }
-  },
+	},
   "MEMORY":{
 		"mem1":{
 			"filename":"wb_sdram.v",
 			"bind":{
-	
 				"o_sdram_clk":{
 					"loc":"sdram_clk",
 					"direction":"output"
@@ -114,11 +113,11 @@
 					"loc":"dq[15:0]",
 					"direction":"inout"
 				},
-				"io_sdram_data_mask[1]":{
+				"o_sdram_data_mask[1]":{
 					"loc":"dqmh",
 					"direction":"output"
 				},
-				"io_sdram_data_mask[0]":{
+				"o_sdram_data_mask[0]":{
 					"loc":"dqml",
 					"direction":"output"
 				}
@@ -127,38 +126,44 @@
 		}
 	},
   "internal_bind":{
-    "lax1_la_clk" : {
+    "lax1_i_la_clk" : {
       "signal":"clk"
     },
-    "lax1_la_data[15:0]":{
+    "lax1_i_la_data[15:0]":{
       "signal":"debug[15:0]"
     },
-   "lax1_la_data[16]":{
+    "lax1_i_la_data[16]":{
       "signal":"master_ready"
     },
-   "lax1_la_data[17]":{
+    "lax1_i_la_data[17]":{
       "signal":"ih_ready"
     },
-     "lax1_la_data[18]":{
+    "lax1_i_la_data[18]":{
       "signal":"oh_ready"
     },
-   "lax1_la_data[19]":{
+    "lax1_i_la_data[19]":{
       "signal":"oh_en"
     },
-   "lax1_la_data[30:20]":{
+    "lax1_i_la_data[30:20]":{
       "signal":"0"
     },
-   "lax1_la_data[31]":{
+    "lax1_i_la_data[31]":{
       "signal":"button[0]"
     },
-    "lax1_la_ext_trig":{
+    "lax1_i_la_ext_trig":{
       "signal":"button[1]"
     }
   },
 	"bind":{
+    "clk":{
+      "direction":"input",
+      "loc":"clk"
+    },
+    "rst":{
+      "direction":"input",
+      "loc":"rst"
+    }
 	},
-	
 	"constraint_files":[
 	]
-
 }

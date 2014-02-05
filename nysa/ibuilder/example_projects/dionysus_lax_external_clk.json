@@ -46,34 +46,6 @@
 		}
 	},
 	"SLAVES":{
-		"i2s":{
-			"filename":"wb_i2s.v",
-			"BUS":{
-				"mem":"mem1"
-			},
-			"bind":{
-       "writer_starved":{
-        "loc":"s3",
-        "direction":"output"
-       },
-       "phy_mclock":{
-          "loc":"pmoda1",
-          "direction":"output"
-        },
-       "phy_lr":{
-          "loc":"pmoda2",
-          "direction":"output"
-        },
-        "phy_clock":{
-          "loc":"pmoda3",
-          "direction":"output"
-        },
-        "phy_data":{
-          "loc":"pmoda4",
-          "direction":"output"
-        }
-      }
-		},
     "lax1":{
       "filename":"wb_logic_analyzer.v",
       "bind":{
@@ -87,6 +59,7 @@
         }
       }
     }
+
 	},
   "MEMORY":{
 		"mem1":{
@@ -140,38 +113,13 @@
 			}
 		}
 	},
+
   "internal_bind":{
-    "lax1_i_la_clk" : {
-      "signal":"clk"
-    },
-    "lax1_i_la_data[0]":{
-      "signal":"w_arb0_i_wbs_cyc"
-    },
-    "lax1_i_la_data[1]":{
-      "signal":"w_arb0_i_wbs_stb"
-    },
-    "lax1_i_la_data[2]":{
-      "signal":"w_arb0_o_wbs_ack"
-    },
-    "lax1_i_la_data[18:3]":{
-      "signal":"w_arb0_i_wbs_dat[15:0]"
-    },
-    "lax1_i_la_data[19]":{
-      "signal":"i2s_mem_o_cyc"
-    },
-    "lax1_i_la_data[20]":{
-      "signal":"w_sm0_i_wbs_cyc"
-    },
-    "lax1_i_la_data[21]":{
-      "signal":"w_arb0_i_wbs_we"
-    },
-    "lax1_i_la_data[25:22]":{
-      "signal":"w_arb0_i_wbs_adr[3:0]"
-    },
     "lax1_i_la_ext_trig":{
       "signal":"0"
     }
   },
+
 	"bind":{
     "clk":{
       "direction":"input",
@@ -180,6 +128,42 @@
     "rst":{
       "direction":"input",
       "loc":"rst"
+    },
+    "lax1_i_la_clk" : {
+      "direction":"input",
+      "loc":"pmodb1"
+    },
+    "lax1_i_la_data[0]":{
+      "direction":"input",
+      "loc":"pmoda1"
+    },
+    "lax1_i_la_data[1]":{
+      "direction":"input",
+      "loc":"pmoda2"
+    },
+    "lax1_i_la_data[2]":{
+      "direction":"input",
+      "loc":"pmoda3"
+    },
+    "lax1_i_la_data[3]":{
+      "direction":"input",
+      "loc":"pmoda4"
+    },
+    "lax1_i_la_data[4]":{
+      "direction":"input",
+      "loc":"pmoda7"
+    },
+    "lax1_i_la_data[5]":{
+      "direction":"input",
+      "loc":"pmoda8"
+    },
+    "lax1_i_la_data[6]":{
+      "direction":"input",
+      "loc":"pmoda9"
+    },
+    "lax1_i_la_data[7]":{
+      "direction":"input",
+      "loc":"pmoda10"
     }
 	},
 	"constraint_files":[

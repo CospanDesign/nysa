@@ -54,6 +54,9 @@ module wb_i2s_reader #(
 
   //Add signals to control your device here
   output      [31:0]  debug,
+  output              debug_i2s_clk,
+  output              debug_i2s_lr,
+  output              debug_i2s_data,
 
   //Wishbone Bus Signals
   input               i_wbs_we,
@@ -99,15 +102,13 @@ wire                w_enable;
 wire                w_enable_interrupt;
 wire                w_control_reset;
 
-reg         [31:0]  r_clock_divisor = 0;
-reg         [31:0]  r_clock_count;
-reg                 dclock;
-reg                 r_dclock;
+wire                w_reset_phy;
+wire                w_enable_phy;
+
+wire                w_i2s_clk;
 
 //Submodules
 
-//Asynchronous Logic
-//Synchronous Logic
 reg                 r_flush_memory;
 reg         [31:0]  r_memory_0_base;
 reg         [31:0]  r_memory_0_size;
@@ -146,12 +147,20 @@ reg         [23:0]  r_min_read_size = `MIN_READ_SIZE;
 
 //Submodules
 
+BUFG phy_clk_in_bufg (
+	.I                (i_i2s_clk),
+	.O                (w_i2s_clk)
+);
+
+
 //I2S Reader
 i2s_reader_phy phy (
-  .clk                  (i_i2s_clk                ),
-  .rst                  (rst |  w_control_reset   ),
+  .clk                  (w_i2s_clk                ),
+  .rst                  (rst |  w_reset_phy       ),
+  .debug                (debug                    ),
 
-  .i_enable             (w_enable                 ),
+  .i_enable             (w_enable_phy             ),
+  .o_working            (w_phy_working            ),
   .i_min_read_size      (r_min_read_size          ),
 
   //memory interface
@@ -160,7 +169,6 @@ i2s_reader_phy phy (
   .o_wfifo_activate     (w_wfifo_activate         ),
   .o_wfifo_strobe       (w_wfifo_strobe           ),
   .o_wfifo_data         (w_wfifo_data             ),
-
 
   //These signals are connected to the phy signals
   .i_i2s_lr             (i_i2s_lr                 ),
@@ -193,7 +201,6 @@ wb_ppfifo_2_mem p2m(
   .o_memory_1_empty     (w_memory_1_empty         ),
 
   .o_default_mem_1_base (w_default_mem_1_base     ),
-
   .o_write_finished     (w_write_finished         ),
 
   //master control signal for memory arbitration
@@ -229,7 +236,7 @@ ppfifo #(
   .reset                (rst |  w_control_reset   ),
 
   //write
-  .write_clock          (clk                      ),
+  .write_clock          (w_i2s_clk                ),
   .write_ready          (w_wfifo_ready            ),
   .write_activate       (w_wfifo_activate         ),
   .write_fifo_size      (w_wfifo_size             ),
@@ -246,9 +253,17 @@ ppfifo #(
 );
 
 //Asynchronous Logic
+
+assign  debug_i2s_clk       = w_i2s_clk;
+assign  debug_i2s_lr        = i_i2s_lr;
+assign  debug_i2s_data      = i_i2s_data;
 assign  w_enable            = r_control[`CONTROL_ENABLE];
 assign  w_enable_interrupt  = r_control[`CONTROL_ENABLE_INTERRUPT];
 assign  w_control_reset     = r_control[`CONTROL_RESET];
+assign  w_enable_phy        = r_control[`CONTROL_ENABLE_PHY];
+assign  w_reset_phy         = r_control[`CONTROL_RESET_PHY];
+
+
 
 //Verilogs default behavior will pad the upper bits with '0's
 assign  w_status            = { 28'h00,
@@ -257,6 +272,7 @@ assign  w_status            = { 28'h00,
                                 w_memory_1_finished,
                                 w_memory_0_finished
                               };
+/*
 assign  debug               = {
                                 14'h0,
                                 r_memory_1_ready,       //  16
@@ -275,6 +291,7 @@ assign  debug               = {
                                 w_memory_1_finished,    //  1
                                 w_memory_0_finished     //  0
                               };
+*/
 //Synchronous Logic
 always @ (posedge clk) begin
   if (rst) begin
@@ -342,32 +359,42 @@ always @ (posedge clk) begin
       end
       else begin
         //Reading
-        case (i_wbs_adr)
-          REG_CONTROL: begin
-            o_wbs_dat <=  r_control;
-          end
-          REG_STATUS: begin
-            o_wbs_dat <=  w_status;
-          end
-          REG_MEM_0_BASE: begin
-            o_wbs_dat <=  r_memory_0_base;
-          end
-          REG_MEM_0_SIZE: begin
-            o_wbs_dat <=  w_memory_0_count;
-          end
-          REG_MEM_1_BASE: begin
-            o_wbs_dat <=  r_memory_1_base;
-          end
-          REG_MEM_1_SIZE: begin
-            o_wbs_dat <=  w_memory_1_count;
-          end
-          REG_MIN_READ_SIZE: begin
-            o_wbs_dat <=  {8'h0, r_min_read_size};
-          end
-          default: begin
-            o_wbs_dat <=  32'h00;
-          end
-        endcase
+        if (!o_wbs_ack) begin //Fix double reads
+          case (i_wbs_adr)
+            REG_CONTROL: begin
+              o_wbs_dat <=  r_control;
+            end
+            REG_STATUS: begin
+              o_wbs_dat <=  w_status;
+              if (w_memory_0_finished) begin
+                $display ("Reset size 0");
+                r_memory_0_size   <=  0;
+              end
+              if (w_memory_1_finished) begin
+                $display ("Reset size 1");
+                r_memory_1_size   <=  0;
+              end
+            end
+            REG_MEM_0_BASE: begin
+              o_wbs_dat <=  r_memory_0_base;
+            end
+            REG_MEM_0_SIZE: begin
+              o_wbs_dat <=  w_memory_0_count;
+            end
+            REG_MEM_1_BASE: begin
+              o_wbs_dat <=  r_memory_1_base;
+            end
+            REG_MEM_1_SIZE: begin
+              o_wbs_dat <=  w_memory_1_count;
+            end
+            REG_MIN_READ_SIZE: begin
+              o_wbs_dat <=  {8'h0, r_min_read_size};
+            end
+            default: begin
+              o_wbs_dat <=  32'h00;
+            end
+          endcase
+        end
       end
       o_wbs_ack <= 1;
     end

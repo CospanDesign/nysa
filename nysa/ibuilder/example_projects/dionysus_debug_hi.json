@@ -77,7 +77,6 @@
 		"mem1":{
 			"filename":"wb_sdram.v",
 			"bind":{
-	
 				"o_sdram_clk":{
 					"loc":"sdram_clk",
 					"direction":"output"
@@ -174,8 +173,6 @@
       "loc":"rst"
     }
 	},
-	
 	"constraint_files":[
 	]
-
 }

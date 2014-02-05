@@ -331,7 +331,9 @@ always @ (posedge clk) begin
   if (rst) begin
     o_wbs_dat           <= 32'h0;
     o_wbs_ack           <= 0;
+    control             <=  0;
 
+    //Default base, user can change this from the API
     r_memory_0_base     <=  w_default_mem_0_base;
     r_memory_1_base     <=  w_default_mem_1_base;
 
@@ -341,8 +343,6 @@ always @ (posedge clk) begin
 
     r_memory_0_ready    <=  0;
     r_memory_1_ready    <=  0;
-
-    control             <=  0;
 
   end
   else begin

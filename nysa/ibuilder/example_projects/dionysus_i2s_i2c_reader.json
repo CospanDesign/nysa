@@ -46,47 +46,60 @@
 		}
 	},
 	"SLAVES":{
-		"i2s":{
-			"filename":"wb_i2s.v",
+		"gpio1":{
+			"filename":"wb_gpio.v",
+			"bind":{
+				"gpio_out[1:0]":{
+					"loc":"led[1:0]",
+					"direction":"output"
+				},
+				"gpio_in[3:2]":{
+					"loc":"button[1:0]",
+					"direction":"input"
+				}
+			}
+  	},
+    "audio_i2c":{
+      "filename":"wb_i2c.v",
+      "bind":{
+        "scl":{
+          "loc":"s0",
+          "direction":"inout"
+        },
+        "sda":{
+          "loc":"s1",
+          "direction":"inout"
+        }
+      }
+    },
+		"i2s_reader":{
+			"filename":"wb_i2s_reader.v",
 			"BUS":{
 				"mem":"mem1"
 			},
 			"bind":{
-       "writer_starved":{
-        "loc":"s3",
-        "direction":"output"
-       },
-       "phy_mclock":{
-          "loc":"pmoda1",
-          "direction":"output"
-        },
-       "phy_lr":{
-          "loc":"pmoda2",
-          "direction":"output"
-        },
-        "phy_clock":{
-          "loc":"pmoda3",
-          "direction":"output"
-        },
-        "phy_data":{
-          "loc":"pmoda4",
-          "direction":"output"
-        }
-      }
-		},
-    "lax1":{
-      "filename":"wb_logic_analyzer.v",
-      "bind":{
-        "o_la_uart_tx":{
-          "loc":"s0",
-          "direction":"output"
-        },
-        "i_la_uart_rx":{
-          "loc":"s1",
+        "i_i2s_clock":{
+          "loc":"pmodb1",
           "direction":"input"
+        },
+       "i_i2s_lr":{
+          "loc":"pmodb2",
+          "direction":"input"
+        },
+        "i_i2s_data":{
+          "loc":"pmodb3",
+          "direction":"input"
+        },
+        "debug_i2s_lr":{
+          "loc":"s3",
+          "direction":"output"
+        },
+        "debug_i2s_data":{
+          "loc":"s4",
+          "direction":"output"
         }
       }
-    }
+		}
 	},
   "MEMORY":{
 		"mem1":{
@@ -140,38 +153,6 @@
 			}
 		}
 	},
-  "internal_bind":{
-    "lax1_i_la_clk" : {
-      "signal":"clk"
-    },
-    "lax1_i_la_data[0]":{
-      "signal":"w_arb0_i_wbs_cyc"
-    },
-    "lax1_i_la_data[1]":{
-      "signal":"w_arb0_i_wbs_stb"
-    },
-    "lax1_i_la_data[2]":{
-      "signal":"w_arb0_o_wbs_ack"
-    },
-    "lax1_i_la_data[18:3]":{
-      "signal":"w_arb0_i_wbs_dat[15:0]"
-    },
-    "lax1_i_la_data[19]":{
-      "signal":"i2s_mem_o_cyc"
-    },
-    "lax1_i_la_data[20]":{
-      "signal":"w_sm0_i_wbs_cyc"
-    },
-    "lax1_i_la_data[21]":{
-      "signal":"w_arb0_i_wbs_we"
-    },
-    "lax1_i_la_data[25:22]":{
-      "signal":"w_arb0_i_wbs_adr[3:0]"
-    },
-    "lax1_i_la_ext_trig":{
-      "signal":"0"
-    }
-  },
 	"bind":{
     "clk":{
       "direction":"input",
