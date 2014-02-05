@@ -129,6 +129,44 @@ class DRTManager():
     """
     return self.num_of_devices
 
+  def find_device(self, device_id, subdevice_id = None, unique_id = None):
+    """
+    Find a device in the DRT that has the dev_id.
+
+    If the sub_id and or the unique_id is not specified the device returns
+    the first device that is found.
+
+    The function will attempt to match as many parameters as the user
+    specifies
+
+    XXX: Unique ID is not supported yet!
+
+    Args:
+        dev_id (int): a device identification number
+        sub_id (int): sub identification number for a device
+        unique_id (int): a unique integer that identifies the device
+
+    Returns:
+        None: if the device is not found
+        Integer: this specifies the device index
+
+    Raises:
+        Nothing
+    """
+    for dev_index in range(0, self.num_of_devices):
+        id_string = self.drt_lines[((dev_index + 1) * 8)]
+        dev_id = string.atoi(id_string[4:], 16)
+        dev_sub_id = string.atoi(id_string[:4], 16)
+        if (dev_id == device_id):
+            if (subdevice_id is not None):
+                if (subdevice_id == dev_sub_id):
+                    return dev_index + 1
+            else:
+                return dev_index + 1
+        else:
+            return dev_index + 1
+    return None
+
   def is_device_attached(self, device_id, subdevice_id=None):
     """
     Determine if the device with the specified ID exists
@@ -147,8 +185,8 @@ class DRTManager():
     """
     for dev_index in range (0, self.num_of_devices):
       id_string = self.drt_lines[((dev_index + 1) * 8)]
-      dev_id = string.atoi(id_string[4:])
-      dev_sub_id = string.atoi(id_string[:4])
+      dev_id = string.atoi(id_string[4:], 16)
+      dev_sub_id = string.atoi(id_string[:4], 16)
       if (self.dbg):
         print "dev_id: " + str(dev_id)
       if (dev_id == device_id):
