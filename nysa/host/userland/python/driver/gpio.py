@@ -41,26 +41,27 @@ import nysa
 from nysa.host.userland.python.nysa import Nysa
 from nysa.host.userland.python.nysa import NysaCommError
 
+from driver import Driver
+
 #Register Constants
 GPIO_PORT           =   0x00000000
 GPIO_OUTPUT_ENABLE  =   0x00000001
 INTERRUPTS          =   0x00000002
 INTERRUPT_ENABLE    =   0x00000003
-INTERUPT_EDGE       =   0x00000004
+INTERRUPT_EDGE      =   0x00000004
 
-class GPIO(object):
+class GPIO(Driver):
     """ GPIO
 
         Communication with a GPIO Core
     """
-    def __init__(self, nysa, dev_id, debug = False):
-        self.dev_id = dev_id
-        self.n = nysa
-        self.debug = debug
-
-    def get_core_id(self):
+    @staticmethod
+    def get_core_id():
         #This core corresponds to a GPIO (Numbers are found in DRT.json)
         return 0x00000001
+
+    def __init__(self, nysa, dev_id, debug = False):
+        super(GPIO, self).__init__(nysa, dev_id, debug)
 
     def set_dev_id(self, dev_id):
         self.dev_id = dev_id
@@ -82,8 +83,7 @@ class GPIO(object):
         if self.debug:
             print "Writing GPIO Direction"
 
-        self.n.write_register(self.dev_id, GPIO_OUTPUT_ENABL, direction)
-
+        self.write_register(GPIO_OUTPUT_ENABLE, direction)
 
     def set_port_raw(self, value):
         """set_port_raw
@@ -99,7 +99,7 @@ class GPIO(object):
         Raises:
             NysaCommError
         """
-        self.n.write_register(self.dev_id, GPIO_PORT, value)
+        self.write_register(GPIO_PORT, value)
 
     def get_port_raw(self):
         """get_port_raw
@@ -115,7 +115,7 @@ class GPIO(object):
         Raises:
             NysaCommError
         """
-        return self.n.read_register(self.dev_id, GPIO_PORT)
+        return self.read_register(GPIO_PORT)
 
     def set_bit_value(self, bit, value):
         """set_bit_value
@@ -134,27 +134,7 @@ class GPIO(object):
         """
         if self.debug:
             print "Setting individual bit value"
-
-        port_raw = self.get_port_raw()
-
-        bit_shifted = 1 << bit
-        
-        if self.debug:
-            print "Value: 0x%08X" % value
-            print "Bit: 0x%08X" % bit
-            print "Bit Shift Value 0x%08X" % bit_shifted
-            print "Port Value: 0x%08X" % port_raw
-
-        if value != 0:
-            port_raw |= bit_shifted
-
-        else:
-            port_raw &= ~bit_shifted
-
-        if self.debug:
-            print "New Port Value: 0x%08X" % port_raw
-
-        self.set_port_raw(port_raw)
+        self.enable_register_bit(GPIO_PORT, bit, value)
 
     def get_bit_value(self, bit):
         """get_bit_value
@@ -172,14 +152,7 @@ class GPIO(object):
         """
         if self.debug:
                 print "Getting individual bit value"
-
-        port = self.get_port_raw()
-        bit_shifted = 1 << bit
-
-        if (bit_shifted & port) > 0:
-            return 1
-
-        return 0
+        return self.is_register_bit_set(GPIO_PORT, bit)
 
     def set_interrupt_enable(self, interrupt_enable):
         """set_interrupt_enable
@@ -195,7 +168,7 @@ class GPIO(object):
         Raises:
             NysaComError
         """
-        self.n.write_register(self.dev_id, INTERRUPT_ENABLE, interrupt_enable)
+        self.write_register(INTERRUPT_ENABLE, interrupt_enable)
  
     def get_interrupt_enable(self):
         """get_interrupt_enable
@@ -211,7 +184,7 @@ class GPIO(object):
         Raises:
             Nothing
         """
-        return self.n.get_register(self.dev_id, INTERRUPT_ENABLE)
+        return self.read_register(INTERRUPT_ENABLE)
  
     def set_interrupt_edge(self, interrupt_edge):
         """set_interrupt_edge
@@ -227,7 +200,7 @@ class GPIO(object):
         Raises:
             NysaCommError
         """
-        self.n.write_register(self.dev_id, INTERRUPT_EDGE, interrupt_edge)
+        self.write_register(INTERRUPT_EDGE, interrupt_edge)
  
     def get_interrupt_edge(self):
         """get_interrupt_edge
@@ -243,7 +216,7 @@ class GPIO(object):
         Raises:
             NysaCommError
         """
-        return self.n.read_register(self.dev_id, INTERRUPT_EDGE)
+        return self.read_register(INTERRUPT_EDGE)
  
     def get_interrupts(self):
         """get_interrupts
@@ -259,14 +232,18 @@ class GPIO(object):
         Raises:
             NysaCommError
         """
-        return self.n.read_register(self.dev_id, INTERRUPTS)
+        return self.read_register(INTERRUPTS)
 
 
-def unit_test(n, dev_index):
+def unit_test(n):
     """unit_test
  
     Run the unit test of the GPIO
     """
+    dev_index = n.find_device(GPIO.get_core_id())
+    if dev_index is None:
+        print "Failed to find GPIO Device!\n"
+        return
     gpio = GPIO(n, dev_index)
  
     print "Testing output ports (like LEDs)"
@@ -276,31 +253,36 @@ def unit_test(n, dev_index):
     print "Set all the ports to outputs"
     gpio.set_port_direction(0xFFFFFFFF)
  
-    print "Set all the values to 0"
+    print "Set all the values to 1s"
     gpio.set_port_raw(0xFFFFFFFF)
     time.sleep(1)
+    print "Set all the values to 0s"
     gpio.set_port_raw(0x00000000)
  
     print "Reading inputs (Like buttons) in 2 second"
     gpio.set_port_direction(0x00000000)
     
     time.sleep(2)
-    print "Read value: 0x%08X", gpio.get_port_raw()
+    print "Read value: 0x%08X" % gpio.get_port_raw()
     print "Reading inputs (Like buttons) in 2 second"
     time.sleep(2)
-    print "Read value: 0x%08X", gpio.get_port_raw()
+    print "Read value: 0x%08X" % gpio.get_port_raw()
  
+    print "Interrupts: 0x%08X" % gpio.get_interrupts()
  
     print "Testing Interrupts, setting interrupts up for positive edge detect"
+    print "Interrupts: 0x%08X" % gpio.get_interrupts()
     gpio.set_interrupt_edge(0xFFFFFFFF)
     gpio.set_interrupt_enable(0xFFFFFFFF)
- 
-    print "Waiting for 5 seconds for the interrupts to fire"
-    if gpio.n.wait_for_interrupts(5):
-        if gpio.n.is_interrupt_for_slave(gpio.dev_id):
-            print "Interrupt for GPIO detected!"
-            print "Interrupts: 0x%08X", gpio.get_interrupts()
-            print "Read value: 0x%08X", gpio.get_port_raw()
 
+    print "Waiting for 5 seconds for the interrupts to fire"
+    if gpio.wait_for_interrupts(5):
+        print "Interrupt detected!\n"
+        if gpio.is_interrupt_for_slave():
+            print "Interrupt for GPIO detected!"
+            print "Interrupts: 0x%08X" % gpio.get_interrupts()
+            print "Read value: 0x%08X" % gpio.get_port_raw()
+
+    print "Interrupts: 0x%08X" % gpio.get_interrupts()
 
  

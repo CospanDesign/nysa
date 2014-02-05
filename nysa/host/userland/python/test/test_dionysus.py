@@ -30,6 +30,7 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 import argparse
 import sys
 import os
+import time
 from array import array as Array
 
 
@@ -42,6 +43,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 import nysa
 from nysa.host.userland.python.dionysus.dionysus import Dionysus
 from nysa.host.userland.python.driver import gpio
+from nysa.host.userland.python.driver import i2c
 
 
 
@@ -64,16 +66,21 @@ EPILOG = "\n" \
 
 
 debug = False
-TEST_GPIO = True
 
 def test_memory(dyn, dev_index):
     print "Testing memory @ %d" % dev_index
+    num = 0
     data_out = Array('B')
     size = dyn.get_device_size(dev_index)
+    print "Size: 0x%08X" % size
 
-    for i in range(size / 4):
+    for i in range(0, ((size / 4) - 1)):
+        num = 0x00
         data_out.append(num)
-    print "Clearin Memory"
+
+    print "Length of data out: 0x%08X" % len(data_out)
+    print "Word Size: 0x%08X" % (size / 4)
+    print "Clearing Memory"
     dyn.write_memory(0, data_out)
 
     print "Testing short write at the beginning of the memory"
@@ -82,7 +89,7 @@ def test_memory(dyn, dev_index):
 
     print "Testing short read at the beginning of the memory"
     data_in = dyn.read_memory(0, 2)
-    for i in range (len[data_out]):
+    for i in range (len(data_out)):
         if data_in[i] != data_out[i]:
             print "ERROR at: [{0:>2}] OUT: {1:>8} IN: {2:>8}".format(str(i), hex(data_out[i]), hex(data_in[i]))
 
@@ -92,7 +99,7 @@ def test_memory(dyn, dev_index):
     print "Reading from location: 0x%08X" % (size - 16)
     data_in = dyn.read_memory((size - 16), 2)
 
-    for i in range (len[data_out]):
+    for i in range (len(data_out)):
         if data_in[i] != data_out[i]:
             print "ERROR at: [{0:>2}] OUT: {1:>8} IN: {2:>8}".format(str(i), hex(data_out[i]), hex(data_in[i]))
 
@@ -157,7 +164,7 @@ def perform_unit_tests(dyn, core = None):
     pass
 
 def list_cores(dyn):
-    import driver
+    from nysa.host.userland.python import driver
     #Get a list of the devices from the DRT
     #Get a of devices found in Dionysus from the DRT
     #Go through the driver directory and find all the drivers available
@@ -175,13 +182,16 @@ def main(argv):
     parser.add_argument("-d", "--debug",
                         action='store_true',
                         help="Enable Debug messages")
-    parser.add_argument("-l", "--list",
+    parser.add_argument("-m", "--memory",
+                        action='store_true',
+                        help="Test Memory")
+    parser.add_argument("-l", "--list_devices",
                         action='store_true',
                         help="List the cores that can be tested")
     parser.add_argument("-t", "--test",
                         type = str,
                         nargs = 1,
-                        default = "memory",
+                        default = "nothing",
                         help = "Test an individual core")
 
     args = parser.parse_args()
@@ -206,11 +216,24 @@ def main(argv):
     dyn.pretty_print_drt()
 
 
-    if args.list:
+    if args.memory:
+        print "Test Memory"
+        for i in range(dyn.get_number_of_devices()):
+            if dyn.is_memory_device(i):
+                test_memory(dyn, i)
+
+
+
+    if args.list_devices:
         print "List the cores that can be tested"
+        list_cores(dyn)
         sys.exit(0)
 
 
+    if args.test[0] == "nothing":
+        print "Nothing to test"
+    elif args.test[0].lower() == "gpio":
+        gpio.unit_test(dyn)
 
 if __name__ == "__main__":
     main(sys.argv)

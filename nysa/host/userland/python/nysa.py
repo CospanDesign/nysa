@@ -73,9 +73,9 @@ class Nysa(object):
     def __init__(self, debug = False):
         self.name = "Nysa"
         self.debug = debug
+        self.drt_manager = DRTManager()
         if debug:
             print "Debug Enabled"
-        self.drt_manager = DRTManager()
 
     def __del__(self):
         print "Closing Nysa"
@@ -585,8 +585,33 @@ class Nysa(object):
         Raises:
           Nothing
         """
-        #print "interrupts: %X" % self.interrupts
+        #print "Device interrupts: 0x%08X" % self.interrupts
         if ( (1 << device_id) & self.interrupts) > 0:
             return True
         return False
 
+    def find_device(self, dev_id, sub_id = None, unique_id = None):
+        """
+        Find a device in the DRT that has the dev_id.
+
+        If the sub_id and or the unique_id is not specified the device returns
+        the first device that is found.
+
+        The function will attempt to match as many parameters as the user
+        specifies
+
+        XXX: Unique ID is not supported yet!
+
+        Args:
+            dev_id (int): a device identification number
+            sub_id (int): sub identification number for a device
+            unique_id (int): a unique integer that identifies the device
+
+        Returns:
+            None: if the device is not found
+            Integer: this specifies the device index
+
+        Raises:
+            Nothing
+        """
+        return self.drt_manager.find_device(dev_id, sub_id, unique_id)
