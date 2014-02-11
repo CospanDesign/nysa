@@ -413,6 +413,20 @@ class DMAReadController(object):
         self.next_finished = 0
 
     def get_finished_block(self):
+        """
+        Uses either cached data or if not available reads the status from the
+        core to determine if there is any available blocks of data to be read
+
+        Args:
+            Nothing
+
+        Returns:
+            Nothing
+
+        Raises:
+            NysaCommError:
+                An error in communication (Timeout, Disconnected)
+        """
         if (not self.finished_status[0]) and (not self.finished_status[1]):
             status = self.device.read_register(self.reg_status)
             self.finished_status[0] = ((status & self.finished[0]) > 0)
@@ -447,6 +461,9 @@ class DMAReadController(object):
         return 0
 
     def is_busy(self):
+        """
+        Returns true if the core is currently reading the data in the memory
+        """
         if self.busy_status[0] or self.busy_status[1]:
             return True
         return False
@@ -506,6 +523,30 @@ class DMAReadController(object):
 
 
     def read(self, anticipate = False):
+        """
+        Returns a block of data and prepare for consequtive reads when the
+        anticipate flag is set.
+
+        When the anticipate flag is set the function will initiate a new
+        request for a block of data before leaving the function so that when
+        the user calls this function consqutively the function will return
+        faster because a read has already been requested.
+
+        This is useful when the user knows they will be reading from the core
+        consequtively
+    
+
+        Args:
+            anticipate (Boolean): if true will aggressively start consecutive
+            reads.
+
+        Returns:
+            Array of bytes
+
+        Raises:
+            NysaCommError:
+                Error in communication
+        """
 
         buf = Array('B')
         finished_status = self.get_finished_block()
@@ -645,8 +686,8 @@ class DMAWriteController(object):
 
     def get_available_memory_blocks(self):
         """
-        reads the status of the I2S core and determine whether the memory
-        blocks are available, Returns a value between 0 and 2
+        reads the status of the core and determine whether any memory
+        blocks are available, Returns a value between 0 and 3
 
         Args;
             Nothing
@@ -664,6 +705,22 @@ class DMAWriteController(object):
         return status & (self.empty[0] | self.empty[1])
 
     def write(buf):
+        """
+        Write a buffer of data down to the core using DMA. The buffer sent to
+        the device can be arbitrarily long. The function will packetize the
+        data and send it to the memory, then notify the core there is data
+        available.
+
+        Args:
+            buf (Array of bytes): buffer of data to send down
+
+        Returns:
+            Nothing
+
+        Raises:
+            NysaCommError
+                An error in communication
+        """
         position = 0
         total_length = len(buf)
         if (self.timeout > 0):
