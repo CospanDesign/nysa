@@ -336,21 +336,30 @@ class DMAReadController(object):
             timeout = 0     : Return immediately
             timeout > 0.0   : Wait the specified amount of seconds
                                 (or fraction of seconds)
-        finished0:
+        finished0: bit address of a status flag
             Reading: memory 0 is ready for reading
                 (NOTE this flag will be reset upon reading so allow the DMA
                 core to manage this)
+
+            example (first bit of the status flag): 0
 
         finished1:
             Reading: memory 1 is ready for reading
                 (NOTE this flag will be reset upon reading so allow the DMA
                 core to manage this)
 
-        empty0:
+            example (second bit of the status flag): 1
+
+
+        empty0: bit address of a status flag
             Reading: the memory is not being written to
 
-        empty1:
+            example (first bit of the status flag): 2
+
+        empty1: bit address of a status flag
             Reading: the memory is not being written to
+
+            example (second bit of the status flag): 3
 
     Exceptions:
         NysaDMAException:
@@ -578,11 +587,15 @@ class DMAWriteController(object):
             timeout > 0.0   : Wait the specified amount of seconds
                                 (or fraction of seconds)
 
-        empty0:
-            Writing: memory 0 is ready to be written to
+        empty0: bit address of a status flag:
+            memory 0 is ready to be written to
 
-        empty1:
-            Writing: memory 1 is ready to be written to
+            example (first bit of the status flag): 0
+
+        empty1: bit address of a status flag:
+            memory 1 is ready to be written to
+
+            example (second bit of the status flag): 1
 
     Exceptions:
         NysaDMAException:
