@@ -129,7 +129,7 @@ class DRTManager():
     """
     return self.num_of_devices
 
-  def find_device(self, device_id, subdevice_id = None, unique_id = None):
+  def find_device(self, device_id, subdevice_id = None, unique_id = None, debug = False):
     """
     Find a device in the DRT that has the dev_id.
 
@@ -153,18 +153,24 @@ class DRTManager():
     Raises:
         Nothing
     """
+    if debug:
+        print "Looking for: 0x%02X" % device_id
     for dev_index in range(0, self.num_of_devices):
         id_string = self.drt_lines[((dev_index + 1) * 8)]
         dev_id = string.atoi(id_string[4:], 16)
         dev_sub_id = string.atoi(id_string[:4], 16)
+        if debug:
+            print "Position: 0x%02X" % dev_index
+            print "\tDev ID: 0x%02X" % dev_id
+            print "\tDev Sub ID: 0x%02X" % dev_sub_id
         if (dev_id == device_id):
+            if debug:
+                print "Found 0x%02X at position: 0x%02X" % (device_id, dev_index)
             if (subdevice_id is not None):
                 if (subdevice_id == dev_sub_id):
                     return dev_index + 1
             else:
                 return dev_index + 1
-        else:
-            return dev_index + 1
     return None
 
   def is_device_attached(self, device_id, subdevice_id=None):

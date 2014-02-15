@@ -44,7 +44,14 @@ import nysa
 from nysa.host.userland.python.dionysus.dionysus import Dionysus
 from nysa.host.userland.python.driver import gpio
 from nysa.host.userland.python.driver import i2c
+from nysa.host.userland.python.driver import i2s
 
+
+devices = {
+        "GPIO":gpio,
+        "I2C":i2c,
+        "I2S":i2s
+        }
 
 
 DESCRIPTION = "\n" \
@@ -204,11 +211,19 @@ def main(argv):
     try:
         dyn = Dionysus(debug = debug)
     except IOError, ex:
-        print "PyFtdi IOError while openning: %s" % str(ex)
+        #print "PyFtdi IOError while openning: %s" % str(ex)
+        print "Dionysus not found!"
+        return
     except AttributeError, ex:
-        print "PyFtdi Attribute Error while openning: %s" % str(ex)
+        #print "PyFtdi Attribute Error while openning: %s" % str(ex)
+        print "Dionysus not found!"
+        return
 
     #Open up Dionysus and read the DRT
+    if dyn is None:
+        print "Dionysus not found!"
+        return
+
     dyn.ping()
     print "Reading DRT"
     dyn.read_drt()
@@ -230,10 +245,10 @@ def main(argv):
         sys.exit(0)
 
 
-    if args.test[0] == "nothing":
+    if args.test[0].upper() in devices:
+        devices[args.test[0].upper()].unit_test(dyn)
+    else:
         print "Nothing to test"
-    elif args.test[0].lower() == "gpio":
-        gpio.unit_test(dyn)
 
 if __name__ == "__main__":
     main(sys.argv)

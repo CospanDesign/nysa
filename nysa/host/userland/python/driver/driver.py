@@ -19,9 +19,9 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
-
 from nysa.host.userland.python.nysa import Nysa
 from nysa.host.userland.python.nysa import NysaCommError
+from nysa.host.userland.python.nysa import NysaError
 
 
 class Driver(object):
@@ -267,6 +267,20 @@ class Driver(object):
         Pass through for nysa 'is_interrupt_for_slave()
         """
         return self.n.is_interrupt_for_slave(self.dev_id)
+
+    def register_dump(self):
+        """
+        Display All the Register Values
+
+        Reads the size number of registers from the DRT and
+        prints them all out
+        """
+        count = self.n.get_device_size(self.dev_id - 1)
+        print "Register Dump"
+        for i in range(count):
+            print "Register [0x%02X]: 0x%08X" % (i, self.read_register(i))
+
+        print ""
 
 
 class NysaDMAException(Exception):
@@ -662,8 +676,8 @@ class DMAWriteController(object):
 
         self.device = device
         self.mem_base = [0, 1]
-        self.mem_base[0] = memory_base0
-        self.mem_base[1] = memory_base1
+        self.mem_base[0] = mem_base0
+        self.mem_base[1] = mem_base1
         if size is None:
             self.size = self.mem_base[1] - self.mem_base[0]
         else:

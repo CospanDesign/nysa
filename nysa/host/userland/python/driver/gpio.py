@@ -43,6 +43,9 @@ from nysa.host.userland.python.nysa import NysaCommError
 
 from driver import Driver
 
+#Sub Module ID
+COSPAN_DESIGN_GPIO_MODULE = 0x01
+
 #Register Constants
 GPIO_PORT           =   0x00000000
 GPIO_OUTPUT_ENABLE  =   0x00000001
@@ -57,8 +60,44 @@ class GPIO(Driver):
     """
     @staticmethod
     def get_core_id():
-        #This core corresponds to a GPIO (Numbers are found in DRT.json)
-        return 0x00000001
+        """
+        Returns the identification number of the device this module controls
+
+        Args:
+            Nothing
+
+        Returns (Integer):
+            Number corresponding to the device in the drt.json file
+
+        Raises:
+            DRTError: Device ID Not found in drt.json
+        """
+        return Nysa.get_id_from_name("GPIO")
+
+    @staticmethod
+    def get_core_sub_id():
+        """Returns the identification of the specific implementation of this
+        controller
+
+        Example: Cospan Design wrote the HDL GPIO core with sub_id = 0x01
+            this module was designed to interface and exploit features that
+            are specific to the Cospan Design version of the GPIO controller.
+
+            Some controllers may add extra functionalities that others do not
+            sub_ids are used to differentiate them and select the right python
+            controller for those HDL modules
+
+        Args:
+            Nothing
+
+        Returns (Integer):
+            Number ID for the HDL Module that this controls
+            (Note: 0 = generic control or baseline funtionality of the module)
+
+        Raises:
+            Nothing
+        """
+        return COSPAN_DESIGN_GPIO_MODULE
 
     def __init__(self, nysa, dev_id, debug = False):
         super(GPIO, self).__init__(nysa, dev_id, debug)

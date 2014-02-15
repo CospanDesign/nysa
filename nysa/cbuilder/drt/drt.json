@@ -46,7 +46,7 @@
       "ID":"0x000A"
     },
     "I2S":{
-      "description": "Generic Inter IC Sount",
+      "description": "Generic Inter IC Sound",
       "ID":"0x000B"
     },
     "Logic Analyzer":{

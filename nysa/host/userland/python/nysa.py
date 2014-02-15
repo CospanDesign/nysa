@@ -45,6 +45,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              "cbuilder",
                              "drt"))
 import drt as drt_controller
+from drt import DRTError
 from drt import DRTManager
 
 
@@ -57,6 +58,15 @@ class NysaCommError(Exception):
     """
     pass
 
+class NysaError(Exception):
+    """NysaError
+
+    Errors associated with Nysa
+        Device not found in DRT
+    """
+    pass
+
+
 
 class Nysa(object):
     """Nysa
@@ -64,6 +74,30 @@ class Nysa(object):
     Abstract class and must be overriden by a class that will implement
     device specific functions such as initialize, read, write, and ping
     """
+
+    @staticmethod
+    def get_id_from_name(name):
+        """Gets the device ID number from it's name,
+
+        Example: GPIO return 0x01 (this is defined within drt.json
+
+        Args:
+            name (String): Name of the device to identify 
+
+        Returns:
+            (Integer):
+            Integer device identification number
+
+        Raises:
+            NysaError:
+                Name not found in DRT.json file
+        """
+        try:
+            return drt_controller.get_device_index(name)
+        except DRTError, e:
+            raise NysaError(e)
+
+
 
     #XXX: This might be better specified as a float
     timeout  = 3
@@ -612,6 +646,13 @@ class Nysa(object):
             Integer: this specifies the device index
 
         Raises:
-            Nothing
+            NysaError
         """
-        return self.drt_manager.find_device(dev_id, sub_id, unique_id)
+        dev = 0
+        try:
+            dev = self.drt_manager.find_device(dev_id, sub_id, unique_id)
+        except DRTError, e:
+            raise NysaCommError("Device not found in DRT")
+
+        return dev
+
