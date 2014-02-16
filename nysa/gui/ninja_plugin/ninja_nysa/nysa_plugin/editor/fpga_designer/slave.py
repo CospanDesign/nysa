@@ -32,8 +32,8 @@ import inspect
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from box import Box
-import graphics_utils as gu
+from visual_graph.box import Box
+import visual_graph.graphics_utils as gu
 
 class Slave(Box):
     """Host Interface Box"""

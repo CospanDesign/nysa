@@ -36,6 +36,8 @@ import sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from visual_graph.graphics_scene import GraphicsScene as gs
+
 sys.path.append(os.path.join( os.path.dirname(__file__),
                               os.pardir,
                               os.pardir,
@@ -47,8 +49,6 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
                               "gui"))
 
 from graph_manager import SlaveType
-
-
 
 def enum(*sequential, **named):
   enums = dict(zip(sequential, range(len(sequential))), **named)
@@ -71,21 +71,6 @@ class GraphicsScene(QGraphicsScene):
         if self.dbg: print "GS: Set state for normal"
         #self.setAcceptDrops(True)
 
-    def set_link_ref(self, lref):
-        if self.dbg: print "GS: set_link_ref()"
-        if self.dbg: print "\tlink_ref: %s - %s" % (lref.from_box.box_name, lref.to_box.box_name)
-
-        self.links.append(lref)
-
-    def set_master(self, master):
-        self.master = master
-
-    def set_peripheral_bus(self, peripheral_bus):
-        self.peripheral_bus = peripheral_bus
-
-    def set_memory_bus(self, memory_bus):
-        self.memory_bus = memory_bus
-
     def get_view(self):
         if self.dbg: print "GS: get_view()"
         return self.view
@@ -101,6 +86,39 @@ class GraphicsScene(QGraphicsScene):
         if type(data) is dict and "module" in data.keys():
             if self.dbg: print "\tbox: %s" % data["module"]
             self.fd.clear_param_table()
+
+    def get_state(self):
+        if self.dbg: print "GS: get_state()"
+        return self.state
+
+    def fit_view(self):
+        self.fd.fit_view()
+
+    def remove_selected(self, reference):
+        if self.dbg: print "GS: remove_selected()"
+
+    #Links
+    def set_link_ref(self, lref):
+        if self.dbg: print "GS: set_link_ref()"
+        if self.dbg: print "\tlink_ref: %s - %s" % (lref.from_box.box_name, lref.to_box.box_name)
+
+        self.links.append(lref)
+
+    def clear_links(self):
+        for i in range (len(self.links)):
+            self.removeItem(self.links[i])
+
+
+
+
+    def set_master(self, master):
+        self.master = master
+
+    def set_peripheral_bus(self, peripheral_bus):
+        self.peripheral_bus = peripheral_bus
+
+    def set_memory_bus(self, memory_bus):
+        self.memory_bus = memory_bus
 
     def slave_selected(self, name, bus, tags):
         if self.dbg: print "GS: slave_selected()"
@@ -142,9 +160,7 @@ class GraphicsScene(QGraphicsScene):
         #return self.state == view_state.arbitor_master_selected
         return self.arbitor_selected is not None
 
-    def get_state(self):
-        if self.dbg: print "GS: get_state()"
-        return self.state
+
 
     def slave_deselected(self, name, bus, tags):
         if self.dbg: print "GS: slave_deselect()"
@@ -223,29 +239,6 @@ class GraphicsScene(QGraphicsScene):
         if self.dbg: print "\tGetting Arbitor Master connected for %s which is: %s" % (arbitor_name, slave.box_name)
         return slave
 
-    def fit_view(self):
-        self.fd.fit_view()
-
-    def remove_selected(self, reference):
-        if self.dbg: print "GS: remove_selected()"
-
-
-    def clear_links(self):
-        for i in range (len(self.links)):
-            self.removeItem(self.links[i])
-
-    def mousePressEvent(self, event):
-        if self.dbg: print "GS: mouse press event"
-        super (GraphicsScene, self).mousePressEvent(event)
-
-    def dropEvent(self, event):
-        if self.dbg: print "GS: Drag Event"
-        super (GraphicsScene, self).dropEvent(event)
-
-    def startDrag(self, event):
-        if self.dbg: print "GS: Drag start event"
-        pass
-
     def remove_slave(self, slave):
         if self.dbg: print "GS: Remove slave"
         index = slave.bus.get_slave_index(slave.box_name)
@@ -255,4 +248,30 @@ class GraphicsScene(QGraphicsScene):
     def constraint_item_selected(self, module_name=None):
         if self.dbg: print "GS: constraint item clicked"
         self.fd.show_constraint_editor(module_name)
+
+
+
+    
+    #def mouseMoveEvent(self, event):
+    #    if self.dbg: print "GS: mouse move event"
+    #    super (GraphicsScene, self).mouseMoveEvent(event)
+    #    for l in self.links:
+    #        if l.is_center_track():
+    #            l.auto_update_center()
+
+
+    def mousePressEvent(self, event):
+        if self.dbg: print "GS: mouse press event"
+        super (GraphicsScene, self).mousePressEvent(event)
+        #for l in self.links:
+        #    if l.is_center_track():
+        #        l.auto_update_center()
+
+    def dropEvent(self, event):
+        if self.dbg: print "GS: Drag Event"
+        super (GraphicsScene, self).dropEvent(event)
+
+    def startDrag(self, event):
+        if self.dbg: print "GS: Drag start event"
+
 

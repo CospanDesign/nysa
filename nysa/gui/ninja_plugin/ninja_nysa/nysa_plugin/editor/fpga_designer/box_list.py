@@ -38,7 +38,7 @@ from PyQt4.QtCore import *
 #from PyQt4 import QtCore
 from PyQt4.QtGui import *
 
-from box import Box
+from visual_graph.box import Box
 
 class BoxList(QListWidget):
   """A list of items that can be dropped onto the main flowchart canvas"""

@@ -31,7 +31,7 @@ from PyQt4.QtCore import *
 from PyQt4 import QtCore
 from PyQt4.QtGui import *
 
-from box import Box
+from visual_graph.box import Box
 
 from defines import PERIPHERAL_BUS_RECT
 from defines import PERIPHERAL_BUS_POS

@@ -42,7 +42,18 @@ from ninja_ide.gui.editor.editor import Editor
 
 #from graph_utils import Box
 
-from box import Box
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              "pvg",
+                              "visual_graph"))
+
+
+
+from visual_graph.box import Box
 from box_list import BoxList
 from graphics_view import GraphicsView
 from graphics_scene import GraphicsScene

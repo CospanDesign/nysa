@@ -38,14 +38,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 import properties_dialog
 
-sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             "editor",
-                             "fpga_editor"))
-
-from box import Box
+from visual_graph.box import Box
 from link import link_type as lt
 from link import side_type as st
 

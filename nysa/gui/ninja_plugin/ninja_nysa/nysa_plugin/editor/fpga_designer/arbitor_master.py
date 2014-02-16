@@ -31,10 +31,10 @@ from PyQt4.QtCore import *
 from PyQt4 import QtCore
 from PyQt4.QtGui import *
 
-from box import Box
+from visual_graph.box import Box
 
 from graphics_scene import view_state as vs
-import graphics_utils as gu
+import visual_graph.graphics_utils as gu
 
 
 from link import side_type as st

@@ -35,6 +35,7 @@ __author__ = "Dave McCoy dave.mccoy@cospandesign.com"
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from visual_graph.link import Link as VLink
 
 def enum(*sequential, **named):
   enums = dict(zip(sequential, range(len(sequential))), **named)
@@ -81,96 +82,10 @@ class BoxLinkError(Exception):
         return repr(self.value)
 
 
-class Link (QGraphicsItem):
+class Link (VLink):
 
     def __init__(self, from_box, to_box, scene, ltype):
-        super(Link, self).__init__(parent = None, scene = scene)
-        self.rect = QRectF(0, 0, 0, 0)
-        self.from_box = from_box
-        self.to_box = to_box
-        self.setFlags
-        self.setZValue(-1)
-        #self.scene = scene
-        #self.setFlags(QGraphicsItem.ItemIsSelectable    |
-        #          QGraphicsItem.ItemIsFocusable)
-        self.link_type = ltype
-        self.from_side = side_type.right
-        self.to_side = side_type.left
-
-        style = Qt.SolidLine
-        pen = QPen(style)
-        pen.setColor(get_color_from_type(ltype))
-        self.pen = pen
-        self.path = QPainterPath()
-        self.track_nodes()
-        self.bezier_en = BEZIER_CONNECTION
-        self.start = QPointF(0.0, 0.0)
-        self.end = QPointF(0.0, 0.0)
-        self.start_offset = QLineF(0.0, 0.0, 0.0, 0.0)
-        self.end_offset = QLineF(0.0, 0.0, 0.0, 0.0)
-        self.line = QLineF(self.start, self.end)
-
-    def en_bezier_connections(self, enable):
-        self.bezier_en = enable
-
-    def get_link_type(self):
-        return self.link_type
-
-    def bezier_connections(self):
-        return self.bezier_en
-
-    def from_box_side(self, side):
-        self.from_side = side
-
-    def to_box_side(self, side):
-        self.to_side = side
-
-    def track_nodes(self):
-        self.update()
-
-    def get_min_max_to(self):
-        return self.end_offset.y()
-
-    def set_start_end(self, start, end):
-        self.prepareGeometryChange()
-
-        self.start = start
-        self.end = end
-
-        s_offset_point = QPointF(self.start.x() + 15, self.start.y())
-        e_offset_point = QPointF(self.end.x() - 15, self.end.y())
-        
-
-        self.start_offset = QLineF(self.start, s_offset_point)
-        self.end_offset = QLineF(self.end, e_offset_point)
-
-        self.line = QLineF(self.start, self.end)
-
-    def auto_update(self):
-        self.prepareGeometryChange()
-
-        self.start = self.mapFromItem(self.from_box, self.from_box.side_coordinates(self.from_side))
-        self.end = self.mapFromItem(self.to_box, self.from_box.side_coordinates(self.to_side))
-
-
-        self.start_offset = QLineF(self.start, QPointF(self.start.x() + 15, self.start.y()))
-        self.end_offset = QLineF(self.end, QPointF(self.end.x() - 15, self.end.y()))
-
-        self.line = QLineF(self.start, self.end)
-
-
-    def boundingRect(self):
-        extra = (self.pen.width() * 64) / 2
-        return QRectF(self.line.p1(),
-                QSizeF( self.line.p2().x() - self.line.p1().x(),
-                        self.line.p2().y() - self.line.p1().y())).normalized().adjusted(-extra, 
-                                                                                        -extra, 
-                                                                                        extra, 
-                                                                                        extra)
-
-    def shape(self):
-        return QPainterPath(self.path)
-
+        super(Link, self).__init__(from_box, to_box, ltype = ltype)
 
     def paint(self, painter, option, widget):
         center_point = QLineF(self.start, self.end).pointAt(0.5)

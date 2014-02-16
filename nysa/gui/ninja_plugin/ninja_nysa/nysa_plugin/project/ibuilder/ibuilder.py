@@ -192,9 +192,11 @@ class IBuilder (QObject):
                 print "Project path: %s" % p.get_full_path()
                 f = open(p.get_full_path(), "r")
                 j = json.loads(f.read())
+                if "project-type" not in j:
+                    continue
                 if j["project-type"] == CBUILDER_PROJECT_TYPE:
                     path = os.path.split(p.get_full_path())[0]
-                    print "ading: %s" % path
+                    print "adding: %s" % path
                     user_dirs.append(path)
 
 

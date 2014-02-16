@@ -23,6 +23,7 @@
 
 
 
+import sys
 import os
 import glob
 
@@ -34,6 +35,14 @@ from ninja_ide.core import plugin
 from ninja_ide.core import file_manager
 from ninja_ide.gui import actions
 from ninja_ide import resources
+
+#Add the Visual Graph Library path
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                              os.pardir,
+                              os.pardir,
+                              os.pardir,
+                              "pvg"))
+
 
 #from ninja_ide.tools import json_manager
 #from ninja_ide.core import plugin_interfaces

@@ -31,7 +31,7 @@ from PyQt4.QtCore import *
 from PyQt4 import QtCore
 from PyQt4.QtGui import *
 
-from box import Box
+from visual_graph.box import Box
 
 from defines import HOST_INTERFACE_RECT
 from defines import HOST_INTERFACE_POS
@@ -71,6 +71,6 @@ class HostInterface(Box):
     def paint(self, painter, option, widget):
         super(HostInterface, self).paint(painter, option, widget)
         for link in self.links:
-            self.links[link].auto_update()
+            self.links[link].auto_update_center()
 
 

@@ -31,7 +31,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 
-from box import Box
+from visual_graph.box import Box
 
 from defines import CONSTRAINT_EDITOR_NAME
 from defines import CONSTRAINT_EDITOR_COLOR
