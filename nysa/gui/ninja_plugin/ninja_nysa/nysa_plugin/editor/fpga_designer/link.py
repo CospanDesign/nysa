@@ -85,76 +85,24 @@ class BoxLinkError(Exception):
 class Link (VLink):
 
     def __init__(self, from_box, to_box, scene, ltype):
-        super(Link, self).__init__(from_box, to_box, ltype = ltype)
+        super(Link, self).__init__(from_box, to_box)
+        self.ltype = ltype
 
     def paint(self, painter, option, widget):
-        center_point = QLineF(self.start, self.end).pointAt(0.5)
-
-        pen = self.pen
-        pen.setJoinStyle(Qt.RoundJoin)
-        pen.setWidth(4)
-        if self.link_type == link_type.bus:
-            pen.setWidth(4)
-        if self.link_type == link_type.host_interface:
-            pen.setWidth(8)
-        if self.link_type == link_type.arbitor:
-            pen.setWidth(4)
-        if self.link_type == link_type.port:
-            pen.setWidth(4)
-        if self.link_type == link_type.slave:
-            pen.setWidth(2)
-        if self.link_type == link_type.arbitor_master:
-            pen.setWidth(2)
-
-        painter.setPen(pen)
-        path = QPainterPath()
-        
-        pstart = self.start_offset.p1()
-        pend = self.end_offset.p1()
-
-        if self.link_type == link_type.slave:
-            pstart = QPointF(pstart.x(), pend.y())
-            path.moveTo(pstart)
-            path.lineTo(pend)
-            #self.from_box.slave_adjust(mapToItem(from_box, pstart))
-
+        if self.ltype == link_type.bus:
+            self.paint_normal_connect(painter, 4, get_color_from_type(self.ltype))
+        if self.ltype == link_type.host_interface:
+            self.paint_normal_connect(painter, 8, get_color_from_type(self.ltype))
+        if self.ltype == link_type.arbitor:
+            self.paint_normal_connect(painter, 4, get_color_from_type(self.ltype))
+        if self.ltype == link_type.port:
+            self.paint_normal_connect(painter, 4, get_color_from_type(self.ltype))
+        if self.ltype == link_type.slave:
+            self.paint_direct_connect(painter, 2, get_color_from_type(self.ltype))
+        if self.ltype == link_type.arbitor_master:
+            self.paint_normal_connect(painter, 2, get_color_from_type(self.ltype))
         else:
-            one = (QPointF(pend.x(), pstart.y()) + pstart) / 2
-            two = (QPointF(pstart.x(), pend.y()) + pend) / 2
-            path.moveTo(pstart)
-
- 
-            if self.bezier_en:
-                path.cubicTo(one, two, pend)
- 
-            else:
-                if (pstart.x() + padding) < pend.x():
-                    path.lineTo(one)
-                    path.lineTo(two)
-                    path.lineTo(pend)
-  
-                else:
-                    start_pad = QPointF(pstart.x() + padding, pstart.y())
-                    end_pad = QPointF(pend.x() - padding, pend.y())
-                    center = QLineF(pstart, pend).pointAt(0.5)
-                    one = (QPointF(start_pad.x(), center.y()))
-                    two = (QPointF(end_pad.x(), center.y()))
-  
-  
-                    path.lineTo(start_pad)
-                    path.lineTo(one)
-                    path.lineTo(two)
-                    path.lineTo(end_pad)
-                    path.lineTo(pend)
-
-        #painter.drawRect(self.rect)
-        #painter.drawText(self.rect, Qt.AlignCenter, "%s,%s" % (str(start.x()), str(start.y())))
-        self.path = path
-        painter.drawPath(path)
-
-
-
-
+            self.paint_normal_connect(painter, 2, get_color_from_type(self.ltype))
 
 def get_color_from_type(lt):
     if lt == link_type.bus:

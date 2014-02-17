@@ -203,7 +203,7 @@ class Box (QGraphicsItem):
     def add_link(self, to_box, from_side = st.right, to_side=st.left):
         #print "link"
         name = "%s_%s" % (self.box_name, to_box.box_name)
-        self.links[name] = Link(self, to_box, self.scene())
+        self.links[name] = Link(self, to_box)
         self.links[name].from_box_side(from_side)
         self.links[name].to_box_side(to_side)
         self.update_links()

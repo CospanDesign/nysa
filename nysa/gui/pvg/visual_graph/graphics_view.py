@@ -37,7 +37,6 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from link import Link
-from link import link_type
 from box import Box
 
 class GraphicsView(QGraphicsView):

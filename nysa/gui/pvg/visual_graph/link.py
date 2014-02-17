@@ -40,10 +40,6 @@ def enum(*sequential, **named):
   enums = dict(zip(sequential, range(len(sequential))), **named)
   return type('Enum', (), enums)
 
-link_type = enum(   "simple",
-                    "difficult")
-
-
 side_type = enum(   "top",
                     "bottom",
                     "right",
@@ -71,7 +67,7 @@ class BoxLinkError(Exception):
 
 class Link (QGraphicsItem):
 
-    def __init__(self, from_box, to_box, ltype = link_type.simple):
+    def __init__(self, from_box, to_box):
         super(Link, self).__init__(parent = None, scene = from_box.scene())
         self.rect = QRectF(0, 0, 0, 0)
         self.from_box = from_box
@@ -81,13 +77,12 @@ class Link (QGraphicsItem):
         self.setZValue(-1)
         #self.setFlags(QGraphicsItem.ItemIsSelectable    |
         #          QGraphicsItem.ItemIsFocusable)
-        self.link_type = ltype
         self.from_side = side_type.right
         self.to_side = side_type.left
 
         style = Qt.SolidLine
         pen = QPen(style)
-        pen.setColor(get_color_from_type(ltype))
+        pen.setColor(QColor("black"))
         self.pen = pen
         self.path = QPainterPath()
         self.track_nodes()
@@ -109,9 +104,6 @@ class Link (QGraphicsItem):
     def en_bezier_connections(self, enable):
         if self.dbg: print "Enable Bezier Connections: %s" % str(enable)
         self.bezier_en = enable
-
-    def get_link_type(self):
-        return self.link_type
 
     def bezier_connections(self):
         return self.bezier_en
@@ -169,78 +161,75 @@ class Link (QGraphicsItem):
     def shape(self):
         return QPainterPath(self.path)
 
-
-    def paint(self, painter, option, widget):
+    def paint_direct_connect(self, painter, width, color):
         center_point = QLineF(self.start, self.end).pointAt(0.5)
-
         pen = self.pen
         pen.setJoinStyle(Qt.RoundJoin)
-        pen.setColor(get_color_from_type(self.link_type))
-        pen.setWidth(4)
-        if self.link_type == link_type.simple:
-            pen.setWidth(4)
-        if self.link_type == link_type.difficult:
-            pen.setWidth(8)
-        else:
-            pen.setWidth(6)
+        pen.setColor(color)
+        pen.setWidth(width)
         painter.setPen(pen)
+
         path = QPainterPath()
-        
+
         pstart = self.start_offset.p1()
         pend = self.end_offset.p1()
 
-        if self.link_type == link_type.simple:
-            pstart = QPointF(pstart.x(), pend.y())
-            path.moveTo(pstart)
-            path.lineTo(pend)
-            #self.from_box.slave_adjust(mapToItem(from_box, pstart))
+        pstart = QPointF(pstart.x(), pend.y())
+        path.moveTo(pstart)
+        path.lineTo(pend)
 
-        else:
-            one = (QPointF(pend.x(), pstart.y()) + pstart) / 2
-            two = (QPointF(pstart.x(), pend.y()) + pend) / 2
-            path.moveTo(pstart)
-
- 
-            if self.bezier_en:
-                path.cubicTo(one, two, pend)
- 
-            else:
-                if (pstart.x() + padding) < pend.x():
-                    path.lineTo(one)
-                    path.lineTo(two)
-                    path.lineTo(pend)
-  
-                else:
-                    start_pad = QPointF(pstart.x() + padding, pstart.y())
-                    end_pad = QPointF(pend.x() - padding, pend.y())
-                    center = QLineF(pstart, pend).pointAt(0.5)
-                    one = (QPointF(start_pad.x(), center.y()))
-                    two = (QPointF(end_pad.x(), center.y()))
-  
-  
-                    path.lineTo(start_pad)
-                    path.lineTo(one)
-                    path.lineTo(two)
-                    path.lineTo(end_pad)
-                    path.lineTo(pend)
-
-        #painter.drawRect(self.rect)
-        #painter.drawText(self.rect, Qt.AlignCenter, "%s,%s" % (str(start.x()), str(start.y())))
         self.path = path
         painter.drawPath(path)
 
+    def paint_normal_connect(self, painter, width, color):
+        center_point = QLineF(self.start, self.end).pointAt(0.5)
+        pen = self.pen
+        pen.setJoinStyle(Qt.RoundJoin)
+        pen.setColor(color)
+        pen.setWidth(width)
+        painter.setPen(pen)
 
+        path = QPainterPath()
 
+        pstart = self.start_offset.p1()
+        pend = self.end_offset.p1()
 
+        start_pad = QPointF(pstart.x() + padding, pstart.y())
+        end_pad = QPointF(pend.x() - padding, pend.y())
+        center = QLineF(pstart, pend).pointAt(0.5)
 
-def get_color_from_type(lt):
-    return LINK_DEMO_COLOR
-    '''
-    if lt == link_type.bus:
-        return LINK_BUS_COLOR
-    raise BoxLinkError("Invalid or undefined link type: %s, valid options \
-            are: %s" % (str(lt), str(link_type)))
-    '''
+        one = (QPointF(pend.x(), pstart.y()) + pstart) / 2
+        two = (QPointF(pstart.x(), pend.y()) + pend) / 2
+                                
+        path.moveTo(pstart)
+
+        if self.bezier_en:
+            path.cubicTo(one, two, pend)
+
+        else:
+            if (pstart.x() + padding) < pend.x():
+                path.lineTo(one)
+                path.lineTo(two)
+                path.lineTo(pend)
+            
+            else:
+                start_pad = QPointF(pstart.x() + padding, pstart.y())
+                end_pad = QPointF(pend.x() - padding, pend.y())
+                center = QLineF(pstart, pend).pointAt(0.5)
+                one = (QPointF(start_pad.x(), center.y()))
+                two = (QPointF(end_pad.x(), center.y()))
+                path.lineTo(start_pad)
+                path.lineTo(one)
+                path.lineTo(two)
+                path.lineTo(end_pad)
+                path.lineTo(pend)
+
+        self.path = path
+        painter.drawPath(path)
+
+    def paint(self, painter, option, widget):
+        self.paint_normal_connect(painter, 4, LINK_DEMO_COLOR)
+        #self.paint_direct_connect(painter, 4, LINK_DEMO_COLOR)
 
 def get_inverted_side(side):
     if side == side_type.top:

@@ -58,23 +58,19 @@ view_state = enum(  "normal",
                     "arbitor_master_selected")
 
 
-class GraphicsScene(QGraphicsScene):
+#class GraphicsScene(QGraphicsScene):
+class GraphicsScene(gs):
     def __init__(self, view, fpga_designer):
-        super(GraphicsScene, self).__init__()
-        self.view = view
-        #self.parent = parent
+        #super(GraphicsScene, self).__init__()
+        super(GraphicsScene, self).__init__(view, fpga_designer)
         self.fd = fpga_designer
         self.arbitor_selected = None
         self.state = view_state.normal
-        self.links = []
         self.dbg = False
         if self.dbg: print "GS: Set state for normal"
         #self.setAcceptDrops(True)
 
-    def get_view(self):
-        if self.dbg: print "GS: get_view()"
-        return self.view
-
+    #Overriden Methods
     def box_selected(self, data):
         if self.dbg: print "GS: box_selected()"
         if type(data) is dict and "module" in data.keys():
@@ -87,29 +83,31 @@ class GraphicsScene(QGraphicsScene):
             if self.dbg: print "\tbox: %s" % data["module"]
             self.fd.clear_param_table()
 
-    def get_state(self):
-        if self.dbg: print "GS: get_state()"
-        return self.state
-
-    def fit_view(self):
-        self.fd.fit_view()
-
     def remove_selected(self, reference):
         if self.dbg: print "GS: remove_selected()"
 
-    #Links
-    def set_link_ref(self, lref):
-        if self.dbg: print "GS: set_link_ref()"
-        if self.dbg: print "\tlink_ref: %s - %s" % (lref.from_box.box_name, lref.to_box.box_name)
+    #Overriden PyQT4 Methods
+    def mouseMoveEvent(self, event):
+        super (GraphicsScene, self).mouseMoveEvent(event)
 
-        self.links.append(lref)
+    def mousePressEvent(self, event):
+        super (GraphicsScene, self).mousePressEvent(event)
 
-    def clear_links(self):
-        for i in range (len(self.links)):
-            self.removeItem(self.links[i])
+    def dropEvent(self, event):
+        if self.dbg: print "GS: Drag Event"
+        super (GraphicsScene, self).dropEvent(event)
+
+    def startDrag(self, event):
+        if self.dbg: print "GS: Drag start event"
 
 
 
+
+
+    #States
+    def get_state(self):
+        if self.dbg: print "GS: get_state()"
+        return self.state
 
     def set_master(self, master):
         self.master = master
@@ -192,6 +190,7 @@ class GraphicsScene(QGraphicsScene):
         slave.remove_arbitor_masters()
         slave.show_arbitor_masters()
         slave.setSelected(True)
+
     #def arbitor_master_fake_selected(self, slave, arbitor_master):
     #    print "GS: arbitor master selected selected"
     #    self.arbitor_selected = arbitor_master
@@ -250,28 +249,5 @@ class GraphicsScene(QGraphicsScene):
         self.fd.show_constraint_editor(module_name)
 
 
-
-    
-    #def mouseMoveEvent(self, event):
-    #    if self.dbg: print "GS: mouse move event"
-    #    super (GraphicsScene, self).mouseMoveEvent(event)
-    #    for l in self.links:
-    #        if l.is_center_track():
-    #            l.auto_update_center()
-
-
-    def mousePressEvent(self, event):
-        if self.dbg: print "GS: mouse press event"
-        super (GraphicsScene, self).mousePressEvent(event)
-        #for l in self.links:
-        #    if l.is_center_track():
-        #        l.auto_update_center()
-
-    def dropEvent(self, event):
-        if self.dbg: print "GS: Drag Event"
-        super (GraphicsScene, self).dropEvent(event)
-
-    def startDrag(self, event):
-        if self.dbg: print "GS: Drag start event"
 
 

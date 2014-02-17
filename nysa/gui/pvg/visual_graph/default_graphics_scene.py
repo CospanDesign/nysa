@@ -80,7 +80,6 @@ class GraphicsScene(QGraphicsScene):
                 l.auto_update_center()
 
 
-    '''
     #The user should override the following methods:
     def mouseMoveEvent(self, event):
         super (GraphicsScene, self).mouseMoveEvent(event)
@@ -95,7 +94,4 @@ class GraphicsScene(QGraphicsScene):
 
     def startDrag(self, event):
         pass
-    '''
-
-
 

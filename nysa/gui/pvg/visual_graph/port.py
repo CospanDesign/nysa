@@ -23,7 +23,6 @@
 from box import Box
 
 from link import side_type as st
-from link import link_type as lt
 from link import Link
 
 from PyQt4.Qt import *
@@ -87,13 +86,13 @@ class Port (Box):
 
 
 
-    def connect_port(self, port):
-        self.link = Link(self, port, lt.simple)
-        self.s.set_link_ref(self.link)
-        self.link.from_box_side(st.right)
-        self.link.to_box_size(st.left)
-        self.link.en_bezier_connections(False)
-        self.update_link()
+    #def connect_port(self, port):
+    #    self.link = Link(self, port)
+    #    self.s.set_link_ref(self.link)
+    #    self.link.from_box_side(st.right)
+    #    self.link.to_box_size(st.left)
+    #    self.link.en_bezier_connections(False)
+    #    self.update_link()
 
     def paint(self, painter, option, widget):
         if self.activate:
