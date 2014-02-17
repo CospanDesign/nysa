@@ -35,28 +35,25 @@ import sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from visual_graph.graphics_scene import GraphicsScene as gs
 from link import Link
 
-class GraphicsScene(QGraphicsScene):
-
+class GraphicsScene(gs):
     def __init__(self, view, build_flow_viewer):
-        super(GraphicsScene, self).__init__()
+        #super(GraphicsScene, self).__init__()
+        super(GraphicsScene, self).__init__(view, build_flow_viewer)
         self.bfv = build_flow_viewer
         self.dbg = False
-        self.links = {}
+        if self.dbg: print "GS: Set state for normal"
 
     def box_selected(self, data):
         if self.dbg: print "GS: box_selected()"
-        #Use this to populate the properties table
-#        if type(data) is dict and "module" in data.keys():
-#            if self.dbg: print "\tbox: %s" % data["module"]
-#            self.fd.populate_param_table(data)
 
     def box_deselected(self, data):
         if self.dbg: print "GS: box_deselected()"
-#        if type(data) is dict and "module" in data.keys():
-#            if self.dbg: print "\tbox: %s" % data["module"]
-#            self.fd.clear_param_table()
-#
+
+    def remove_selected(self, reference):
+        if self.dbg: print "GS: remove_selected()"
+
 
 

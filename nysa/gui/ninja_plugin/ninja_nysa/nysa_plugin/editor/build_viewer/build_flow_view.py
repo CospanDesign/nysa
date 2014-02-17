@@ -174,17 +174,24 @@ class BuildFlowView(QWidget):
                         TRACE_RECT)
 
         #Add the link between generator and synthesis
-        project_gen.add_link(synthesis, from_side = st.bottom, to_side = st.top)
+        l = project_gen.add_link(synthesis, from_side = st.bottom, to_side = st.top)
+        l.set_directed(True)
+        
         #Add the link between synthesis and translate
-        synthesis.add_link(translate)
+        l = synthesis.add_link(translate)
+        l.set_directed(True)
         #Add the link between translate and map
-        translate.add_link(mapper)
+        l = translate.add_link(mapper)
+        l.set_directed(True)
         #Add the link between map and par
-        mapper.add_link(par)
+        l = mapper.add_link(par)
+        l.set_directed(True)
         #Add the link between par and bitgen
-        par.add_link(bitgen)
+        l = par.add_link(bitgen)
+        l.set_directed(True)
         #Add the link between par and trce
-        par.add_link(trce)
+        l = par.add_link(trce)
+        l.set_directed(True)
 
         self.builders[GEN_ID] = project_gen
         self.builders[SYNTHESIZER_ID] = synthesis

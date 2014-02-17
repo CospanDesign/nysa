@@ -36,6 +36,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from visual_graph.link import Link as VLink
+from visual_graph.link import BoxLinkError
 
 def enum(*sequential, **named):
   enums = dict(zip(sequential, range(len(sequential))), **named)
@@ -66,21 +67,6 @@ from defines import LINK_ARBITOR_MASTER_COLOR
 
 
 padding = 20
-
-
-class BoxLinkError(Exception):
-    """
-    Errors associated with Links between boxes
-
-    Error associated with:
-        -invalid side
-        -invalid link type
-    """
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return repr(self.value)
-
 
 class Link (VLink):
 

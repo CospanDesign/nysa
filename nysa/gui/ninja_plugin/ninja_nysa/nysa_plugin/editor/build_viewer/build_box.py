@@ -32,7 +32,7 @@ import inspect
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from box import Box
+from visual_graph.box import Box
 from build_status import BuildStatus
 
 class BuildBox(Box):
@@ -118,5 +118,6 @@ class BuildBox(Box):
         self.add_label_to_rect(painter, rect, self.box_name)
         self.status_box.paint(painter, option, widget)
         #Draw Status
+
 
 

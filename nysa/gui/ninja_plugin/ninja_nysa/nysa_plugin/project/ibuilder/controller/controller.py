@@ -39,8 +39,25 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 import properties_dialog
 
 from visual_graph.box import Box
-from link import link_type as lt
-from link import side_type as st
+
+def enum(*sequential, **named):
+  enums = dict(zip(sequential, range(len(sequential))), **named)
+  return type('Enum', (), enums)
+
+lt = enum(   "bus",
+             "host_interface",
+             "arbitor",
+             "slave",
+             "port",
+             "arbitor_master")
+
+
+st = enum(   "top",
+             "bottom",
+             "right",
+             "left")
+
+
 
 from defines import HI_COLOR
 from defines import PS_COLOR

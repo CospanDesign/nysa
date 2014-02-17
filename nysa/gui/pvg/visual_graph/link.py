@@ -94,9 +94,14 @@ class Link (QGraphicsItem):
         self.line = QLineF(self.start, self.end)
         self.dbg = False
         self.center_track = True
+        self.directed = False
+        self.padding = padding
 
     def en_center_track(self, enable):
         self.center_track = True
+
+    def set_padding(self, p = 20):
+        self.padding = padding
 
     def is_center_track(self):
         return self.center_track
@@ -113,6 +118,9 @@ class Link (QGraphicsItem):
 
     def to_box_side(self, side):
         self.to_side = side
+
+    def set_directed(self, enable):
+        self.directed = enable
 
     def track_nodes(self):
         self.update()
@@ -180,6 +188,30 @@ class Link (QGraphicsItem):
 
         self.path = path
         painter.drawPath(path)
+        if self.directed:
+
+            height = 2 * pen.width()
+            pa = None
+            pb = None
+            if self.to_side == side_type.left:
+                pa = QPointF(end_pad.x(), end_pad.y() + (height / 2))
+                pb = QPointF(end_pad.x(), end_pad.y() - (height / 2))
+            if self.to_side == side_type.right:
+                pa = QPointF(end_pad.x(), end_pad.y() + (height / 2))
+                pb = QPointF(end_pad.x(), end_pad.y() - (height / 2))
+         
+            if self.to_side == side_type.top:
+                pa = QPointF(end_pad.x() + height / 2, end_pad.y())
+                pb = QPointF(end_pad.x() - height / 2, end_pad.y())
+         
+            if self.to_side == side_type.bottom:
+                pa = QPointF(end_pad.x() + height / 2, end_pad.y())
+                pb = QPointF(end_pad.x() - height / 2, end_pad.y())
+         
+            arrow_head = QPolygonF([pa, pb, pend])
+            painter.drawPolygon(arrow_head)
+
+
 
     def paint_normal_connect(self, painter, width, color):
         center_point = QLineF(self.start, self.end).pointAt(0.5)
@@ -194,8 +226,8 @@ class Link (QGraphicsItem):
         pstart = self.start_offset.p1()
         pend = self.end_offset.p1()
 
-        start_pad = QPointF(pstart.x() + padding, pstart.y())
-        end_pad = QPointF(pend.x() - padding, pend.y())
+        start_pad = QPointF(pstart.x() + self.padding, pstart.y())
+        end_pad = QPointF(pend.x() -  self.padding, pend.y())
         center = QLineF(pstart, pend).pointAt(0.5)
 
         one = (QPointF(pend.x(), pstart.y()) + pstart) / 2
@@ -207,14 +239,34 @@ class Link (QGraphicsItem):
             path.cubicTo(one, two, pend)
 
         else:
-            if (pstart.x() + padding) < pend.x():
+            if (pstart.x() + self.padding) < pend.x():
                 path.lineTo(one)
                 path.lineTo(two)
                 path.lineTo(pend)
             
             else:
-                start_pad = QPointF(pstart.x() + padding, pstart.y())
-                end_pad = QPointF(pend.x() - padding, pend.y())
+                start_pad = 0
+                end_pad = 0
+                if self.from_side == side_type.left:
+                    start_pad = QPointF(pstart.x() - self.padding, pstart.y())
+                if self.from_side == side_type.right:
+                    start_pad = QPointF(pstart.x() + self.padding, pstart.y())
+                if self.from_side == side_type.top:
+                    start_pad = QPointF(pstart.x(), pstart.y() - self.padding)
+                if self.from_side == side_type.bottom:
+                    start_pad = QPointF(pstart.x(), pstart.y() + self.padding)
+
+
+                if self.to_side == side_type.left:
+                    end_pad = QPointF(pend.x() - self.padding, pend.y())
+                if self.to_side == side_type.right:
+                    end_pad = QPointF(pend.x() + self.padding, pend.y())
+                if self.to_side == side_type.top:
+                    end_pad = QPointF(pend.x(), pend.y() - self.padding)
+                if self.to_side == side_type.bottom:
+                    end_pad = QPointF(pend.x(), pend.y() + self.padding)
+
+
                 center = QLineF(pstart, pend).pointAt(0.5)
                 one = (QPointF(start_pad.x(), center.y()))
                 two = (QPointF(end_pad.x(), center.y()))
@@ -226,6 +278,29 @@ class Link (QGraphicsItem):
 
         self.path = path
         painter.drawPath(path)
+        if self.directed:
+
+            height = 2 * pen.width()
+            pa = None
+            pb = None
+            if self.to_side == side_type.left:
+                pa = QPointF(end_pad.x(), end_pad.y() + (height / 2))
+                pb = QPointF(end_pad.x(), end_pad.y() - (height / 2))
+            if self.to_side == side_type.right:
+                pa = QPointF(end_pad.x(), end_pad.y() + (height / 2))
+                pb = QPointF(end_pad.x(), end_pad.y() - (height / 2))
+         
+            if self.to_side == side_type.top:
+                pa = QPointF(end_pad.x() + height / 2, end_pad.y())
+                pb = QPointF(end_pad.x() - height / 2, end_pad.y())
+         
+            if self.to_side == side_type.bottom:
+                pa = QPointF(end_pad.x() + height / 2, end_pad.y())
+                pb = QPointF(end_pad.x() - height / 2, end_pad.y())
+         
+            arrow_head = QPolygonF([pa, pb, pend])
+            painter.drawPolygon(arrow_head)
+
 
     def paint(self, painter, option, widget):
         self.paint_normal_connect(painter, 4, LINK_DEMO_COLOR)
