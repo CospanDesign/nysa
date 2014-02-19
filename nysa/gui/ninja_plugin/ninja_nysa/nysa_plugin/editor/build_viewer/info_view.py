@@ -195,6 +195,7 @@ class InfoView(QWidget):
         #Project Directory should have the name of the project
         #Look for a configuration file
         #set the project name
+        print "config dict: %s" % str(config)
         self.set_project_name(config["PROJECT_NAME"])
         
         #set the board name

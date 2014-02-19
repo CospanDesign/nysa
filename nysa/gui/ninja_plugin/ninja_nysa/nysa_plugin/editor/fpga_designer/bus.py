@@ -111,7 +111,7 @@ class Bus(Box):
         return
 
     def update_slaves(self, slave_list):
-        if self.dbg: print "BUS: update_slaves()"
+        #print "BUS: update_slaves()"
         self.expand_slaves = False
            
         #might need to change the slaves around
@@ -137,6 +137,7 @@ class Bus(Box):
                                       bus = self)
             self.slaves.append(slave)
             self.links[slave] = Link(self, slave, self.scene(), lt.slave)
+            self.links[slave].en_center_track(False)
             self.links[slave].from_box_side(st.right)
             self.links[slave].to_box_side(st.left)
             self.recalculate_size_pos()
@@ -167,6 +168,7 @@ class Bus(Box):
                                  instance_name = instance_name)
         self.slaves.insert(index, slave)
         self.links[slave] = Link(self, slave, self.scene(), lt.slave)
+        self.links[slave].en_center_track(False)
         self.links[slave].from_box_side(st.right)
         self.links[slave].to_box_side(st.left)
         self.recalculate_size_pos()

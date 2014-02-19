@@ -89,9 +89,11 @@ class GraphicsScene(gs):
     #Overriden PyQT4 Methods
     def mouseMoveEvent(self, event):
         super (GraphicsScene, self).mouseMoveEvent(event)
+        self.auto_update_all_links()
 
     def mousePressEvent(self, event):
         super (GraphicsScene, self).mousePressEvent(event)
+        self.auto_update_all_links()
 
     def dropEvent(self, event):
         if self.dbg: print "GS: Drag Event"
@@ -101,8 +103,15 @@ class GraphicsScene(gs):
         if self.dbg: print "GS: Drag start event"
 
 
-
-
+    def auto_update_all_links(self):
+        #for l in self.links:
+        #    if l.is_center_track():
+        #        print "Center track!"
+        #        print "\tlink_ref: %s - %s" % (l.from_box.box_name, l.to_box.box_name)
+        #        l.auto_update_center()
+        #self.peripheral_bus.update_links()
+        #self.memory_bus.update_links()
+        pass
 
     #States
     def get_state(self):

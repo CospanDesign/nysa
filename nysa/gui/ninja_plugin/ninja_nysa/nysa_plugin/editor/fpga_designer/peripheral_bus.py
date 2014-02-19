@@ -45,7 +45,6 @@ from defines import SLAVE_HORIZONTAL_SPACING
 
 from defines import ARB_MASTER_EXPAND_OFFSET
 
-from link import Link
 from link import link_type as lt
 from link import side_type as st
 

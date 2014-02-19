@@ -90,6 +90,7 @@ class Link (VLink):
         else:
             self.paint_normal_connect(painter, 2, get_color_from_type(self.ltype))
 
+
 def get_color_from_type(lt):
     if lt == link_type.bus:
         return LINK_BUS_COLOR
