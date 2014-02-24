@@ -1250,7 +1250,7 @@ class WishboneTopGenerator(object):
 
         if debug: print "\tyes"
 
-        if debug: print "chec to see if the module contains parameters..."
+        if debug: print "check to see if the module contains parameters..."
         if len(slave_tags["PARAMETERS"].keys()) == 0:
             if debug: print "\tno"
             return ""

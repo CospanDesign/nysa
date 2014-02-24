@@ -16,25 +16,32 @@
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
 
-""" nysa interface
+""" Main Tab View
 """
 
 __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
-import argparse
-
 import sys
 import os
 import time
-from array import array as Array
 
+from PyQt4.Qt import *
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
-sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir))
-import nysa
+os.path.join(os.path.dirname(__file__), os.pardir)
+
+import status
+import actions
+
+class MainTabView(QTabWidget):
+    def __init__(self):
+        super (MainTabView, self).__init__()
+        #Create a view
+
+    def add_tab(self, tab, name):
+        assert tab is not None
+        self.addTab(tab, name)
+
 
 

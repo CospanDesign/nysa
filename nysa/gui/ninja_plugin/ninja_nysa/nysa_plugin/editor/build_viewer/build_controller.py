@@ -60,7 +60,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 
 import xmsgs_tree_model
 
-builders = [SYNTHESIZER_ID, TRANSLATOR_ID, MAP_ID, PAR_ID, BITGEN_ID, TRACE_ID]
+builders = [GEN_ID, SYNTHESIZER_ID, TRANSLATOR_ID, MAP_ID, PAR_ID, BITGEN_ID, TRACE_ID]
 all_target = TRACE_ID
 
 class BuildControllerError(Exception):
