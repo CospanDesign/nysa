@@ -31,11 +31,19 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 08/30/2012
     -Initial Commit
 """
-
+import sys
+import os
 import time
 
-from nysa.host.userland.python.nysa import Nysa
-from nysa.host.userland.python.nysa import NysaCommError
+
+p = os.path.join(os.path.dirname(__file__), os.pardir)
+#print "File: %s" % __file__
+#print "Path: %s" % os.path.abspath(p)
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir))
+
+from nysa import Nysa
+from nysa import NysaCommError
 
 from pyftdi.pyftdi.ftdi import Ftdi
 from array import array as Array
@@ -48,18 +56,17 @@ class Dionysus (Nysa):
     Concrete Class that implemented Dionysus specific communication functions
     """
 
-    def __init__(self, idVendor = 0x0403, idProduct = 0x8530, debug = False):
+    def __init__(self, idVendor = 0x0403, idProduct = 0x8530, sernum = None, debug = False):
         Nysa.__init__(self, debug)
         self.vendor = idVendor
         self.product = idProduct
         self.dev = Ftdi()
+        self.sernum = sernum
         self._open_dev()
         self.name = "Dionysus"
 
-
     def __del__(self):
         self.dev.close()
-
 
     def _open_dev(self):
         """_open_dev
@@ -80,7 +87,7 @@ class Dionysus (Nysa):
         #Latency can go down to 2 but there is a small chance there will be a
         #crash
         latency  = 2
-        self.dev.open(self.vendor, self.product, 0)
+        self.dev.open(self.vendor, self.product, 0, serial = self.sernum)
 
         #Drain the input buffer
         self.dev.purge_buffers()

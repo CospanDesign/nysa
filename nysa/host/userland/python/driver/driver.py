@@ -19,9 +19,16 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
-from nysa.host.userland.python.nysa import Nysa
-from nysa.host.userland.python.nysa import NysaCommError
-from nysa.host.userland.python.nysa import NysaError
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir))
+
+import nysa
+from nysa import Nysa
+from nysa import NysaCommError
+from nysa import NysaError
 
 
 class Driver(object):

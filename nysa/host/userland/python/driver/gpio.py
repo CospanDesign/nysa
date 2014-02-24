@@ -34,12 +34,17 @@ TODO: Implement Debounce
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
+import sys
+import os
 import time
 from array import array as Array
 
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir))
+
 import nysa
-from nysa.host.userland.python.nysa import Nysa
-from nysa.host.userland.python.nysa import NysaCommError
+from nysa import Nysa
+from nysa import NysaCommError
 
 from driver import Driver
 

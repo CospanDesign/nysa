@@ -35,16 +35,13 @@ from array import array as Array
 
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
                              os.pardir))
 import nysa
-from nysa.host.userland.python.dionysus.dionysus import Dionysus
-from nysa.host.userland.python.driver import gpio
-from nysa.host.userland.python.driver import i2c
-from nysa.host.userland.python.driver import i2s
+
+from dionysus.dionysus import Dionysus
+from driver import gpio
+from driver import i2c
+from driver import i2s
 
 
 devices = {
