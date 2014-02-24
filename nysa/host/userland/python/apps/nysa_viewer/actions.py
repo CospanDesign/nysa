@@ -21,6 +21,8 @@ class _Actions(QtCore.QObject):
     remove_device_signal = QtCore.pyqtSignal(str, str, name = "remove_device")
 
     #View Signals
+    phy_tree_changed_signal = QtCore.pyqtSignal(object, object, object, name = "phy_tree_changed")
+    phy_tree_get_first_dev = QtCore.pyqtSignal(name = "phy_tree_first_dev")
 
     def __init__(self, parent = None):
         super (_Actions, self).__init__(parent)

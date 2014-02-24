@@ -68,10 +68,10 @@ class MainPanel(QWidget):
         self.tab_view = MainTabView()
         self.tab_view.setSizePolicy(QSizePolicy.Preferred,
                                     QSizePolicy.Preferred)
-        fpga_image = FPGAImage()
-        fpga_image.setSizePolicy(QSizePolicy.MinimumExpanding,
+        self.fpga_image = FPGAImage()
+        self.fpga_image.setSizePolicy(QSizePolicy.MinimumExpanding,
                                QSizePolicy.Preferred)
-        self.tab_view.add_tab(fpga_image, "main tab")
+        self.tab_view.add_tab(self.fpga_image, "main tab")
 
         self.main_splitter.addWidget(self.phy_tree)
         self.main_splitter.addWidget(self.tab_view)
@@ -96,6 +96,9 @@ class MainPanel(QWidget):
             self.status.setVisible(False)
         else:
             self.status.setVisible(True)
+
+    def get_fpga_view(self):
+        return self.fpga_image
 
 
 class MainForm(QMainWindow):
@@ -139,6 +142,9 @@ class MainForm(QMainWindow):
         view_menu.addAction(status_window_action)
 
         self.show()
+
+    def get_fpga_view(self):
+        return self.main_panel.get_fpga_view()
 
     def closeEvent(self, event):
         super (MainForm, self).closeEvent(event)

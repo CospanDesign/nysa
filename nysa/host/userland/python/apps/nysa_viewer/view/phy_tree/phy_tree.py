@@ -118,10 +118,12 @@ class TypeBranch(BranchNode):
         return None
 
     def get_device(self, unique_id):
-
         for child in self.children:
             if child[NODE].get_id() == unique_id:
                 return child[NODE]
+
+    def get_type(self):
+        return self.name
 
 
 class RootBranch(BranchNode):
@@ -146,7 +148,7 @@ class RootBranch(BranchNode):
     def remove_type(self, type_name):
         c = None
         for child in self.children:
-            if child[NONE].name.toLower() == type_name:
+            if child[NODE].name.toLower() == type_name:
                 c = child
                 break
         self.children.remove(c)
@@ -177,22 +179,33 @@ class PhyTreeTableModel(QAbstractItemModel):
             return 0
         if isinstance(node, DeviceNode):
             return 0
-
         return len(node)
 
     def asRecord(self, index):
-        leaf = self.nodeFromIndex(index)
-        self.status.Debug(self, "leaf: %s" % str(leaf))
+        node = self.nodeFromIndex(index)
+        self.status.Debug(self, "node: %s" % str(node))
 
         #Only return valid records
-        if leaf is None:
+        if node is None:
             return []
-        if isinstance(leaf, RootBranch):
+        if isinstance(node, RootBranch):
             return []
-        if isinstance(leaf, TypeBranch):
+        if isinstance(node, TypeBranch):
             return []
-        if isinstance(leaf, DeviceNode):
-            return leaf.asRecord()
+        if isinstance(node, DeviceNode):
+            return node.asRecord()
+
+    def get_nysa_device(self, index):
+        node = self.nodeFromIndex(index)
+        if isinstance(node, DeviceNode):
+            return node.get_data()
+        return None
+
+    def get_nysa_type(self, index):
+        node = self.nodeFromIndex(index)
+        if isinstance(node, DeviceNode):
+            return node.parent.get_type()
+        return None
 
     def addRecord(self, dev_type, unique_id, data):
         fields = [dev_type, unique_id]
@@ -243,7 +256,6 @@ class PhyTreeTableModel(QAbstractItemModel):
         #This may not be needed
         self.reet()
 
-
     def headerData(self, section, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             assert 0 <= section <= len(self.headers)
@@ -291,6 +303,22 @@ class PhyTreeTableModel(QAbstractItemModel):
     def clear (self):
         self.root = RootBranch("")
         self.reset()
+
+    def first_device_index(self):
+        for r in range(len(self.root)):
+            type_branch = self.root.childAtRow(r)
+            for cr in range(len(type_branch)):
+
+                dev_node = type_branch.childAtRow(cr)
+                if dev_node is None: 
+                    continue
+                grandparent = self.root
+                roc = grandparent.rowOfChild(type_branch)
+                #print "Found Row of child: %d" % roc
+                #print "Type: %s" % dev_node.parent.get_type()
+                return self.createIndex(roc, 0, dev_node)
+
+        return None
 
     def data(self, index, role):
         if role == Qt.TextAlignmentRole:
@@ -340,6 +368,7 @@ class PhyTree(QTreeView):
         self.actions = Actions()
         self.actions.add_device_signal.connect(self.add_device)
         self.actions.clear_phy_tree_signal.connect(self.clear)
+        self.actions.phy_tree_get_first_dev.connect(self.select_first_item)
         self.status.Debug(self, "Phy Tree View Started!")
         self.setMaximumWidth(300)
         hdr = self.header()
@@ -347,6 +376,9 @@ class PhyTree(QTreeView):
         hdr.setDefaultSectionSize(90)
         self.connect(self, SIGNAL("activated(QModelIndex)"), self.activated)
         self.connect(self, SIGNAL("pressed(QModelIndex)"), self.item_pressed)
+        #self.connect(self, SIGNAL("SelectionChanged(QModelIndex)"), self.item_pressed)
+        self.sm = QItemSelectionModel(self.m)
+        self.setSelectionModel(self.sm)
 
     def add_device(self, dev_type, unique_id, data):
         self.m.addRecord(dev_type, unique_id, data)
@@ -365,7 +397,21 @@ class PhyTree(QTreeView):
     def clear(self):
         self.m.clear()
 
+    def select_first_item(self):
+        self.status.Debug(self, "Selecting first device in phy tree")
+        index = self.m.first_device_index()
+        if index is not None:
+            nysa_dev = self.m.get_nysa_device(index)
+            nysa_type = self.m.get_nysa_type(index)
+            uid = self.m.nodeFromIndex(index).get_id()
+            #print "Type: %s" % nysa_type
+            #print "Device: %s" % str(type(nysa_dev))
+            print "ID: %s" % uid
+            self.actions.phy_tree_changed_signal.emit(uid, nysa_type, nysa_dev)
+            self.sm.select(index, QItemSelectionModel.Rows | QItemSelectionModel.Select)
+
     def item_pressed(self, index):
         self.status.Debug(self, "Pressed: %d, %d" % (index.row(), index.column()))
-
-
+        nysa_dev = self.m.get_nysa_device(index)
+        nysa_type = self.m.get_nysa_type(index)
+        self.actions.phy_tree_changed_signal.emit(nysa_type, nysa_dev)

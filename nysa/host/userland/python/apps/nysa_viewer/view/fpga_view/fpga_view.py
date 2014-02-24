@@ -66,8 +66,8 @@ class FPGAImage(GraphicsWidget):
         self.status = status.Status()
         self.status.Debug(self, "Started FPGAImage View")
 
-
-    def no_device_selected(self):
+    def clear(self):
+        self.status.Verbose(self, "Clearing the FPGA Image")
         self.view = GraphicsView()
 
     def device_selected(self, device_type, nysa):
