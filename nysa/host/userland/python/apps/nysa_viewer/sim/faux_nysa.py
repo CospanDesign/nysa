@@ -1,0 +1,133 @@
+# Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
+
+# This file is part of Nysa (wiki.cospandesign.com/index.php?title=Nysa).
+#
+# Nysa is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# any later version.
+#
+# Nysa is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Nysa; If not, see <http://www.gnu.org/licenses/>.
+
+""" dionysus
+
+Concrete interface for Nysa on the Dionysus platform
+"""
+
+__author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
+
+""" Changelog:
+10/18/2013
+    -Pep8ing the module and some cleanup
+09/21/2012
+    -added core dump function to retrieve the state of the master when a crash
+    occurs
+08/30/2012
+    -Initial Commit
+"""
+import sys
+import os
+import time
+
+
+p = os.path.join(os.path.dirname(__file__),
+                 os.pardir,
+                 os.pardir,
+                 os.pardir)
+#print "Path: %s" % os.path.abspath(p)
+sys.path.append(p)
+from nysa import Nysa
+
+p = os.path.join(os.path.dirname(__file__),
+                 os.pardir,
+                 os.pardir,
+                 os.pardir,
+                 os.pardir,
+                 os.pardir,
+                 os.pardir,
+                 "ibuilder",
+                 "lib")
+#print "Path: %s" % os.path.abspath(p)
+sys.path.append(p)
+
+p = os.path.join(os.path.dirname(__file__),
+                 os.pardir,
+                 os.pardir,
+                 os.pardir,
+                 os.pardir,
+                 os.pardir,
+                 os.pardir,
+                 "ibuilder",
+                 "lib",
+                 "gen_scripts")
+
+#print "Path: %s" % os.path.abspath(p)
+sys.path.append(p)
+from gen_drt import GenDRT
+
+
+from array import array as Array
+
+class FauxNysa(Nysa):
+
+    def __init__(self, dev_dict, debug = False):
+        Nysa.__init__(self, debug)
+        self.dev_dict = dev_dict
+
+    def read(self, device_id, address, length = 1, mem_device = False):
+        read_array = Array('B')
+        for i in range(length):
+            read_array.append(i)
+        return read_array
+
+    def write(self, device_id, address, data=None, mem_device=False):
+        return
+
+    def ping(self):
+        return
+
+    def reset(self):
+        return
+
+    def read_drt(self):
+        print "Read DRT"
+        '''
+        data = Array('B')
+        data = self.read(0, 0, 8)
+        num_of_devices  = drt_controller.get_number_of_devices(data)
+        len_to_read = num_of_devices * 8
+
+        data = self.read(0, 0, len_to_read + 8)
+        self.drt_manager.set_drt(data)
+        '''
+        gd = GenDRT()
+        d = gd.gen_script(self.dev_dict)
+        drt_array = Array('B')
+        dl = d.splitlines()
+        for l in dl:
+            print "l: %s" % l
+            byte_data = l[0:1]
+            drt_array.append(int(byte_data, 16))
+            byte_data = l[2:3]
+            drt_array.append(int(byte_data, 16))
+            byte_data = l[4:5]
+            drt_array.append(int(byte_data, 16))
+            byte_data = l[6:7]
+            drt_array.append(int(byte_data, 16))
+
+
+        
+        print "d: %s" % str(d)
+        self.drt_manager.set_drt(drt_array)
+        return
+
+
+    def wait_for_interrupts(self, wait_time = 1):
+        time.sleep(0.1)
+        return

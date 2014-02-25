@@ -222,7 +222,7 @@ class DRTManager():
     """
     addr_string = self.drt_lines[((device_index + 1) * 8) + 2]
     addr = string.atoi(addr_string, 16) >> 24
-    print "Device Address: 0x%08X" % addr
+    #print "Device Address: 0x%08X" % addr
     return addr
 
   def get_id_from_index(self, device_index):

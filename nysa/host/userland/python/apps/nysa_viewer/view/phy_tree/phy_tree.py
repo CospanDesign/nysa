@@ -304,6 +304,12 @@ class PhyTreeTableModel(QAbstractItemModel):
         self.root = RootBranch("")
         self.reset()
 
+    def is_nysa_device(self, index):
+        node = self.nodeFromIndex(index)
+        if isinstance(node, DeviceNode):
+            return True
+        return False
+
     def first_device_index(self):
         for r in range(len(self.root)):
             type_branch = self.root.childAtRow(r)
@@ -381,6 +387,7 @@ class PhyTree(QTreeView):
         self.setSelectionModel(self.sm)
 
     def add_device(self, dev_type, unique_id, data):
+        print "Adding: %s" % dev_type
         self.m.addRecord(dev_type, unique_id, data)
         self.expandAll()
 
@@ -406,12 +413,16 @@ class PhyTree(QTreeView):
             uid = self.m.nodeFromIndex(index).get_id()
             #print "Type: %s" % nysa_type
             #print "Device: %s" % str(type(nysa_dev))
-            print "ID: %s" % uid
+            #print "ID: %s" % uid
             self.actions.phy_tree_changed_signal.emit(uid, nysa_type, nysa_dev)
             self.sm.select(index, QItemSelectionModel.Rows | QItemSelectionModel.Select)
 
     def item_pressed(self, index):
         self.status.Debug(self, "Pressed: %d, %d" % (index.row(), index.column()))
+        if not self.m.is_nysa_device(index):
+            return
+
         nysa_dev = self.m.get_nysa_device(index)
         nysa_type = self.m.get_nysa_type(index)
-        self.actions.phy_tree_changed_signal.emit(nysa_type, nysa_dev)
+        uid = self.m.nodeFromIndex(index).get_id()
+        self.actions.phy_tree_changed_signal.emit(uid, nysa_type, nysa_dev)

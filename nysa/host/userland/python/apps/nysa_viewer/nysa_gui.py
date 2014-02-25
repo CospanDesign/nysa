@@ -109,7 +109,7 @@ class NysaGui(QObject):
                     if issubclass(obj, Phy) and obj is not Phy:
                         unique = True
                         for phy_class in phy_classes:
-                            if type(phy_class) == type(obj):
+                            if str(phy_class) == str(obj):
                                 unique = False
                         if unique:
                             #print "Adding Class: %s" % str(obj)

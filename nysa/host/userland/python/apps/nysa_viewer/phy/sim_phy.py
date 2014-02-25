@@ -26,41 +26,46 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 import sys
 import os
+import glob
+import yaml
+import hashlib
 
 from phy import Phy
-import usb.core
-import usb.util
-from pyftdi.pyftdi.ftdi import Ftdi
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             os.pardir,
                              os.pardir))
 
+from status import Status
+from sim.faux_nysa import FauxNysa
 
-import nysa
-from dionysus.dionysus import Dionysus
 
-class DionysusPhy(Phy):
+class SimPhy(Phy):
     def __init__(self):
-        super (DionysusPhy, self).__init__()
-        self.vendor = 0x0403
-        self.product = 0x8530
+        super (SimPhy, self).__init__()
+        self.status = Status()
 
     def get_type(self):
-        return "Dionysus"
+        self.status.Verbose(self, "Returnig 'sim' type")
+        return "sim"
 
     def scan(self):
-        #print ("Scanning...")
-        devices = usb.core.find(find_all = True)
-        for device in devices:
-            if device.idVendor == self.vendor and device.idProduct == self.product:
-                sernum = usb.util.get_string(device, 64, device.iSerialNumber)
-                #print "Found a Dionysus Device: Serial Number: %s" % sernum
+        self.status.Debug(self, "Scannig...")
+        configs = self.find_all_sims()
+        sim_dict = {}
+        for f in configs:
+            #print "Config: %s" % f
+            d = yaml.load(open(f, "r"))
+            unique = os.path.split(f)[-1]
+            unique = os.path.splitext(unique)[0]
+            fn = FauxNysa(d)
+            sim_dict[unique] = fn
 
-                self.add_device_dict(sernum, Dionysus(idVendor = self.vendor, 
-                                                      idProduct = self.product,
-                                                      sernum = sernum,
-                                                      debug = False))
-        return self.dev_dict
+
+        return sim_dict
+
+    def find_all_sims(self):
+        return glob.glob(os.path.join("sim", "images", "*.yaml"))
+
+            
+        
 

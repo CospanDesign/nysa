@@ -41,20 +41,30 @@ class NysaControl(QObject):
         self.actions = Actions()
         self.n = None
         self.uid = None
+        self.dev_type = None
         self.actions.phy_tree_changed_signal.connect(self.nysa_device_changed)
         self.fpga_image = fpga_image
         self.fpga_image.clear()
 
 
     def nysa_device_changed(self, uid, dev_type, nysa_device):
-        if uid == uid:
-            #Don't change anything if it's the same UID
-            self.status.Verbose(self, "Same UID, no change")
-            return
+        #if uid == uid:
+        #    #Don't change anything if it's the same UID
+        #    self.status.Verbose(self, "Same UID, no change")
+        #    return
 
         self.status.Debug(self, "Device Changed")
         if dev_type is None:
             self.n = None
             self.status.Info(self, "No Device Selected")
             self.fpga_image.clear()
+            return
 
+        self.uid = uid
+        self.dev_type = dev_type
+        self.n = nysa_device
+
+        self.n.read_drt()
+        print "Memory Size: 0x%08X" % self.n.get_total_memory_size()
+
+        
