@@ -39,6 +39,15 @@ Version
                     New Haven 4.3" LCD:   0
                     Sparkfun SPI LCD:     1
 
+  02/25/2014:
+    0.00.7  Added a Flags entry into the DRT Image Flags
+              Flags:
+                bits 1:0 indicates what bus is used:
+                  00: Wishbone
+                  01: Axie
+                  10: RFU
+                  11: RFU
+
 Device Rom Table (DRT)
 
 A slave that maps all the devices in the interconnect, essentially
@@ -61,7 +70,14 @@ Organization of the ROM 32 bit address location
 0x04              IMAGE ID: 32-bit unique image identification number
                     (0 - 255) are available to use, request an image ID
                     from dave.mccoy@cospandesign.com
-0x05              RFU
+0x05              RFU,FLAGS
+  (Addr: 31-16) : RFU
+  (Addr: 15-0)  : FLAGS: DRT Flags
+                BIT (1 - 0):
+                    11: RFU
+                    10: RFU
+                    01: Axie
+                    00: Wishbone
 0x06              RFU
 0x07              RFU
 

@@ -63,6 +63,7 @@ class SimPhy(Phy):
 
         return sim_dict
 
+
     def find_all_sims(self):
         return glob.glob(os.path.join("sim", "images", "*.yaml"))
 

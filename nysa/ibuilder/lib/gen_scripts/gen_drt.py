@@ -63,6 +63,7 @@ class GenDRT(Gen):
         version_string = "{0:0=4X}".format(version)
         id_string = "{0:0=4X}".format(0xC594)
         number_of_devices = 0
+        #print "tags: %s" % str(tags)
         number_of_devices += len(tags["SLAVES"])
 
         if debug:
@@ -78,23 +79,38 @@ class GenDRT(Gen):
         num_dev_string = "{0:0=8X}".format(number_of_devices)
         board_string = "{0:0=8X}".format(board_id)
         image_string = "{0:0=8X}".format(0)
+
+        drt_flags = 0 
+        if tags["TEMPLATE"] == "axie_template.json":
+            if debug:
+                print "Axie bus"
+            drt_flags |= 0x01
+        else:
+            if debug:
+                print "Wishbone Bus"
+
+        drt_flags_string = "{0:0=4X}".format(drt_flags)
+
         if "IMAGE_ID" in tags:
             image_string = "{0:0=8X}".format(tags["IMAGE_ID"])
 
+
         #header
         out_buf = version_string + id_string + "\n"
-        out_buf += num_dev_string + "\n"
-        out_buf += "00000000" + "\n"
-        out_buf += board_string + "\n"
-        out_buf += image_string + "\n"
-        out_buf += "00000000" + "\n"
-        out_buf += "00000000" + "\n"
-        out_buf += "00000000" + "\n"
+        out_buf += num_dev_string   + "\n"
+        out_buf += board_string     + "\n"
+        out_buf += image_string     + "\n"
+        out_buf += "0000"              
+        out_buf += drt_flags_string + "\n"
+        out_buf += "00000000"       + "\n"
+        out_buf += "00000000"       + "\n"
+        out_buf += "00000000"       + "\n"
 
 
 
         #peripheral slaves
         for i in range (0, len(tags["SLAVES"])):
+            if debug: print "Working on slave: %d" % i
             key = tags["SLAVES"].keys()[i]
             name = tags["SLAVES"][key]["filename"]
             absfilename = utils.find_rtl_file_location(name, self.user_paths)
@@ -136,6 +152,7 @@ class GenDRT(Gen):
 
         #memory slaves
         if ("MEMORY" in tags):
+            if debug: print "Working on memory: %d" % i
             mem_offset = 0
             for i in range (0, len(tags["MEMORY"])):
                 key = tags["MEMORY"].keys()[i]
@@ -174,6 +191,7 @@ class GenDRT(Gen):
                 out_buf += "00000000\n"
 
 
+        if debug: print "DRT:\n%s" % out_buf
         return out_buf
 
     def gen_name(self):

@@ -1,5 +1,5 @@
 {
-  "version":5,
+  "version":7,
   "devices":{
     "Nothing":{
       "description": "Unknown Device",
@@ -72,6 +72,14 @@
     "DMA Writer":{
       "description":"A test core for DMA Writer",
       "ID":"0x0065"
+    }
+  },
+  "drt_flags":{
+    "description": "Flags for the entire DRT",
+    "Bus ID":{
+      "range":"2",
+      "high bit":"1",
+      "low bit":"0"
     }
   },
   "flags":{

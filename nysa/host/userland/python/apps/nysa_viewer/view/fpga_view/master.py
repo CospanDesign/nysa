@@ -31,6 +31,20 @@ from PyQt4.QtCore import *
 from PyQt4 import QtCore
 from PyQt4.QtGui import *
 
+p = os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir,
+                             os.pardir,
+                             os.pardir,
+                             os.pardir,
+                             os.pardir,
+                             os.pardir,
+                             "gui",
+                             "pvg")
+
+print "Path: %s" % os.path.abspath(p)
+sys.path.append(p)
+
 from visual_graph.box import Box
 
 from defines import MASTER_RECT

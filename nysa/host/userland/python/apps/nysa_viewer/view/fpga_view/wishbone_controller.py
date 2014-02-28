@@ -40,21 +40,6 @@ from PyQt4.QtGui import *
 import controller
 
 
-#epath = os.path.abspath(os.path.join(os.path.dirname(__file__),
-#                                     os.pardir,
-#                                     os.pardir,
-#                                     os.pardir,
-#                                     "editor",
-#                                     "fpga_designer"))
-#print "epath %s" % epath
-
-sys.path.append(os.path.join( os.path.dirname(__file__),
-                              os.pardir,
-                              os.pardir,
-                              os.pardir,
-                              "editor",
-                              "fpga_designer"))
-
 from defines import PS_COLOR
 from defines import MS_COLOR
 
@@ -77,7 +62,6 @@ sys.path.append(os.path.join( os.path.dirname(__file__),
                               os.pardir,
                               "ibuilder",
                               "lib"))
-
 import utils
 import wishbone_utils
 import ibuilder_error
@@ -218,7 +202,7 @@ class WishboneController (controller.Controller):
             slave_type = SlaveType.MEMORY
 
         if slave_type is None:
-            raise fpga_deisgner.FPGADesignerError("Unrecognized slave type: %s" % slave_type)
+            raise Exception ("Error unrecognized Slave Type: %s" % slave_type)
 
         fn = utils.find_module_filename(module_name, self.get_user_dirs())
         fn = utils.find_rtl_file_location(fn, self.get_user_dirs())

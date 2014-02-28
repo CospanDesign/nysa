@@ -43,15 +43,14 @@ p = os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir,
                              "gui",
-                             "pvg",
-                             "visual_graph")
+                             "pvg")
 p = os.path.abspath(p)
 sys.path.append(p)
 
 from graphics_view import GraphicsView
 from graphics_scene import GraphicsScene
 #from default_graphics_scene import GraphicsScene
-from graphics_widget import GraphicsWidget
+from visual_graph.graphics_widget import GraphicsWidget
 
 
 
@@ -65,12 +64,22 @@ class FPGAImage(GraphicsWidget):
         self.scene = GraphicsScene(self.view)
         self.status = status.Status()
         self.status.Debug(self, "Started FPGAImage View")
+        self.n = None
+        self.boxes = {}
 
     def clear(self):
         self.status.Verbose(self, "Clearing the FPGA Image")
+        self.boxes = {}
         self.view = GraphicsView()
+        self.scene = GraphicsScene(self.view)
 
     def device_selected(self, device_type, nysa):
         pass
 
+    def update_nysa_image(self, n):
+        self.n = n
+        self.clear()
+        if self.n is None:
+            return
+        print "Add Master"
 

@@ -3,8 +3,8 @@ base_dir:     ~/projects/ibuilder_project
 board:        dionysus
 image_id:     256
 project_name: dionysus_default
-template:     wishbone_template.json
-interface:
+TEMPLATE:     wishbone_template.json
+INTERFACE:
   filename:   ft_master_interface.v
   bind:
     i_ftdi_clk:

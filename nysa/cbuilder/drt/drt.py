@@ -20,6 +20,16 @@ The DRT Manager can be used to determine the content of the DRT
 Pretty Print an annotated representation of the Devcie Rom Table within the
 FPGA
 """
+
+
+def enum(*sequential, **named):
+  enums = dict(zip(sequential, range(len(sequential))), **named)
+  return type('Enum', (), enums)
+
+bus_type = enum(  "wishbone",
+                  "axie")
+
+
 #sys.path.append(os.path.join(os.path.dirname(__file__)))
 
 class DRTError(Exception):
@@ -63,6 +73,7 @@ class DRTManager():
     self.drt_string = "" #DRT Parsed as a string
     self.drt = Array('B') #DRT as an Array of Unsigned Bytes
     self.num_of_devices = 0
+    self.bus_type = bus_type.wishbone
 
   def set_drt(self, drt):
     """
@@ -88,6 +99,13 @@ class DRTManager():
 
     self.drt_lines = self.drt_string.splitlines()
     self.num_of_devices = get_number_of_devices(self.drt)
+    flags = int(image_flags[4:8], 16)
+    if ((flags & 0x0000003) == 0):
+      self.bus_type = bus_type.wishbone
+    if ((flags & 0x0000003) == 1):
+      self.bus_type = bus_type.axie
+
+
 
 
   def is_memory_device(self, device_index):
@@ -112,6 +130,42 @@ class DRTManager():
 
     return False
     
+
+  def is_wishbone_bus(self):
+      """
+      Returns true if the internal bus is wishbone
+
+      Args:
+        Nothing
+
+      Returns (boolean):
+        True: Wishbone Bus
+        False: Not Wishbone BUs
+
+      Raises:
+        Nothing
+      """
+      if self.bus_type = bus_type.wishbone:
+          return True
+      return False
+
+  def is_axie_bus(self):
+      """
+      Returns true if the internal bus is axie
+
+      Args:
+        Nothing
+
+      Returns (boolean):
+        True: Axie Bus
+        False: Not Axie BUs
+
+      Raises:
+        Nothing
+      """
+      if self.bus_type = bus_type.axie:
+          return True
+      return False
 
   def get_number_of_devices(self):
     """
@@ -288,7 +342,7 @@ class DRTManager():
     Args:
       device_index (unsigned int): device position in the DRT
 
-    Returns (string)
+    Returns (list of strings)
       string of flags for the device
 
     Raises:
@@ -301,6 +355,29 @@ class DRTManager():
     if ((flags & 0x00010000) > 0):
       flag_strings.append("0x00010000: Memory Device")
     return flag_strings
+
+  def get_image_flags(self, image_flags):
+    """
+    Identifies the flags associated with the image
+
+    Args:
+      image_flags (unsigned int): 16-bit image flags to be decoded
+
+    Returns (list of strings)
+      list of strings describing the flags
+
+    Raises:
+      Nothing
+    """
+    flag_strings = []
+    flags = int(image_flags[4:8], 16)
+    if ((flags & 0x0000003) == 0):
+      flag_strings.append("Bits [1:0] Bus Type: Wishbone")
+    if ((flags & 0x0000003) == 1):
+      flag_strings.append("Bits [1:0] Bus Type: Axie")
+    return flag_strings
+
+
 
   def pretty_print_drt(self):
     """
@@ -335,9 +412,14 @@ class DRTManager():
     print "%s%s:%sVersion: %s ID Word: %s" % (blue, self.drt_lines[0], green, self.drt_lines[0][0:4], self.drt_lines[0][4:8])
     print "%s%s:%sNumber of Devices: %d" % (blue, self.drt_lines[1], green, int(self.drt_lines[1], 16))
     print "%s%s:%sString Table Offset (0x0000 == No Table)" % (blue, self.drt_lines[2], green)
-    print "%s%s:%sReserverd for future use" % (blue, self.drt_lines[3], green)
-    print "%s%s:%sReserverd for future use" % (blue, self.drt_lines[4], green)
-    print "%s%s:%sReserverd for future use" % (blue, self.drt_lines[5], green)
+    print "%s%s:%sBoard ID" % (blue, self.drt_lines[3], green)
+    print "%s%s:%sImage ID" % (blue, self.drt_lines[4], green)
+    print "%s%s:%s(0x0000 RFU, Image Flags)" % (blue, self.drt_lines[5], green)
+
+    flags = self.get_image_flags(self.drt_lines[5])
+    for j in flags:
+        print "\t%s%s" % (purple, j)
+
     print "%s%s:%sReserverd for future use" % (blue, self.drt_lines[6], green)
     print "%s%s:%sReserverd for future use" % (blue, self.drt_lines[7], green)
  
@@ -606,9 +688,9 @@ def pretty_print_drt(drt):
   print "%s%s:%sVersion: %s ID Word: %s" % (blue, drt_lines[0], green, drt_lines[0][0:4], drt_lines[0][4:8])
   print "%s%s:%sNumber of Devices: %d" % (blue, drt_lines[1], green, int(drt_lines[1], 16))
   print "%s%s:%sString Table Offset (0x0000 == No Table)" % (blue, drt_lines[2], green)
-  print "%s%s:%sReserverd for future use" % (blue, drt_lines[3], green)
-  print "%s%s:%sReserverd for future use" % (blue, drt_lines[4], green)
-  print "%s%s:%sReserverd for future use" % (blue, drt_lines[5], green)
+  print "%s%s:%sBoard ID" % (blue, self.drt_lines[3], green)
+  print "%s%s:%sImage ID" % (blue, self.drt_lines[4], green)
+  print "%s%s:%s(0x0000 RFU, Image Flags)" % (blue, self.drt_lines[5], green)
   print "%s%s:%sReserverd for future use" % (blue, drt_lines[6], green)
   print "%s%s:%sReserverd for future use" % (blue, drt_lines[7], green)
 
@@ -647,7 +729,14 @@ def pretty_print_drt(drt):
 
     print white,
 
- 
+
+def is_wishbone_bus(drt):
+    pass
+
+def is_axie_bus(drt):
+    pass
+
+
 def is_memory_core(core_id):
     """Given the core identification number return true if the core is a memory
     device

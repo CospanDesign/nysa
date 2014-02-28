@@ -61,7 +61,7 @@ def get_number_of_arbitor_hosts(module_tags = {}, debug = False):
   #go through all the ports and verify that after the first
   #'_' there is a a wbm and hte wbm has all the arbitor
   #host components
-  debug = True
+  debug = False
 
   if debug:
     print "Module Name: %s" % (module_tags["module"])

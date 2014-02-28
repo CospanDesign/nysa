@@ -43,7 +43,7 @@ class GraphicsScene(QGraphicsScene):
         self.view = view
         self.app = app
         self.links = []
-        self.dbg = True
+        self.dbg = False
         if self.dbg: print "GS: Set state for normal"
         #self.setAcceptDrops(True)
 

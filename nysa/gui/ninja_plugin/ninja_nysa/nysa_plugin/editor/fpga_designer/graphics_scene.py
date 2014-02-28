@@ -167,8 +167,6 @@ class GraphicsScene(gs):
         #return self.state == view_state.arbitor_master_selected
         return self.arbitor_selected is not None
 
-
-
     def slave_deselected(self, name, bus, tags):
         if self.dbg: print "GS: slave_deselect()"
         if self.arbitor_selected is None:

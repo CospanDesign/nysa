@@ -34,6 +34,7 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 import sys
 import os
 import time
+from array import array as Array
 
 
 p = os.path.join(os.path.dirname(__file__),
@@ -71,8 +72,22 @@ p = os.path.join(os.path.dirname(__file__),
 sys.path.append(p)
 from gen_drt import GenDRT
 
+p = os.path.join(os.path.dirname(__file__),
+                 os.pardir,
+                 os.pardir,
+                 os.pardir,
+                 os.pardir,
+                 os.pardir,
+                 os.pardir,
+                 "cbuilder",
+                 "drt")
+sys.path.append(p)
+import drt as drt_controller
+from drt import DRTError
+from drt import DRTManager
 
-from array import array as Array
+
+
 
 class FauxNysa(Nysa):
 
@@ -107,24 +122,24 @@ class FauxNysa(Nysa):
         self.drt_manager.set_drt(data)
         '''
         gd = GenDRT()
-        d = gd.gen_script(self.dev_dict)
+        d = gd.gen_script(self.dev_dict, debug = True)
         drt_array = Array('B')
         dl = d.splitlines()
         for l in dl:
             print "l: %s" % l
-            byte_data = l[0:1]
-            drt_array.append(int(byte_data, 16))
-            byte_data = l[2:3]
-            drt_array.append(int(byte_data, 16))
-            byte_data = l[4:5]
-            drt_array.append(int(byte_data, 16))
-            byte_data = l[6:7]
-            drt_array.append(int(byte_data, 16))
+            i = int(l, 16)
+            drt_array.append((i >> 24) & 0xFF)
+            drt_array.append((i >> 16) & 0xFF)
+            drt_array.append((i >>  8) & 0xFF)
+            drt_array.append((i      ) & 0xFF)
+       
+        #print "d: %s" % str(d)
+        num_of_devices  = drt_controller.get_number_of_devices(drt_array)
+        print "Num Devices: %d" % num_of_devices
 
-
-        
-        print "d: %s" % str(d)
+        len_to_read = num_of_devices * 8
         self.drt_manager.set_drt(drt_array)
+
         return
 
 

@@ -47,7 +47,7 @@ p = os.path.join(os.path.dirname(__file__),
                              "pvg")
 
 p = os.path.abspath(p)
-print ("GV: %s" % p)
+#print ("GV: %s" % p)
 sys.path.append(p)
 from visual_graph.graphics_view import GraphicsView as gv
 

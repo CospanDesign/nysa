@@ -156,6 +156,18 @@ class Link (QGraphicsItem):
 
         self.line = QLineF(self.start, self.end)
 
+    def update_direct(self, from_coordinate, to_coordinate):
+        self.prepareGeometryChange()
+
+        self.start = self.mapFromItem(self.from_box, from_coordinate)
+        self.end = self.mapFromItem(self.to_box, to_coordinate)
+
+
+        self.start_offset = QLineF(self.start, QPointF(self.start.x() + 15, self.start.y()))
+        self.end_offset = QLineF(self.end, QPointF(self.end.x() - 15, self.end.y()))
+
+
+        self.line = QLineF(self.start, self.end)
 
     def boundingRect(self):
         extra = (self.pen.width() * 64) / 2

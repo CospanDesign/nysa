@@ -33,6 +33,19 @@ from actions import Actions
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
+'''
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir,
+                             os.pardir,
+                             os.pardir,
+                             os.pardir,
+                             "cbuilder",
+                             "drt"))
+
+from drt import *
+'''
+
 
 class NysaControl(QObject):
     def __init__(self, fpga_image):
@@ -54,6 +67,7 @@ class NysaControl(QObject):
         #    return
 
         self.status.Debug(self, "Device Changed")
+        self.dev_type = dev_type
         if dev_type is None:
             self.n = None
             self.status.Info(self, "No Device Selected")
@@ -61,10 +75,25 @@ class NysaControl(QObject):
             return
 
         self.uid = uid
-        self.dev_type = dev_type
         self.n = nysa_device
 
         self.n.read_drt()
-        print "Memory Size: 0x%08X" % self.n.get_total_memory_size()
+        self.n.pretty_print_drt()
+        #print "Memory Size: 0x%08X" % self.n.get_total_memory_size()
+        self.fpga_image.update_nysa_image(self.n)
 
-        
+
+def drt_to_config(drt):
+    config_dict = {}
+    config_dict["bus_type"] = "wishbone"
+    config_dict["SLABES"] = {}
+    config_dict["MEMORY"] = {}
+    config_dict["INTERFACE"] = {}
+    config_dict["board"] = ""
+
+    #Read the board id and find out what type of board this is
+    #Read the bus flag (Wishbone or Axie)
+    #Read the number of slaves
+    #Go thrugh each of the slave devices and find out what type it is
+    #Read the number of memory devices
+
