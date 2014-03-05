@@ -99,7 +99,7 @@ class DRTManager():
 
     self.drt_lines = self.drt_string.splitlines()
     self.num_of_devices = get_number_of_devices(self.drt)
-    flags = int(image_flags[4:8], 16)
+    flags = int(self.drt_lines[5][4:8], 16)
     if ((flags & 0x0000003) == 0):
       self.bus_type = bus_type.wishbone
     if ((flags & 0x0000003) == 1):
@@ -145,7 +145,7 @@ class DRTManager():
       Raises:
         Nothing
       """
-      if self.bus_type = bus_type.wishbone:
+      if self.bus_type == bus_type.wishbone:
           return True
       return False
 
@@ -163,7 +163,7 @@ class DRTManager():
       Raises:
         Nothing
       """
-      if self.bus_type = bus_type.axie:
+      if self.bus_type == bus_type.axie:
           return True
       return False
 
@@ -297,7 +297,7 @@ class DRTManager():
     dev_sub_id = string.atoi(id_string[:4], 16)
     return dev_id
 
-  def get_sub_id_from_index(self, sub_device_index):
+  def get_sub_id_from_index(self, device_index):
     """
     From the index within the DRT return the Sub ID of this device
 
@@ -310,12 +310,27 @@ class DRTManager():
     Raises:
       Nothing
     """
-    id_string = self.drt_lines[((dev_index + 1) * 8)]
+    id_string = self.drt_lines[((device_index + 1) * 8)]
     dev_id = string.atoi(id_string[4:], 16)
     dev_sub_id = string.atoi(id_string[:4], 16)
     return dev_sub_id
 
+  def get_unique_id_from_index(self, device_index):
+    """
+    From the index within the DRT return the Unique ID of this device
 
+    Args:
+        device_index (unsigned integer): index of the device
+
+    Returns (unsigned integer):
+        Unique device ID
+
+    Raises:
+        Nothing
+    """
+    uid_string = self.drt_lines[((device_index + 1) * 8) + 3]
+    unique_id = string.atoi(uid_string[:4], 16)
+    return unique_id
 
   def get_size_from_index(self, device_index):
     """
@@ -377,7 +392,30 @@ class DRTManager():
       flag_strings.append("Bits [1:0] Bus Type: Axie")
     return flag_strings
 
+  def get_board_name(self):
+    """
+    Returns the board name
 
+    Args:
+        Nothing
+
+    Returns:
+        (string): Name of the board
+
+    Raises:
+        DRTError if DRT is not defined
+    """ 
+    if self.drt is None:
+        raise DRTError("DRT Not Defined")
+
+    dl = get_board_list()
+    #print "board lines: %s" % str(dl)
+    name = get_board_list()[int(self.drt_lines[3])]
+    #print "index: %d" % int(self.drt_lines[3])
+    #print "Namae: %s" % name
+    return name
+
+    #return get_board_index[board_index]
 
   def pretty_print_drt(self):
     """
@@ -569,6 +607,74 @@ def get_device_list():
         dev_tags[key]["name"] = key
         dev_list.insert(index, dev_tags[key])
   return dev_list
+
+
+def get_board_list():
+    """Returns a list of device names where the index corresponds to the device
+    identification number
+
+    Args:
+        Nothing
+
+    Returns:
+        (list): List of boards
+        (index corresponds to board identification number)
+
+    Raies:
+        Nothing
+    """
+    board_tags = {}
+    board_list = []
+    index = 0
+    length = 0
+    try: 
+        f = open(os.path.join(os.path.dirname(__file__), 
+                              os.pardir,
+                              os.pardir,
+                              "ibuilder",
+                              "boards",
+                              "boards.json"), "r")
+        board_tags = json.load(f)
+    except TypeError as err:
+        print "JSON Error: %s" % str(err)
+        raise DRTError("DRT Error: %s", str(err)) 
+ 
+    length = len(board_tags) 
+ 
+    for i in range(0, length):
+        key = board_tags.keys()[i]
+        index = board_tags[key]
+        #print "index: %s" % str(index)
+        while len(board_list) < index:
+            board_list.append("")
+
+        board_list[index - 1] = key
+        #print "board list: %s" % str(board_list)
+        
+    return board_list
+
+
+def get_device_name_from_id(device_id):
+    #print "Index: 0x%04X" % device_id
+    dev_tags = {}
+    try: 
+      f = open(os.path.join(os.path.dirname(__file__), "drt.json"), "r")
+      drt_tags = json.load(f)
+    except TypeError as err:
+      print "JSON Error: %s" % str(err)
+      raise DRTError("DRT Error: %s", str(err)) 
+ 
+    dev_tags = drt_tags["devices"]
+    did = 0
+    for device in dev_tags:
+        #print "Looking at: %s" % device
+        id_val = dev_tags[device]["ID"]
+
+        did = int(dev_tags[device]["ID"], 16)
+        #print "ID: 0x%04X" % did
+        if did == device_id:
+            return device
+    return "Unknown Device"
 
 
 def get_device_index(name):

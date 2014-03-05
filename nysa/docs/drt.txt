@@ -103,7 +103,7 @@ DRT_DEV_OFFSET[x * 8] + 2:    Size
                                     Memory
 DRT_DEV_OFFSET[x * 8] + 3:    User ID
   (Addr: 31-16)   : RFU
-  (Addr: 15-0 )   : If there are two devices with the same unique
+  (Addr: 15-0 )   : If there are two devices with the same
                     IDs and Sub IDs this will differentiate the two
 DRT_DEV_OFFSET[x * 8] + 4:    RFU
 DRT_DEV_OFFSET[x * 8] + 5:    RFU
