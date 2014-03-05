@@ -48,8 +48,6 @@ from link import side_type as st
 from link import link_type as lt
 from link import Link
 
-from arbitor_master import ArbitorMaster
-
 highlight_width = 8
 
 class PeripheralSlave(Slave):
@@ -63,10 +61,7 @@ class PeripheralSlave(Slave):
 
         self.nochange = False
 
-        self.arbitor_masters = []
         self.links = {}
-        self.arbitor_boxes = []
-        self.selected_arbitor = None
         self.am_selected = False
         self.peripheral_bus = bus
         self.ignore_selection = False
@@ -80,10 +75,7 @@ class PeripheralSlave(Slave):
                                              bus = bus,
                                              parameters = parameters)
         self.s = scene
-        if 'arbitor_masters' in parameters:
-            self.arbitor_masters = parameters["arbitor_masters"]
-            #print "Arbitor Masters: %s" % self.arbitor_masters
-
+        self.movable(False)
 
     def paint(self, painter, option, widget):
 
@@ -101,27 +93,6 @@ class PeripheralSlave(Slave):
 
         #draw text
         r = QRectF(self.rect)
-
-        if len(self.arbitor_masters) > 0:
-            arb_height = self.rect.height()
-            arb_width  = self.rect.width() / 4
-            arb_pos = QPointF(self.rect.width() - arb_width, 0)
-            arb_rect = QRectF(arb_pos, QSizeF(arb_width, arb_height))
-            r = QRectF(QPointF(r.x(), r.y()), QSizeF(self.rect.width() - arb_width, r.height())) 
-
-            pen = QPen(self.style)
-            pen.setColor(Qt.black)
-            pen.setWidth(1)
-            if option.state & QStyle.State_Selected:
-                #Selected
-                pen.setColor(Qt.black)
-                pen.setWidth(highlight_width)
-
-            painter.setPen(pen)
-            painter.drawRect(arb_rect)
-            painter.fillRect(arb_rect, QColor(Qt.white))
-
-            painter.drawText(arb_rect, Qt.AlignCenter, "M")
 
         painter.setFont(self.text_font)
         pen.setColor(Qt.black)
@@ -149,121 +120,11 @@ class PeripheralSlave(Slave):
             end = self.mapToScene(self.mapFromItem(link, link.side_coordinates(st.left))) 
             self.links[link].set_start_end(start, end)
 
-    def show_arbitor_masters(self):
-        if self.dbg: print "show_arbitor_masters()"
-        if len(self.arbitor_boxes) > 0:
-            #print "There are already arbitor boxes: %d" % len(self.arbitor_boxes)
-            return 
-
-        num_m = len(self.arbitor_masters)
-        if num_m == 0:
-            return
-
-        #print "Add %d arbitor boxes" % num_m
-
-        #setup the start position for the case where there is only one master
-        position = QPointF(self.pos())
-        rect = QRectF(self.rect)
-        arb_x = position.x() + rect.width() + ARB_MASTER_HORIZONTAL_SPACING
-        arb_y = position.y() + rect.height() / 2
-        arb_y -= (num_m - 1) * ARB_MASTER_VERTICAL_SPACING
-        arb_y -= ((num_m - 1) * ARB_MASTER_RECT.height()) / 2
-
-        arb_pos = QPointF(arb_x, arb_y)
-
-        for i in range(0, len(self.arbitor_masters)):
-            #print "Add Arbitor %s" % self.arbitor_masters[i]
-            arb_rect = QRectF(ARB_MASTER_RECT)
-
-            am = ArbitorMaster(name = self.arbitor_masters[i], 
-                               position = arb_pos,
-                               y_pos = position.y(),
-                               scene = self.scene(),
-                               slave = self)
-
-            #am.movable(False)
-
-            self.arbitor_boxes.append(am)
-            al = Link(self, am, self.scene(), lt.arbitor_master)
-            al.from_box_side(st.right)
-            al.to_box_side(st.left)
-
-            al.en_bezier_connections(True)
-            self.links[am] = al
-
-            #Progress the position
-            arb_pos = QPointF(arb_pos.x(), arb_pos.y() + arb_rect.height() + ARB_MASTER_VERTICAL_SPACING)
-
-        self.update_links()
-
-    def is_arbitor_master_selected(self):
-        if self.dbg: print "PS: is_arbitor_master_selected()"
-        for am in self.arbitor_boxes:
-            if am.isSelected():
-                return True
-        return False
-
-    def arbitor_master_selected(self, arbitor_master):
-        if self.dbg: print "PS: arbitor_master_selected()"
-        if self.ignore_selection:
-            return
-
-        self.ignore_selection = True
-        self.s.clearSelection()
-        self.remove_arbitor_masters()
-        position = QPointF(self.pos())
-        rect = QRectF(self.rect)
-        arb_x = position.x() + rect.width() + ARB_MASTER_HORIZONTAL_SPACING
-        arb_y = position.y() + (rect.height() / 2)  - (ARB_MASTER_ACT_RECT.height() / 2)
-
-        arb_pos = QPointF(arb_x, arb_y)
-        #print "Adding arbitor master"
-        am = ArbitorMaster(name = arbitor_master,
-                           position = arb_pos,
-                           y_pos = arb_y,
-                           scene = self.scene(),
-                           slave = self)
-
-        #am.set_activate(True)
-        am.update_view()
-        self.arbitor_boxes.append(am)
-        al = Link(self, am, self.scene(), lt.arbitor_master)
-        al.from_box_side(st.right)
-        al.to_box_side(st.left)
-
-        al.en_bezier_connections(True)
-        self.links[am] = al
-
-        #print "update links"
-        self.update_links()
-        self.ignore_selection = False
-        self.s.invalidate(self.s.sceneRect())
-
-    def remove_arbitor_masters(self):
-        if self.dbg: print "PS: remove_arbitor_masters()"
-
-        ams = self.links.keys()
-        for am in ams:
-            if self.links[am] is not None:
-                self.scene().removeItem(self.links[am])
-
-        self.links = {}
-        for am in ams:
-            am.clear_link()
-            self.s.removeItem(am)
-
-        self.arbitor_boxes = []
-
     def mouseReleaseEvent(self, event):
         if self.dbg: print "PS: mouse release event()"
-        if (len(self.arbitor_masters) > 0) and (len(self.arbitor_boxes) == 0):
-            self.show_arbitor_masters()
         return QGraphicsItem.mouseReleaseEvent(self, event)
 
     def itemChange(self, a, b):
-        if self.dbg: print "PS: itemChange()"
-        #print "Peripheral slave item change: %s" % self.box_name
         if self.isSelected():
             self.peripheral_bus.slave_selection_changed(self)
         return super(PeripheralSlave, self).itemChange(a, b)
-

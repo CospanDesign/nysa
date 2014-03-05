@@ -88,13 +88,11 @@ class Slave(Box):
         self.s.remove_slave(self)
 
     def itemChange(self, a, b):
-        #if self.sdbg: print "SLAVE: itemChange()"
-        if self.isSelected():
-            #if self.sdbg: print "\t%s is selected" % self.box_name
-            self.s.slave_selected(self.box_name, self.bus, self.user_data)
-        else:
-            #if self.sdbg: print "\t%s is NOT selected" % self.box_name
-            self.s.slave_deselected(self.box_name, self.bus, self.user_data)
+        if QGraphicsItem.ItemSelectedHasChanged == a:
+            if b.toBool():
+                self.s.slave_selected(self.box_name, self.bus, self.user_data)
+            else:
+                self.s.slave_deselected(self.box_name, self.bus, self.user_data)
         return super(Slave, self).itemChange(a, b)
 
     def dragMoveEvent(self, event):
@@ -112,45 +110,6 @@ class Slave(Box):
                 if self.dbg: print "\tLength: %f" % l.length()
                 event.accept
                 return
-
-            else:
-                self.dragging = True
-                self.hide()
-                if self.sdbg: print "SLAVE.%s: startDrag: %s" % (inspect.getframeinfo(inspect.currentframe()).function, self.box_name)
-                mime_data = QMimeData()
-                mime_data.setData("application/flowchart-data", self.slave_data)
-                
-               
-                #Create and dispatch a move event
-                drag = QDrag(event.widget())
-                drag.start(Qt.MoveAction)
-                drag.setMimeData(mime_data)
-                #drag.start(Qt.MoveAction)
-                
-                #create an image for the drag
-                size = QSize(self.start_rect.width(), self.start_rect.height())
-                pixmap = QPixmap(size)
-                pixmap.fill(QColor(self.color))
-                painter = QPainter(pixmap)
-                pen = QPen(self.style)
-                pen.setColor(Qt.black)
-                painter.setPen(pen)
-                painter.setFont(self.text_font)
-                #painter.drawText(0, 0, 100, 100, 0x24, self.box_name)
-
-                gu.add_label_to_rect(painter, self.rect, self.box_name)
-                painter.end()
-                drag.setPixmap(pixmap)
-                #p = QPointF(event.buttonDownScreenPos(Qt.LeftButton))
-                #p = p.toPoint()
-                if self.dbg: print "Position: %f, %f" % (pos.x(), pos.y())
-                drag.setHotSpot(epos.toPoint())
-                
-                if self.sdbg: print "\tdrag started"
-                drag.exec_()
-                event.accept
-                #self.s.invalidate(self.s.sceneRect())
-
         super(Slave, self).mouseMoveEvent(event)
 
 

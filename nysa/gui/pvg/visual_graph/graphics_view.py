@@ -48,8 +48,7 @@ class GraphicsView(QGraphicsView):
         self.setRenderHint(QPainter.TextAntialiasing)
         self.setAcceptDrops(True)
         self.icon = QIcon()
-        self.controller = None
-        self.fd = None
+        self.controller = parent
         #self.setAcceptDrops(True)
         self.dbg = False
 
@@ -76,7 +75,7 @@ class GraphicsView(QGraphicsView):
 
     def dropEvent(self, event):
         if self.dbg: print "GV: dropEvent"
-        self.fd.drop_event(event)
+        self.controller.drop_event(event)
 
     def keyPressEvent(self, event):
         if self.dbg: print "GV: Key press event"

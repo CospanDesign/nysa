@@ -10,10 +10,17 @@ from box import Box
 
 class GraphicsWidget (QWidget):
 
-    def __init__(self):
+    def __init__(self, view = None, scene = None):
         QWidget.__init__(self, None)
-        self.view = GV(self)
-        self.scene = GS(self.view, self)
+        if view is None:
+            self.view = GV(self)
+        else:
+            self.view = view
+
+        if scene is None:
+            self.scene = GS(self.view, self)
+        else:
+            self.scene = scene
         self.view.setScene(self.scene)
         self.prevPoint = QPoint()
         layout = QHBoxLayout()

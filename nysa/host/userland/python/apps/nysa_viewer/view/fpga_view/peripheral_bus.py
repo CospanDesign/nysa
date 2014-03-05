@@ -115,13 +115,6 @@ class PeripheralBus(Bus):
     def slave_selection_changed(self, slave):
         if slave == self.prev_selected_slave:
             return
-
-        if self.prev_selected_slave is not None:
-            #print "Slave ID: %s" % str(slave.user_data)
-            if self.scene().is_arbitor_master_selected():
-                return
-            self.prev_selected_slave.remove_arbitor_masters()
-
         self.prev_selected_slave = slave
 
     def update_slaves(self, slave_list):
@@ -129,12 +122,9 @@ class PeripheralBus(Bus):
         if self.scene().is_arbitor_master_selected():
             am = self.scene().get_arbitor_master_selected()
             self.scene().arbitor_master_deselected(am)
-            am.get_slave().remove_arbitor_masters()
             self.scene().clear_links()
  
         if self.prev_selected_slave is not None:
-
-            self.prev_selected_slave.remove_arbitor_masters()
             self.prev_selected_slave = None
 
            #self.scene().arbitor_master_deselected(am) 

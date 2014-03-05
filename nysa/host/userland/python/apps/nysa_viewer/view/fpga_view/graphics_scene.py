@@ -41,13 +41,14 @@ p = os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir,
                              os.pardir,
+                             os.pardir,
                              "gui",
-                             "pvg",
-                             "visual_graph")
+                             "pvg")
 
-from visual_graph.graphics_scene import GraphicsScene as gs
 p = os.path.abspath(p)
+print "Visual Graph Path: %s" % p
 sys.path.append(p)
+from visual_graph.graphics_scene import GraphicsScene as gs
 
 
 
@@ -64,6 +65,7 @@ class GraphicsScene(gs):
 
     def __init__(self, view):
         super (GraphicsScene, self).__init__(view, None)
+        self.actions = actions.Actions()
         self.arbitor_selected = None
         self.state = view_state.normal
         self.dbg = False
@@ -72,16 +74,12 @@ class GraphicsScene(gs):
 
     #Overriden Methods
     def box_selected(self, data):
-        if self.dbg: print "GS: box_selected()"
-        if type(data) is dict and "module" in data.keys():
-            if self.dbg: print "\tbox: %s" % data["module"]
-            self.fd.populate_param_table(data)
+        if data is not None:
+            self.actions.module_selected.emit(data)
 
     def box_deselected(self, data):
-        if self.dbg: print "GS: box_deselected()"
-        if type(data) is dict and "module" in data.keys():
-            if self.dbg: print "\tbox: %s" % data["module"]
-            self.fd.clear_param_table()
+        if data is not None:
+            self.actions.module_deselected.emit(data)
 
     def remove_selected(self, reference):
         if self.dbg: print "GS: remove_selected()"
@@ -128,49 +126,15 @@ class GraphicsScene(gs):
         self.memory_bus = memory_bus
 
     def slave_selected(self, name, bus, tags):
-        if self.dbg: print "GS: slave_selected()"
-        if self.dbg: print "\t%s" % name
-        if self.arbitor_selected is None:
-            if self.dbg: print "\tArbitor master is not selected"
-            if self.dbg: print "\tSet state for normal"
-            #slave = bus.get_slave(name)
-            #bus.slave_selection_changed(slave)
-            self.state = view_state.normal
-            return
+        self.actions.slave_selected.emit(name, bus.box_name, tags)
 
-        self.state = view_state.arbitor_master_selected
-
-        if self.dbg: print "\tArbitor master is selected: %s" % self.arbitor_selected.box_name
-
-        if  name == "DRT":
-            if self.dbg: print "\tCan't attach to the DRT"
-            return
-
-        from_slave = self.arbitor_selected.get_slave()
-        if from_slave.box_name == name:
-            if self.dbg: print "\tCan't attach to ourselves"
-            return
-
-        arbitor_name = self.arbitor_selected.box_name
-        to_slave = bus.get_slave(name)
-        
-        connected_slave = self.get_arbitor_master_connected(self.arbitor_selected)
-        if connected_slave is not None:
-            self.arbitor_master_disconnect(self.arbitor_selected, connected_slave)
-
-        self.fd.connect_arbitor_master(from_slave, arbitor_name, to_slave)
-        self.arbitor_selected.update_view()
-        self.arbitor_selected.connect_slave(to_slave)
+    def slave_deselected(self, name, bus, tags):
+        self.actions.slave_deselected.emit(name, bus.box_name, tags)
 
     def is_arbitor_master_active(self):
         if self.dbg: print "GS: is_arbitor_master_active()"
         #return self.state == view_state.arbitor_master_selected
         return self.arbitor_selected is not None
-
-    def slave_deselected(self, name, bus, tags):
-        if self.dbg: print "GS: slave_deselect()"
-        if self.arbitor_selected is None:
-            self.state = view_state.normal
 
     def arbitor_master_selected(self, slave, arbitor_master):
         if self.dbg: print "GS: arbitor_master_selected()"

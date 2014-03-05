@@ -53,6 +53,22 @@ from visual_graph.graphics_view import GraphicsView as gv
 
 
 class GraphicsView(gv):
-    def __init__(self, parent = None):
+    def __init__(self, parent):
         super(GraphicsView, self).__init__(parent)
+        self.initialize = True
+
+    def update(self):
+        self._scale_fit()
+        self.initialize = False
+        print "Update"
+        super (FPGAImage, self).update()
+
+    def paint(self, painter, option, widget):
+        super(FPGAImage, self).paint(painter, option, widget)
+        if self.initialize:
+            self.update()
+
+    def showEvent(self, sevent):
+        print "Show Event!"
+        super (GraphicsView, self).showEvent(sevent)
 

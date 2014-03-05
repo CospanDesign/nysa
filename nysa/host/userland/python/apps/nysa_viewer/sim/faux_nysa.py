@@ -111,8 +111,8 @@ class FauxNysa(Nysa):
         return
 
     def read_drt(self):
-        print "Read DRT"
         '''
+        print "Read DRT"
         data = Array('B')
         data = self.read(0, 0, 8)
         num_of_devices  = drt_controller.get_number_of_devices(data)
@@ -122,11 +122,12 @@ class FauxNysa(Nysa):
         self.drt_manager.set_drt(data)
         '''
         gd = GenDRT()
-        d = gd.gen_script(self.dev_dict, debug = True)
+        #d = gd.gen_script(self.dev_dict, debug = True)
+        d = gd.gen_script(self.dev_dict, debug = False)
         drt_array = Array('B')
         dl = d.splitlines()
         for l in dl:
-            print "l: %s" % l
+            #print "l: %s" % l
             i = int(l, 16)
             drt_array.append((i >> 24) & 0xFF)
             drt_array.append((i >> 16) & 0xFF)
@@ -135,7 +136,7 @@ class FauxNysa(Nysa):
        
         #print "d: %s" % str(d)
         num_of_devices  = drt_controller.get_number_of_devices(drt_array)
-        print "Num Devices: %d" % num_of_devices
+        #print "Num Devices: %d" % num_of_devices
 
         len_to_read = num_of_devices * 8
         self.drt_manager.set_drt(drt_array)

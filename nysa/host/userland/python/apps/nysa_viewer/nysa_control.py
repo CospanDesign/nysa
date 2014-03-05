@@ -57,7 +57,7 @@ class NysaControl(QObject):
         self.dev_type = None
         self.actions.phy_tree_changed_signal.connect(self.nysa_device_changed)
         self.fpga_image = fpga_image
-        self.fpga_image.clear()
+        #self.fpga_image.clear()
 
 
     def nysa_device_changed(self, uid, dev_type, nysa_device):
@@ -78,22 +78,52 @@ class NysaControl(QObject):
         self.n = nysa_device
 
         self.n.read_drt()
-        self.n.pretty_print_drt()
+        #self.n.pretty_print_drt()
         #print "Memory Size: 0x%08X" % self.n.get_total_memory_size()
-        self.fpga_image.update_nysa_image(self.n)
+        config_dict = drt_to_config(self.n)
+        self.fpga_image.update_nysa_image(self.n, config_dict)
 
 
-def drt_to_config(drt):
+def drt_to_config(n):
+
     config_dict = {}
-    config_dict["bus_type"] = "wishbone"
-    config_dict["SLABES"] = {}
-    config_dict["MEMORY"] = {}
-    config_dict["INTERFACE"] = {}
-    config_dict["board"] = ""
 
     #Read the board id and find out what type of board this is
+    config_dict["board"] = n.get_board_name()
+    print "Name: %s" % config_dict["board"]
+
     #Read the bus flag (Wishbone or Axie)
+    if n.is_wishbone_bus():
+        config_dict["bus_type"] = "wishbone"
+        config_dict["TEMPLATE"] = "wishbone_template.json"
+    if n.is_axie_bus():
+        config_dict["bus_type"] = "axie"
+        config_dict["TEMPLATE"] = "axie_template.json"
+
+    config_dict["SLAVES"] = {}
+    config_dict["MEMORY"] = {}
     #Read the number of slaves
     #Go thrugh each of the slave devices and find out what type it is
+    for i in range (n.get_number_of_devices()):
+        if n.is_memory_device(i):
+            name = "Memory %d" % i
+            config_dict["MEMORY"][name] = {}
+            config_dict["MEMORY"][name]["sub_id"] = n.get_device_sub_id(i)
+            config_dict["MEMORY"][name]["unique_id"] = n.get_device_unique_id(i)
+            config_dict["MEMORY"][name]["address"] = n.get_device_address(i)
+            config_dict["MEMORY"][name]["size"] = n.get_device_size(i)
+            continue
+
+        name = n.get_device_name_from_id(n.get_device_id(i))
+        config_dict["SLAVES"][name] = {}
+        #print "Name: %s" % n.get_device_name_from_id(n.get_device_id(i))
+        config_dict["SLAVES"][name]["id"] = n.get_device_id(i)
+        config_dict["SLAVES"][name]["sub_id"] = n.get_device_sub_id(i)
+        config_dict["SLAVES"][name]["unique_id"] = n.get_device_unique_id(i)
+        config_dict["SLAVES"][name]["address"] = n.get_device_address(i)
+        config_dict["SLAVES"][name]["size"] = n.get_device_size(i)
+
+    config_dict["INTERFACE"] = {}
+    return config_dict
     #Read the number of memory devices
 

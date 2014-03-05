@@ -34,52 +34,77 @@ os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
 import status
 import actions
 
-p = os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             "gui",
-                             "pvg")
-p = os.path.abspath(p)
-sys.path.append(p)
 
-from graphics_view import GraphicsView
-from graphics_scene import GraphicsScene
-#from default_graphics_scene import GraphicsScene
-from visual_graph.graphics_widget import GraphicsWidget
+from defines import *
 
+from wishbone_controller import WishboneController
 
+from fpga_bus_view import FPGABusView
+from bus_property_view import BusPropertyView
 
-class FPGAImage(GraphicsWidget):
+class FPGAImage(QWidget):
+
     def __init__(self):
         super (FPGAImage, self).__init__()
-        self.actions = actions.Actions()
-        #Create a view
-        self.view = GraphicsView()
-        #Create a scene
-        self.scene = GraphicsScene(self.view)
         self.status = status.Status()
-        self.status.Debug(self, "Started FPGAImage View")
+        self.actions = actions.Actions()
+        self.fbv = FPGABusView(self)
+        self.fbv.setSizePolicy(QSizePolicy.Preferred,
+                               QSizePolicy.Preferred)
+
+        self.bpv = BusPropertyView(self)
+        self.bpv.setSizePolicy(QSizePolicy.Maximum,
+                               QSizePolicy.Preferred)
+
         self.n = None
-        self.boxes = {}
+        self.controller = None
+        self.main_splitter = QSplitter(Qt.Horizontal)
+        self.main_splitter.addWidget(self.fbv)
+        self.main_splitter.addWidget(self.bpv)
+        self.main_splitter.setStretchFactor(1, 0)
+        layout = QHBoxLayout()
+        layout.addWidget(self.main_splitter)
+        self.setLayout(layout)
 
-    def clear(self):
-        self.status.Verbose(self, "Clearing the FPGA Image")
-        self.boxes = {}
-        self.view = GraphicsView()
-        self.scene = GraphicsScene(self.view)
-
-    def device_selected(self, device_type, nysa):
-        pass
-
-    def update_nysa_image(self, n):
+    def update_nysa_image(self, n, config_dict):
         self.n = n
-        self.clear()
+        self.fbv.clear()
         if self.n is None:
             return
-        print "Add Master"
+        if config_dict["bus_type"] == "wishbone":
+            self.controller = WishboneController(config_dict, self.fbv.scene)
+        else:
+            raise NotImplemented("Implement AXI Interface!")
+
+        self.controller.initialize_view()
+        self.controller.refresh_slaves()
+        m = self.controller.get_model()
+        npslaves = m.get_number_of_peripheral_slaves()
+
+        height = (SLAVE_RECT.height() * npslaves + SLAVE_VERTICAL_SPACING)
+        width = (SLAVE_RECT.width() +
+                 PERIPHERAL_BUS_RECT.width() +
+                 MASTER_RECT.width() +
+                 HOST_INTERFACE_RECT.width() +
+                 (SLAVE_HORIZONTAL_SPACING * 4))
+        r = QRectF(0, 0, height, 100)
+        self.fbv.view.fitInView(r, Qt.KeepAspectRatio)
+        self.bpv.setup_bus(config_dict)
+
+    def sizeHint (self):
+        size = QSize()
+        size.setWidth(600)
+        return size
+
+    def drag_enter(self, event):
+        print "FV: Drag Enter"
+    
+    def drag_move(self, event):
+        print "FV: Drag Move"
+
+    def drop_event(self, event):
+        print "FV: Drop Event"
+        event.ignore()
+        #self.vc.drop_event(self.position(), event)
+
 

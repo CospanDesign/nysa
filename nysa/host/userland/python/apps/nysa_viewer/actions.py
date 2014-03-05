@@ -24,6 +24,12 @@ class _Actions(QtCore.QObject):
     phy_tree_changed_signal = QtCore.pyqtSignal(object, object, object, name = "phy_tree_changed")
     phy_tree_get_first_dev = QtCore.pyqtSignal(name = "phy_tree_first_dev")
 
+    module_selected = QtCore.pyqtSignal(str, name = "module_selected")
+    module_deselected = QtCore.pyqtSignal(str, name = "module_deselected")
+
+    slave_selected = QtCore.pyqtSignal(str, str, object, name = "slave_selected")
+    slave_deselected = QtCore.pyqtSignal(str, str, object, name = "slave_deselected")
+
     def __init__(self, parent = None):
         super (_Actions, self).__init__(parent)
 

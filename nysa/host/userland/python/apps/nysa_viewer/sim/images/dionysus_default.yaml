@@ -1,6 +1,6 @@
 ---
 base_dir:     ~/projects/ibuilder_project
-board:        dionysus
+board:        sim
 image_id:     256
 project_name: dionysus_default
 TEMPLATE:     wishbone_template.json

@@ -52,4 +52,5 @@ class MemorySlave(Slave):
                                           rect = SLAVE_RECT,
                                           bus = bus,
                                           parameters = parameters)
+        self.movable(False)
 

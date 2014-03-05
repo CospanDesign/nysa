@@ -377,6 +377,7 @@ class PhyTree(QTreeView):
         self.actions.phy_tree_get_first_dev.connect(self.select_first_item)
         self.status.Debug(self, "Phy Tree View Started!")
         self.setMaximumWidth(300)
+        
         hdr = self.header()
         #hdr.setStretchLastSection (False)
         hdr.setDefaultSectionSize(90)
@@ -385,6 +386,11 @@ class PhyTree(QTreeView):
         #self.connect(self, SIGNAL("SelectionChanged(QModelIndex)"), self.item_pressed)
         self.sm = QItemSelectionModel(self.m)
         self.setSelectionModel(self.sm)
+
+    def sizeHint (self):
+        size = QSize()
+        size.setWidth(300)
+        return size
 
     def add_device(self, dev_type, unique_id, data):
         print "Adding: %s" % dev_type

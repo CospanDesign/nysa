@@ -143,10 +143,9 @@ class Bus(Box):
         for i in range(len(slave_list)):
             params = slave_list[i]
             instance_name = slave_list[i]["instance_name"]
-            params = slave_list[i]["parameters"]
             slave = self.slave_class (scene = self.scene(),
                                       instance_name = instance_name,
-                                      parameters = params,
+                                      parameters = None,
                                       bus = self)
             self.slaves.append(slave)
             self.links[slave] = Link(self, slave, self.scene(), lt.slave)

@@ -60,7 +60,7 @@ class MainPanel(QWidget):
         self.status = status.Status()
 
         self.phy_tree = PhyTree(self)
-        self.phy_tree.setSizePolicy(QSizePolicy.Maximum,
+        self.phy_tree.setSizePolicy(QSizePolicy.Preferred,
                                     QSizePolicy.Preferred)
         self.main_splitter = QSplitter(Qt.Horizontal)
 
@@ -79,7 +79,6 @@ class MainPanel(QWidget):
         self.main_splitter.setStretchFactor(1, 0)
         self.main_splitter.setSizePolicy(QSizePolicy.Preferred,
                                          QSizePolicy.MinimumExpanding)
-
 
         #Create the main window
         #Add Main Tabbed View

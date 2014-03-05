@@ -128,12 +128,14 @@ class Box (QGraphicsItem):
         print ("Demo function!")
 
     def itemChange(self, a, b):
-        if self.isSelected():
-            if self.scene() is not None:
-                self.scene().box_selected(self.user_data)
-        else:
-            if self.scene() is not None:
-                self.scene().box_deselected(self.user_data)
+        if QGraphicsItem.ItemSelectedHasChanged == a:
+            if b.toBool():
+                if self.scene() is not None:
+                    self.scene().box_selected(self.user_data)
+            else:
+                if self.scene() is not None:
+                    self.scene().box_deselected(self.user_data)
+
         return QGraphicsItem.itemChange(self, a, b)
 
     def update(self):
