@@ -56,6 +56,7 @@ class GenDRT(Gen):
         board_fn = os.path.join(utils.get_nysa_base(), "ibuilder", "boards", "boards.json")
         #print "Board Filename: %s" % board_fn
         board_dict = json.load(open(board_fn, 'r'))
+        #print "board: %s" % tags["board"]
         board_id = board_dict[tags["board"]]
 
         #Get the DRT version from the DRT info
