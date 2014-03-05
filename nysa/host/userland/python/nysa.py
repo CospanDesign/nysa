@@ -453,6 +453,56 @@ class Nysa(object):
         """
         return self.drt_manager.get_id_from_index(device_index)
 
+    def get_device_sub_id(self, device_index):
+        """get_device_sub_id
+
+        From the index within the DRT return the sub ID of this device
+
+        Args:
+            device (unsigned int): index of the device
+
+        Returns:
+            (unsigned int): Device sub ID number
+
+        Raises:
+            Nothing
+        """
+        return self.drt_manager.get_sub_id_from_index(device_index)
+
+    def get_device_unique_id(self, device_index):
+        """get_device_unique_id
+
+        From the idex within the DRT return the unique ID of the device
+
+        Args:
+            device (unsienged int): index of the device
+
+        Returns:
+            (unsigned int): Device sub ID number
+
+        Raises:
+            Nothing
+        """
+        return self.drt_manager.get_unique_id_from_index(device_index)
+
+    def get_device_name_from_id(self, device_id):
+        """get_device_name_from_id
+
+        From the id of the device return the name associated with it in the
+        config file
+
+        Args:
+            device_id(unsigned int): id of the device
+
+        Returns:
+            (string): name of the device, if not found returns
+            'Unknown Device"
+
+        Raises:
+            Nothing
+        """
+        return drt_controller.get_device_name_from_id(device_id)
+
     def get_device_address(self, device_index):
         """get_device_address
 
@@ -526,6 +576,52 @@ class Nysa(object):
           DRTError: DRT Not defined
         """
         return self.drt_manager.get_total_memory_size()
+
+    def get_drt_flags(self):
+        """get_drt_flags
+
+        Returns the configuration flags for the DRT image
+
+        Args:
+            Nothing
+
+        Returns (unsigned int): DRT image flags
+
+        Raises:
+            DRTError: DRT not defined
+
+        """
+        return self.drt_manager.get_image_flags()
+
+    def is_wishbone_bus(self):
+        """is_wishbone_bus
+
+        Returns true if the FPGA image is using a wishbone bus
+
+        Returns:
+            (Boolean):
+                True: Image uses wishbone bus
+                False: Image doesn't use wishbone bus
+
+        Raises:
+            DRTError: DRT not defines
+        """
+        return self.drt_manager.is_wishbone_bus()
+
+    def is_axie_bus(self):
+        """is_axie_bus
+        Returns true if the FPGA image is using a axie bus
+
+        Returns:
+            (Boolean):
+                True: Image uses axie bus
+                False: Image doesn't use axie bus
+
+        Raises:
+            DRTError: DRT not defines
+
+        """
+        return self.drt_manager.is_axie_bus()
 
     def ping(self):
         """ping
@@ -655,4 +751,21 @@ class Nysa(object):
             raise NysaCommError("Device not found in DRT")
 
         return dev
+
+    def get_board_name(self):
+        """
+        Returns the board name
+
+        Args:
+            Nothing
+
+        Returns:
+            (String): Name of the board
+
+        Raises:
+            DRTError if DRT is not defined
+        """
+        #return self.drt_manager.get_board_name(int(self.drt_lines[3]))
+        return self.drt_manager.get_board_name()
+
 
