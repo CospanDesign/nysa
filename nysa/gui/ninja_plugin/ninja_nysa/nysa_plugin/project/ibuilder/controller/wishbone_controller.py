@@ -188,8 +188,6 @@ class WishboneController (controller.Controller):
         if self.dbg: print "\tupdating slave view"
         pb.update_slaves(slave_list)
 
-
-
         slave_type = SlaveType.MEMORY
         nslaves = self.model.get_number_of_slaves(slave_type)
         slave_list = []
