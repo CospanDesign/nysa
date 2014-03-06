@@ -7,127 +7,110 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 
-os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+os.path.join(os.path.dirname(__file__),
+             os.pardir,
+             os.pardir,
+             os.pardir)
 
 import status
 import actions
 
+from nothing import NothingProperties
+from main_bus import MainBusProperties
+from host_interface import HostInterfaceProperties
+from master import MasterProperties
+from peripheral_bus import PeripheralBusProperties
+from memory_bus import MemoryBusProperties
+from peripheral_slave import PeripheralSlaveProperties
+from memory_slave import MemorySlaveProperties
 
-class BusPropertyView(QWidget):
+class PropertiesView(QWidget):
 
     def __init__(self, parent):
-        super(BusPropertyView, self).__init__()
+        super(PropertiesView, self).__init__()
         self.actions = actions.Actions()
         self.status = status.Status()
         self.setMaximumWidth(300)
 
-        self.layout = QFormLayout(self)
+        self.layout = QVBoxLayout(self)
         #self.layout.RowWrapPolicy(QFormLayout.WrapAllRows)
         #self.layout.FieldGrowthPolicy(QFormLayout.ExpandingFieldsGrow)
         self.setLayout(self.layout)
 
 
-        self.info_text = QLabel("Info!")
-        sp = QSizePolicy()
-        self.info_text.setSizePolicy(sp)
-        self.info_text.setWordWrap(True)
+        #self.info_text = QLabel("Info!")
+        #sp = QSizePolicy()
+        #self.info_text.setSizePolicy(sp)
+        #self.info_text.setWordWrap(True)
+        self.nothing_params = NothingProperties()
+        self.host_interface_params = HostInterfaceProperties()
+        self.main_bus_params = MainBusProperties()
+        self.master_params = MasterProperties()
+        self.peripheral_bus_params = PeripheralBusProperties()
+        self.memory_bus_params = MemoryBusProperties()
+        self.peripheral_slave_params = PeripheralSlaveProperties()
+        self.memory_slave_params = MemorySlaveProperties()
 
-        self.setup_nothing_selected()
+        self.ps = []
+        self.ps.append(self.nothing_params)
+        self.ps.append(self.host_interface_params)
+        self.ps.append(self.main_bus_params)
+        self.ps.append(self.master_params)
+        self.ps.append(self.peripheral_bus_params)
+        self.ps.append(self.memory_bus_params)
+        self.ps.append(self.peripheral_slave_params)
+        self.ps.append(self.memory_slave_params)
+
+        for p in self.ps:
+            self.layout.addWidget(p)
+
+        #Connect the Signals
         self.actions.module_selected.connect(self.module_selected)
         self.actions.module_deselected.connect(self.module_deselected)
 
         self.actions.slave_selected.connect(self.slave_selected)
         self.actions.slave_deselected.connect(self.slave_deselected)
 
+        #Setup the initial view
+        self.setup_nothing_selected()
+
     def setup_nothing_selected(self):
         self.clear_layout()
-        self.layout.addRow(QLabel("Nothing selected"),
-                           self.info_text.setText("Select a platform in the platform tree"))
+        self.nothing_params.show()
         self.config_dict = {}
 
     def setup_bus(self, config_dict):
         #Populate the view for an entire bus
         self.clear_layout()
         self.config_dict = config_dict
-
-
-        nlabel = QLabel("Name")
-        name_label = QLabel("Nothing")
-        ilabel = QLabel("Info")
-        info_text = QLabel("Info!")
-        sp = QSizePolicy()
-        info_text.setSizePolicy(sp)
-        info_text.setWordWrap(True)
-
-
-        name_label.setText(config_dict["board"])
-
-        #Setup the Grid
-        self.layout.addRow(nlabel, name_label)
-        info_text.setText("Select a module block")
-        self.layout.addRow(ilabel, info_text)
-        #print "config dict: %s" % str(config_dict)
+        self.main_bus_params.set_config_dict(config_dict)
+        self.main_bus_params.show()
 
     def setup_host_interface(self):
         self.clear_layout()
-        nlabel = QLabel("Name")
-        name_label = QLabel("Host Interface")
-        dlabel = QLabel("Description")
-        desc_text = QTextEdit("Nothing")
-        desc_text.setReadOnly(True)
-        ilabel = QLabel("Info")
-        info_text = QLabel("Info!")
-        sp = QSizePolicy()
-        info_text.setSizePolicy(sp)
-        info_text.setWordWrap(True)
-
-
-
-        #Setup the Grid
-        self.layout.addRow(nlabel, name_label)
+        self.host_interface_params.show()
 
     def setup_master(self):
-        #Populate the view for the master selected
         self.clear_layout()
-        nlabel = QLabel("Name")
-        name_label = QLabel("Master")
-
-
-
-        self.layout.addRow(nlabel, name_label)
+        self.master_params.show()
 
     def setup_peripheral_bus(self):
         self.clear_layout()
-        nlabel = QLabel("Name")
-        name_label = QLabel("Peripheral Bus")
-
-
-
-        self.layout.addRow(nlabel, name_label)
+        self.peripheral_bus_params.show()
 
     def setup_memory_bus(self):
         self.clear_layout()
-        nlabel = QLabel("Name")
-        name_label = QLabel("Memory Bus")
-
-
-
-        self.layout.addRow(nlabel, name_label)
+        self.memory_bus_params.show()
 
     def setup_peripheral_slave(self, slave_dict, name):
         self.clear_layout()
-        nlabel = QLabel("Peripheral Slave")
-        name_label = QLabel(name)
-
-
-
-        self.layout.addRow(nlabel, name_label)
+        self.peripheral_slave_params.set_slave(name, slave_dict)
+        self.peripheral_slave_params.show()
 
     def setup_memory_slave(self, slave_dict, name):
         self.clear_layout()
-        nlabel = QLabel("Memory Slave")
-        name_label = QLabel(name)
-        self.layout.addRow(nlabel, name_label)
+        self.memory_slave_params.set_slave(name, slave_dict)
+        self.memory_slave_params.show()
 
     def module_selected(self, name):
         if name == "master":
@@ -163,7 +146,6 @@ class BusPropertyView(QWidget):
 
 
     def clear_layout(self):
-        while self.layout.count():
+        for p in self.ps:
+            p.hide()
 
-            child = self.layout.takeAt(0)
-            child.widget().deleteLater()

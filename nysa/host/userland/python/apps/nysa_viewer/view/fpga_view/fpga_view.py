@@ -40,7 +40,7 @@ from defines import *
 from wishbone_controller import WishboneController
 
 from fpga_bus_view import FPGABusView
-from bus_property_view import BusPropertyView
+from properties.properties_view import PropertiesView
 
 class FPGAImage(QWidget):
 
@@ -52,7 +52,7 @@ class FPGAImage(QWidget):
         self.fbv.setSizePolicy(QSizePolicy.Preferred,
                                QSizePolicy.Preferred)
 
-        self.bpv = BusPropertyView(self)
+        self.bpv = PropertiesView(self)
         self.bpv.setSizePolicy(QSizePolicy.Maximum,
                                QSizePolicy.Preferred)
 
