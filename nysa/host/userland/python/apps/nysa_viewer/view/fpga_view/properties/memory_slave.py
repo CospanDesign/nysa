@@ -32,8 +32,9 @@ class MemorySlaveProperties(QWidget):
         self.hide()
 
 
-    def set_slave(self, name, slave_dict):
+    def set_slave(self, name, config_dict, n):
         self.slave_name.setText(name)
-        self.slave_dict = slave_dict
+        self.config_dict = config_dict
+        self.nysa = n
         self.slave_name.setText(name)
         #Setup the reset of the config dict

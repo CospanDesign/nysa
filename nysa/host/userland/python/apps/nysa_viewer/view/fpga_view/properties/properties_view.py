@@ -79,10 +79,11 @@ class PropertiesView(QWidget):
         self.nothing_params.show()
         self.config_dict = {}
 
-    def setup_bus(self, config_dict):
+    def setup_bus(self, config_dict, n):
         #Populate the view for an entire bus
         self.clear_layout()
         self.config_dict = config_dict
+        self.nysa = n
         self.main_bus_params.set_config_dict(config_dict)
         self.main_bus_params.show()
 
@@ -102,14 +103,14 @@ class PropertiesView(QWidget):
         self.clear_layout()
         self.memory_bus_params.show()
 
-    def setup_peripheral_slave(self, slave_dict, name):
+    def setup_peripheral_slave(self, name):
         self.clear_layout()
-        self.peripheral_slave_params.set_slave(name, slave_dict)
+        self.peripheral_slave_params.set_slave(name, self.config_dict, self.nysa)
         self.peripheral_slave_params.show()
 
-    def setup_memory_slave(self, slave_dict, name):
+    def setup_memory_slave(self, name):
         self.clear_layout()
-        self.memory_slave_params.set_slave(name, slave_dict)
+        self.memory_slave_params.set_slave(name, self.config_dict, self.nysa)
         self.memory_slave_params.show()
 
     def module_selected(self, name):
@@ -128,21 +129,21 @@ class PropertiesView(QWidget):
 
     def module_deselected(self, name):
         print "Module: %s deselected" % name
-        self.setup_bus(self.config_dict)
+        self.setup_bus(self.config_dict, self.nysa)
 
-    def slave_selected(self, name, bus, config_dict):
+    def slave_selected(self, name, bus):
         if bus == "Peripherals":
-            self.setup_peripheral_slave(config_dict, name)
+            self.setup_peripheral_slave(name)
         if bus == "Memory":
-            self.setup_memory_slave(config_dict, name)
+            self.setup_memory_slave(name)
 
     def slave_deselected(self, name, bus, config_dict):
         print "Slave: %s deselected" % name
-        self.setup_bus(self.config_dict)
+        self.setup_bus(self.config_dict, self.nysa)
 
     def device_selected(self, device_type, nysa):
         print "device: selected: %s" % device_type
-        self.setup_bus(self.config_dict)
+        self.setup_bus(self.config_dict, self.nysa)
 
 
     def clear_layout(self):

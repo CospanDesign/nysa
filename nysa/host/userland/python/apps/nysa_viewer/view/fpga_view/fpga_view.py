@@ -89,7 +89,7 @@ class FPGAImage(QWidget):
                  (SLAVE_HORIZONTAL_SPACING * 4))
         r = QRectF(0, 0, height, 100)
         self.fbv.view.fitInView(r, Qt.KeepAspectRatio)
-        self.bpv.setup_bus(config_dict)
+        self.bpv.setup_bus(config_dict, n)
 
     def sizeHint (self):
         size = QSize()

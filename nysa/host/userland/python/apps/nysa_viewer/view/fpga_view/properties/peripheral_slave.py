@@ -26,14 +26,21 @@ class PeripheralSlaveProperties(QWidget):
         self.layout = QFormLayout(self)
         self.slave_name = QLabel("")
 
+        self.script_list = QListWidget()
+        self.script_list.addItem("Hello")
+
         self.setLayout(self.layout)
         self.layout.addRow(QLabel("Module Type"), QLabel("Peripheral Slave"))
         self.layout.addRow(QLabel("Name"), self.slave_name)
+        self.layout.addRow(QLabel("Scripts"), self.script_list)
         self.hide()
 
 
-    def set_slave(self, name, slave_dict):
+    def set_slave(self, name, config_dict, n):
         self.slave_name.setText(name)
-        self.slave_dict = slave_dict
+        self.config_dict = config_dict
+        self.nysa = n
         self.slave_name.setText(name)
+        if name == "DRT":
+            print "DRT Found!"
         #Setup the reset of the config dict
