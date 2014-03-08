@@ -44,3 +44,6 @@ class PeripheralSlaveProperties(QWidget):
         if name == "DRT":
             print "DRT Found!"
         #Setup the reset of the config dict
+
+    def clear_scripts_list(self):
+        for l in self.script_list.clear()
