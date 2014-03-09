@@ -29,9 +29,15 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
 
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir,
+                             os.pardir,
+                             "common"))
 import status
+
+os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
 import actions
 
 

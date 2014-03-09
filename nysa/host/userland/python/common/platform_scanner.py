@@ -16,13 +16,16 @@
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
 
-""" nysa controller
+""" nysa platform scanner
 """
 
 __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 import sys
 import os
+from inspect import isclass
+from inspect import ismodule
+
 
 from PyQt4.Qt import *
 from PyQt4.QtCore import *
@@ -30,58 +33,62 @@ from PyQt4.QtCore import *
 from status import Status
 from actions import Actions
 
-sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir))
+from nplatform.nplatform import Platform
 
-'''
-sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             "cbuilder",
-                             "drt"))
-
-from drt import *
-'''
-
-
-class NysaControl(QObject):
-    def __init__(self, fpga_image):
-        super(NysaControl, self).__init__()
+class PlatformScanner(QObject):
+    def __init__(self):
+        super(PlatformScanner, self).__init__()
         self.status = Status()
-        self.actions = Actions()
         self.n = None
         self.uid = None
         self.dev_type = None
-        self.actions.phy_tree_changed_signal.connect(self.nysa_device_changed)
-        self.fpga_image = fpga_image
-        #self.fpga_image.clear()
 
+    def refresh_platforms(self):
+        plat_dir = os.path.join(os.path.dirname(__file__), "nplatform")
+        plat_files = os.listdir(plat_dir)
+        plat_classes = []
+        for f in plat_files:
+            #Removed compiled python modules from the list
+            if f.endswith("pyc"):
+                continue
 
-    def nysa_device_changed(self, uid, dev_type, nysa_device):
-        #if uid == uid:
-        #    #Don't change anything if it's the same UID
-        #    self.status.Verbose(self, "Same UID, no change")
-        #    return
+            #Remove package modules
+            if f.startswith("__init__"):
+                continue
 
-        self.status.Debug(self, "Device Changed")
-        self.dev_type = dev_type
-        if dev_type is None:
-            self.n = None
-            self.status.Info(self, "No Device Selected")
-            self.fpga_image.clear()
-            return
+            f = f.split(".")[0]
+            m = __import__("nplatform.%s" % f)
+            for name in dir(m):
+                item = getattr(m, name)
+                if not ismodule(item):
+                    continue
+                
+                for mname in dir(item):
+                    #print "Name: %s" % mname
+                    #print "Type: %s" % str(type(mname))
+                    obj = getattr(item, mname)
 
-        self.uid = uid
-        self.n = nysa_device
+                    if not isclass(obj):
+                        continue
+                    if issubclass(obj, Platform) and obj is not Platform:
+                        unique = True
+                        for plat_class in plat_classes:
+                            if str(plat_class) == str(obj):
+                                unique = False
+                        if unique:
+                            #print "Adding Class: %s" % str(obj)
+                            plat_classes.append(obj)
 
-        self.n.read_drt()
-        #self.n.pretty_print_drt()
-        #print "Memory Size: 0x%08X" % self.n.get_total_memory_size()
-        config_dict = drt_to_config(self.n)
-        self.fpga_image.update_nysa_image(self.n, config_dict)
+        plat_instances = []
+        for pc in plat_classes:
+            plat_instances.append(pc())
+
+        plat_dict = {}
+        for pi in plat_instances:
+            plat_dict[pi.get_type()] = pi.scan()
+
+        print "Plat Dict: %s" % str(plat_dict)
+        return plat_dict
 
 
 def drt_to_config(n):

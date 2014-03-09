@@ -30,7 +30,7 @@ import glob
 import yaml
 import hashlib
 
-from phy import Phy
+from nplatform import Platform
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
@@ -39,9 +39,9 @@ from status import Status
 from sim.faux_nysa import FauxNysa
 
 
-class SimPhy(Phy):
+class SimPlatform(Platform):
     def __init__(self):
-        super (SimPhy, self).__init__()
+        super (SimPlatform, self).__init__()
         self.status = Status()
 
     def get_type(self):
@@ -51,6 +51,7 @@ class SimPhy(Phy):
     def scan(self):
         self.status.Debug(self, "Scannig...")
         configs = self.find_all_sims()
+        print "scan; %s" % str(configs)
         sim_dict = {}
         for f in configs:
             #print "Config: %s" % f
@@ -65,7 +66,10 @@ class SimPhy(Phy):
 
 
     def find_all_sims(self):
-        return glob.glob(os.path.join("sim", "images", "*.yaml"))
+        return glob.glob(os.path.join(os.path.dirname(__file__),
+                                      "sim",
+                                      "images",
+                                      "*.yaml"))
 
             
         

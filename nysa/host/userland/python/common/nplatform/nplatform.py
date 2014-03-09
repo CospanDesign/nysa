@@ -20,47 +20,31 @@
 #SOFTWARE.
 
 """
-Dionysus Interface
+Base Platform Script for use with Nysa Viewer
 """
 __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
+import argparse
 import sys
 import os
+import time
+from array import array as Array
+    
+    
+class Platform(object):
 
-from phy import Phy
-import usb.core
-import usb.util
-from pyftdi.pyftdi.ftdi import Ftdi
-
-sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             os.pardir,
-                             os.pardir))
-
-
-import nysa
-from dionysus.dionysus import Dionysus
-
-class DionysusPhy(Phy):
     def __init__(self):
-        super (DionysusPhy, self).__init__()
-        self.vendor = 0x0403
-        self.product = 0x8530
+        super (Platform, self).__init__()
+        self.dev_dict = {}
 
     def get_type(self):
-        return "Dionysus"
+        AssertionError("Failed to implement 'get_type' function")
+
+    def get_unique_ids(self):
+        AssertionError("Failed to implement 'get_unique_id' function")
 
     def scan(self):
-        #print ("Scanning...")
-        devices = usb.core.find(find_all = True)
-        for device in devices:
-            if device.idVendor == self.vendor and device.idProduct == self.product:
-                sernum = usb.util.get_string(device, 64, device.iSerialNumber)
-                #print "Found a Dionysus Device: Serial Number: %s" % sernum
+        AssertionError("Failed to implement 'scan' function")
 
-                self.add_device_dict(sernum, Dionysus(idVendor = self.vendor, 
-                                                      idProduct = self.product,
-                                                      sernum = sernum,
-                                                      debug = False))
-        return self.dev_dict
-
+    def add_device_dict(self, unique_id, device):
+        self.dev_dict[unique_id] = device

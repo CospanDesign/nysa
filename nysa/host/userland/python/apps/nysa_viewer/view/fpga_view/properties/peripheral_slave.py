@@ -27,7 +27,7 @@ class PeripheralSlaveProperties(QWidget):
         self.slave_name = QLabel("")
 
         self.script_list = QListWidget()
-        self.script_list.addItem("Hello")
+        #self.script_list.addItem("Hello")
 
         self.setLayout(self.layout)
         self.layout.addRow(QLabel("Module Type"), QLabel("Peripheral Slave"))
@@ -38,6 +38,7 @@ class PeripheralSlaveProperties(QWidget):
 
     def set_slave(self, name, config_dict, n):
         self.slave_name.setText(name)
+        self.clear_scripts_list()
         self.config_dict = config_dict
         self.nysa = n
         self.slave_name.setText(name)
@@ -46,4 +47,4 @@ class PeripheralSlaveProperties(QWidget):
         #Setup the reset of the config dict
 
     def clear_scripts_list(self):
-        for l in self.script_list.clear()
+        self.script_list.clear()

@@ -50,9 +50,11 @@ from memory_bus import MemoryBus
 from peripheral_slave import PeripheralSlave
 from memory_slave import MemorySlave
 
-sys.path.append(os.path.join( os.path.dirname(__file__),
-                              os.pardir,
-                              os.pardir))
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir,
+                             os.pardir,
+                             "common"))
 
 from status import Status
 

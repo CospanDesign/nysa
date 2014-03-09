@@ -27,26 +27,22 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 import argparse
 import sys
 import os
-from inspect import isclass
-from inspect import ismodule
-
 from PyQt4.Qt import *
 from PyQt4.QtCore import *
 
-sys.path.append(os.path.join(os.path.dirname(__file__),
+p = os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir,
-                             os.pardir,
-                             os.pardir,
-                             os.pardir))
+                             "common",
+                             )
+
+sys.path.append(p)
+
+from platform_scanner import PlatformScanner
 
 from view.main_view import MainForm
 from status import Status
 from actions import Actions
-from nysa_control import NysaControl
-
-from phy.phy import Phy
-import phy
 
 DESCRIPTION = "\n" \
 "\n"\
@@ -67,65 +63,103 @@ class NysaGui(QObject):
         super (NysaGui, self).__init__()
 
         app = QApplication(sys.argv)
-        mf = MainForm()
+        self.mf = MainForm()
+        self.fv = self.mf.get_fpga_view()
         self.actions = Actions()
         self.status = Status()
         self.status.Debug(self, "Created main form!")
 
+        self.uid = None
+
         #Connect the action signal to a local function
-        self.actions.refresh_signal.connect(self.refresh_phy_tree)
-        self.nysa_control = NysaControl(mf.get_fpga_view())
-        self.refresh_phy_tree()
+        self.actions.refresh_signal.connect(self.refresh_platform_tree)
+        self.actions.platform_tree_changed_signal.connect(self.nysa_device_changed)
+        self.refresh_platform_tree()
         sys.exit(app.exec_())
 
-    def refresh_phy_tree(self):
-        self.actions.clear_phy_tree_signal.emit()
-        phy_dir = os.path.join(os.path.dirname(__file__), "phy")
-        #print "Phy: %s" % str(os.listdir(phy_dir))
-        phy_files = os.listdir(phy_dir)
-        phy_classes = []
-        for f in phy_files:
-            if f.endswith("pyc"):
-                continue
+    def refresh_platform_tree(self):
+        self.actions.clear_platform_tree_signal.emit()
+        ps = PlatformScanner()
+        platforms_dict = ps.refresh_platforms()
 
-            if f.startswith("__init__"):
-                continue
+        for pis in platforms_dict:
+            print "pis: %s" % pis
+            for pi in platforms_dict[pis]:
+                print "pi: %s" % str(pi)
+                self.status.Info(self, "Refresh The Platformsical Tree")
+                t = platforms_dict[pis][pi]
+                self.actions.add_device_signal.emit(pis, pi, t)
+         
+            self.actions.platform_tree_get_first_dev.emit()
 
-            f = f.split(".")[0]
-            m = __import__("phy.%s" % f)
-            for name in dir(m):
-                item = getattr(m, name)
-                if not ismodule(item):
-                    continue
-                
-                for mname in dir(item):
-                    #print "Name: %s" % mname
-                    #print "Type: %s" % str(type(mname))
-                    obj = getattr(item, mname)
 
-                    if not isclass(obj):
-                        #print "Type: %s" % str(type(obj))
-                        continue
-                    if issubclass(obj, Phy) and obj is not Phy:
-                        unique = True
-                        for phy_class in phy_classes:
-                            if str(phy_class) == str(obj):
-                                unique = False
-                        if unique:
-                            #print "Adding Class: %s" % str(obj)
-                            phy_classes.append(obj)
+    def nysa_device_changed(self, uid, dev_type, nysa_device):
+        if self.uid == uid:
+            #Don't change anything if it's the same UID
+            self.status.Verbose(self, "Same UID, no change")
+            return
 
-        phy_instances = []
-        for pc in phy_classes:
-            phy_instances.append(pc())
+        self.status.Debug(self, "Device Changed")
+        self.dev_type = dev_type
+        if dev_type is None:
+            self.n = None
+            self.status.Info(self, "No Device Selected")
+            self.fv.clear()
+            return
 
-        for pi in phy_instances:
-            dev_dict = pi.scan()
-            for d in dev_dict:
-                self.status.Info(self, "Refresh The Physical Tree")
-                self.actions.add_device_signal.emit(pi.get_type(), d, dev_dict[d])
+        self.uid = uid
+        self.n = nysa_device
 
-        self.actions.phy_tree_get_first_dev.emit()
+        self.n.read_drt()
+        config_dict = drt_to_config(self.n)
+        self.fv.update_nysa_image(self.n, config_dict)
+
+
+def drt_to_config(n):
+
+    config_dict = {}
+
+    #Read the board id and find out what type of board this is
+    config_dict["board"] = n.get_board_name()
+    print "Name: %s" % config_dict["board"]
+
+    #Read the bus flag (Wishbone or Axie)
+    if n.is_wishbone_bus():
+        config_dict["bus_type"] = "wishbone"
+        config_dict["TEMPLATE"] = "wishbone_template.json"
+    if n.is_axie_bus():
+        config_dict["bus_type"] = "axie"
+        config_dict["TEMPLATE"] = "axie_template.json"
+
+    config_dict["SLAVES"] = {}
+    config_dict["MEMORY"] = {}
+    #Read the number of slaves
+    #Go thrugh each of the slave devices and find out what type it is
+    for i in range (n.get_number_of_devices()):
+        if n.is_memory_device(i):
+            name = "Memory %d" % i
+            config_dict["MEMORY"][name] = {}
+            config_dict["MEMORY"][name]["sub_id"] = n.get_device_sub_id(i)
+            config_dict["MEMORY"][name]["unique_id"] = n.get_device_unique_id(i)
+            config_dict["MEMORY"][name]["address"] = n.get_device_address(i)
+            config_dict["MEMORY"][name]["size"] = n.get_device_size(i)
+            continue
+
+        name = n.get_device_name_from_id(n.get_device_id(i))
+        config_dict["SLAVES"][name] = {}
+        #print "Name: %s" % n.get_device_name_from_id(n.get_device_id(i))
+        config_dict["SLAVES"][name]["id"] = n.get_device_id(i)
+        config_dict["SLAVES"][name]["sub_id"] = n.get_device_sub_id(i)
+        config_dict["SLAVES"][name]["unique_id"] = n.get_device_unique_id(i)
+        config_dict["SLAVES"][name]["address"] = n.get_device_address(i)
+        config_dict["SLAVES"][name]["size"] = n.get_device_size(i)
+
+    config_dict["INTERFACE"] = {}
+    return config_dict
+    #Read the number of memory devices
+
+
+
 
 def main(argv):
     #Parse out the commandline arguments

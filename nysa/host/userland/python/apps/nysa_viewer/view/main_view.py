@@ -28,12 +28,18 @@ from PyQt4.Qt import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir,
+                             os.pardir,
+                             "common"))
+import status
 
 os.path.join(os.path.dirname(__file__), os.pardir)
 
-import status
+
 import actions
-from view.phy_tree.phy_tree import PhyTree
+from view.platform_tree.platform_tree import PlatformTree
 
 from main_tab_view import MainTabView
 from fpga_view.fpga_view import FPGAImage
@@ -59,8 +65,8 @@ class MainPanel(QWidget):
         layout = QVBoxLayout()
         self.status = status.Status()
 
-        self.phy_tree = PhyTree(self)
-        self.phy_tree.setSizePolicy(QSizePolicy.Preferred,
+        self.platform_tree = PlatformTree(self)
+        self.platform_tree.setSizePolicy(QSizePolicy.Preferred,
                                     QSizePolicy.Preferred)
         self.main_splitter = QSplitter(Qt.Horizontal)
 
@@ -73,7 +79,7 @@ class MainPanel(QWidget):
                                QSizePolicy.Preferred)
         self.tab_view.add_tab(self.fpga_image, "main tab")
 
-        self.main_splitter.addWidget(self.phy_tree)
+        self.main_splitter.addWidget(self.platform_tree)
         self.main_splitter.addWidget(self.tab_view)
 
         self.main_splitter.setStretchFactor(1, 0)
@@ -120,10 +126,10 @@ class MainForm(QMainWindow):
         status_window_action.setShortcut('F4')
         status_window_action.triggered.connect(self.main_panel.toggle_status_view)
 
-        #Refresh Phy Tree
-        refresh_phy = QAction("Refresh &Phy Tree", self)
-        refresh_phy.setShortcut('F2')
-        refresh_phy.triggered.connect(self.actions.refresh_signal)
+        #Refresh Platform Tree
+        refresh_platform = QAction("Refresh &Platform Tree", self)
+        refresh_platform.setShortcut('F2')
+        refresh_platform.triggered.connect(self.actions.refresh_signal)
 
         #Toolbar
         self.toolbar = self.addToolBar("main")
@@ -135,7 +141,7 @@ class MainForm(QMainWindow):
         file_menu.addAction(exit_action)
 
         nysa_menu = menubar.addMenu('&Nysa')
-        nysa_menu.addAction(refresh_phy)
+        nysa_menu.addAction(refresh_platform)
 
         view_menu = menubar.addMenu('&View')
         view_menu.addAction(status_window_action)
