@@ -111,16 +111,20 @@ class FauxNysa(Nysa):
         return
 
     def read_drt(self):
-        '''
-        print "Read DRT"
-        data = Array('B')
-        data = self.read(0, 0, 8)
-        num_of_devices  = drt_controller.get_number_of_devices(data)
-        len_to_read = num_of_devices * 8
+        """read_drt
 
-        data = self.read(0, 0, len_to_read + 8)
-        self.drt_manager.set_drt(data)
-        '''
+        Read the contents of the DRT
+
+        Args:
+          Nothing
+
+        Returns (Array of bytes):
+          the raw DRT data, this can be ignored for normal operation 
+
+        Raises:
+          Nothing
+        """
+
         gd = GenDRT()
         #d = gd.gen_script(self.dev_dict, debug = True)
         d = gd.gen_script(self.dev_dict, debug = False)
@@ -140,8 +144,7 @@ class FauxNysa(Nysa):
 
         len_to_read = num_of_devices * 8
         self.drt_manager.set_drt(drt_array)
-
-        return
+        return drt_array
 
 
     def wait_for_interrupts(self, wait_time = 1):

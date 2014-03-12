@@ -58,6 +58,8 @@ def ClStatus(*args, **kw):
 
 class _ClStatus(object):
     def __init__(self):
+        super(_ClStatus, self).__init__()
+        print "Starint CL Status"
         self.level = StatusLevel.VERBOSE
 
     def Verbose (self, c, text):
@@ -73,7 +75,7 @@ class _ClStatus(object):
             self.status_output("Info", c, text, color = white)
 
     def Important (self, c, text):
-        if self.CheckLevel(StatusLevel.Important):
+        if self.CheckLevel(StatusLevel.IMPORTANT):
             self.status_output("Important", c, text, color = blue)
 
     def Warning (self, c, text):
@@ -103,37 +105,45 @@ class _ClStatus(object):
         else:
             print "%s%s: %s%s" % (color, level, text, white)
 
-    def SetLevel(self, level):
+    def set_level(self, level):
         self.level = level
 
     def GetLevel(self):
         return self.level
 
     def CheckLevel(self, requestLevel):
-        if requestLevel is StatusLevel.FATAL:
+        if requestLevel == StatusLevel.FATAL:
             return True
         elif requestLevel is StatusLevel.VERBOSE:
-            if  self.level is StatusLevel.VERBOSE:
+            if  self.level == StatusLevel.VERBOSE:
                 return True
         elif requestLevel is StatusLevel.DEBUG:
-            if  self.level is StatusLevel.VERBOSE or \
-                self.level is StatusLevel.DEBUG:
+            if  self.level == StatusLevel.VERBOSE or \
+                self.level == StatusLevel.DEBUG:
                 return True
         elif requestLevel is StatusLevel.INFO:
-            if self.level is StatusLevel.VERBOSE or  \
-                self.level is StatusLevel.DEBUG or   \
-                self.level is StatusLevel.INFO:
+            if self.level == StatusLevel.VERBOSE or  \
+                self.level == StatusLevel.DEBUG or   \
+                self.level == StatusLevel.INFO:
+                return True
+        elif requestLevel is StatusLevel.IMPORTANT:
+            if self.level == StatusLevel.VERBOSE or  \
+                self.level == StatusLevel.DEBUG or   \
+                self.level == StatusLevel.INFO or    \
+                self.level == StatusLevel.IMPORTANT:
                 return True
         elif requestLevel is StatusLevel.WARNING:
             if self.level == StatusLevel.VERBOSE or  \
                 self.level == StatusLevel.DEBUG or   \
                 self.level == StatusLevel.INFO  or   \
+                self.level == StatusLevel.IMPORTANT or \
                 self.level == StatusLevel.WARNING:
                 return True
         elif requestLevel is StatusLevel.ERROR:
             if self.level == StatusLevel.VERBOSE or  \
                 self.level == StatusLevel.DEBUG or   \
                 self.level == StatusLevel.INFO  or   \
+                self.level == StatusLevel.IMPORTANT or \
                 self.level == StatusLevel.WARNING or \
                 self.level == StatusLevel.ERROR:
                 return True
@@ -215,7 +225,7 @@ class _Status(QWidget):
         if self.CheckLevel(StatusLevel.INFO):
             self.status_output("Info", c, text, fg="Green", bg="Black")
 
-    def Warning (self, c, text):
+    def Important (self, c, text):
         if self.CheckLevel(StatusLevel.IMPORTANT):
             self.status_output("Important:", c, text, fg="Blue", bg="Black")
 
@@ -250,7 +260,7 @@ class _Status(QWidget):
         hh.setStretchLastSection(True)
  
 
-    def SetLevel(self, level):
+    def set_level(self, level):
         self.level = level
 
     def GetLevel(self):

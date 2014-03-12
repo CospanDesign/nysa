@@ -29,13 +29,21 @@ import sys
 import os
 import time
 from array import array as Array
-    
+
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir))
+from status import ClStatus
     
 class Platform(object):
 
-    def __init__(self):
+    def __init__(self, status = None):
         super (Platform, self).__init__()
         self.dev_dict = {}
+        if status is None:
+            self.status = ClStatus()
+        else:
+            self.status = status
+
 
     def get_type(self):
         AssertionError("Failed to implement 'get_type' function")

@@ -33,8 +33,7 @@ from PyQt4.QtCore import *
 p = os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir,
-                             "common",
-                             )
+                             "common")
 
 sys.path.append(p)
 
@@ -79,8 +78,8 @@ class NysaGui(QObject):
 
     def refresh_platform_tree(self):
         self.actions.clear_platform_tree_signal.emit()
-        ps = PlatformScanner()
-        platforms_dict = ps.refresh_platforms()
+        ps = PlatformScanner(self.status)
+        platforms_dict = ps.get_platforms()
 
         for pis in platforms_dict:
             print "pis: %s" % pis

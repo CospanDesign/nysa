@@ -41,8 +41,8 @@ import nysa
 from dionysus.dionysus import Dionysus
 
 class DionysusPlatform(Platform):
-    def __init__(self):
-        super (DionysusPlatform, self).__init__()
+    def __init__(self, status = None):
+        super (DionysusPlatform, self).__init__(status)
         self.vendor = 0x0403
         self.product = 0x8530
 

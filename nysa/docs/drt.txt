@@ -95,13 +95,14 @@ DRT_DEV_OFFSET[x * 8] + 1:    FLAGS
   (Addr: 15-0 )   :
                   BIT: 1      Memory Slave
                   BIT: 0      Standard device (can use generic drivers)
-DRT_DEV_OFFSET[x * 8] + 2:    Size
+DRT_DEV_OFFSET[x * 8] + 2:    Address Location of slave
+DRT_DEV_OFFSET[x * 8] + 3:    Size
                                 Size of address space for device
                                   For a peripheral this is the number of
                                     registers
                                   For a memory device this is the size of the
                                     Memory
-DRT_DEV_OFFSET[x * 8] + 3:    User ID
+DRT_DEV_OFFSET[x * 8] + 4:    User ID
   (Addr: 31-16)   : RFU
   (Addr: 15-0 )   : If there are two devices with the same
                     IDs and Sub IDs this will differentiate the two

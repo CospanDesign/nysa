@@ -34,6 +34,7 @@ KEY, NODE = range(2)
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir,
+                             os.pardir,
                              "common",
                              "tree_table"))
 

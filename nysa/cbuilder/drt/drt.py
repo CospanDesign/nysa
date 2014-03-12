@@ -645,10 +645,10 @@ def get_board_list():
         key = board_tags.keys()[i]
         index = board_tags[key]
         #print "index: %s" % str(index)
-        while len(board_list) < index:
+        while len(board_list) < index + 1:
             board_list.append("")
 
-        board_list[index - 1] = key
+        board_list[index] = key
         #print "board list: %s" % str(board_list)
         
     return board_list

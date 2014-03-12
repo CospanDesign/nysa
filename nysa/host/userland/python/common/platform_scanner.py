@@ -30,20 +30,22 @@ from inspect import ismodule
 from PyQt4.Qt import *
 from PyQt4.QtCore import *
 
-from status import Status
-from actions import Actions
+from status import ClStatus
 
 from nplatform.nplatform import Platform
 
 class PlatformScanner(QObject):
-    def __init__(self):
+    def __init__(self, status = None):
         super(PlatformScanner, self).__init__()
-        self.status = Status()
+        if status is None:
+            self.status = ClStatus()
+        else:
+            self.status = status
         self.n = None
         self.uid = None
         self.dev_type = None
 
-    def refresh_platforms(self):
+    def get_platforms(self):
         plat_dir = os.path.join(os.path.dirname(__file__), "nplatform")
         plat_files = os.listdir(plat_dir)
         plat_classes = []
@@ -81,23 +83,24 @@ class PlatformScanner(QObject):
 
         plat_instances = []
         for pc in plat_classes:
-            plat_instances.append(pc())
+            plat_instances.append(pc(self.status))
 
         plat_dict = {}
         for pi in plat_instances:
             plat_dict[pi.get_type()] = pi.scan()
 
-        print "Plat Dict: %s" % str(plat_dict)
         return plat_dict
 
 
 def drt_to_config(n):
 
     config_dict = {}
+    print "Pretty print:"
+    n.pretty_print_drt()
 
     #Read the board id and find out what type of board this is
     config_dict["board"] = n.get_board_name()
-    print "Name: %s" % config_dict["board"]
+    #print "Name: %s" % config_dict["board"]
 
     #Read the bus flag (Wishbone or Axie)
     if n.is_wishbone_bus():

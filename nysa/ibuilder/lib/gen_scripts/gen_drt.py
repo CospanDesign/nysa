@@ -99,11 +99,11 @@ class GenDRT(Gen):
         #header
         out_buf = version_string + id_string + "\n"
         out_buf += num_dev_string   + "\n"
+        out_buf += "00000000"       + "\n"
         out_buf += board_string     + "\n"
         out_buf += image_string     + "\n"
         out_buf += "0000"              
         out_buf += drt_flags_string + "\n"
-        out_buf += "00000000"       + "\n"
         out_buf += "00000000"       + "\n"
         out_buf += "00000000"       + "\n"
 

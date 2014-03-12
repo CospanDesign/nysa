@@ -112,7 +112,8 @@ class Nysa(object):
             print "Debug Enabled"
 
     def __del__(self):
-        print "Closing Nysa"
+        #print "Closing Nysa"
+        pass
 
 
     """initialize
@@ -391,8 +392,8 @@ class Nysa(object):
         Args:
           Nothing
 
-        Returns:
-          Nothing
+        Returns (Array of bytes):
+          the raw DRT data, this can be ignored for normal operation 
 
         Raises:
           NysaCommError: When a failure of communication is detected
@@ -404,6 +405,7 @@ class Nysa(object):
 
         data = self.read(0, 0, len_to_read + 8)
         self.drt_manager.set_drt(data)
+        return data
 
     def pretty_print_drt(self):
         """pretty_print_drt
