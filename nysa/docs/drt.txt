@@ -10,7 +10,7 @@ Version
   12/02/2011:
     0.00.4  Changed the DRT size from 4 to 8 for the header and devices
 
-  04/16/2013:
+  4/16/2013:
     0.00.5  Removed DRT Device declaration (it is in it's own file drt.json)
             Removed references to sap and saplib, this is now cbuilder
   12/02/2013:
@@ -39,7 +39,7 @@ Version
                     New Haven 4.3" LCD:   0
                     Sparkfun SPI LCD:     1
 
-  02/25/2014:
+  2/25/2014:
     0.00.7  Added a Flags entry into the DRT Image Flags
               Flags:
                 bits 1:0 indicates what bus is used:
@@ -48,15 +48,33 @@ Version
                   10: RFU
                   11: RFU
 
+
+
+DESCRIPTION START
+
 Device Rom Table (DRT)
 
-A slave that maps all the devices in the interconnect, essentially
-this is a ROM.
+A ROM within all Nysa FPGA images automatically generated and inserted by the FPGA image builer.
 
--This slave should be located at address 0 on the interconnect (axi/wishbone)
--The controlling software should query this ROM in order to determine the
-  devices and where they are located on the peripheral bus
--Initially designed for 32 bit words
+The purpose of the DRT is to provide all information necessary to interface with an FPGA image without external documentation.
+
+Except for special projects where an entire image is designed for one purpose (for example interfacince with a custom sensor that spans multiple cores) The host side software should be capable of interfacing with all cores on the FPGA with existing software.
+
+The DRT is always located at address 0x00 on the peripheral bus. The host side controller should query the DRT in order to determine what drivers and software to load.
+
+Features:
+  -Lists all Perpheral (I/O) and Memory devices
+  -ID values for each type of device: (Example: GPIO = 1, I2C = 2)
+  -Optional Sub ID for each device to support features in generic interfaces
+  (As an example a GPIO core that provides PWM control could be identified
+  by a unique Sub ID)
+  -Optional User ID for each device to support multiple instantiations of the
+  same core (As an example multiple stepper motors controlled by the same
+  core type can be identified by the User ID)
+  -Provides address for each core
+  -Identifies special features of the cores or image
+
+DESCRIPTION END
 
 Organization of the ROM 32 bit address location
 
