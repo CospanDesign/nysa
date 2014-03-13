@@ -48,6 +48,7 @@ from nysa import NysaCommError
 from pyftdi.pyftdi.ftdi import Ftdi
 from array import array as Array
 
+from bitbang.bitbang import BitBangController
 
 class Dionysus (Nysa):
     """
@@ -64,6 +65,17 @@ class Dionysus (Nysa):
         self.sernum = sernum
         self._open_dev()
         self.name = "Dionysus"
+        try:
+            #XXX: Hack to fix a strange bug where FTDI
+            #XXX: won't recognize Dionysus until a read and reset occurs
+            btimeout = self.timeout
+            self.timeout = 0.1
+            self.ping()
+            self.timeout = btimeout
+        except NysaCommError:
+            self.timeout = btimeout
+            self.reset()
+
 
     def __del__(self):
         self.dev.close()
@@ -404,13 +416,25 @@ class Dionysus (Nysa):
         Raises:
             NysaCommError: Failue in communication
         """
-        data = Array('B')
-        data.extend([0xCD, 0x03, 0x00, 0x00, 0x00]);
-        if self.debug:
-            print "Sending Reset..."
+        #data = Array('B')
+        #data.extend([0xCD, 0x03, 0x00, 0x00, 0x00]);
+        #if self.debug:
+        #    print "Sending Reset..."
 
-        self.dev.purge_buffers()
-        self.dev.write_data(data)
+        #self.dev.purge_buffers()
+        #self.dev.write_data(data)
+
+        bbc = BitBangController(self.vendor, self.product, 2)
+        bbc.set_soft_reset_to_output()
+        bbc.soft_reset_high()
+        time.sleep(.2)
+        bbc.soft_reset_low()
+        time.sleep(.2)
+        bbc.soft_reset_high()
+        bbc.pins_on()
+        bbc.set_pins_to_input()
+
+
 
     def dump_core(self):
         """ dump_core
