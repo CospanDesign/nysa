@@ -42,7 +42,7 @@ p = os.path.join(os.path.dirname(__file__),
                              "gui",
                              "pvg")
 
-print "Path: %s" % os.path.abspath(p)
+#print "Path: %s" % os.path.abspath(p)
 sys.path.append(p)
 
 from visual_graph.box import Box

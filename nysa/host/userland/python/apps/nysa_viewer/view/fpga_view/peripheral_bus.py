@@ -77,6 +77,7 @@ class PeripheralBus(Bus):
     def recalculate_size_pos(self):
         if self.dbg: print "PB: recalculate_size_pos"
         num_slaves = len(self.slaves)
+        self.rect = QRectF(self.start_rect)
         #the position of of the slaves are at the top left corner
         total_height = (num_slaves * SLAVE_RECT.height())
 

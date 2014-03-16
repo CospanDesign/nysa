@@ -22,7 +22,29 @@
 
 from PyQt4.Qt import QObject
 
-class NysaBaseController(QObject):
+
+
+class ScriptPlugin(type):
+    def __init__(cls, name, bases, attrs):
+        if cls is None:
+            return
+        if not hasattr(cls, 'plugins'):
+            '''
+            This is only implemented when the metaclass is first instantiated
+
+            Create the class variable
+            '''
+            cls.plugins = []
+        else:
+            print "Adding: %s" % str(cls)
+            '''
+            This is a plugin class so add it to the plugins class variable
+            '''
+            cls.plugins.append(cls)
+
+class NysaBaseController:
+
+    __metaclass__ = ScriptPlugin
 
     def __init__(self):
         self.actions = None
@@ -35,15 +57,24 @@ class NysaBaseController(QObject):
     def set_nysa_viewer_controls(self, actions, status):
         self.actions = actions
         self.status = status
+   
+    @staticmethod
+    def get_name():
+        raise NotImplemented("get_name is not implemented")
 
-    def get_unique_image_id(self):
+    @staticmethod
+    def get_unique_image_id():
         raise NotImplemented("get_unique_image_id is not implemented! if not using return None")
 
-    def get_device_id(self):
+    @staticmethod
+    def get_device_id():
         raise NotImplemented("get_device_id is not implemented! if not using return None")
 
-    def get_device_sub_id(self):
+    @staticmethod
+    def get_device_sub_id():
         raise NotImplemented("get_device_sub_id is not implemented! if not using return None")
 
-    def get_device_unique_id(self):
+    @staticmethod
+    def get_device_unique_id():
         raise NotImplemented("get_device_unique_id is not implemented! If not using return None")
+

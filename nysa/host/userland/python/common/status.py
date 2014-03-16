@@ -99,10 +99,12 @@ class _ClStatus(object):
     def status_output(self, level, c, text, color=white):
         if c is not None:
             f = str(inspect.stack()[2][3])
+            print "inspace: %s" % str(inspect.stack()[2])
             d = "%s:%s " % (c.__class__.__name__, f)
             text=d + text
             print "%s%s: %s%s" % (color, level, text, white)
         else:
+            print "inspace: %s" % str(inspect.stack()[2])
             print "%s%s: %s%s" % (color, level, text, white)
 
     def set_level(self, level):

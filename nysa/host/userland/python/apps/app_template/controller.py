@@ -60,20 +60,27 @@ class Controller(NysaBaseController):
         super (Controller, self).__init__()
         self.m = AppModel()
 
+    @staticmethod
+    def get_name():
+        #Change this for your app
+        return "app_template"
+
     def start_standalone_app(self):
         app = QApplication (sys.argv)
         self.v = View(self.status, self.actions)
         self.v.setup_simple_text_output_view()
         sys.exit(app.exec_())
 
-    def get_unique_image_id(self):
+    @staticmethod
+    def get_unique_image_id():
         """
         If this ia controller for an entire image return the associated unique
         image ID here
         """
         return None
 
-    def get_device_id(self):
+    @staticmethod
+    def get_device_id():
         """
         If this is a controller for an individual device (GPIO, I2C, UART,
         etc...) return the associted device ID here (notes for the device are in
@@ -81,7 +88,8 @@ class Controller(NysaBaseController):
         """
         return None
 
-    def get_device_sub_id(self):
+    @staticmethod
+    def get_device_sub_id():
         """
         If this is a controller for an individual device with that has a
         specific implementation (Cospan Design's version of a GPIO controller
@@ -89,7 +97,8 @@ class Controller(NysaBaseController):
         """
         return None
 
-    def get_device_unique_id(self):
+    @staticmethod
+    def get_device_unique_id():
         """
         Used to differentiate devices with the same device/sub ids.
         """

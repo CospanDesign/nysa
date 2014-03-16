@@ -40,12 +40,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              "common"))
 
-
 from tree_table.tree_table import TreeTableModel
 from tree_table.tree_table import BranchNode
 from tree_table.tree_table import LeafNode
-
-
 
 KEY, NODE = range(2)
 

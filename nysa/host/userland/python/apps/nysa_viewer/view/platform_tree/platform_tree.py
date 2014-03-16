@@ -35,8 +35,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir,
                              os.pardir,
-                             "common",
-                             "tree_table"))
+                             os.pardir))
 
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
@@ -45,10 +44,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 
 from status import Status
 from actions import Actions
+from common.utils import get_color_from_id
 
-from tree_table import TreeTableModel
-from tree_table import BranchNode
-from tree_table import LeafNode
+
+from apps.common.tree_table.tree_table import TreeTableModel
+from apps.common.tree_table.tree_table import BranchNode
+from apps.common.tree_table.tree_table import LeafNode
 
 
 class DeviceNode(LeafNode):
@@ -58,14 +59,8 @@ class DeviceNode(LeafNode):
         m = hashlib.md5()
         m.update(unique_id)
         h = int(m.hexdigest(), 16)
-        #print "Hex: 0x%08X" % h
-        #Boost the light level, it would be very difficult to see if the
-        #Background Color is too dark
-
-        red = ((h >> 16) & 0xFF) | 0x40
-        green = ((h >> 8) & 0xFF) | 0x40
-        blue = (h & 0xFF) | 0x40
-        self.color = QColor(red, green, blue)
+        self.color_id = h
+        self.color = get_color_from_id(h)
         super (DeviceNode, self).__init__(fields)
 
     def field(self, column):
@@ -394,15 +389,20 @@ class PlatformTree(QTreeView):
         return size
 
     def add_device(self, dev_type, unique_id, data):
-        print "Adding: %s" % dev_type
         self.m.addRecord(dev_type, unique_id, data)
         self.expandAll()
 
     def remove_device(self, unique_id):
         self.m.removeRecord(unique_id)
 
+    def get_node_color(self, index):
+        node = self.m.nodeFromIndex(index)
+        if isinstance(node, DeviceNode):
+            return node.get_color()
+        return None
+
     def get_unique_id(self, index):
-        self.m.asRecord(index)
+        l = self.m.asRecord(index)
 
     def activated(self, index):
         self.status.Debug(self, "Activated: %d, %d" % (index.row(), index.column()))
@@ -421,8 +421,8 @@ class PlatformTree(QTreeView):
             #print "Type: %s" % nysa_type
             #print "Device: %s" % str(type(nysa_dev))
             #print "ID: %s" % uid
-            self.actions.platform_tree_changed_signal.emit(uid, nysa_type, nysa_dev)
             self.sm.select(index, QItemSelectionModel.Rows | QItemSelectionModel.Select)
+            self.actions.platform_tree_changed_signal.emit(uid, nysa_type, nysa_dev)
 
     def item_pressed(self, index):
         self.status.Debug(self, "Pressed: %d, %d" % (index.row(), index.column()))

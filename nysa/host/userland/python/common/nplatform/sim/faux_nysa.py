@@ -130,7 +130,7 @@ class FauxNysa(Nysa):
         d = gd.gen_script(self.dev_dict, debug = False)
         drt_array = Array('B')
         dl = d.splitlines()
-        print "DL Lenght: %d" % len(dl)
+        #print "DL Lenght: %d" % len(dl)
         for l in dl:
             #print "l: %s" % l
             i = int(l, 16)

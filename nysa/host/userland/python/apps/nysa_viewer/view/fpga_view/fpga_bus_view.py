@@ -52,12 +52,16 @@ class FPGABusView(GraphicsWidget):
 
     def clear(self):
         #self.status.Verbose(self, "Clearing the FPGA Image")
-        #self.boxes = {}
-        pass
+        #print "Items: %s" % str(self.view.items())
+        self.scene.clear()
+        self.boxes = {}
+        self.scene.clear_links()
 
     def update(self):
+        super (FPGABusView, self).update()
         self.view._scale_fit()
-        super (FPGAImage, self).update()
+        #self.scene.update(self.scene.sceneRect())
+        #self.scene.invalidate(self.scene.sceneRect())
 
     def sizeHint (self):
         size = QSize()

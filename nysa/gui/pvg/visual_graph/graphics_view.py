@@ -50,6 +50,8 @@ class GraphicsView(QGraphicsView):
         self.icon = QIcon()
         self.controller = parent
         #self.setAcceptDrops(True)
+        self.scale_min = .01
+        self.scale_max = 1000
         self.dbg = False
 
     def set_controller(self, controller):

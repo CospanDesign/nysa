@@ -116,7 +116,6 @@ class WishboneController (controller.Controller):
         hi_name = self.model.get_host_interface_name()
         hi = HostInterface(self.scene,
                            hi_name)
-        print "Added Host Interface"
         hi.link_master(m)
         self.boxes["host_interface"] = hi
 

@@ -82,20 +82,13 @@ class FPGAImage(QWidget):
         else:
             raise NotImplemented("Implement AXI Interface!")
 
-        self.controller.initialize_view()
-        self.controller.refresh_slaves()
-        m = self.controller.get_model()
-        npslaves = m.get_number_of_peripheral_slaves()
-
-        height = (SLAVE_RECT.height() * npslaves + SLAVE_VERTICAL_SPACING)
-        width = (SLAVE_RECT.width() +
-                 PERIPHERAL_BUS_RECT.width() +
-                 MASTER_RECT.width() +
-                 HOST_INTERFACE_RECT.width() +
-                 (SLAVE_HORIZONTAL_SPACING * 4))
-        r = QRectF(0, 0, height, 100)
-        self.fbv.view.fitInView(r, Qt.KeepAspectRatio)
+        print "Number of slaves: %d" % len(config_dict["SLAVES"])
         self.bpv.setup_bus(config_dict, n)
+        
+        self.controller.initialize_view()
+        #print "Items: %s" % str(self.fbv.view.items())
+        self.actions.platform_tree_first_dev.emit()
+        self.fbv.update()
 
     def sizeHint (self):
         size = QSize()

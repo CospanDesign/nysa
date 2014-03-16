@@ -46,7 +46,7 @@ p = os.path.join(os.path.dirname(__file__),
                              "pvg")
 
 p = os.path.abspath(p)
-print "Visual Graph Path: %s" % p
+#print "Visual Graph Path: %s" % p
 sys.path.append(p)
 from visual_graph.graphics_scene import GraphicsScene as gs
 
@@ -214,5 +214,8 @@ class GraphicsScene(gs):
         index = slave.bus.get_slave_index(slave.box_name)
         bus_type = slave.bus.get_bus_type()
         self.fd.remove_slave(bus_type, index)
+
+    def clear_links(self):
+        self.links = []
 
 

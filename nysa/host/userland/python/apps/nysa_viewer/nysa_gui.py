@@ -27,6 +27,8 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 import argparse
 import sys
 import os
+import collections
+
 from PyQt4.Qt import *
 from PyQt4.QtCore import *
 
@@ -38,6 +40,7 @@ p = os.path.join(os.path.dirname(__file__),
 sys.path.append(p)
 
 from platform_scanner import PlatformScanner
+from script_manager import ScriptManager
 
 from view.main_view import MainForm
 from status import Status
@@ -72,7 +75,9 @@ class NysaGui(QObject):
 
         #Connect the action signal to a local function
         self.actions.refresh_signal.connect(self.refresh_platform_tree)
-        self.actions.platform_tree_changed_signal.connect(self.nysa_device_changed)
+        self.actions.platform_tree_changed_signal.connect(self.platform_changed)
+        self.nbc = ScriptManager()
+        self.nbc.scan()
         self.refresh_platform_tree()
         sys.exit(app.exec_())
 
@@ -82,17 +87,14 @@ class NysaGui(QObject):
         platforms_dict = ps.get_platforms()
 
         for pis in platforms_dict:
-            print "pis: %s" % pis
             for pi in platforms_dict[pis]:
-                print "pi: %s" % str(pi)
                 self.status.Info(self, "Refresh The Platformsical Tree")
                 t = platforms_dict[pis][pi]
                 self.actions.add_device_signal.emit(pis, pi, t)
          
             self.actions.platform_tree_get_first_dev.emit()
 
-
-    def nysa_device_changed(self, uid, dev_type, nysa_device):
+    def platform_changed(self, uid, dev_type, nysa_device):
         if self.uid == uid:
             #Don't change anything if it's the same UID
             self.status.Verbose(self, "Same UID, no change")
@@ -113,14 +115,12 @@ class NysaGui(QObject):
         config_dict = drt_to_config(self.n)
         self.fv.update_nysa_image(self.n, config_dict)
 
-
 def drt_to_config(n):
 
     config_dict = {}
-
     #Read the board id and find out what type of board this is
     config_dict["board"] = n.get_board_name()
-    print "Name: %s" % config_dict["board"]
+    #print "Name: %s" % config_dict["board"]
 
     #Read the bus flag (Wishbone or Axie)
     if n.is_wishbone_bus():
@@ -130,10 +130,12 @@ def drt_to_config(n):
         config_dict["bus_type"] = "axie"
         config_dict["TEMPLATE"] = "axie_template.json"
 
-    config_dict["SLAVES"] = {}
-    config_dict["MEMORY"] = {}
+    config_dict["SLAVES"] = collections.OrderedDict()
+    config_dict["MEMORY"] = collections.OrderedDict()
     #Read the number of slaves
     #Go thrugh each of the slave devices and find out what type it is
+    #n.pretty_print_drt()
+    #print "Number of devices: %d" % n.get_number_of_devices()
     for i in range (n.get_number_of_devices()):
         if n.is_memory_device(i):
             name = "Memory %d" % i
@@ -145,6 +147,7 @@ def drt_to_config(n):
             continue
 
         name = n.get_device_name_from_id(n.get_device_id(i))
+        name = "%s %d" % (name, i)
         config_dict["SLAVES"][name] = {}
         #print "Name: %s" % n.get_device_name_from_id(n.get_device_id(i))
         config_dict["SLAVES"][name]["id"] = n.get_device_id(i)
@@ -156,9 +159,6 @@ def drt_to_config(n):
     config_dict["INTERFACE"] = {}
     return config_dict
     #Read the number of memory devices
-
-
-
 
 def main(argv):
     #Parse out the commandline arguments

@@ -28,13 +28,15 @@ import os
 import sys
 import argparse
 
+from PyQt4.Qt import QApplication
+
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
-                             "common"))
+                             os.pardir))
 
 
-from nysa_base_controller import NysaBaseController
-
+from apps.common.nysa_base_controller import NysaBaseController
+import apps
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
@@ -44,10 +46,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 from platform_scanner import PlatformScanner
 import status
 
-from view.view import View
-from model.model import AppModel
+from .view.view import View
+from .model.model import AppModel
 
-from PyQt4.Qt import QApplication
 
 #Module Defines
 n = str(os.path.split(__file__)[1])
@@ -82,6 +83,7 @@ class Controller(NysaBaseController):
         self.drt_desc = s
         self.m = AppModel()
 
+
     def start_standalone_app(self, platform):
         app = QApplication (sys.argv)
         self.m.setup_model(self, platform[2])
@@ -102,17 +104,25 @@ class Controller(NysaBaseController):
         self.v.resize_columns()
         sys.exit(app.exec_())
 
-    def get_unique_image_id(self):
+    @staticmethod
+    def get_name():
+        return "DRT Viewer"
+
+    @staticmethod
+    def get_unique_image_id():
         return None
 
-    def get_device_id(self):
+    @staticmethod
+    def get_device_id():
         #ID of DRT
         return 0
 
-    def get_device_sub_id(self):
+    @staticmethod
+    def get_device_sub_id():
         return None
 
-    def get_device_unique_id(self):
+    @staticmethod
+    def get_device_unique_id():
         return None
 
 

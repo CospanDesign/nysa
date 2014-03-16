@@ -32,7 +32,7 @@ from PyQt4.QtGui import QToolBar
 from PyQt4.QtGui import QPushButton
 from PyQt4.QtCore import Qt
 
-from drt_table import DRTTree
+from .drt_table import DRTTree
 
 class View(QWidget):
 
