@@ -23,6 +23,7 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 
 from PyQt4.Qt import QColor
+import hashlib
 
 def get_color_from_id(num):
     #Boost the light level, it would be very difficult to see if the
@@ -31,4 +32,10 @@ def get_color_from_id(num):
     green = ((num >> 8) & 0xFF) | 0x40
     blue = (num & 0xFF) | 0x40
     return QColor(red, green, blue)
+
+def create_hash(unique_id):
+    m = hashlib.md5()
+    m.update(unique_id)
+    h = int(m.hexdigest(), 16)
+    return h
 

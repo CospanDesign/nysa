@@ -15,8 +15,9 @@ os.path.join(os.path.dirname(__file__),
 import status
 import actions
 
+from properties_base import PropertiesBase
 
-class NothingProperties(QWidget):
+class NothingProperties(PropertiesBase):
 
     def __init__(self):
         #super (NothingProperties, self).__init__(parent)
@@ -27,7 +28,7 @@ class NothingProperties(QWidget):
         self.layout = QFormLayout(self)
 
         self.ilabel = QLabel("Info")
-        self.info_text = QLabel("Nothing Selected, Choose a device in the Plattform Tree")
+        self.info_text = QLabel("Nothing Selected, Choose a device in the Platform Tree")
         self.info_text.setWordWrap(True)
 
         self.setLayout(self.layout)

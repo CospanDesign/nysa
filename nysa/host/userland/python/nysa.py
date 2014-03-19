@@ -770,4 +770,18 @@ class Nysa(object):
         #return self.drt_manager.get_board_name(int(self.drt_lines[3]))
         return self.drt_manager.get_board_name()
 
+    def get_image_id(self):
+        """
+        Returns the image id
+
+        Args:
+            Nothing
+
+        Returns:
+            (int): Image ID of the FPGA image
+
+        Raises:
+            DRTError if DRT is not defined
+        """
+        return self.drt_manager.get_image_id()
 

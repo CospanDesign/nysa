@@ -37,6 +37,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 from actions import Actions
 from common.utils import get_color_from_id
+from fpga_view.fpga_view import FPGAImage
 
 class TabManagerException(Exception):
     pass
@@ -49,7 +50,9 @@ class TabManager(QObject):
         self.actions = Actions()
         self.tab_view = tab_view
         self.tabs = []
-        self.connect(self.tab_view, SIGNAL("tabRemoved"), self.tab_removed)
+        self.tab_view.setTabsClosable(True)
+        self.tab_view.tabCloseRequested.connect(self.tab_remove_request)
+        #self.connect(self.tab_view, SIGNAL("tabRemoved"), self.tab_remove_request)
 
     def set_tab_color (self, widget, color):
         index = self.tab_view.indexOf(widget)
@@ -82,13 +85,26 @@ class TabManager(QObject):
         self.tabs.append([nysa_id, widget])
 
 
-    def tab_removed(self, index):
-        print "Tab Removed"
-        for i in range (len(self.tabs), 0, -1):
-            widget = self.tabs[i][1]
-            if self.tab_view.indexOf(widget) == -1:
-                del (self.tabs[i])
+    def tab_remove_request(self, index):
+        widget = self.tab_view.widget(index)
+        if isinstance(widget, FPGAImage):
+            self.status.Important(self, "Cannot remove bus view")
+            return
+
+        for i in range(len(self.tabs)):
+            item = self.tabs[i]
+            if widget == item[1]:
+                del self.tabs[i]
+                self.tab_view.removeTab(index)
+                self.actions.remove_tab.emit(widget)
                 return
+        #    #widget = self.tabs[i][1]
+
+        #    if self.tab_view.indexOf(widget) == -1:
+        #        print "Found: %s" % str(widget)
+        #        del (self.tabs[i])
+        #        return
+
         return
             
     
@@ -102,3 +118,4 @@ class TabManager(QObject):
                 index = self.tab_view.indexOf(self.tabs[i][1])
                 self.tab_view.removeTab(index)
                 del(self.tabs[i])
+

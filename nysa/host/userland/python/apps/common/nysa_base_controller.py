@@ -54,10 +54,19 @@ class NysaBaseController:
     def start_standalone_app(self):
         raise NotImplemented("Start standalone app not implemented!")
 
+    def _initialize(self):
+        raise NotImplemented("_initialize Not Implemented")
+
     def set_nysa_viewer_controls(self, actions, status):
         self.actions = actions
         self.status = status
    
+    def start_tab_view(self, platform):
+        self._initialize()
+
+    def get_view(self):
+        raise NotImplemented("get_view Not Implemented")
+
     @staticmethod
     def get_name():
         raise NotImplemented("get_name is not implemented")

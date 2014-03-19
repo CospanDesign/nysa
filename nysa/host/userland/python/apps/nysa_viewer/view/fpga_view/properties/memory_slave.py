@@ -16,7 +16,9 @@ import status
 import actions
 
 
-class MemorySlaveProperties(QWidget):
+from properties_base import PropertiesBase
+
+class MemorySlaveProperties(PropertiesBase):
 
     def __init__(self):
         super (MemorySlaveProperties, self).__init__()
@@ -26,14 +28,19 @@ class MemorySlaveProperties(QWidget):
         self.layout = QFormLayout(self)
         self.slave_name = QLabel("")
 
+        self.initialize_script_list()
+
         self.setLayout(self.layout)
         self.layout.addRow(QLabel("Module Type"), QLabel("Memory Slave"))
         self.layout.addRow(QLabel("Name"), self.slave_name)
+        self.layout.addRow(QLabel("Scripts"), self.script_list)
         self.hide()
 
 
-    def set_slave(self, name, config_dict, n):
+    def set_slave(self, name, config_dict, n, scripts):
         self.slave_name.setText(name)
+        self.clear_scripts_list()
+        self.set_scripts_list(scripts)
         self.config_dict = config_dict
         self.nysa = n
         self.slave_name.setText(name)

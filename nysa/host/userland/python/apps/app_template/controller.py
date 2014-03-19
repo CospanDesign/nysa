@@ -65,11 +65,20 @@ class Controller(NysaBaseController):
         #Change this for your app
         return "app_template"
 
-    def start_standalone_app(self):
-        app = QApplication (sys.argv)
+    def _initialize(self):
         self.v = View(self.status, self.actions)
         self.v.setup_simple_text_output_view()
+
+    def start_standalone_app(self):
+        app = QApplication (sys.argv)
+        self._initialize()
         sys.exit(app.exec_())
+
+    def start_tab_view(self, platform):
+        self._initialize()
+
+    def get_view(self):
+        return self.v
 
     @staticmethod
     def get_unique_image_id():

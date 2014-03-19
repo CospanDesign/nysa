@@ -125,11 +125,11 @@ class GraphicsScene(gs):
     def set_memory_bus(self, memory_bus):
         self.memory_bus = memory_bus
 
-    def slave_selected(self, name, bus, tags):
-        self.actions.slave_selected.emit(name, bus.box_name, tags)
+    def slave_selected(self, name, bus):
+        self.actions.slave_selected.emit(name, bus.box_name)
 
-    def slave_deselected(self, name, bus, tags):
-        self.actions.slave_deselected.emit(name, bus.box_name, tags)
+    def slave_deselected(self, name, bus):
+        self.actions.slave_deselected.emit(name, bus.box_name)
 
     def is_arbitor_master_active(self):
         if self.dbg: print "GS: is_arbitor_master_active()"

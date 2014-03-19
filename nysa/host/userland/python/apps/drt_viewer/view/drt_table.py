@@ -77,6 +77,13 @@ class DRTDescriptionBranch(BranchNode):
     def get_dev_type(self):
         return self.dev_type
 
+    def is_first_index(self):
+        index = int(self.fields[0], 16)
+        if index % 8 == 0:
+            return True
+        return False
+
+
     def field(self, column):
         assert 0 <= column <= len(self.fields)
         return self.fields[column]
@@ -107,6 +114,11 @@ class Root(BranchNode):
                 c = child
                 break
         self.children.remove(c)
+
+    def insertChild(self, child):
+        print "Insert Child"
+        child.parent = self
+        self.children.append(child)
 
     def removeChild(self, child):
         self.children.remove(child)
@@ -176,6 +188,19 @@ class DRTTreeModel(TreeTableModel):
             return self.font
 
         if role == Qt.BackgroundColorRole:
+            if index.column() == 0:
+                if index.row() != 0:
+                    node = self.nodeFromIndex(index)
+                    if isinstance(node, DRTDescriptionBranch):
+                        if node.is_first_index():
+                            return QColor.fromRgb(0xC0C0C0)
+            if index.column() == 2:
+                if index.row() != 0:
+                    node = self.nodeFromIndex(index)
+                    if isinstance(node, DRTDescriptionBranch):
+                        if node.is_first_index():
+                            return QColor.fromRgb(0xC0C0C0)
+                   
             if index.column() == 1:
                 node = self.nodeFromIndex(index)
 
@@ -191,15 +216,6 @@ class DRTTreeModel(TreeTableModel):
                         return QColor.fromRgb(0xDA70D6)
 
                     return QColor.fromRgb(0xB0C4DE)
-
-
-
-                #dev_index = index.row() % 8
-                #Light Blue
-                #return QColor.fromRgb(0xB0C4DE)
-                #Light Purple
-                #return QColor.fromRgb(0xDA70D6)
-                #Light Purple
 
 
         if role != Qt.DisplayRole:

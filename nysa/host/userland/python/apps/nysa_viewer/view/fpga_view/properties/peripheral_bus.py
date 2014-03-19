@@ -24,6 +24,7 @@ class PeripheralBusProperties(PropertiesBase):
         super (PeripheralBusProperties, self).__init__()
         self.actions = actions.Actions()
         self.status = status.Status()
+        self.initialize_default_form_view()
 
         self.set_name("Peripheral Bus")
         self.set_info("Facilitates communication between master and user host\n"

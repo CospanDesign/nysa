@@ -23,6 +23,7 @@ class MasterProperties(PropertiesBase):
         super (MasterProperties, self).__init__()
         self.actions = actions.Actions()
         self.status = status.Status()
+        self.initialize_default_form_view()
 
         self.features_text = QLabel("2 Bus Controllers\n\n"
                                     "Single or Burst Reads/Writes\n\n"

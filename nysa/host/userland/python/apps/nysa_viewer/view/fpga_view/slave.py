@@ -36,7 +36,7 @@ from visual_graph.box import Box
 import visual_graph.graphics_utils as gu
 
 class Slave(Box):
-    """Host Interface Box"""
+    """Slave Box"""
 
     def __init__(self,
                  scene,
@@ -90,9 +90,9 @@ class Slave(Box):
     def itemChange(self, a, b):
         if QGraphicsItem.ItemSelectedHasChanged == a:
             if b.toBool():
-                self.s.slave_selected(self.box_name, self.bus, self.user_data)
+                self.s.slave_selected(self.box_name, self.bus)
             else:
-                self.s.slave_deselected(self.box_name, self.bus, self.user_data)
+                self.s.slave_deselected(self.box_name, self.bus)
         return super(Slave, self).itemChange(a, b)
 
     def dragMoveEvent(self, event):

@@ -392,6 +392,21 @@ class DRTManager():
       flag_strings.append("Bits [1:0] Bus Type: Axie")
     return flag_strings
 
+  def get_image_id(self):
+    """
+    Gets the image id for this image
+
+    Args:
+        Nothing
+
+    Returns (int):
+        Image identification number
+
+    Raises:
+        Nothing
+    """
+    return int (self.drt_lines[4], 16)
+
   def get_board_name(self):
     """
     Returns the board name

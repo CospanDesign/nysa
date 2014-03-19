@@ -27,8 +27,12 @@ class _Actions(QtCore.QObject):
     module_selected = QtCore.pyqtSignal(str, name = "module_selected")
     module_deselected = QtCore.pyqtSignal(str, name = "module_deselected")
 
-    slave_selected = QtCore.pyqtSignal(str, str, object, name = "slave_selected")
-    slave_deselected = QtCore.pyqtSignal(str, str, object, name = "slave_deselected")
+    slave_selected = QtCore.pyqtSignal(str, str, name = "slave_selected")
+    slave_deselected = QtCore.pyqtSignal(str, str, name = "slave_deselected")
+
+    script_item_selected = QtCore.pyqtSignal(str, object, name = "script_item_selected")
+    remove_tab = QtCore.pyqtSignal(object, name = "remove_tab")
+
 
     def __init__(self, parent = None):
         super (_Actions, self).__init__(parent)

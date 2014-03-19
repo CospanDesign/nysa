@@ -22,8 +22,10 @@ class HostInterfaceProperties(PropertiesBase):
 
     def __init__(self):
         super (HostInterfaceProperties, self).__init__()
+
         self.actions = actions.Actions()
         self.status = status.Status()
+        self.initialize_default_form_view()
 
         self.set_name("Host Interface")
         self.set_info("Facilitates communication between host and nysa platfrom")

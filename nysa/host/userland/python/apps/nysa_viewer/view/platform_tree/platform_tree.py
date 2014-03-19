@@ -131,6 +131,16 @@ class RootBranch(BranchNode):
         return len(self.children)
 
     def childWithKey(self, key):
+        i = -1
+        if not self.children:
+            return None
+        for child in self.children:
+            if key == child[KEY]:
+                return child[NODE]
+
+        return None
+
+        '''
         key = key.toLower()
         if not self.children:
             return None
@@ -140,6 +150,7 @@ class RootBranch(BranchNode):
 
         if i < 0 or i >= len(self.children):
             return None
+        '''
 
     def remove_type(self, type_name):
         c = None

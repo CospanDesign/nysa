@@ -88,9 +88,10 @@ class ScriptManager(QObject):
         self.scripts.append(s)
 
     def identify_image_scripts(self, image_id):
-        scripts_dict = {}
+        script_dict = {}
         for script_entry in self.scripts:
-            if image_id != 0 and script_entry[IMAGE_ID_POS] == image_Id:
+            if image_id != 0 and script_entry[IMAGE_ID_POS] == image_id:
+                script_dict[script_entry[NAME_POS]] = None
                 script_dict[script_entry[NAME_POS]] == script_entry[SCRIPT_POS]
         return script_dict
 
@@ -105,7 +106,7 @@ class ScriptManager(QObject):
             if unique_id is not None and unique_id != 0:
                 if unique_id != script_entry[DEV_UNIQUE_ID]:
                     continue
-
+            script_dict[script_entry[NAME_POS]] = None
             script_dict[script_entry[NAME_POS]] = script_entry[SCRIPT_POS]
 
         return script_dict

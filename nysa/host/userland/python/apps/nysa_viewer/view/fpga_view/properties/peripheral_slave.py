@@ -15,8 +15,9 @@ os.path.join(os.path.dirname(__file__),
 import status
 import actions
 
+from properties_base import PropertiesBase
 
-class PeripheralSlaveProperties(QWidget):
+class PeripheralSlaveProperties(PropertiesBase):
 
     def __init__(self):
         super (PeripheralSlaveProperties, self).__init__()
@@ -24,27 +25,24 @@ class PeripheralSlaveProperties(QWidget):
         self.status = status.Status()
 
         self.layout = QFormLayout(self)
-        self.slave_name = QLabel("")
+        self.name = QLabel("")
 
-        self.script_list = QListWidget()
-        #self.script_list.addItem("Hello")
+        self.initialize_script_list()
 
         self.setLayout(self.layout)
         self.layout.addRow(QLabel("Module Type"), QLabel("Peripheral Slave"))
-        self.layout.addRow(QLabel("Name"), self.slave_name)
+        self.layout.addRow(QLabel("Name"), self.name)
         self.layout.addRow(QLabel("Scripts"), self.script_list)
         self.hide()
 
 
-    def set_slave(self, name, config_dict, n):
-        self.slave_name.setText(name)
+    def set_slave(self, name, config_dict, n, scripts):
+        self.name.setText(name)
         self.clear_scripts_list()
+        self.set_scripts_list(scripts)
         self.config_dict = config_dict
         self.nysa = n
-        self.slave_name.setText(name)
-        if name == "DRT":
-            print "DRT Found!"
+        self.name.setText(name)
         #Setup the reset of the config dict
 
-    def clear_scripts_list(self):
-        self.script_list.clear()
+

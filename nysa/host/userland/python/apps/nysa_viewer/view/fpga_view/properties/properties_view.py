@@ -65,11 +65,11 @@ class PropertiesView(QWidget):
             self.layout.addWidget(p)
 
         #Connect the Signals
-        self.actions.module_selected.connect(self.module_selected)
-        self.actions.module_deselected.connect(self.module_deselected)
+        #self.actions.module_selected.connect(self.module_selected)
+        #self.actions.module_deselected.connect(self.module_deselected)
 
-        self.actions.slave_selected.connect(self.slave_selected)
-        self.actions.slave_deselected.connect(self.slave_deselected)
+        #self.actions.slave_selected.connect(self.slave_selected)
+        #self.actions.slave_deselected.connect(self.slave_deselected)
 
         #Setup the initial view
         self.setup_nothing_selected()
@@ -77,13 +77,10 @@ class PropertiesView(QWidget):
     def setup_nothing_selected(self):
         self.clear_layout()
         self.nothing_params.show()
-        self.config_dict = {}
 
-    def setup_bus(self, config_dict, n):
+    def setup_bus(self, config_dict, n, scripts):
         #Populate the view for an entire bus
         self.clear_layout()
-        self.config_dict = config_dict
-        self.nysa = n
         self.main_bus_params.set_config_dict(config_dict)
         self.main_bus_params.show()
 
@@ -103,14 +100,14 @@ class PropertiesView(QWidget):
         self.clear_layout()
         self.memory_bus_params.show()
 
-    def setup_peripheral_slave(self, name):
+    def setup_peripheral_slave(self, name, config_dict, n, scripts):
         self.clear_layout()
-        self.peripheral_slave_params.set_slave(name, self.config_dict, self.nysa)
+        self.peripheral_slave_params.set_slave(name, config_dict, n, scripts)
         self.peripheral_slave_params.show()
 
-    def setup_memory_slave(self, name):
+    def setup_memory_slave(self, name, config_dict, n, scripts):
         self.clear_layout()
-        self.memory_slave_params.set_slave(name, self.config_dict, self.nysa)
+        self.memory_slave_params.set_slave(name, config_dict, n, scripts)
         self.memory_slave_params.show()
 
     def module_selected(self, name):
@@ -128,22 +125,24 @@ class PropertiesView(QWidget):
 
 
     def module_deselected(self, name):
-        print "Module: %s deselected" % name
-        self.setup_bus(self.config_dict, self.nysa)
+        pass
+        #self.setup_bus(self.config_dict, self.nysa, [])
 
-    def slave_selected(self, name, bus):
+    def slave_selected(self, name, bus, config_dict, n, scripts):
+        print "Slave: %s selected on %s bus" % (name, bus)
         if bus == "Peripherals":
-            self.setup_peripheral_slave(name)
+            self.setup_peripheral_slave(name, config_dict, n, scripts)
         if bus == "Memory":
-            self.setup_memory_slave(name)
+            self.setup_memory_slave(name, config_dict, n, scripts)
 
     def slave_deselected(self, name, bus, config_dict):
-        print "Slave: %s deselected" % name
-        self.setup_bus(self.config_dict, self.nysa)
+        pass
+        #self.setup_bus(self.config_dict, self.nysa, [])
+
 
     def device_selected(self, device_type, nysa):
         print "device: selected: %s" % device_type
-        self.setup_bus(self.config_dict, self.nysa)
+        self.setup_bus(self.config_dict, self.nysa, [])
 
 
     def clear_layout(self):

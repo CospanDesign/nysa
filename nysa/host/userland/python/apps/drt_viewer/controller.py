@@ -46,8 +46,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 from platform_scanner import PlatformScanner
 import status
 
-from .view.view import View
-from .model.model import AppModel
+from view.view import View
+from model.model import AppModel
 
 
 #Module Defines
@@ -84,8 +84,7 @@ class Controller(NysaBaseController):
         self.m = AppModel()
 
 
-    def start_standalone_app(self, platform):
-        app = QApplication (sys.argv)
+    def _initialize(self, platform):
         self.m.setup_model(self, platform[2])
         self.v = View(self.status, self.actions)
         self.v.setup_simple_text_output_view()
@@ -102,7 +101,18 @@ class Controller(NysaBaseController):
             #    print "\t%s" % row_data[1][j]
 
         self.v.resize_columns()
+        self.v.collapse_all()
+
+    def start_standalone_app(self, platform):
+        app = QApplication (sys.argv)
+        self._initialize(platform)
         sys.exit(app.exec_())
+
+    def start_tab_view(self, platform):
+        self._initialize(platform)
+
+    def get_view(self):
+        return self.v
 
     @staticmethod
     def get_name():

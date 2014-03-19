@@ -24,6 +24,7 @@ class MemoryBusProperties(PropertiesBase):
         super (MemoryBusProperties, self).__init__()
         self.actions = actions.Actions()
         self.status = status.Status()
+        self.initialize_default_form_view()
 
         self.set_name("Memory Bus")
         self.set_info("Facilitates communication between master and memory cores\n"

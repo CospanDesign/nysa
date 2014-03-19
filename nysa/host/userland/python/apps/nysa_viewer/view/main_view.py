@@ -192,11 +192,11 @@ class MainForm(QMainWindow):
         super (MainForm, self).closeEvent(event)
         quit()
 
-    def add_tab(self, widget, name):
+    def add_tab(self, uid, widget, name):
         """
         Returns an index of the tab
         """
-        return self.main_panel.add_tab(widget, name)
+        return self.main_panel.add_tab(uid, widget, name)
 
     def remove_tab(self, index):
         self.main_panel.remove_tab(index)

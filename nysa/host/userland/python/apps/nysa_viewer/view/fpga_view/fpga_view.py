@@ -62,7 +62,6 @@ class FPGAImage(QWidget):
         self.bpv.setSizePolicy(QSizePolicy.Maximum,
                                QSizePolicy.Preferred)
 
-        self.n = None
         self.controller = None
         self.main_splitter = QSplitter(Qt.Horizontal)
         self.main_splitter.addWidget(self.fbv)
@@ -74,20 +73,21 @@ class FPGAImage(QWidget):
         self.first = True
 
     def update_nysa_image(self, n, config_dict):
-        self.n = n
+        self.config_dict = config_dict
         self.fbv.clear()
-        if self.n is None:
+        if n is None:
             return
         if config_dict["bus_type"] == "wishbone":
             self.controller = WishboneController(config_dict, self.fbv.scene)
         else:
             raise NotImplemented("Implement AXI Interface!")
 
-        self.bpv.setup_bus(config_dict, n)
+        #self.bpv.setup_bus(config_dict, n)
         self.controller.initialize_view()
         self.fbv.update()
 
         if self.first:
+            #XXX: Hack, How to resize this without manually doing this the first time??
             self.first = False
             m = self.controller.get_model()
             npslaves = m.get_number_of_peripheral_slaves()
@@ -100,6 +100,21 @@ class FPGAImage(QWidget):
                     (SLAVE_HORIZONTAL_SPACING * 4))
             r = QRectF(0, 0, height, 100)
             self.fbv.view.fitInView(r, Qt.KeepAspectRatio)
+
+    def module_selected(self, name):
+        self.bpv.module_selected(name)
+
+    def module_deselected(self, name):
+        self.bpv.module_deselected(name)
+
+    def slave_selected(self, name, bus, config_dict, n, scripts):
+        self.bpv.slave_selected(name, bus, config_dict, n, scripts)
+
+    def slave_deselected(self, name, bus, config_dict):
+        self.bpv.slave_deselected(name, bus, config_dict)
+
+    def setup_bus_properties(self, config_dict, n, scripts):
+        self.bpv.setup_bus(config_dict, n, scripts)
 
     def sizeHint (self):
         size = QSize()

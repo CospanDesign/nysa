@@ -18,7 +18,6 @@ as such this file uses the GNU copyright
 by: Mark Summerfield
 
 """
-import bisect
 import codecs
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -54,18 +53,18 @@ class BranchNode(object):
         return -1
 
     def childWithKey(self, key):
+        i = -1
         if not self.children:
             return None
-        i = bisect.bisect_left(self.children, (key, None))
-        if i < 0 or i >= len(self.children):
-            return None
-        if self.children[i][KEY] == key:
-            return self.children[i][NODE]
+        for child in self.children:
+            if key == child[KEY]:
+                return child[NODE]
+
         return None
 
     def insertChild(self, child):
         child.parent = self
-        bisect.insort(self.children, (child.orderKey(), child))
+        self.children.append([child.orderKey(), child])
 
     def removeChild(self, child):
         #assert child in self.children[NODE]:
