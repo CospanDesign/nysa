@@ -748,7 +748,7 @@ class Nysa(object):
         """
         dev = 0
         try:
-            dev = self.drt_manager.find_device(dev_id, sub_id, unique_id)
+            dev = self.drt_manager.find_device(dev_id, sub_id, unique_id, debug = True)
         except DRTError, e:
             raise NysaCommError("Device not found in DRT")
 

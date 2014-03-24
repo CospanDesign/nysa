@@ -260,9 +260,3 @@ class AppModel(object):
             if offset == 7:
                 return row_data
 
-
-
-
-
-
-    

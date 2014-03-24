@@ -97,7 +97,7 @@ class FauxNysa(Nysa):
 
     def read(self, device_id, address, length = 1, mem_device = False):
         read_array = Array('B')
-        for i in range(length):
+        for i in range(length * 4):
             read_array.append(i)
         return read_array
 

@@ -209,6 +209,8 @@ class DRTManager():
     """
     if debug:
         print "Looking for: 0x%02X" % device_id
+        print "Number of devices: %s" % self.num_of_devices
+
     for dev_index in range(0, self.num_of_devices):
         id_string = self.drt_lines[((dev_index + 1) * 8)]
         dev_id = string.atoi(id_string[4:], 16)

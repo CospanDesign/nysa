@@ -29,6 +29,7 @@ class ScriptPlugin(type):
         if cls is None:
             return
         if not hasattr(cls, 'plugins'):
+            print "Initialize plugins"
             '''
             This is only implemented when the metaclass is first instantiated
 
@@ -61,7 +62,7 @@ class NysaBaseController:
         self.actions = actions
         self.status = status
    
-    def start_tab_view(self, platform):
+    def start_tab_view(self, platform, device_index = None):
         self._initialize()
 
     def get_view(self):

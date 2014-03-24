@@ -179,7 +179,6 @@ class NysaGui(QObject):
         scripts = self.sm.identify_image_scripts(image_id)
         self.fv.setup_bus_properties(self.config_dict, n, scripts)
 
-
     def script_item_selected(self, name, script):
         #print "UID: %s" % str(self.uid)
         platform = [self.platform_type, self.uid, self.n]
@@ -192,7 +191,8 @@ class NysaGui(QObject):
 
         widget = script()
         self.scripts.append([uid, name, widget])
-        widget.start_tab_view(platform)
+        device_index = None
+        widget.start_tab_view(platform, device_index)
         view = widget.get_view()
        
         self.mf.add_tab(uid, view, name)

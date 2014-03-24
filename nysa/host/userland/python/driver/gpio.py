@@ -129,6 +129,26 @@ class GPIO(Driver):
 
         self.write_register(GPIO_OUTPUT_ENABLE, direction)
 
+    def get_port_direction(self):
+        """get_port_direction
+
+        Gets the direction of the port
+
+        Args:
+            Nothing
+
+        Return (Integer):
+            32-bit value that will set the direction of all the ports
+
+        Raises:
+            NysaCommError
+        """
+
+        if self.debug:
+            print "Reading GPIO Direction"
+
+        return self.read_register(GPIO_OUTPUT_ENABLE)
+
     def set_port_raw(self, value):
         """set_port_raw
 
