@@ -1,0 +1,103 @@
+
+
+QPushButton#direction_button {
+  background-color : orange;
+  border-style     : outset;
+  border-width     : 2px;
+  border-radius    : 8px;
+  border-color     : black;
+  font             : bold 8px;
+  min-width        : 3em;
+  max-width        : 5em;
+  padding          : 2px;
+}
+QPushButton#direction_button:checked {
+  background-color : blue;
+  border-color     : black;
+  border-style     : inset;
+}
+
+QPushButton#input_button{
+  background-color : white;
+  border-style     : outset;
+  border-width     : 2px;
+  border-radius    : 8px;
+  border-color     : black;
+  font             : bold 8px;
+  min-width        : 3em;
+  max-width        : 4em;
+  padding          : 2px;
+  color            : black;
+}
+QPushButton#input_button:checked {
+  background-color : black;
+  color            : white;
+  border-color     : black;
+  border-style     : inset;
+}
+
+
+QPushButton#output_button{
+  background-color : white;
+  color            : black;
+
+  border-style     : outset;
+  border-width     : 2px;
+  border-radius    : 8px;
+  border-color     : black;
+  font             : bold 8px;
+  min-width        : 3em;
+  max-width        : 4em;
+  padding          : 2px;
+}
+QPushButton#output_button:checked {
+  background-color : black;
+  color            : white;
+}
+
+QPushButton#interrupt_enable_button{
+  background-color : white;
+  color            : black;
+
+  border-style     : outset;
+  border-width     : 2px;
+  border-radius    : 8px;
+  border-color     : black;
+  font             : bold 8px;
+  min-width        : 3em;
+  max-width        : 4em;
+  padding          : 2px;
+}
+QPushButton#interrupt_enable_button:checked {
+  background-color : black;
+  color            : white;
+}
+
+
+QPushButton#interrupt_edge_button{
+  background-color : white;
+  color            : black;
+
+  border-style     : outset;
+  border-width     : 2px;
+  border-radius    : 8px;
+  border-color     : black;
+  font             : bold 8px;
+  min-width        : 3em;
+  max-width        : 4em;
+  padding          : 2px;
+}
+QPushButton#interrupt_edge_button:checked {
+  background-color : black;
+  color            : white;
+}
+
+QLabel:{
+  color            : black;
+  font             : bold 8px;
+  min-width        : 3em;
+  max-width        : 4em;
+  padding          : 2px;
+
+}
+
