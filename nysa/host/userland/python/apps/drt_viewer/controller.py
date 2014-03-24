@@ -34,7 +34,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
 
-
 from apps.common.nysa_base_controller import NysaBaseController
 import apps
 

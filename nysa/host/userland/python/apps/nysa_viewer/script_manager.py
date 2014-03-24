@@ -62,13 +62,13 @@ class ScriptManager(QObject):
         self.script_dirs = [p]
         self.scripts = []
 
-
     def scan(self):
         from apps.drt_viewer.controller import Controller as drt_controller
         from apps.gpio_controller.controller import Controller as gpio_controller
+        print "DIR: %s" % (str(dir(self)))
 
         script_list = NysaBaseController.plugins
-        print "nbc classes: %s" % str(NysaBaseController.plugins)
+        print "\tNBC CLASSES: %s" % str(NysaBaseController.plugins)
         for script in script_list:
             print "Adding: %s" % str(script)
             self.insert_script(script)
@@ -100,8 +100,9 @@ class ScriptManager(QObject):
 
     def get_device_script(self, dev_id, sub_id = None, unique_id = None):
         script_dict = {}
+        print "Number of scripts: %d" % len(self.scripts)
         for script_entry in self.scripts:
-            print "Looking at: %d, %d, %d" % (dev_id, sub_id, unique_id)
+            print "Looking at: %d, %s, %s" % (dev_id, str(type(sub_id)), str(type(unique_id)))
             print "Comparing: %s, %s, %s" % (script_entry[DEV_ID_POS], script_entry[DEV_SUB_ID_POS], script_entry[DEV_UNIQUE_ID_POS])
             if dev_id != script_entry[DEV_ID_POS]:
                 continue

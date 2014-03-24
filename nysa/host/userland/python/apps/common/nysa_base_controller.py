@@ -25,6 +25,7 @@ from PyQt4.Qt import QObject
 
 
 class ScriptPlugin(type):
+
     def __init__(cls, name, bases, attrs):
         if cls is None:
             return
@@ -42,6 +43,7 @@ class ScriptPlugin(type):
             This is a plugin class so add it to the plugins class variable
             '''
             cls.plugins.append(cls)
+
 
 class NysaBaseController:
 
