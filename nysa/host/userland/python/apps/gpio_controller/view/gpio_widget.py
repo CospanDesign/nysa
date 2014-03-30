@@ -39,7 +39,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 
 
 from control_view import ControlView
-from gpio_actions import GPIOActions
 direction_ss = os.path.join(os.path.dirname(__file__), "stylesheet.css")
 
 
@@ -61,9 +60,9 @@ REG_INTERRUPT_EDGE = 4
 
 class GPIOWidget(QWidget):
 
-    def __init__(self, count = 32):
+    def __init__(self, count = 32, gpio_actions = None):
         super (GPIOWidget, self).__init__()
-        self.actions = GPIOActions()
+        self.gpio_actions = gpio_actions
         layout = QGridLayout()
         #status_layout = QVBoxLayout
 
@@ -144,7 +143,7 @@ class GPIOWidget(QWidget):
             layout.setRowStretch(i + 1, 8)
             layout.setRowMinimumHeight(i + 1, 8)
 
-        self.cv = ControlView()
+        self.cv = ControlView(self.gpio_actions)
 
         layout.addWidget(self.cv, 0, STATUS_POS, count, 1)
         self.setLayout(layout)
@@ -154,7 +153,7 @@ class GPIOWidget(QWidget):
     def direction_clicked(self, index):
         self.direction_changed(index)
         btn = self.direction_buttons[index]
-        self.actions.direction_changed.emit(index, btn.isChecked())
+        self.gpio_actions.direction_changed.emit(index, btn.isChecked())
 
     def direction_changed(self, index):
         btn = self.direction_buttons[index]
@@ -173,7 +172,7 @@ class GPIOWidget(QWidget):
     def out_clicked(self, index):
         self.out_changed(index)
         btn = self.output_values[index]
-        self.actions.gpio_out_changed.emit(index, btn.isChecked())
+        self.gpio_actions.gpio_out_changed.emit(index, btn.isChecked())
 
     def out_changed(self, index):
         btn = self.output_values[index]
@@ -185,7 +184,7 @@ class GPIOWidget(QWidget):
     def int_en_clicked(self, index):
         self.int_en_changed(index)
         btn = self.interrupt_enables[index]
-        self.actions.interrupt_en_changed.emit(index, btn.isChecked())
+        self.gpio_actions.interrupt_en_changed.emit(index, btn.isChecked())
 
     def int_en_changed(self, index):
         btn = self.interrupt_enables[index]
@@ -197,7 +196,7 @@ class GPIOWidget(QWidget):
     def int_edge_clicked(self, index):
         self.int_edge_changed(index)
         btn = self.interrupt_edges[index]
-        self.actions.interrupt_edge_changed.emit(index, btn.isChecked())
+        self.gpio_actions.interrupt_edge_changed.emit(index, btn.isChecked())
 
     def int_edge_changed(self, index):
         btn = self.interrupt_edges[index]

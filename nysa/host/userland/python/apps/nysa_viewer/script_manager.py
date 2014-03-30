@@ -65,6 +65,7 @@ class ScriptManager(QObject):
     def scan(self):
         from apps.drt_viewer.controller import Controller as drt_controller
         from apps.gpio_controller.controller import Controller as gpio_controller
+        from apps.memory_controller.controller import Controller as mem_controller
         print "DIR: %s" % (str(dir(self)))
 
         script_list = NysaBaseController.plugins

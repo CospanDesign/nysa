@@ -107,7 +107,7 @@ class Controller(NysaBaseController):
         self._initialize(platform)
         sys.exit(app.exec_())
 
-    def start_tab_view(self, platform):
+    def start_tab_view(self, platform, device_index = None):
         self._initialize(platform)
 
     def get_view(self):

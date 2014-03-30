@@ -57,6 +57,10 @@ def ClStatus(*args, **kw):
 
 
 class _ClStatus(object):
+    @staticmethod
+    def is_command_line():
+        return True
+
     def __init__(self):
         super(_ClStatus, self).__init__()
         print "Starint CL Status"
@@ -178,6 +182,10 @@ class _ClStatus(object):
 class _Status(QWidget):
     status_list = None
     mdl = None
+
+    @staticmethod
+    def is_command_line():
+        return False
 
     def __init__(self):
         QWidget.__init__(self)

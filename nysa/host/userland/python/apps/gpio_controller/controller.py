@@ -67,10 +67,10 @@ EPILOG = "\n" \
 from gpio_actions import GPIOActions
 
 class ReaderThread(QtCore.QThread):
-    def __init__(self, gpio, mutex, timeout):
+    def __init__(self, gpio, mutex, timeout, gpio_actions):
         super(ReaderThread, self).__init__()
 
-        self.gpio_actions = GPIOActions()
+        self.gpio_actions = gpio_actions
         self.timeout = timeout
         self.mutex = mutex
         self.gpio = gpio
@@ -88,7 +88,6 @@ class ReaderThread(QtCore.QThread):
 
     def run(self):
         while not self.term_flag:
-            #print "run!"
             time.sleep(self.timeout)
             if self.mutex.tryLock():
                 value = self.gpio.get_port_raw()
@@ -131,16 +130,16 @@ class Controller(NysaBaseController):
         self.reader_thread = None
 
     def _initialize(self, platform, device_index):
-        self.v = GPIOWidget()
+        self.v = GPIOWidget(count = 32, gpio_actions = self.gpio_actions)
         #self.m.setup_(self, platform[2], device_index)
 
         self.n = platform[2]
-        self.dev_index = device_index
 
         self.gpio = GPIO(platform[2], device_index)
+        self.dev_index = device_index + 1
 
         #Initialize the thread with a 40mS timeout
-        self.reader_thread = ReaderThread(self.gpio, self.mutex, .040)
+        self.reader_thread = ReaderThread(self.gpio, self.mutex, .040, self.gpio_actions)
 
 
         self.v.add_register(0, "GPIO Value", initial_value = self.gpio.get_port_raw())
@@ -156,11 +155,13 @@ class Controller(NysaBaseController):
         self.v.set_register(4, self.gpio.get_interrupt_edge())
 
     def start_standalone_app(self, platform, device_index):
+        #print "Device Index: %d" % device_index
         app = QApplication (sys.argv)
         self._initialize(platform, device_index)
         sys.exit(app.exec_())
 
     def start_tab_view(self, platform, device_index):
+        #print "Device Index: %d" % device_index
         self._initialize(platform, device_index)
 
     def get_view(self):
@@ -209,7 +210,7 @@ class Controller(NysaBaseController):
             print "Reader thread is finished"
             del(self.reader_thread)
             #Wait till thread is finished
-            self.reader_thread = ReaderThread(self.gpio, self.mutex, rate)
+            self.reader_thread = ReaderThread(self.gpio, self.mutex, rate, self.gpio_actions)
 
     def gpio_input_changed(self, value):
         print "Input Changed"
@@ -218,28 +219,40 @@ class Controller(NysaBaseController):
 
     def register_get_pressed(self, index):
         print "Register Get Pressed: %d" % index
+        self.mutex.lock()
         value = self.n.read_register(self.dev_index, index)
+        self.mutex.unlock()
         self.v.set_register(index, value)
 
     def register_set_pressed(self, index, value):
         print "Register Set Pressed: %d: %d" % (index, value)
+        self.mutex.lock()
         self.n.write_register(self.dev_index, index, value)
+        self.mutex.unlock()
 
     def gpio_out_changed(self, index, val):
         print "GPIO Out: %d : %s" % (index, str(val))
+        self.mutex.lock()
         self.gpio.set_bit_value(index, val)
+        self.mutex.unlock()
 
     def direction_changed(self, index, val):
         print "GPIO Direction: %d : %s" % (index, str(val))
+        self.mutex.lock()
         self.n.enable_register_bit(self.dev_index, 1, index, val)
+        self.mutex.unlock()
 
     def interrupt_en_changed(self, index, val):
         print "Interrupt En Changed: %d : %s" % (index, str(val))
+        self.mutex.lock()
         self.n.enable_register_bit(self.dev_index, 3, index, val)
+        self.mutex.unlock()
 
     def interrupt_edge_changed(self, index, val):
         print "Interrupt Edge Changed: %d : %s" % (index, str(val))
+        self.mutex.lock()
         self.n.enable_register_bit(self.dev_index, 4, index, val)
+        self.mutex.unlock()
 
 
 
@@ -302,7 +315,7 @@ def main(argv):
             if p == psi:
                 #Found a match for a name!
                 #See if we can find a GPIO device: 0
-                dev_index = n.find_device(0)
+                dev_index = n.find_device(1)
                 print "Dev Index: %d" % dev_index
                 if dev_index is not None:
                     plat = [p, psi, ps[p][psi]]

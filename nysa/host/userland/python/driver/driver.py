@@ -37,7 +37,7 @@ class Driver(object):
                  dev_id,
                  debug):
         self.n = n
-        self.dev_id = dev_id
+        self.dev_id = dev_id + 1
         self.debug = debug
 
     def set_timeout(self, timeout):

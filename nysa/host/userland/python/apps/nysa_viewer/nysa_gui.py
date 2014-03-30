@@ -87,6 +87,7 @@ class NysaGui(QObject):
 
         self.actions.script_item_selected.connect(self.script_item_selected)
         self.actions.remove_tab.connect(self.remove_script)
+        self.device_index = None
 
 
         self.scripts = []
@@ -133,13 +134,17 @@ class NysaGui(QObject):
         self.config_dict = drt_to_config(self.n)
         self.fv.update_nysa_image(self.n, self.config_dict)
         self.setup_bus_properties(self.config_dict, self.n)
+        self.device_index = None
 
     def module_selected(self, name):
         self.status.Verbose(self, "Module %s Selected" % name)
+        self.device_index = None
         self.fv.module_selected(name)
+        self.device_index = None
 
     def module_deselected(self, name):
         self.setup_bus_properties(self.config_dict, self.n)
+        self.device_index = None
 
     def slave_selected(self, name, bus):
         #self.status.Verbose(self, "Slave: %s on %s bus selected" % (name, bus))
@@ -157,12 +162,18 @@ class NysaGui(QObject):
                 dev_id = 0
                 dev_sub_id = 0
                 unique_id = 0
+                self.device_index = 0
             else:
+
+                self.device_index = self.config_dict["SLAVES"][name]["device_index"]
+
                 dev_id = self.config_dict["SLAVES"][name]["id"]
                 dev_sub_id = self.config_dict["SLAVES"][name]["sub_id"]
                 dev_unique_id = self.config_dict["SLAVES"][name]["unique_id"]
         elif bus == "Memory":
             print "Name: %s" % name
+            self.device_index = self.config_dict["MEMORY"][name]["device_index"]
+
             dev_id = self.config_dict["MEMORY"][name]["id"]
             dev_sub_id = self.config_dict["MEMORY"][name]["sub_id"]
             dev_unique_id = self.config_dict["MEMORY"][name]["unique_id"]
@@ -172,6 +183,7 @@ class NysaGui(QObject):
 
     def slave_deselected(self, name, bus):
         self.setup_bus_properties(self.config_dict, self.n)
+        self.device_index = None
 
     def setup_bus_properties(self, config_dict, n):
         scripts = []
@@ -191,8 +203,8 @@ class NysaGui(QObject):
 
         widget = script()
         self.scripts.append([uid, name, widget])
-        device_index = None
-        widget.start_tab_view(platform, device_index)
+        print "Index: %d" % self.device_index
+        widget.start_tab_view(platform, self.device_index)
         view = widget.get_view()
        
         self.mf.add_tab(uid, view, name)
@@ -230,18 +242,21 @@ def drt_to_config(n):
     for i in range (n.get_number_of_devices()):
         if n.is_memory_device(i):
             name = "Memory %d" % i
+            print "Name: %s" % n.get_device_name_from_id(n.get_device_id(i))
             config_dict["MEMORY"][name] = {}
             config_dict["MEMORY"][name]["id"] = n.get_device_id(i)
             config_dict["MEMORY"][name]["sub_id"] = n.get_device_sub_id(i)
             config_dict["MEMORY"][name]["unique_id"] = n.get_device_unique_id(i)
             config_dict["MEMORY"][name]["address"] = n.get_device_address(i)
             config_dict["MEMORY"][name]["size"] = n.get_device_size(i)
+            config_dict["MEMORY"][name]["device_index"] = i
             continue
 
         name = n.get_device_name_from_id(n.get_device_id(i))
         name = "%s %d" % (name, i)
         config_dict["SLAVES"][name] = {}
-        #print "Name: %s" % n.get_device_name_from_id(n.get_device_id(i))
+        config_dict["SLAVES"][name]["device_index"] = i
+        print "Name: %s" % n.get_device_name_from_id(n.get_device_id(i))
         config_dict["SLAVES"][name]["id"] = n.get_device_id(i)
         config_dict["SLAVES"][name]["sub_id"] = n.get_device_sub_id(i)
         config_dict["SLAVES"][name]["unique_id"] = n.get_device_unique_id(i)

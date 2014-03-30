@@ -70,9 +70,9 @@ STYLE = "                               "\
 INFO = open(os.path.join(os.path.dirname(__file__), os.pardir, "doc", "gpio.txt"), "r").read()
 class ControlView(QWidget):
 
-    def __init__(self, status = None, Actions = None):
+    def __init__(self, gpio_actions = None):
         super (ControlView, self).__init__()
-        self.gpio_actions = GPIOActions()
+        self.gpio_actions = gpio_actions
         layout = QGridLayout()
 
         #Info

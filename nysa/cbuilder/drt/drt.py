@@ -211,22 +211,22 @@ class DRTManager():
         print "Looking for: 0x%02X" % device_id
         print "Number of devices: %s" % self.num_of_devices
 
-    for dev_index in range(0, self.num_of_devices):
-        id_string = self.drt_lines[((dev_index + 1) * 8)]
+    for device_index in range(0, self.num_of_devices):
+        id_string = self.drt_lines[((device_index + 1) * 8)]
         dev_id = string.atoi(id_string[4:], 16)
         dev_sub_id = string.atoi(id_string[:4], 16)
         if debug:
-            print "Position: 0x%02X" % dev_index
+            print "Position: 0x%02X" % device_index
             print "\tDev ID: 0x%02X" % dev_id
             print "\tDev Sub ID: 0x%02X" % dev_sub_id
         if (dev_id == device_id):
             if debug:
-                print "Found 0x%02X at position: 0x%02X" % (device_id, dev_index)
+                print "Found 0x%02X at position: 0x%02X" % (device_id, device_index)
             if (subdevice_id is not None):
                 if (subdevice_id == dev_sub_id):
-                    return dev_index + 1
+                    return device_index
             else:
-                return dev_index + 1
+                return device_index
     return None
 
   def is_device_attached(self, device_id, subdevice_id=None):
@@ -245,8 +245,8 @@ class DRTManager():
     Raises:
       Nothing
     """
-    for dev_index in range (0, self.num_of_devices):
-      id_string = self.drt_lines[((dev_index + 1) * 8)]
+    for device_index in range (0, self.num_of_devices):
+      id_string = self.drt_lines[((device_index + 1) * 8)]
       dev_id = string.atoi(id_string[4:], 16)
       dev_sub_id = string.atoi(id_string[:4], 16)
       if (self.dbg):
@@ -541,11 +541,11 @@ class DRTManager():
     num_devices = self.get_number_of_devices()
     while (1):
       prev_offset = offset
-      for dev_index in range (0, num_devices):
-        memory_device = self.is_memory_device(dev_index)
-        dev_offset = self.get_address_from_index(dev_index)
-        dev_size = self.get_size_from_index(dev_index)
-        device_id = self.get_id_from_index(dev_index)
+      for device_index in range (0, num_devices):
+        memory_device = self.is_memory_device(device_index)
+        dev_offset = self.get_address_from_index(device_index)
+        dev_size = self.get_size_from_index(device_index)
+        device_id = self.get_id_from_index(device_index)
         if (device_id == 5):
           if dev_offset == offset:
             offset = offset + dev_size + 1

@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-# Copyright (c) 2014 Dave McCoy (dave.mccoy@cospandesign.com)
+# Copyright (c) 2014 name (email@example.com)
 
 # This file is part of Nysa (wiki.cospandesign.com/index.php?title=Nysa).
 #
@@ -28,16 +28,18 @@ import os
 import sys
 import argparse
 
+from PyQt4.Qt import QApplication
+from PyQt4 import QtCore
+
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
-                             "common"))
+                             os.pardir))
 
-from nysa_base_controller import NysaBaseController
+from apps.common.nysa_base_controller import NysaBaseController
+import apps
 
 from view.view import View
 from model.model import AppModel
-
-from PyQt4.Qt import QApplication
 
 #Module Defines
 n = str(os.path.split(__file__)[1])

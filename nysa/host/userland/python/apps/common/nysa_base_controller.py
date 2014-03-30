@@ -30,7 +30,7 @@ class ScriptPlugin(type):
         if cls is None:
             return
         if not hasattr(cls, 'plugins'):
-            print "Initialize plugins"
+            #print "Initialize plugins"
             '''
             This is only implemented when the metaclass is first instantiated
 
@@ -38,7 +38,7 @@ class ScriptPlugin(type):
             '''
             cls.plugins = []
         else:
-            print "Adding: %s" % str(cls)
+            #print "Adding: %s" % str(cls)
             '''
             This is a plugin class so add it to the plugins class variable
             '''

@@ -31,4 +31,5 @@ class _GPIOActions(QtCore.QObject):
 
     def __init__(self, parent = None):
         super (_GPIOActions, self).__init__(parent)
+        print "Started"
 

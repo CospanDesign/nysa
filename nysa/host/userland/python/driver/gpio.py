@@ -107,9 +107,6 @@ class GPIO(Driver):
     def __init__(self, nysa, dev_id, debug = False):
         super(GPIO, self).__init__(nysa, dev_id, debug)
 
-    def set_dev_id(self, dev_id):
-        self.dev_id = dev_id
-
     def set_port_direction(self, direction):
         """set_port_direction
 
