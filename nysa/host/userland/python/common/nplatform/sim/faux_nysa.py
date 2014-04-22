@@ -147,6 +147,8 @@ class FauxNysa(Nysa):
         self.drt_manager.set_drt(drt_array)
         return drt_array
 
+    def is_interrupt_for_slave(self, dev_id):
+        return True
 
     def wait_for_interrupts(self, wait_time = 1):
         time.sleep(0.1)
