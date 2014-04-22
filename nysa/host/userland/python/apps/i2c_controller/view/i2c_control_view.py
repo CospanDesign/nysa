@@ -16,10 +16,10 @@
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
 
-""" nysa interface
+""" i2c control view
 """
 
-__author__ = 'email@example.com (name)'
+__author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 import sys
 import os
@@ -48,6 +48,17 @@ GOOD_VAL ="QLineEdit {                  "\
           " background-color : white    "\
           "}                            "
 
+I2C_DESC_LOC = os.path.join(os.path.dirname(__file__),
+                            os.pardir,
+                            os.pardir,
+                            os.pardir,
+                            os.pardir,
+                            os.pardir,
+                            os.pardir,
+                            "docs",
+                            "i2c.txt")
+
+
 
 class I2CControlView(QWidget):
 
@@ -55,6 +66,18 @@ class I2CControlView(QWidget):
         super (I2CControlView, self).__init__()
         self.status = status
         self.actions = actions
+
+        f = open(I2C_DESC_LOC, 'r')
+        s = f.read()
+        f.close()
+        s = s.split("DESCRIPTION START")[1]
+        s = s.split("DESCRIPTION END")[0]
+        #print "s: %s" % s
+        i2c_desc = QLabel(s)
+        i2c_desc.setMaximumWidth(500)
+        i2c_desc.setWordWrap(True)
+        i2c_desc.setAlignment(QtCore.Qt.AlignTop)
+
 
         run_button = QPushButton("Run")
         run_button.setToolTip("Execute the I2C Transaction")
@@ -74,7 +97,7 @@ class I2CControlView(QWidget):
 
         reset_button = QPushButton("Reset")
         reset_button.setToolTip("Reset the current execution")
-        reset_button.clicked.connect(self.actions.i2c_run)
+        reset_button.clicked.connect(self.actions.i2c_reset)
 
         step_button = QPushButton("Step")
         step_button.setToolTip("Execute one I2C Transaction")
@@ -103,42 +126,10 @@ class I2CControlView(QWidget):
         self.default_slave_addr.returnPressed.connect(self.update_all_slave_addresses)
         self.update_all_slave_addr = QPushButton("Update All Slave Addr")
         self.update_all_slave_addr.clicked.connect(self.update_all_slave_addresses)
-        '''
-        self.name_line_edit = QLineEdit("test")
-        load_config = QPushButton("Load")
-        save_config = QPushButton("Save")
-
-
-        layout = QFormLayout()
-
-        layout.addRow("Name:", self.name_line_edit)
-        layout.addRow(save_config)
-        layout.addRow(load_config)
-        layout.addRow(QWidget())
-
-        #Add Default I2C Address
-        layout.addRow(QLabel("Default Slave Addr:"), self.default_slave_addr)
-        layout.addRow(self.update_all_slave_addr)
-
-
-        layout.addRow(run_button)
-        layout.addRow(pause_button)
-        layout.addRow(stop_button)
-        layout.addRow(reset_button)
-        layout.addRow(QLabel("Status:"), self.execute_status)
-
-        '''
-
 
         layout = QGridLayout()
 
-        #file_layout.addWidget(QLabel("Name:"), 0, 0, 1, 1)
-        #file_layout.addWidget(self.name_line_edit, 0, 1, 1, 1)
-        #file_layout.addWidget(save_config, 1, 0, 1, 2)
-        #file_layout.addWidget(load_config, 2, 0, 1, 2)
-
-        #layout.addLayout(file_layout, 0, 0, 1, 2)
-
+        layout.addWidget(i2c_desc, 0, 0, 1, 2)
         #Add Default I2C Address
         default_addr_layout = QGridLayout()
 
@@ -164,13 +155,12 @@ class I2CControlView(QWidget):
         buttons_layout.addWidget(self.execute_status, 8, 1, 1, 1)
 
         layout.addLayout(buttons_layout,              3, 0, 1, 2)
-
-
-
-
-
+        self.actions.i2c_execute_status_update.connect(self.status_update)
         self.setLayout(layout)
         self.show()
+
+    def status_update(self, status):
+        self.execute_status.setText(status)
 
     def update_delay(self):
         value = int(str(self.delay_le.text()), 10)

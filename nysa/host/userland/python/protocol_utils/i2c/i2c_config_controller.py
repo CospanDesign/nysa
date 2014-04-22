@@ -35,6 +35,8 @@ class I2CConfigController(object):
     def __init__(self, file_location = None):
         super (I2CConfigController, self).__init__()
         self.file_location = file_location
+        self.name = ""
+        self.description = ""
 
 
     def _populate_row(self, row_data):
@@ -139,12 +141,20 @@ class I2CConfigController(object):
             row_data.append(d)
         return row_data
 
+    def get_name(self):
+        return self.name
 
-    def save_data(self, file_location, start_data, loop_data):
+    def get_description(self):
+        return self.description
+
+    def save_data(self, file_location, start_data, loop_data, name, description):
+        self.name = name
+        self.description = description
         with open(file_location, 'wb') as csv_file:
-            print "Save File is open"
             csv_writer = csv.writer(csv_file, delimiter = ',')
             #First Set the info for the user on line 0
+            csv_writer.writerow(["#Name", name])
+            csv_writer.writerow(["#Description", description])
             csv_writer.writerow(["#Start Sequence"])
             start_list = []
             for d in start_data:
@@ -161,7 +171,6 @@ class I2CConfigController(object):
         loop_commands = []
         with open(file_location, 'rb') as csv_file:
             csv_reader = csv.reader(csv_file, delimiter = ',')
-            print "Load File is open"
             #Go through line by line 
             reader_list = []
             for row in csv_reader:
@@ -169,8 +178,14 @@ class I2CConfigController(object):
 
             loop_pos = 0
 
+
+            #Find Loop Position
             for index in range (len(reader_list)):
                 #print "Reader List: %s" % str(reader_list[index][0])
+                if reader_list[index][0].lower().startswith("#name"):
+                    self.name = reader_list[index][1]
+                if reader_list[index][0].lower().startswith("#description"):
+                    self.description = reader_list[index][1]
                 if reader_list[index][0].lower().startswith("#loop sequence"):
                     loop_pos = index
                     break

@@ -187,6 +187,7 @@ class I2CController(object):
 
     def __init__(self, status, actions):
         super (I2CController, self).__init__()
+
         self.status = status
         self.actions = actions
         self.init_tokens = []
@@ -201,6 +202,9 @@ class I2CController(object):
         self.actions.i2c_row_add.connect(self.add_transaction)
         self.actions.i2c_row_delete.connect(self.remove_transaction)
         self.actions.i2c_ack_changed.connect(self.set_token_require_ack)
+        self.config_name = "?"
+        self.config_description = "Not Set"
+
 
         usr = os.path.expanduser("~")
         self.file_location = os.path.join(usr, "Projects", "nysa_projects", "i2c_configs")
@@ -221,10 +225,18 @@ class I2CController(object):
     def __del__(self):
         default = None
         
-    def save_i2c_commands(self, file_location):
+    def get_config_name(self):
+        return self.config.get_name()
+
+    def get_config_description(self):
+        return self.config.get_description()
+
+    def save_i2c_commands(self, file_location, name, description):
+        self.config_name = name
+        self.config_description = description
         init_data = self.get_all_init_transactions()
         loop_data = self.get_all_loop_transactions()
-        self.config.save_data(file_location, init_data, loop_data)
+        self.config.save_data(file_location, init_data, loop_data, self.config_name, self.config_description)
 
     def load_i2c_commands(self, file_location):
         init_data, loop_data = self.config.load_data(file_location)

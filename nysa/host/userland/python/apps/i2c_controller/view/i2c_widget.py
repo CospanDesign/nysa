@@ -28,13 +28,17 @@ os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "common")
 
 from PyQt4.QtGui import QWidget
 from PyQt4.QtGui import QHBoxLayout
+from PyQt4.QtGui import QGridLayout
+from PyQt4.QtCore import QSize
 from PyQt4.QtGui import QVBoxLayout
 from PyQt4.QtGui import QTextEdit
+from PyQt4.QtGui import QLineEdit
 from PyQt4.QtGui import QTabWidget
 from PyQt4.QtGui import QToolBar
 from PyQt4.QtGui import QAction
 from PyQt4 import QtGui
 from PyQt4 import QtCore
+from PyQt4 import Qt
 
 from i2c_control_view import I2CControlView
 from i2c_table import I2CTable
@@ -79,6 +83,16 @@ class I2CWidget(QWidget):
 
         io_layout = QVBoxLayout()
         io_layout.addWidget(self.save_loader)
+        name_desc_layout = QHBoxLayout()
+        self.config_name = QLineEdit("Name")
+        self.config_name.setMinimumWidth(100)
+        self.config_name.setSizePolicy(Qt.QSizePolicy.Preferred, Qt.QSizePolicy.Preferred)
+
+        self.config_desc = QLineEdit("Description")
+        name_desc_layout.addWidget(self.config_name)
+        name_desc_layout.addWidget(self.config_desc)
+
+        io_layout.addLayout(name_desc_layout)
         io_layout.addWidget(self.tab_view)
 
         layout.addLayout(io_layout)
@@ -89,6 +103,17 @@ class I2CWidget(QWidget):
         self.setLayout(layout)
         self.show()
 
+    def get_config_name(self):
+        return self.config_name.text()
+
+    def set_config_name(self, name):
+        self.config_name.setText(name)
+
+    def get_config_description(self):
+        return self.config_desc.text()
+
+    def set_config_description(self, description):
+        self.config_desc.setText(description)
 
     def add_row(self):
         if self.tab_view.currentWidget() is self.loop_table:

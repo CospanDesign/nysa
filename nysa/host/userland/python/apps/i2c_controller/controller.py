@@ -79,6 +79,7 @@ EPILOG = "\n" \
 
 from i2c_actions import I2CActions
 
+
 class Controller(NysaBaseController):
 
     def __init__(self):
@@ -170,18 +171,23 @@ class Controller(NysaBaseController):
         self.engine.pause_flow()
         self.engine.step_loop_flow()
 
-
-
     def save_callback(self):
         filename = self.v.get_filename()
+        name = self.v.get_config_name()
+        description = self.v.get_config_description()
         self.status.Important(self, "Saving I2C Config File: %s" % filename)
-        self.m.save_i2c_commands(filename)
+        self.m.save_i2c_commands(filename, name, description)
         
-
     def load_callback(self):
         filename = self.v.get_filename()
         self.status.Important(self, "Loading I2C Config File: %s" % filename)
+        name = None
+        description = None
         self.m.load_i2c_commands(filename)
+
+        self.v.set_config_name(self.m.get_config_name())
+        self.v.set_config_description(self.m.get_config_description())
+
 
 
 def main(argv):

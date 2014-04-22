@@ -81,25 +81,29 @@ class I2CEngineThread(QtCore.QThread):
 
     def set_delay(self, delay):
         #Delays cannot be shorter than 1 ms
-        print "Update delay to: %d" % delay
+        self.actions.i2c_execute_status_update.emit("Update Delay to: %d" % delay)
         self.delay = delay
         if self.delay < 1:
             self.delay = 1
         self.delay = delay
 
     def step_flow(self):
+        self.actions.i2c_execute_status_update.emit("Single step")
         self.step = True
 
     def step_loop_flow(self):
+        self.actions.i2c_execute_status_update.emit("Step through loop")
         self.step_loop = True
 
     def pause_flow(self):
+        self.actions.i2c_execute_status_update.emit("Pause")
         self.pause = True
 
     def continue_flow(self):
         self.pause = False
 
     def reset_flow(self):
+        self.actions.i2c_execute_status_update.emit("Reset")
         self.init_pos = 0
         self.loop_pos = 0
 
@@ -111,21 +115,22 @@ class I2CEngineThread(QtCore.QThread):
                 if self.mutex.tryLock():
                     if len(self.init_commands) > 0 and (self.init_pos < len(self.init_commands)):
                         self.engine.process_transaction(self.init_commands[self.init_pos])
+                        self.actions.i2c_execute_status_update.emit("Init Pos: %d" % (self.init_pos))
                         self.init_pos += 1
-                        if self.init_pos == (len(self.init_commands) - 1):
-                            #XXX: Emit a signal when the init finished
-                            pass
+                        if self.init_pos == len(self.init_commands):
+                            self.actions.i2c_execute_status_update.emit("Init Pos: %d (Finished)" % (self.init_pos - 1))
                     else:
                         if len(self.loop_commands) > 0:
-                            print "loop pos: %d" % self.loop_pos
+                            #print "loop pos: %d" % self.loop_pos
                             if self.loop_pos < len(self.loop_commands):
                                 self.engine.process_transaction(self.loop_commands[self.loop_pos])
                                 self.loop_pos += 1
 
+                            self.actions.i2c_execute_status_update.emit("Loop Pos: %d" % (self.loop_pos))
                             if self.loop_pos >= len(self.loop_commands):
+                                self.actions.i2c_execute_status_update.emit("Loop Pos: %d (Finished)" % self.loop_pos)
                                 self.loop_pos = 0
                                 self.step_loop = False
-                                #XXX: Emit a signal when the loop finished
 
                     self.step = False
                     self.mutex.unlock()
