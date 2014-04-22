@@ -49,6 +49,8 @@ from nysa import NysaCommError
 
 from driver import Driver
 
+COSPAN_DESIGN_I2C_MODULE = 0x01
+
 #Register Constants
 CONTROL               = 0
 STATUS                = 1
@@ -77,7 +79,7 @@ COMMAND_START         = 1 << 0
 COMMAND_STOP          = 1 << 1
 COMMAND_READ          = 1 << 2
 COMMAND_WRITE         = 1 << 3
-COMMAND_NACK           = 1 << 4
+COMMAND_NACK          = 1 << 4
 
 class I2CError (Exception):
     """I2C Error:
@@ -92,8 +94,50 @@ class I2CError (Exception):
 class I2C(Driver):
     """I2C
     """
+
+    @staticmethod
+    def get_core_id():
+        """
+        Returns the identification number of the device this module controls
+
+        Args:
+            Nothing
+
+        Returns (Integer):
+            Number corresponding to the device in the drt.json file
+
+        Raises:
+            DRTError: Device ID Not found in drt.json
+        """
+        return Nysa.get_id_from_name("I2C")
+
+    @staticmethod
+    def get_core_sub_id():
+        """Returns the identification of the specific implementation of this
+        controller
+
+        Example: Cospan Design wrote the HDL GPIO core with sub_id = 0x01
+            this module was designed to interface and exploit features that
+            are specific to the Cospan Design version of the GPIO controller.
+
+            Some controllers may add extra functionalities that others do not
+            sub_ids are used to differentiate them and select the right python
+            controller for those HDL modules
+
+        Args:
+            Nothing
+
+        Returns (Integer):
+            Number ID for the HDL Module that this controls
+            (Note: 0 = generic control or baseline funtionality of the module)
+
+        Raises:
+            Nothing
+        """
+        return COSPAN_DESIGN_I2C_MODULE
+
     def __init__(self, nysa, dev_id, debug = False):
-        super(self, I2C).__init__(nysa, dev_id, debug)
+        super(I2C, self).__init__(nysa, dev_id, debug)
 
     def get_control(self):
         """get_control
@@ -446,7 +490,7 @@ class I2C(Driver):
         if self.debug:
             self.print_status(self.get_status())
 
-    def write_to_i2c(self, i2c_id, i2c_data):
+    def write_to_i2c(self, i2c_id, i2c_data, repeat_start = False):
         """write_to_i2c_register
 
         write to a register in the I2C device
@@ -455,6 +499,8 @@ class I2C(Driver):
             i2c_id: Identification byte of the I2C (7-bit)
                 this value will be shifted left by 1
             i2c_data: data to write to that register Array of bytes
+            repeat_start: do not explicitely end a transaction, this is used for
+                a repeat start condition
 
         Returns:
             Nothing
@@ -519,19 +565,32 @@ class I2C(Driver):
                 count = count + 1
 
         #send the last peice of data
-        data = i2c_data[count]
+        data = None
+        if count < len(i2c_data):
+            data = i2c_data[count]
+            self.write_register(TRANSMIT, data)
 
-        self.write_register(TRANSMIT, data)
-        self.write_register(COMMAND, COMMAND_WRITE | COMMAND_STOP)
-        if self.wait_for_interrupts(wait_time = 1):
-            if self.debug:
-                print "got interrupt for the last byte"
-            if self.is_interrupt_for_slave():
-                status = self.get_status()
-                if (status & STATUS_READ_ACK_N) > 0:
-                    raise I2CError("Did not receive an ACK while writing data")
+        if not repeat_start:
+            if count >= len(i2c_data):
+                #last peice of data to be written
+                self.write_register(COMMAND, COMMAND_WRITE | COMMAND_STOP)
+            else:
+                #There is just a start then stop command
+                self.write_register(COMMAND, COMMAND_STOP)
+
+            if self.wait_for_interrupts(wait_time = 1):
+                if self.debug:
+                    print "got interrupt for the last byte"
+                if self.is_interrupt_for_slave():
+                    status = self.get_status()
+                    if (status & STATUS_READ_ACK_N) > 0:
+                        raise I2CError("Did not receive an ACK while writing data")
+            else:
+                raise I2CError("Timed out while waiting for interrupt while sending the last byte")
+
         else:
-            raise I2CError("Timed out while waiting for interrupt while sending the last byte")
+            #XXX: This repeat start condition has not been tested out!
+            self.write_register(COMMAND, COMMAND_WRITE)
 
 
 
@@ -561,7 +620,8 @@ class I2C(Driver):
         read_data = Array('B')
 
         #setup the registers to read
-        self.write_to_i2c(i2c_id, i2c_write_data)
+        if i2c_write_data is not None:
+            self.write_to_i2c(i2c_id, i2c_write_data)
 
         #set up interrupts
         self.enable_interrupt(True)
@@ -580,7 +640,7 @@ class I2C(Driver):
         if self.wait_for_interrupts(wait_time = 1):
             if self.debug:
                 print "got interrupt for start"
-            if self.is_interrupt_for_slave(self.dev_id):
+            if self.is_interrupt_for_slave():
                 status = self.get_status()
                 if self.debug:
                     self.print_status(status)
