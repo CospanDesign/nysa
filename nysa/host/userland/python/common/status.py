@@ -63,7 +63,7 @@ class _ClStatus(object):
 
     def __init__(self):
         super(_ClStatus, self).__init__()
-        print "Starint CL Status"
+        #print "Staring CL Status"
         self.level = StatusLevel.VERBOSE
 
     def Verbose (self, c, text):
