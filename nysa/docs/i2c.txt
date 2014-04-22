@@ -1,0 +1,16 @@
+Version
+  4/22/2014: Initial I2C Description
+
+DESCRIPTION START
+
+I2C (Inter Integrated Circuit)
+
+A low speed protocol used to exchange information between two ICs using only two pins.
+
+The protocol requires a master that initiates all transactions, it allows for one master to communicate with multiple slaves or multiple masters to communicate with one one or more slaves.
+
+Each slave device has a 7-bit/10-bit address. The master initiates a transaction by sending the 7-bit/10-bit address and a '1' at the end to indicate a write request or a '0' at the end to indicate a read request.
+
+The protocol only defines the Physical and Data Link Layer. The behavior of I2C devices vary. Writes are relatively straight forward usually initated by indicating a 'write' transaction when sending the address and then data to populate the device's registers. Reading is usually acomplished by initiating a transaction as a 'write' to indicate what register(s) to read from and then initiating a read to read the data.
+
+DESCRIPTION END
