@@ -1,0 +1,41 @@
+QPushButton#rw_check {
+  background-color : green;
+  border-style     : outset;
+  border-width     : 2px;
+  border-radius    : 8px;
+  border-color     : black;
+  font             : bold 10px;
+  min-width        : 3em;
+  max-width        : 5em;
+  padding          : 2px;
+}
+QPushButton#rw_check:checked {
+  background-color : blue;
+  border-color     : black;
+  border-style     : inset;
+}
+
+QPushButton#add_button {
+  background-color : green;
+  border-style     : outset;
+  border-width     : 2px;
+  border-radius    : 8px;
+  border-color     : black;
+  font             : bold 10px;
+  min-width        : 3em;
+  max-width        : 3em;
+  padding          : 2px;
+}
+
+QPushButton#remove_button {
+  background-color : red;
+  border-style     : outset;
+  border-width     : 2px;
+  border-radius    : 8px;
+  border-color     : black;
+  font             : bold 10px;
+  min-width        : 3em;
+  max-width        : 3em;
+  padding          : 2px;
+}
+
