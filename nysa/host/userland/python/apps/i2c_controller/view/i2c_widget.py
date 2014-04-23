@@ -27,6 +27,9 @@ import os
 os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "common")
 
 from PyQt4.QtGui import QWidget
+from PyQt4.QtGui import QLabel
+from PyQt4.QtGui import QPushButton
+from PyQt4.QtGui import QListWidget
 from PyQt4.QtGui import QHBoxLayout
 from PyQt4.QtGui import QGridLayout
 from PyQt4.QtCore import QSize
@@ -36,6 +39,7 @@ from PyQt4.QtGui import QLineEdit
 from PyQt4.QtGui import QTabWidget
 from PyQt4.QtGui import QToolBar
 from PyQt4.QtGui import QAction
+from PyQt4.QtCore import QString
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4 import Qt
@@ -44,6 +48,15 @@ from i2c_control_view import I2CControlView
 from i2c_table import I2CTable
 
 from save_loader import SaveLoader
+
+DEFAULT_SCRIPT_PATH = os.path.join(os.path.dirname(__file__),
+                                   os.pardir,
+                                   os.pardir,
+                                   os.pardir,
+                                   os.pardir,
+                                   "protocols",
+                                   "i2c")
+
 
 
 class I2CWidget(QWidget):
@@ -59,16 +72,32 @@ class I2CWidget(QWidget):
         self.row_delete_action = QAction("Delete Row", self)
         self.row_delete_action.triggered.connect(self.remove_row)
 
+        self.default_script_list = QListWidget()
+        self.default_script_list.setMaximumWidth(150)
+
         self.setWindowTitle("Standalone I2C Widget")
         layout = QHBoxLayout()
+        self.load_callback = None
         self.toolbar = QToolBar()
+        self.toolbar.setMaximumWidth(150)
+        self.toolbar.setSizePolicy(Qt.QSizePolicy.Maximum, Qt.QSizePolicy.Maximum)
 
-        self.save_loader = SaveLoader(extensions = ["i2c"],
-                                      initial_file = "i2c_confic_file")
+        self.tools_layout= QVBoxLayout()
+
+        self.save_loader = SaveLoader(extensions = ["csv"],
+                                      initial_file = "i2c_config_file")
 
         self.toolbar.setOrientation(QtCore.Qt.Vertical)
         self.toolbar.addAction(self.row_add_action)
         self.toolbar.addAction(self.row_delete_action)
+        self.tools_layout.addWidget(self.toolbar)
+        self.tools_layout.addWidget(QLabel("Default Scripts"))
+        self.tools_layout.addWidget(self.default_script_list)
+        default_script_load = QPushButton("Load")
+        default_script_load.clicked.connect(self.default_script_load_clicked)
+        self.tools_layout.addWidget(default_script_load)
+
+
         self.tab_view = QTabWidget()
 
         self.init_table = I2CTable(self.status, self.actions, loop = False)
@@ -79,7 +108,7 @@ class I2CWidget(QWidget):
         self.control_view = I2CControlView(self.status, self.actions)
         self.actions.i2c_update_view.connect(self.update_i2c_transactions)
 
-        layout.addWidget(self.toolbar)
+        layout.addLayout(self.tools_layout)
 
         io_layout = QVBoxLayout()
         io_layout.addWidget(self.save_loader)
@@ -148,4 +177,21 @@ class I2CWidget(QWidget):
 
     def get_filename(self):
         return self.save_loader.get_filename()
+
+    def default_script_load_clicked(self):
+        item = self.default_script_list.currentItem()
+        if item is not None:
+            filename = os.path.join(DEFAULT_SCRIPT_PATH, str(item.text()))
+            if self.load_callback is not None:
+                self.load_callback(filename)
+            #print "Item: %s" % filename
+
+    def set_load_default_callback(self, callback):
+        self.load_callback = callback
+
+    def load_default_scripts(self):
+        files = os.listdir(DEFAULT_SCRIPT_PATH)
+        self.default_script_list.clear()
+        self.default_script_list.addItems(files)
+        self.default_script_list.setCurrentRow(0)
 

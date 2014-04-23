@@ -66,6 +66,8 @@ import status
 #Module Defines
 n = str(os.path.split(__file__)[1])
 
+
+
 DESCRIPTION = "\n" \
 "\n"\
 "A template app\n"
@@ -105,6 +107,10 @@ class Controller(NysaBaseController):
         self.v.update_i2c_init_transactions(init_transactions)
         self.v.set_save_callback(self.save_callback)
         self.v.set_load_callback(self.load_callback)
+        self.v.set_load_default_callback(self.load_default_callback)
+        #print "Files: %s" % str(files)
+        self.v.load_default_scripts()
+
         self.actions.i2c_run.connect(self.i2c_run)
         self.actions.i2c_step.connect(self.i2c_step)
         self.actions.i2c_loop_step.connect(self.i2c_loop_step)
@@ -178,11 +184,15 @@ class Controller(NysaBaseController):
         self.status.Important(self, "Saving I2C Config File: %s" % filename)
         self.m.save_i2c_commands(filename, name, description)
         
+    def load_default_callback(self, filename):
+        self.status.Important(self, "Loading Default I2C Config File: %s" % filename)
+        self.m.load_i2c_commands(filename)
+        self.v.set_config_name(self.m.get_config_name())
+        self.v.set_config_description(self.m.get_config_description())
+
     def load_callback(self):
         filename = self.v.get_filename()
         self.status.Important(self, "Loading I2C Config File: %s" % filename)
-        name = None
-        description = None
         self.m.load_i2c_commands(filename)
 
         self.v.set_config_name(self.m.get_config_name())
