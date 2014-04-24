@@ -44,6 +44,7 @@ class _I2CActions(QtCore.QObject):
 
     #Update View
     i2c_update_view = QtCore.pyqtSignal(bool, object, name = "i2c_update_view")
+    i2c_update_read_view = QtCore.pyqtSignal(bool, object, name = "i2c_read_update")
 
     #Update Write Data Model
     i2c_update_write = QtCore.pyqtSignal(bool, int, int, int, name = "i2c_update_write")

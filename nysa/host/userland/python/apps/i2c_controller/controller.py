@@ -81,6 +81,8 @@ EPILOG = "\n" \
 
 from i2c_actions import I2CActions
 
+from apps.common.udp_server import UDPServer
+I2C_PORT = 0xC594
 
 class Controller(NysaBaseController):
 
@@ -100,7 +102,9 @@ class Controller(NysaBaseController):
     def _initialize(self, platform, device_index):
         self.i2c = I2C(platform[2], device_index)
         self.m = I2CController(self.status, self.actions)
-        self.engine = I2CEngine(self.i2c, self.status, self.actions)
+        self.server = UDPServer(self.status, self.actions, I2C_PORT)
+
+        self.engine = I2CEngine(self.i2c, self.status, self.actions, self.server)
         init_transactions = self.m.get_all_init_transactions()
         #print "Transactions: %s" % str(test)
         self.v = I2CWidget(self.status, self.actions)

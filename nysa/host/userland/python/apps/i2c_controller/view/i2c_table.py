@@ -37,9 +37,6 @@ class I2CTable(QTableWidget):
         self.resizeColumnsToContents()
         self.resizeRowsToContents()
 
-    def remove_row(self):
-        pass
-
     def add_i2c_token(self):
         if self.column_pos == 0:
             self.setRowCount(self.rowCount() + 1)
@@ -66,14 +63,14 @@ class I2CTable(QTableWidget):
             i = self.item(self.row_pos, self.column_pos)
             i.setFlags(Qt.ItemIsEnabled)
 
-
-
-    def remove_i2c_token(self, row, column):
-        pass
-
     def update_i2c_transactions(self, d):
         max_column = 0
         #Update the row count
+        #print "Length D: %d" % len(d)
+
+        while self.rowCount() > len(d):
+            self.removeRow(len(d))
+
         if self.rowCount() < len(d):
             self.setRowCount(len(d))
 
@@ -82,7 +79,6 @@ class I2CTable(QTableWidget):
             if len(t) > max_column:
                 max_column = len(t)
         self.setColumnCount(max_column)
-        #print "Update %s" % str(d)
 
         #update the actual tokens
         for row in range(len(d)):
@@ -102,8 +98,6 @@ class I2CTable(QTableWidget):
                                           loop = self.loop)
                     view_token.set_token_type(data_token["type"])
                     self.setCellWidget(row, column, view_token)
-                    #i = self.item(row, column)
-                    #i.setFlags(Qt.ItemIsEnabled)
 
                 view_token.set_column(column)
                 #print "Token type: %s" % data_token["type"]
@@ -121,12 +115,9 @@ class I2CTable(QTableWidget):
                 
                 elif token_type == "Write":
                     view_token.set_write_data(data_token["data"])
-                    #print "Require Ack: %s" % str(data_token["require_ack"])
-                    #view_token.set_ack_required(data_token["require_ack"])
                 
                 elif token_type == "Read":
                     view_token.set_read_data(data_token["data"])
-                    #view_token.set_ack_required(data_token["require_ack"])
 
         self.resizeColumnsToContents()
         self.resizeRowsToContents()
@@ -141,4 +132,14 @@ class I2CTable(QTableWidget):
                 if type(token) != I2CToken:
                     continue
                 token.update_token()
+
+
+    def update_read_data(self, read_data):
+        for row in read_data:
+            #row = item.keys()[0]
+            transaction_data = read_data[row]
+            for index in range(len(transaction_data)):
+                data = transaction_data[index]
+                view_token = self.cellWidget(row, index + 1)
+                view_token.set_read_data(data)
 

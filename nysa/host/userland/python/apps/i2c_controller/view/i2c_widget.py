@@ -40,6 +40,7 @@ from PyQt4.QtGui import QTabWidget
 from PyQt4.QtGui import QToolBar
 from PyQt4.QtGui import QAction
 from PyQt4.QtCore import QString
+from PyQt4.QtCore import QTimer
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4 import Qt
@@ -58,6 +59,7 @@ DEFAULT_SCRIPT_PATH = os.path.join(os.path.dirname(__file__),
                                    "i2c")
 
 
+SINGLE_SHOT_TIMEOUT = 1000
 
 class I2CWidget(QWidget):
 
@@ -75,6 +77,7 @@ class I2CWidget(QWidget):
         self.default_script_list = QListWidget()
         self.default_script_list.setMaximumWidth(150)
 
+        self.default_script_list.itemDoubleClicked.connect(self.default_script_load_double_clicked)
         self.setWindowTitle("Standalone I2C Widget")
         layout = QHBoxLayout()
         self.load_callback = None
@@ -131,6 +134,13 @@ class I2CWidget(QWidget):
 
         self.setLayout(layout)
         self.show()
+
+        self.actions.i2c_update_read_view.connect(self.update_read_view)
+        self.init_read_data = None
+        self.loop_read_data = None
+        self.read_timer = QTimer(self)
+        self.read_timer.setInterval(SINGLE_SHOT_TIMEOUT)
+        self.read_timer.setSingleShot(True)
 
     def get_config_name(self):
         return self.config_name.text()
@@ -189,9 +199,33 @@ class I2CWidget(QWidget):
     def set_load_default_callback(self, callback):
         self.load_callback = callback
 
+    def default_script_load_double_clicked(self, item):
+        self.default_script_load_clicked()
+
     def load_default_scripts(self):
         files = os.listdir(DEFAULT_SCRIPT_PATH)
         self.default_script_list.clear()
         self.default_script_list.addItems(files)
         self.default_script_list.setCurrentRow(0)
+
+    def singleshot_event(self):
+        if self.init_read_data is not None:
+            self.init_table.update_read_data(self.init_read_data)
+            self.init_read_data = None
+        if self.loop_read_data is not None:
+            self.loop_table.update_read_data(self.loop_read_data)
+            self.loop_read_data = None
+
+    def update_read_view(self, loop, read_data):
+        #print "read timer active: %s" % str(self.read_timer.isActive())
+        if loop:
+            self.loop_read_data = read_data
+
+        else:
+            self.init_read_data = read_data
+
+        if not self.read_timer.isActive():
+            self.read_timer.singleShot(SINGLE_SHOT_TIMEOUT, self.singleshot_event)
+            self.read_timer.start()
+        #print "post read timer active: %s" % str(self.read_timer.isActive())
 

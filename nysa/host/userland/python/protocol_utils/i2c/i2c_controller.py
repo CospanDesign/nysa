@@ -42,6 +42,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 from driver.i2c import I2C
 
 
+
+
 CONFIG_KEY = "host/i2c_configs"
 
 class I2CTransaction(object):
@@ -139,13 +141,13 @@ class I2CTransaction(object):
             if token_type == "Start":
                 d["address"] = t.get_address()
                 d["reading"] = t.is_reading()
-            
+
             elif token_type == "Stop":
                 pass
-            
+
             elif token_type == "Repeat Start":
                 pass
-            
+
             elif token_type == "Write":
                 d["data"] = t.get_write_data()
                 #print "Require Ack: %s" % str(t.is_ack_required())
@@ -182,7 +184,7 @@ class I2CTransaction(object):
         last_token = self.tokens[-1]
         if last_token.get_type() != "Stop" and last_token.get_type() != "Repeat Start":
             last_token.set_type("Stop")
-        
+
 class I2CController(object):
 
     def __init__(self, status, actions):
@@ -224,7 +226,7 @@ class I2CController(object):
 
     def __del__(self):
         default = None
-        
+
     def get_config_name(self):
         return self.config.get_name()
 
@@ -314,9 +316,26 @@ class I2CController(object):
     def remove_transaction(self, loop):
         self.status.Important(self, "Removing a transaction")
         if not loop:
+            print "checking init count: %d" % len(self.init_tokens)
+            if len(self.init_tokens) == 0:
+                print "Init Tokens, found 0"
+                return
+
+            last = self.init_tokens[-1]
+            self.init_tokens.remove(last)
+
             d = self.get_all_init_transactions()
             self.actions.i2c_update_view.emit(False, d)
+
         else:
+            print "checking loop count: %d" % len(self.loop_tokens)
+            if len(self.loop_tokens) == 0:
+                print "Loop Tokens, found 0"
+                return
+
+            last = self.loop_tokens[-1]
+            self.loop_tokens.remove(last)
+
             d = self.get_all_loop_transactions()
             self.actions.i2c_update_view.emit(True, d)
 
@@ -402,7 +421,7 @@ class I2CController(object):
             tokens = self.loop_tokens[row].set_type(column, d["type"])
             d = self.get_all_loop_transactions()
             self.actions.i2c_update_view.emit(True, d)
-        #XXX: update 
+        #XXX: update
 
     def row_reading_changed(self, row, enable, loop):
         self.status.Debug(self, "RW Changed: %d" % row)

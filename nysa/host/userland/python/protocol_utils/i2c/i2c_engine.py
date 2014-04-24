@@ -25,6 +25,7 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 import os
 import sys
 import time
+import json
 
 from array import array as Array
 
@@ -41,7 +42,7 @@ class I2CEngineError(Exception):
     pass
 
 class I2CEngineThread(QtCore.QThread):
-    def __init__(self, engine, i2c, mutex, delay, actions, init_commands, loop_commands):
+    def __init__(self, engine, i2c, mutex, delay, actions, init_commands, loop_commands, server):
         super(I2CEngineThread, self).__init__()
 
         self.i2c = i2c
@@ -57,6 +58,9 @@ class I2CEngineThread(QtCore.QThread):
         self.pause = False
         self.step = False
         self.step_loop = False
+        self.init_read_data = {}
+        self.loop_read_data = {}
+        self.server = server
 
         self.actions.i2c_run.connect(self.continue_flow)
         self.actions.i2c_reset.connect(self.reset_flow)
@@ -107,6 +111,36 @@ class I2CEngineThread(QtCore.QThread):
         self.init_pos = 0
         self.loop_pos = 0
 
+    def send_init_json_packet(self):
+        d = {}
+        d["type"] = "init"
+        for row in range(len(self.init_commands)):
+
+            transaction = self.init_commands[row]
+            if transaction[0]["reading"]:
+                row_data = self.init_read_data[row]
+                for read_index in range(len(row_data)):
+                    self.init_commands[row][read_index + 1]["data"] = row_data[read_index]
+        d["type"] = "init"
+        d["rows"] = self.init_commands
+        jdata = json.dumps(d)
+        self.server.write_data(jdata)
+
+    def send_loop_json_packet(self):
+        d = {}
+        d["type"] = "loop"
+        for row in range(len(self.loop_commands)):
+
+            transaction = self.loop_commands[row]
+            if transaction[0]["reading"]:
+                row_data = self.loop_read_data[row]
+                for read_index in range(len(row_data)):
+                    self.loop_commands[row][read_index + 1]["data"] = row_data[read_index]
+        d["type"] = "loop"
+        d["rows"] = self.loop_commands
+        jdata = json.dumps(d)
+        self.server.write_data(jdata)
+
     def run(self):
         while not self.term_flag:
             self.yieldCurrentThread()
@@ -114,20 +148,38 @@ class I2CEngineThread(QtCore.QThread):
             if not self.pause or self.step or self.step_loop:
                 if self.mutex.tryLock():
                     if len(self.init_commands) > 0 and (self.init_pos < len(self.init_commands)):
-                        self.engine.process_transaction(self.init_commands[self.init_pos])
+                        row = self.init_pos
+                        data = self.engine.process_transaction(self.init_commands[self.init_pos])
+                        if len(data) > 0:
+                            #self.init_read_data.append({"row":row, "data":data})
+                            self.init_read_data[row] = data
+
                         self.actions.i2c_execute_status_update.emit("Init Pos: %d" % (self.init_pos))
                         self.init_pos += 1
                         if self.init_pos == len(self.init_commands):
+                            if len(self.init_read_data) > 0:
+                                self.actions.i2c_update_read_view.emit(False, self.init_read_data)
+                                self.send_init_json_packet()
+                                self.init_read_data = {}
                             self.actions.i2c_execute_status_update.emit("Init Pos: %d (Finished)" % (self.init_pos - 1))
+
                     else:
                         if len(self.loop_commands) > 0:
                             #print "loop pos: %d" % self.loop_pos
                             if self.loop_pos < len(self.loop_commands):
-                                self.engine.process_transaction(self.loop_commands[self.loop_pos])
+                                row = self.loop_pos
+                                data = self.engine.process_transaction(self.loop_commands[self.loop_pos])
+                                if len(data) > 0:
+                                    #self.loop_read_data.append({"row":row, "data":data})
+                                    self.loop_read_data[row] = data
                                 self.loop_pos += 1
 
                             self.actions.i2c_execute_status_update.emit("Loop Pos: %d" % (self.loop_pos))
                             if self.loop_pos >= len(self.loop_commands):
+                                if len(self.loop_read_data) > 0:
+                                    self.actions.i2c_update_read_view.emit(True, self.loop_read_data)
+                                    self.send_loop_json_packet()
+                                    self.loop_read_data = {}
                                 self.actions.i2c_execute_status_update.emit("Loop Pos: %d (Finished)" % self.loop_pos)
                                 self.loop_pos = 0
                                 self.step_loop = False
@@ -138,7 +190,7 @@ class I2CEngineThread(QtCore.QThread):
 
 class I2CEngine (QtCore.QObject):
 
-    def __init__(self, i2c_driver, status, actions):
+    def __init__(self, i2c_driver, status, actions, server):
         super (I2CEngine, self).__init__()
 
         self.i2c = i2c_driver
@@ -148,6 +200,7 @@ class I2CEngine (QtCore.QObject):
         self.status.Verbose(self, "Starting I2C Engine")
         self.engine_thread = None
         self.actions.i2c_stop.connect(self.stop_flow)
+        self.server = server
 
     def stop_flow(self):
         if self.engine_thread is not None:
@@ -176,7 +229,8 @@ class I2CEngine (QtCore.QObject):
                                                  delay,
                                                  self.actions,
                                                  init_commands,
-                                                 loop_commands)
+                                                 loop_commands,
+                                                 self.server)
 
         if pause:
             self.engine_thread.pause_flow()
