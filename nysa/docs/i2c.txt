@@ -7,7 +7,7 @@ I2C (Inter Integrated Circuit)
 
 A low speed protocol used to exchange information between two ICs using only two pins.
 
-The protocol requires a master that initiates all transactions, it allows for one master to communicate with multiple slaves or multiple masters to communicate with one one or more slaves.
+The protocol requires a master that initiates all transactions, it allows for one master to communicate with multiple slaves or multiple masters to communicate with one or more slaves.
 
 Each slave device has a 7-bit/10-bit address. The master initiates a transaction by sending the 7-bit/10-bit address and a '1' at the end to indicate a write request or a '0' at the end to indicate a read request.
 
