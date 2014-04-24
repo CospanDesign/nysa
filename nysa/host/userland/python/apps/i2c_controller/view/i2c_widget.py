@@ -41,6 +41,7 @@ from PyQt4.QtGui import QToolBar
 from PyQt4.QtGui import QAction
 from PyQt4.QtCore import QString
 from PyQt4.QtCore import QTimer
+from PyQt4.QtCore import QThread
 from PyQt4 import QtGui
 from PyQt4 import QtCore
 from PyQt4 import Qt
@@ -209,6 +210,8 @@ class I2CWidget(QWidget):
         self.default_script_list.setCurrentRow(0)
 
     def singleshot_event(self):
+        #print "update I2C Read: in thread: %s" % str(QThread.currentThread().objectName())
+
         if self.init_read_data is not None:
             self.init_table.update_read_data(self.init_read_data)
             self.init_read_data = None

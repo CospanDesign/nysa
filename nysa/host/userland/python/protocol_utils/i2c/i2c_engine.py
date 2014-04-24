@@ -273,7 +273,7 @@ class I2CEngine (QtCore.QObject):
                                                    i2c_write_data = None,
                                                    read_length = count)
             except I2CError as e:
-                self.status.Error(self, "I2C Driver Error: %s" % str(e))
+                raise I2CEngineError("I2C Driver Error: %s" % str(e))
 
         else:
             #Writing to I2C
@@ -291,9 +291,9 @@ class I2CEngine (QtCore.QObject):
                                       i2c_data = write_data,
                                       repeat_start = repeat_start)
             except I2CError as e:
-                self.status.Error(self, "I2C Driver Error: %s" % str(e))
+                raise I2CEngineError("I2C Driver Error: %s" % str(e))
 
-        self.status.Debug(self, "Transaction complete")
+        #self.status.Debug(self, "Transaction complete")
         return read_data
 
     def reset_i2c(self):

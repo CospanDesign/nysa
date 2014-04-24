@@ -66,6 +66,7 @@ class ScriptManager(QObject):
         from apps.drt_viewer.controller import Controller as drt_controller
         from apps.gpio_controller.controller import Controller as gpio_controller
         from apps.memory_controller.controller import Controller as mem_controller
+        from apps.i2c_controller.controller import Controller as i2c_controller
         print "DIR: %s" % (str(dir(self)))
 
         script_list = NysaBaseController.plugins

@@ -122,6 +122,7 @@ class I2CToken(QWidget):
         return self.type_sel.currentText()
 
     def process_token_type(self):
+        #print "Process Token Type: %s" % str(QThread.currentThread().objectName())
         self.clear_layout()
         t = self.token_type
         if t == "Start":
@@ -265,6 +266,7 @@ class I2CToken(QWidget):
         return int(str(self.slave_address_line.text()), 16)
 
     def clear_layout(self):
+        #print "clear layout: in thread: %s" % str(QThread.currentThread().objectName())
         #self.status.Debug(self, "Clear the layout")
         for i in range(self.layout().count(), -1, -1):
             #print "Working on %d" % i

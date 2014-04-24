@@ -123,6 +123,7 @@ class I2CTable(QTableWidget):
         self.resizeRowsToContents()
 
     def update_i2c_tokens(self):
+        #print "update i2c token: in thread: %s" % str(QThread.currentThread().objectName())
         for r in range(self.rowCount()):
             for t in range(self.columnCount()):
                 #There can be a None
@@ -135,6 +136,7 @@ class I2CTable(QTableWidget):
 
 
     def update_read_data(self, read_data):
+        #print "update read data: in thread: %s" % str(QThread.currentThread().objectName())
         for row in read_data:
             #row = item.keys()[0]
             transaction_data = read_data[row]

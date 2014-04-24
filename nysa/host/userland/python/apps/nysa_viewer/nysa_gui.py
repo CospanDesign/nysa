@@ -72,6 +72,7 @@ class NysaGui(QObject):
         self.actions = Actions()
         self.status = Status()
         self.status.Debug(self, "Created main form!")
+        QThread.currentThread().setObjectName("Nysa GUI Main")
 
         self.uid = None
 

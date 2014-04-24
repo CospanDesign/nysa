@@ -65,6 +65,7 @@ class UDPServer(QtCore.QObject):
         self.port = port
         self.udp_socket = QtNetwork.QUdpSocket(self)
         self.worker_thread = QtCore.QThread()
+        self.worker_thread.setObjectName("UDP Server Thread")
         self.status = status
         self.actions = actions
 
@@ -82,6 +83,10 @@ class UDPServer(QtCore.QObject):
         #self.thread = QtCore.QThread()
         #connect(self.thread, SIGNAL(finished()), worker, SLOT(deleteLater())
 
+    def __del__(self):
+        if self.worker_thread is not None:
+            self.worker_thread.wait()
+            del(self.worker_thread)
 
     def write_data(self, data):
         self.status.Verbose(self, "Sending Data")

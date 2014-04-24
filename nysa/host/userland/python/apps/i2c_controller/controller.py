@@ -130,8 +130,10 @@ class Controller(NysaBaseController):
         self._initialize(platform, device_index)
         sys.exit(app.exec_())
 
-    def start_tab_view(self, platform):
-        self._initialize()
+    def start_tab_view(self, platform, device_index):
+        self.status = status.Status()
+        self.status.Verbose(self, "Starting I2C Application")
+        self._initialize(platform, device_index)
 
     def get_view(self):
         return self.v
@@ -142,7 +144,7 @@ class Controller(NysaBaseController):
 
     @staticmethod
     def get_device_id():
-        return None
+        return 3
 
     @staticmethod
     def get_device_sub_id():
