@@ -50,6 +50,7 @@ SOFTWARE.
 
   identification of your device 0 - 65536
   DRT_ID: 13
+  DRT_SUB_ID: 1
 
   flags (read drt.txt in the slave/device_rom_table directory 1 means
   a standard device
@@ -304,8 +305,8 @@ assign  status                              = { 24'h0,
 assign w_memory_ready                       = (!w_memory_0_empty) || (!w_memory_1_empty);
 
 
-assign w_default_mem_0_base                 = `DEFAULT_MEM_0_BASE;
-assign w_default_mem_1_base                 = `DEFAULT_MEM_1_BASE;
+//assign w_default_mem_0_base                 = `DEFAULT_MEM_0_BASE;
+//assign w_default_mem_1_base                 = `DEFAULT_MEM_1_BASE;
 
 //Synchronous Logic
 always @ (posedge clk) begin
