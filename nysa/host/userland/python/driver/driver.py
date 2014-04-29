@@ -406,8 +406,8 @@ class DMAReadController(object):
 
         self.device = device
         self.mem_base = [0, 1]
-        self.mem_base[0] = memory_base0
-        self.mem_base[1] = memory_base1
+        self.mem_base[0] = mem_base0
+        self.mem_base[1] = mem_base1
         if size is None:
             self.size = self.mem_base[1] - self.mem_base[0]
         else:
@@ -426,14 +426,14 @@ class DMAReadController(object):
         self.finished[0] = finished0
         self.finished[1] = finished1
 
-        self.device.write_register(self.reg_base[0], self.mem_base[0])
-        self.device.write_register(self.reg_base[1], self.mem_base[1])
+        self.device.write_register(self.reg_base0, self.mem_base[0])
+        self.device.write_register(self.reg_base1, self.mem_base[1])
 
         self.finished_status = [False, False]
         self.busy_status = [False, False]
         self.next_finished = 0
 
-    def get_finished_block(self):
+    def _get_finished_block(self):
         """
         Uses either cached data or if not available reads the status from the
         core to determine if there is any available blocks of data to be read
@@ -562,7 +562,8 @@ class DMAReadController(object):
             reads.
 
         Returns:
-            Array of bytes
+            Array of bytes, the length of the array is defined from the size
+            value set when initialized
 
         Raises:
             NysaCommError:
@@ -570,13 +571,13 @@ class DMAReadController(object):
         """
 
         buf = Array('B')
-        finished_status = self.get_finished_block()
+        finished_status = self._get_finished_block()
         if (finished_status == 0) and not self.is_busy():
             #Request more data
             self.device.write_register(self.reg_size[0], self.size)
 
         self.device.wait_for_interrupt(self.timeout)
-        finished_status = self.get_finished_block()
+        finished_status = self._get_finished_block()
         if (finished_status == 0) and not self.is_busy():
             return buf
 
