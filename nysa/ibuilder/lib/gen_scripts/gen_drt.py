@@ -58,6 +58,9 @@ class GenDRT(Gen):
         board_dict = json.load(open(board_fn, 'r'))
         #print "board: %s" % tags["board"]
         board_id = board_dict[tags["board"]]
+        #print "board: %s" % tags["image_id"]
+        image_id = tags["image_id"]
+        #image_id = board_dict[tags["image_id"]]
 
         #Get the DRT version from the DRT info
         version = 0x0005
@@ -79,7 +82,7 @@ class GenDRT(Gen):
             print "number of entities: " + str(number_of_devices)
         num_dev_string = "{0:0=8X}".format(number_of_devices)
         board_string = "{0:0=8X}".format(board_id)
-        image_string = "{0:0=8X}".format(0)
+        image_string = "{0:0=8X}".format(image_id)
 
         drt_flags = 0 
         if tags["TEMPLATE"] == "axie_template.json":
