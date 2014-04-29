@@ -32,6 +32,8 @@ http://wiki.cospandesign.com/index.php?title=Wb_sf_camera
 
 __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
+import sys
+import os
 import time
 import i2c
 
@@ -145,10 +147,10 @@ class SFCamera(Driver):
         self.i2c.set_speed_to_100khz()
         self.status = 0
         try:
-            self.dma_reader = DMAReadController(device     = camera_id,
+            self.dma_reader = DMAReadController(device     = self,
                                                 mem_base0  = 0x00000000,
                                                 mem_base1  = 0x00100000,
-                                                size       = None
+                                                size       = None,
                                                 reg_status = STATUS,
                                                 reg_base0  = MEM_0_BASE,
                                                 reg_size0  = MEM_0_SIZE,
@@ -159,7 +161,7 @@ class SFCamera(Driver):
                                                 finished1  = 1,
                                                 empty0     = 6,
                                                 empty1     = 7)
-        except NysaDMAException ex:
+        except NysaDMAException as ex:
             raise SFCameraError("Error initializing the DMA Reader: %s" % str(ex))
 
 
@@ -418,5 +420,5 @@ class SFCamera(Driver):
             (Array of bytes): Size of the image (row * pixel count)
 
         """
-        return self.dma_reader.get_finished_block()
+        return self.dma_reader.read(anticipate = True)
 
