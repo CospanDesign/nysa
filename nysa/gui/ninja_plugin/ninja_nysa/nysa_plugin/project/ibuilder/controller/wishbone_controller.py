@@ -294,7 +294,8 @@ class WishboneController (controller.Controller):
         return drop_position
 
 
-    def drop_event(self, position, event):
+    def drop_event(self, event):
+        position = self.fd.position()
         if self.dbg: print "VC: drop_event()"
         if event.mimeData().hasFormat("application/flowchart-data"):
             data = event.mimeData().data("application/flowchart-data")

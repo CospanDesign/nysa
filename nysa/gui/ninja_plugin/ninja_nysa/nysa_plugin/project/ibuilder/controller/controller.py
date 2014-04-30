@@ -219,7 +219,7 @@ class Controller (QObject):
         """
         raise NotImplementedError("This function should be subclassed")
 
-    def drop_event(self, position, event):
+    def drop_event(self, event):
         """
         An item has been dropped
         """
