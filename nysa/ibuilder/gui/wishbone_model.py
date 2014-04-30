@@ -407,8 +407,8 @@ class WishboneModel():
                             print (("arbitor name: %s" % a))
                         arb_slave = self.get_connected_arbitor_slave(uname, a)
 
-                        arb_name = self.gm.get_node(arb_slave).name
                         if arb_slave is not None:
+                            arb_name = self.gm.get_node(arb_slave).name
                             pt_slave["BUS"][a] = arb_name
 ##                      pt_slave["BUS"]
 
@@ -460,8 +460,8 @@ class WishboneModel():
                             print (("arbitor name: %s" % a))
                         arb_slave = self.get_connected_arbitor_slave(uname, a)
 
-                        arb_name = self.gm.get_node(arb_slave).name
                         if arb_slave is not None:
+                            arb_name = self.gm.get_node(arb_slave).name
                             pt_slave["BUS"][a] = arb_name
 ##                   pt_slave["BUS"]
 

@@ -443,6 +443,8 @@ class GraphManager:
         if g is None:
             raise  IBuilderError("Node with unique name: %s does not exists" %
                   (name))
+        #print "G: %s" % str(g)
+        #print "Name: %s" % str(name)
         return g[name]
 
     def connect_nodes(self, node1, node2):
