@@ -64,27 +64,34 @@ class ArbitorMaster(Box):
                  scene,
                  slave):
 
-        QGraphicsItem.__init__(self)
-
-        self.box_name = name
-        self.color = ARB_MASTER_COLOR
-        self.activate = False
-        self.user_data = "arbitor_master"
-        self.rect = QRectF(ARB_MASTER_RECT)
-        self.start_rect = QRectF(self.rect)
+        #QGraphicsItem.__init__(self)
         self.s = scene
+
+        super(ArbitorMaster, self).__init__( position = position,
+                                             scene = scene,
+                                             name = name,
+                                             color = ARB_MASTER_COLOR,
+                                             rect = QRectF(ARB_MASTER_RECT),
+                                             user_data = "arbitor_master")
+ 
+        #self.box_name = name
+        #self.color = ARB_MASTER_COLOR
+        self.activate = False
+        #self.user_data = "arbitor_master"
+        #self.rect = QRectF(ARB_MASTER_RECT)
+        self.start_rect = QRectF(self.rect)
 
         self.link = None
         self.slave = slave
 
         #UI Stuff
-        global Dirty
-        Dirty = True
+        #global Dirty
+        #Dirty = True
 
         #User cannot move us directly
         self.setFlags(QGraphicsItem.ItemIsSelectable    |
                       QGraphicsItem.ItemIsFocusable)
-        scene.addItem(self)
+        #scene.addItem(self)
 
         #Tooltip
         self.setToolTip(
@@ -95,7 +102,7 @@ class ArbitorMaster(Box):
         #self.setMatrix(QMatrix())
 
         self.style = Qt.SolidLine
-        self.setPos(position)
+        #self.setPos(position)
         #Font
         self.text_font = QFont('White Rabbit')
         self.text_font.setPointSize(16)
@@ -118,20 +125,27 @@ class ArbitorMaster(Box):
 
         self.disconnect_rect.setWidth(ARB_MASTER_ACT_RECT.width() / 2)
         self.disconnect_rect.setHeight(ARB_MASTER_ACT_RECT.height() / 2)
-        #self.s.clearSelection()
+        #self.scene().clearSelection()
         #self.setSelected(True)
         #self.setFocus()
         self.y_pos = y_pos
         self.dbg = False
         if self.dbg: print "**AM**: New Arbitor Master: %s" % name
+        #scene.invalidate()
+        print "self.scene(): %s" % str(self.scene())
 
+    def set_activate(self, enable):
+        if enable:
+            self.scene().arbitor_master_selected(self.slave, self)
 
     def update_view(self):
+        self.dbg = True
         if self.dbg: print "AM: update_view()"
+        if self.dbg: print "\t\tself.scene(): %s" % str(self.scene())
         #if self.activate:
-        if self.s.is_arbitor_master_active():
+        if self.scene().is_arbitor_master_active():
             if self.dbg: print "\tactivate"
-            connected_slave = self.s.get_arbitor_master_connected(self)
+            connected_slave = self.scene().get_arbitor_master_connected(self)
             if connected_slave is not None:
                 if self.dbg: print "\tConnected slave: %s" % connected_slave.box_name
                 self.connect_slave(connected_slave)
@@ -154,22 +168,23 @@ class ArbitorMaster(Box):
             self.color = ARB_MASTER_COLOR
 
         self.start_rect = self.rect
-        self.s.invalidate(self.s.sceneRect())
+        self.scene().invalidate(self.scene().sceneRect())
+        self.dbg = False
 
     def mousePressEvent(self, event):
         if self.dbg: print "AM: mousePressEvent()"
-        connected_slave = self.s.get_arbitor_master_connected(self)
-        if self.s.get_state() == vs.arbitor_master_selected:
+        connected_slave = self.scene().get_arbitor_master_connected(self)
+        if self.scene().get_state() == vs.arbitor_master_selected:
             if self.back_rect.contains(event.pos()):
                 if self.dbg: print "\tBack was pressed"
                 self.clear_link()
-                self.s.arbitor_master_deselected(self)
+                self.scene().arbitor_master_deselected(self)
             elif self.disconnect_rect.contains(event.pos()) and connected_slave is not None:
                 if self.dbg: print "\tDisconnect was pressed"
                 self.clear_link()
-                self.s.arbitor_master_disconnect(self, connected_slave)
+                self.scene().arbitor_master_disconnect(self, connected_slave)
         else:
-            self.s.arbitor_master_selected(self.slave, self)
+            self.scene().arbitor_master_selected(self.slave, self)
             self.setSelected(True)
         return QGraphicsItem.mousePressEvent(self, event)
 
@@ -178,30 +193,36 @@ class ArbitorMaster(Box):
         #print "AM: Connected to slave: %s" % slave.box_name
 
         if self.link is None:
+            print "\tAM: Connect Slave: %s" % self.scene()
             self.link = Link(self, slave, self.s, lt.arbitor_master)
-            self.s.set_link_ref(self.link)
+            self.scene().set_link_ref(self.link)
             self.link.from_box_side(st.right)
             self.link.to_box_side(st.left)
             self.link.en_bezier_connections(True)
-            #self.s.addItem(self.link)
+            #self.scene().addItem(self.link)
             self.update_link()
 
         self.update(self.rect)
-        self.s.invalidate(self.s.sceneRect())
+        self.scene().invalidate(self.scene().sceneRect())
 
     def clear_link(self):
+        self.dbg = True
         if self.dbg: print "AM: clear_link()"
         if self.link is not None:
             if self.dbg: print "\tLink to Remove: %s - %s" % (self.link.from_box.box_name, self.link.to_box.box_name)
-            self.s.removeItem(self.link)
+            self.scene().removeItem(self.link)
+
+        self.dbg = False
 
     def disconnect_slave(self):
+        self.dbg = True
         if self.dbg: print "AM: disconnect_slave()"
         if self.link is None:
             return
         if self.dbg: print "Remove link %s - %s" % (self.link.from_box.box_name, self.link.to_box.box_name)
-        self.s.removeItem(self.link)
+        self.scene().removeItem(self.link)
         self.link = None
+        self.dbg = False
 
     def update_link(self):
         if self.dbg: print "AM: update_link()"
@@ -232,7 +253,7 @@ class ArbitorMaster(Box):
 
     #Paint
     def paint(self, painter, option, widget):
-        if self.s.is_arbitor_master_active():
+        if self.scene().is_arbitor_master_active():
             self.paint_selected(painter, option, widget)
         else:
             self.paint_not_selected(painter, option, widget)
@@ -273,7 +294,7 @@ class ArbitorMaster(Box):
         gu.add_label_to_rect(painter, self.back_rect, "back")
 
         #draw disconnect
-        connected_slave = self.s.get_arbitor_master_connected(self)
+        connected_slave = self.scene().get_arbitor_master_connected(self)
         if connected_slave is not None:
             painter.drawRect(self.disconnect_rect)
             painter.fillRect(self.disconnect_rect, QColor("red"))
@@ -326,7 +347,7 @@ class ArbitorMaster(Box):
         
     def get_connected_slave(self):
         if self.dbg: print "AM: get_connected_slave()"
-        return self.s.get_arbitor_master_connected(self)
+        return self.scene().get_arbitor_master_connected(self)
 
     def get_slave(self):
         if self.dbg: print "AM: get_slave()"

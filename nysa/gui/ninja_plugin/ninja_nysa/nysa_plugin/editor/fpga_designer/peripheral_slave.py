@@ -204,12 +204,14 @@ class PeripheralSlave(Slave):
         return False
 
     def arbitor_master_selected(self, arbitor_master):
+        self.dbg = True
         if self.dbg: print "PS: arbitor_master_selected()"
         if self.ignore_selection:
             return
 
         self.ignore_selection = True
         self.s.clearSelection()
+        #Maybe this is to remove other arbitor masters!
         self.remove_arbitor_masters()
         position = QPointF(self.pos())
         rect = QRectF(self.rect)
@@ -224,7 +226,7 @@ class PeripheralSlave(Slave):
                            scene = self.scene(),
                            slave = self)
 
-        #am.set_activate(True)
+        am.set_activate(True)
         am.update_view()
         self.arbitor_boxes.append(am)
         al = Link(self, am, self.scene(), lt.arbitor_master)
@@ -238,8 +240,10 @@ class PeripheralSlave(Slave):
         self.update_links()
         self.ignore_selection = False
         self.s.invalidate(self.s.sceneRect())
+        self.dbg = True
 
     def remove_arbitor_masters(self):
+        self.dbg = True
         if self.dbg: print "PS: remove_arbitor_masters()"
 
         ams = self.links.keys()
@@ -253,6 +257,7 @@ class PeripheralSlave(Slave):
             self.s.removeItem(am)
 
         self.arbitor_boxes = []
+        self.dbg = False
 
     def mouseReleaseEvent(self, event):
         if self.dbg: print "PS: mouse release event()"
