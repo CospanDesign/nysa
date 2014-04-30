@@ -345,7 +345,7 @@ class FPGADesigner(QWidget, itab_item.ITabItem):
         self.initialize_memory_list(memory_dict)
 
     def drop_event(self, event):
-        self.vc.drop_event(self.position(), event)
+        self.vc.drop_event(event)
 
     def fit_view(self):
         self.view._scale_fit()
