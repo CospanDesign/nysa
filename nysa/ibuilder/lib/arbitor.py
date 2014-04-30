@@ -61,24 +61,25 @@ def get_number_of_arbitor_hosts(module_tags = {}, debug = False):
   #go through all the ports and verify that after the first
   #'_' there is a a wbm and hte wbm has all the arbitor
   #host components
-  debug = False
+  #debug = False
 
   if debug:
     print "Module Name: %s" % (module_tags["module"])
     print "ports: "
 
-  wb_bus = [  ["o", "_we"],
-              ["i", "_dat"],
-              ["i", "_int"],
-              ["i", "_ack"],
-              ["o", "_adr"],
-              ["o", "_stb"],
-              ["o", "_cyc"],
-              ["o", "_dat"],
-              ["o", "_sel"]
-      ]
+  wb_bus = [  "o_we",
+              "i_dat",
+              "i_int",
+              "i_ack",
+              "o_adr",
+              "o_stb",
+              "o_cyc",
+              "o_dat",
+              "o_sel"
+            ]
   possible_prefix = {}
   prefixes = []
+  #debug = True
   for io_ports in module_tags["ports"]:
     if debug:
       print "\tio_ports: " + io_ports
@@ -90,15 +91,16 @@ def get_number_of_arbitor_hosts(module_tags = {}, debug = False):
         continue
 
       for wbm_wire in wb_bus:
-        if wbm_wire[1] in name:
-          io      = name.partition("_")[0]
-          if io not in wbm_wire[0]:
-            continue
+        if wbm_wire in name:
+          #io      = name.partition("_")[0]
+          #if io not in wbm_wire[0]:
+          #  continue
 
-          prefix = name.partition("_")[2]
+          #prefix = name.partition("_")[2]
+          prefix = name.partition("_")[0]
           #wbm_post = prefix.partition("_")[1] + prefix.partition("_")[2]
           wbm_post = wbm_wire
-          prefix = prefix.partition(wbm_wire[1])[0]
+          prefix = prefix.partition(wbm_wire)[0]
           if prefix not in possible_prefix.keys():
             possible_prefix[prefix] = list(wb_bus)
             if debug:
@@ -119,6 +121,7 @@ def get_number_of_arbitor_hosts(module_tags = {}, debug = False):
         print "%s is an arbitor host" % (prefix)
       prefixes.append(prefix)
 
+  #debug = True
   return prefixes
 
 
