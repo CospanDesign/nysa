@@ -59,7 +59,11 @@ class GenDRT(Gen):
         #print "board: %s" % tags["board"]
         board_id = board_dict[tags["board"]]
         #print "board: %s" % tags["image_id"]
-        image_id = tags["image_id"]
+        image_id = 0
+        for key in tags.keys():
+            if key.lower() == "image_id":
+                image_id = tags[key]
+
         #image_id = board_dict[tags["image_id"]]
 
         #Get the DRT version from the DRT info
