@@ -563,6 +563,7 @@ class Dionysus (Nysa):
         Raises:
             NysaCommError: A failure in communication is detected
         """
+        #self.debug = True
         timeout = time.time() + wait_time
 
         temp = Array('B')
@@ -578,7 +579,8 @@ class Dionysus (Nysa):
 
         if not 0xDC in rsp:
             if self.debug:
-                print "Response not found"
+                print "Dionysus (Wait for Interrupts): Response not found"
+            #self.debug = False
             return False
 
         read_total = 13
@@ -603,6 +605,7 @@ class Dionysus (Nysa):
 
         if self.debug:
             print "Interrupts: 0x%08X" % self.interrupts
+        #self.debug = False
         return True
 
 

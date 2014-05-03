@@ -243,7 +243,8 @@ def main(argv):
 
 
     if args.test[0].upper() in devices:
-        devices[args.test[0].upper()].unit_test(dyn)
+        dev_index = dyn.find_device(3)
+        devices[args.test[0].upper()].unit_test(dyn, dev_index)
     else:
         print "Nothing to test"
 

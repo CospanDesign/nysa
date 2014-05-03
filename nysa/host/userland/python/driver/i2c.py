@@ -61,11 +61,11 @@ TRANSMIT              = 5
 RECEIVE               = 6
 
 #Control bit values
-CONTROL_EN            = 1 << 0
-CONTROL_INTERRUPT_EN  = 1 << 1
-CONTROL_SET_100KHZ    = 1 << 2
-CONTROL_SET_400KHZ    = 1 << 3
-CONTROL_RESET         = 1 << 7
+CONTROL_EN            = 0
+CONTROL_INTERRUPT_EN  = 1
+CONTROL_SET_100KHZ    = 2
+CONTROL_SET_400KHZ    = 3
+CONTROL_RESET         = 7
 
 #Status
 STATUS_IRQ_FLAG       = 1 << 0
@@ -78,8 +78,8 @@ STATUS_READ_ACK_N     = 1 << 7
 COMMAND_START         = 1 << 0
 COMMAND_STOP          = 1 << 1
 COMMAND_READ          = 1 << 2
-COMMAND_WRITE         = 1 << 3
-COMMAND_NACK          = 1 << 4
+COMMAND_NACK          = 1 << 3
+COMMAND_WRITE         = 1 << 4
 
 class I2CError (Exception):
     """I2C Error:
@@ -138,6 +138,9 @@ class I2C(Driver):
 
     def __init__(self, nysa, dev_id, debug = False):
         super(I2C, self).__init__(nysa, dev_id, debug)
+
+    def __del__(self):
+        self.enable_i2c(False)
 
     def get_control(self):
         """get_control
@@ -317,7 +320,7 @@ class I2C(Driver):
         Raises:
             NysaCommError: Error in communication
         """
-        self.write_register(CLOCK_DIVISOR, clock_divisor)
+        self.write_register(CLOCK_DIVISOR, clock_divider)
 
     def enable_i2c(self, enable):
         """enable_i2c
@@ -404,10 +407,10 @@ class I2C(Driver):
         Raises:
             NysaCommError: Error in communication
         """
-        print "Control (%X): " % control
-        if (control & CONTROL_EN) > 0:
+        print "Control (0x%X): " % control
+        if (control & (1 << CONTROL_EN)) > 0:
             print "\tI2C Core Enabled"
-        if (control & CONTROL_INTERRUPT_EN) > 0:
+        if (control & (1 << CONTROL_INTERRUPT_EN)) > 0:
             print "\tI2C Interrupt Enabled"
 
     def print_command(self,command):
@@ -424,7 +427,7 @@ class I2C(Driver):
         Raises:
             Nothing
         """
-        print "Command (%X): " % command
+        print "Command (0x%X): " % command
         if (command & COMMAND_START) > 0:
             print "\tSTART"
         if (command & COMMAND_STOP) > 0:
@@ -434,7 +437,7 @@ class I2C(Driver):
         if (command & COMMAND_WRITE) > 0:
             print "\tWRITE"
         if (command & COMMAND_NACK) > 0:
-            print "\tACK"
+            print "\tNACK"
 
     def print_status(self, status):
         """print_status
@@ -451,7 +454,7 @@ class I2C(Driver):
             Nothing
         """
 
-        print "Status (%X): " % status
+        print "Status (0x%X): " % status
         if (status & STATUS_IRQ_FLAG) > 0:
             print "\tInterrupt pending"
         if (status & STATUS_TIP) > 0:
@@ -509,24 +512,26 @@ class I2C(Driver):
             NysaCommError: Error in communication
             I2CError: Errors associated with the I2C protocol
         """
+        self.debug = True
         #set up a write command
         write_command = i2c_id << 1
-
         #set up interrupts
         self.enable_interrupt(True)
 
         #send the write command / i2c identification
         self.write_register(TRANSMIT, write_command)
 
-
         command = COMMAND_START | COMMAND_WRITE
-        if self.debug:
-            self.print_command(command)
+        #if self.debug:
+        #    self.print_control(self.read_register(CONTROL))
+        #    self.print_command(command)
+
         #send the command to the I2C command register to initiate a transfer
         self.write_register(COMMAND, command)
 
         #wait 1 second for interrupt
-        if self.wait_for_interrupts(wait_time = 1):
+        if self.debug: print "Wait for interrupts..."
+        if self.wait_for_interrupts(wait_time = 10):
             if self.debug:
                 print "got interrupt for start"
             if self.is_interrupt_for_slave():
@@ -534,19 +539,18 @@ class I2C(Driver):
                 if self.debug:
                     self.print_status(status)
                 if (status & STATUS_READ_ACK_N) > 0:
-                    raise I2CError("Did not recieve an ACK while writing I2C ID")
-
+                    raise I2CError("Did not recieve an ACK while writing I2C ID: 0x%02X" % i2c_id)
         else:
             if self.debug:
                 self.print_status(self.get_status())
-            raise I2CError("Timed out while waiting for interrupt durring a start")
+            raise I2CError("Timed out while waiting for interrupt during a start: 0x%02X" % i2c_id)
 
         #send the data
         count = 0
         if self.debug:
             print "total data to write: %d" % len(i2c_data)
         if len(i2c_data) > 1:
-            while count < len(i2c_data) - 1:
+            while count < len(i2c_data):
                 if self.debug:
                     print "Writing %d" % count
                 data = i2c_data[count]
@@ -557,6 +561,7 @@ class I2C(Driver):
                         print "got interrupt for data"
                     if self.is_interrupt_for_slave():
                         status = self.get_status()
+                        self.print_status(status)
                         if (status & STATUS_READ_ACK_N) > 0:
                             raise I2CError("Did not receive an ACK while writing data")
                 else:
@@ -593,6 +598,9 @@ class I2C(Driver):
             self.write_register(COMMAND, COMMAND_WRITE)
 
 
+        self.debug = True
+
+
 
     def read_from_i2c(self, i2c_id, i2c_write_data, read_length):
         """read_from_i2c_register
@@ -614,13 +622,21 @@ class I2C(Driver):
             NysaCommError: Error in communication
             I2CError: Errors associated with the I2C protocol
         """
-        #self.debug = True
+        self.debug = True
+        if self.debug: print "read_from_i2c: ENTERED"
         #set up a write command
         read_command = (i2c_id << 1) | 0x01
         read_data = Array('B')
+        self.reset_i2c_core()
+        if self.debug:
+            print "\t\tGetting status before a read"
+            self.print_status(self.read_register(STATUS))
+            print "\t\tGetting status before a read"
+            self.print_status(self.read_register(STATUS))
 
         #setup the registers to read
         if i2c_write_data is not None:
+            if self.debug: print "Writing to I2C"
             self.write_to_i2c(i2c_id, i2c_write_data)
 
         #set up interrupts
@@ -681,7 +697,6 @@ class I2C(Driver):
                 count = count + 1
 
         #read the last peice of data
-        self.get_status()
         self.write_register(COMMAND, COMMAND_READ | COMMAND_NACK | COMMAND_STOP)
         if self.wait_for_interrupts(wait_time = 1):
             if self.debug:
@@ -699,12 +714,18 @@ class I2C(Driver):
         else:
             raise I2CError("Timed out while waiting for interrupt while reading the last byte")
 
+        self.debug = False
         return read_data
+
+
 
 def unit_test(nysa, dev_id):
     print "Unit test!"
     i2c = I2C(nysa, dev_id)
 
+    i2c.reset_i2c_core()
+
+    '''
     print "Check if core is enabled"
     print "enabled: " + str(i2c.is_i2c_enabled())
 
@@ -714,10 +735,6 @@ def unit_test(nysa, dev_id):
 
     print "Check if core is enabled"
     print "enabled: " + str(i2c.is_i2c_enabled())
-
-    print "Enable core"
-    i2c.enable_i2c(True)
-
     print "Check if core is enabled"
     print "enabled: " + str(i2c.is_i2c_enabled())
 
@@ -758,26 +775,29 @@ def unit_test(nysa, dev_id):
     print "Clock Divider: %d" % clock_divider
 
     print "Setting clock rate back to 100kHz"
-    i2c.set_speed_to_100khz()
+    '''
+    print "Enable core"
+    i2c.enable_i2c(True)
+    i2c.enable_interrupt(True)
+    #i2c.get_status()
+    #i2c.set_speed_to_100khz()
+    print "Check if core is enabled"
+    print "enabled: " + str(i2c.is_i2c_enabled())
 
-    print "testing HMC compass"
+    print "Check if interrupt is enabled"
+    print "enabled: " + str(i2c.is_interrupt_enabled())
 
-    print "Resetting I2C device"
-    #i2c.reset_i2c_device()
 
-    i2c_id = 0x21
-    data   = Array('B', [0x47, 0x7F, 0x55])
+
+    i2c_id = 0x3C
+    data   = Array('B', [0x02, 0x04])
 
     i2c.write_to_i2c(i2c_id, data)
 
     #reading from I2C device
-    print "Reading from register"
-    data  = Array('B', [0x41])
-    read_data = i2c.read_from_i2c(i2c_id, data, 2)
+    #print "Reading from register"
+    data  = Array('B', [0x02])
+    read_data = i2c.read_from_i2c(i2c_id, data, 4)
     print "Read Data: %s" % str(read_data)
-
-
-
-
 
 

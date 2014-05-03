@@ -38,6 +38,7 @@ class Driver(object):
                  debug):
         self.n = n
         self.dev_id = dev_id + 1
+        if debug: print "Dev ID: %d" % self.dev_id
         self.debug = debug
 
     def set_timeout(self, timeout):

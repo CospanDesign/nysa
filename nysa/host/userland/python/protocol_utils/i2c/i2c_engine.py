@@ -61,6 +61,7 @@ class I2CEngineThread(QtCore.QThread):
         self.init_read_data = {}
         self.loop_read_data = {}
         self.server = server
+        self.i2c.reset_i2c_core()
 
         self.actions.i2c_run.connect(self.continue_flow)
         self.actions.i2c_reset.connect(self.reset_flow)
@@ -257,10 +258,13 @@ class I2CEngine (QtCore.QObject):
         #index 0 of the transaction is the start transaction, this will dictate
         #Whether this is a read or a write
         #print "i2c type: %s" % str(self.i2c)
+        debug = True
+        if debug: print "I2C Device: 0x%02X" % self.i2c.dev_id
         if not self.i2c.is_i2c_enabled():
-            self.i2c.enable_i2c()
+            self.i2c.enable_i2c(True)
 
         i2c_address = transaction[0]["address"]
+        if debug: print "i2c_address: 0x%02X" % i2c_address
         read_data = Array('B')
 
         if transaction[0]["reading"]:
@@ -286,6 +290,7 @@ class I2CEngine (QtCore.QObject):
                     write_data.append(token["data"])
 
             #Propagate I2C Errors to the above
+            if debug: print "Write Data: %s" % str(write_data)
             try:
                 self.i2c.write_to_i2c(i2c_id = i2c_address,
                                       i2c_data = write_data,
