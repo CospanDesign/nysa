@@ -172,11 +172,11 @@ class GraphicsScene(gs):
         return self.arbitor_selected is not None
 
     def slave_deselected(self, name, bus, tags):
-        self.dbg = True
+        #self.dbg = True
         if self.dbg: print "GS: slave_deselect()"
         if self.arbitor_selected is None:
             self.state = view_state.normal
-        self.dbg = False
+        #self.dbg = False
 
     def removeItem(self, item):
         self.dbg = True
@@ -197,8 +197,8 @@ class GraphicsScene(gs):
     def arbitor_master_deselected(self, arbitor_master):
         self.dbg = True
         if self.dbg: print "GS: arbitor_master_deselected()"
-        for i in range (len(self.links)):
-            self.removeItem(self.links[i])
+        #for i in range (len(self.links)):
+        #    self.removeItem(self.links[i])
         self.links = []
         self.arbitor_selected = None
         name = arbitor_master.box_name
@@ -225,7 +225,7 @@ class GraphicsScene(gs):
         return self.arbitor_selected
 
     def arbitor_master_disconnect(self, arbitor_master, to_slave):
-        self.dbg = True
+        #self.dbg = True
         if self.dbg: print "GS: arbitor_master_disconnect()"
         from_slave = arbitor_master.get_slave()
         for i in range (len(self.links)):
@@ -237,7 +237,7 @@ class GraphicsScene(gs):
         #XXX: Remove the arbitor connctor
         self.fd.disconnect_arbitor_master(from_slave, arbitor_name, to_slave)
         arbitor_master.disconnect_slave()
-        self.dbg = False
+        #self.dbg = False
 
     def get_arbitor_master_connected(self, arbitor_master):
         if self.dbg: print "GS: get_arbitor_master_connected()"

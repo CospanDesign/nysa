@@ -202,7 +202,8 @@ class ArbitorMaster(Box):
             #self.scene().addItem(self.link)
             self.update_link()
 
-        self.update(self.rect)
+        #self.update(self.rect)
+        #self.update(self.rect)
         self.scene().invalidate(self.scene().sceneRect())
 
     def clear_link(self):
@@ -215,21 +216,21 @@ class ArbitorMaster(Box):
         self.dbg = False
 
     def disconnect_slave(self):
-        self.dbg = True
+        #self.dbg = True
         if self.dbg: print "AM: disconnect_slave()"
         if self.link is None:
             return
         if self.dbg: print "Remove link %s - %s" % (self.link.from_box.box_name, self.link.to_box.box_name)
         self.scene().removeItem(self.link)
         self.link = None
-        self.dbg = False
+        #self.dbg = False
 
     def update_link(self):
         if self.dbg: print "AM: update_link()"
         if self.link is None:
             return
 
-        self.link.auto_update()
+        self.link.auto_update_center()
         #print "\tY Position: %f" % (self.y_pos)
 
         x = ARB_MASTER_ACT_RECT.width()

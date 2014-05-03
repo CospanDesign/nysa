@@ -130,7 +130,7 @@ class PeripheralBus(Bus):
             am = self.scene().get_arbitor_master_selected()
             self.scene().arbitor_master_deselected(am)
             am.get_slave().remove_arbitor_masters()
-            self.scene().clear_links()
+            #self.scene().clear_links()
  
         if self.prev_selected_slave is not None:
 
