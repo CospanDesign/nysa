@@ -180,7 +180,7 @@ class Nysa(object):
                register_array[3]
 
 
-    def read(self, device_id, address, length = 1, mem_device = False):
+    def read(self, device_id, address, length = 1, memory_device = False):
         """read
 
         Generic read command used to read data from a Nysa image, this will be
@@ -195,7 +195,7 @@ class Nysa(object):
           device_id (int):  Device identification number, this number is found
                             in the DRT
           address (int):  Address of the register/memory to read
-          mem_device (int): Whether the device is on the memory bus or the
+          memory_device (int): Whether the device is on the memory bus or the
                             peripheral bus
 
         Returns:
@@ -224,7 +224,10 @@ class Nysa(object):
         Raises:
           NysaCommError: Error in communication
         """
-        return self.read(0, address, size, mem_device=True)
+        return self.read(device_id = 0,
+                         address = address,
+                         length = size,
+                         memory_device = True)
 
     def write_register(self, device_id, address, value):
         """write_register
@@ -359,9 +362,9 @@ class Nysa(object):
         Raises:
           NysaCommError: Error in communication
         """
-        self.write(0, address, data, mem_device = True)
+        self.write(0, address, data, memory_device = True)
 
-    def write(self, device_id, address, data = None, mem_device = False):
+    def write(self, device_id, address, data = None, memory_device = False):
         """write
 
         Generic write command usd to write data to a Nysa image, this will be
@@ -370,7 +373,7 @@ class Nysa(object):
         Args:
           device_id (int): Device identification number, found in the DRT
           address (int): Address of the register/memory to read
-          mem_device (int): True if the device is on the memory bus
+          memory_device (int): True if the device is on the memory bus
           data (array of unsigned bytes): Array of raw bytes to send to the
                                           device
 

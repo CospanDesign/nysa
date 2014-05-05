@@ -124,7 +124,7 @@ class Dionysus (Nysa):
 
 
 
-    def read(self, device_id, address, length = 1, mem_device = False):
+    def read(self, device_id, address, length = 1, memory_device = False):
         """read
 
         read data from Dionysus
@@ -143,7 +143,7 @@ class Dionysus (Nysa):
             device_id (int): Device Identification number, found in the DRT
                 (DRT Address = 0)
             address (int): Address of the register/memory to read
-            mem_device (boolean): True if the device is on the memory bus
+            memory_device (boolean): True if the device is on the memory bus
             length (int): Number of 32-bit words to read
 
         Returns:
@@ -158,7 +158,7 @@ class Dionysus (Nysa):
         read_data = Array('B')
         #Set up the ID and the 'Read command (0x02)'
         write_data = Array('B', [0xCD, 0x02])
-        if mem_device:
+        if memory_device:
             if self.debug:
                 print "Read from Memory Device"
             #'OR' the 0x10 flag to indicate that we are using the memory bus
@@ -172,7 +172,7 @@ class Dionysus (Nysa):
 
         #XXX: Memory devices don't have an offset (should they?)
         offset_string = "00"
-        if not mem_device:
+        if not memory_device:
             offset_string = "%02X" % device_id
 
         write_data.fromstring(offset_string.decode('hex'))
@@ -240,7 +240,7 @@ class Dionysus (Nysa):
         return rsp[8:]
 
 
-    def write(self, device_id, address, data=None, mem_device=False):
+    def write(self, device_id, address, data=None, memory_device=False):
         """write
 
         Write data to a Nysa image
@@ -259,7 +259,7 @@ class Dionysus (Nysa):
         Args:
             device_id (int): Device identification number, found in the DRT
             address (int): Address of the register/memory to write to
-            mem_device (boolean):
+            memory_device (boolean):
                 True: Memory device
                 False: Peripheral device
             data (array of bytes): Array of raw bytes to send to the devcie
@@ -273,7 +273,7 @@ class Dionysus (Nysa):
         length = len(data) / 4
         #Create an Array with the identification byte and code for writing
         data_out = Array ('B', [0xCD, 0x01])
-        if mem_device:
+        if memory_device:
             if self.debug:
                 print "Memory Device"
             data_out = Array('B', [0xCD, 0x11])
@@ -282,7 +282,7 @@ class Dionysus (Nysa):
         fmt_string = "%06X" % length
         data_out.fromstring(fmt_string.decode('hex'))
         offset_string = "00"
-        if not mem_device:
+        if not memory_device:
             offset_string = "%02X" % device_id
         data_out.fromstring(offset_string.decode('hex'))
         addr_string = "%06X" % address
