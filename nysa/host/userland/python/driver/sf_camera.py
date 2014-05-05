@@ -56,30 +56,33 @@ SPARKFUN_640_480_CAMERA_MODULE = 1
 
 
 #Register Constants
-CONTROL         = 0
-STATUS          = 1
-PIXEL_COUNT     = 2
-ROW_COUNT       = 3
-MEM_0_BASE      = 4
-MEM_0_SIZE      = 5
-MEM_1_BASE      = 6
-MEM_1_SIZE      = 7
+CONTROL                   = 0
+STATUS                    = 1
+PIXEL_COUNT               = 2
+ROW_COUNT                 = 3
+MEM_0_BASE                = 4
+MEM_0_SIZE                = 5
+MEM_1_BASE                = 6
+MEM_1_SIZE                = 7
 
 #Control bit values
-CONTROL_ENABLE            = 1 << 0
-CONTROL_INTERRUPT_ENABLE  = 1 << 1
-CONTROL_AUTO_FLASH_EN     = 1 << 2
-CONTROL_MANUAL_FLASH_ON   = 1 << 3
-CONTROL_CAMERA_RESET      = 1 << 4
-CONTROL_RESET_COUNTS      = 1 << 5
+CONTROL_ENABLE            = 0
+CONTROL_INTERRUPT_ENABLE  = 1
+CONTROL_AUTO_FLASH_EN     = 2
+CONTROL_MANUAL_FLASH_ON   = 3
+CONTROL_CAMERA_RESET      = 4
+CONTROL_RESET_COUNTS      = 5
+CONTROL_IMAGE_DEBUG       = 6
 
 #Status bit values
-STATUS_MEM_0_READY        = 1 << 0
-STATUS_MEM_1_READY        = 1 << 1
-STATUS_IMAGE_CAPTURED     = 1 << 2
-STATUS_BUSY               = 1 << 3
-STATUS_LOCKED             = 1 << 4
-STATUS_ENABLE             = 1 << 5
+STATUS_MEMORY_0_FINISHED  = 0
+STATUS_MEMORY_1_FINISHED  = 1
+STATUS_IMAGE_CAPTURED     = 2
+STATUS_BUSY               = 3
+STATUS_LOCKED             = 4
+STATUS_ENABLE             = 5
+STATUS_MEMORY_0_EMPTY     = 6
+STATUS_MEMORY_1_EMPTY     = 7
 
 #Camera I2C Address
 CAMERA_I2C = 0x3C
@@ -145,22 +148,31 @@ class SFCamera(Driver):
         self.i2c.enable_interrupt(True)
         self.i2c.get_status()
         self.i2c.set_speed_to_100khz()
+        self.reset_camera()
+        self.set_rgb_mode()
+        self.reset_counts()
+        time.sleep(.4)
+        row_count = self.read_row_count()
+        pixel_count = self.read_pixel_count()
+        size = row_count * pixel_count
+
+
         self.status = 0
         try:
             self.dma_reader = DMAReadController(device     = self,
                                                 mem_base0  = 0x00000000,
                                                 mem_base1  = 0x00100000,
-                                                size       = None,
+                                                size       = size / 4,
                                                 reg_status = STATUS,
                                                 reg_base0  = MEM_0_BASE,
                                                 reg_size0  = MEM_0_SIZE,
                                                 reg_base1  = MEM_1_BASE,
                                                 reg_size1  = MEM_1_SIZE,
                                                 timeout    = 3,
-                                                finished0  = 0,
-                                                finished1  = 1,
-                                                empty0     = 6,
-                                                empty1     = 7)
+                                                finished0  = STATUS_MEMORY_0_FINISHED,
+                                                finished1  = STATUS_MEMORY_1_FINISHED,
+                                                empty0     = STATUS_MEMORY_0_EMPTY,
+                                                empty1     = STATUS_MEMORY_1_EMPTY)
         except NysaDMAException as ex:
             raise SFCameraError("Error initializing the DMA Reader: %s" % str(ex))
 
@@ -264,7 +276,7 @@ class SFCamera(Driver):
         Raises:
             NysaCommError
         """
-        return self.read_register(PIXLE_COUNT)
+        return self.read_register(PIXEL_COUNT)
 
     def reset_counts(self):
         """
@@ -298,7 +310,7 @@ class SFCamera(Driver):
         Raises:
             NysaCommError
         """
-        self.enable_register_bit(CONTROL, 2, enable)
+        self.enable_register_bit(CONTROL, CONTROL_AUTO_FLASH_EN, enable)
 
     def manual_flash_on(self, enable):
         """
@@ -315,7 +327,7 @@ class SFCamera(Driver):
         Raises:
             NysaCommError
         """
-        self.enable_register_bit(CONTROL, 3)
+        self.enable_register_bit(CONTROL, CONTROL_MANUAL_FLASH_ON)
 
     def reset_camera(self):
         """
@@ -330,9 +342,9 @@ class SFCamera(Driver):
         Raises:
             NysaCommError
         """
-        self.clear_register_bit(CONTROL, 4)
+        self.clear_register_bit(CONTROL, CONTROL_CAMERA_RESET)
         time.sleep(.2)
-        self.set_register_bit(CONTROL, 4)
+        self.set_register_bit(CONTROL, CONTROL_CAMERA_RESET)
         time.sleep(.5)
 
     def enable_image_debug(self, enable):
@@ -351,11 +363,11 @@ class SFCamera(Driver):
         Raises:
             NysaCommError
         """
-        self.enable_register_bit(CONTROL, 6, enable)
+        self.enable_register_bit(CONTROL, CONTROL_IMAGE_DEBUG, enable)
 
     def get_config_data(self):
         config_dict = {}
-        img_config = self.i2c.read_from_i2c(CAMERA_I2C, ARRAY('B', [0x02]), 2)
+        img_config = self.i2c.read_from_i2c(CAMERA_I2C, Array('B', [0x02]), 2)
         return img_config
 
     def set_rgb_mode(self, mode = 0x00):
@@ -374,8 +386,8 @@ class SFCamera(Driver):
         mode = mode << 2
         mode |= 0x02
 
-        self.i2c.write_to_i2c(CAMERA_I2C, ARRAY('B', [0x02, 0x40]))
-        self.i2c.write_to_i2c(CAMERA_I2C, ARRAY('B', [I2C_IMG_CONFIG, mode]))
+        self.i2c.write_to_i2c(CAMERA_I2C, Array('B', [0x02, 0x40]))
+        self.i2c.write_to_i2c(CAMERA_I2C, Array('B', [I2C_IMG_CONFIG, mode]))
         self.i2c.is_interrupt_enabled()
 
     def set_start_pixel_count(self, start_pixel):

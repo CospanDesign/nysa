@@ -22,6 +22,8 @@
 import sys
 import os
 
+from array import array as Array
+
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
@@ -159,7 +161,7 @@ class Driver(object):
           AssertionError: This function must be overriden by a board specific
           implementation
         """
-        self.n.write(self.dev_id, address, data, mem_device = False)
+        self.n.write(self.dev_id, address, data, memory_device = False)
 
     def write_memory(self, address, data):
         """write_memory
@@ -410,7 +412,7 @@ class DMAReadController(object):
         self.mem_base[0] = mem_base0
         self.mem_base[1] = mem_base1
         if size is None:
-            self.size = self.mem_base[1] - self.mem_base[0]
+            self.size = (self.mem_base[1] - self.mem_base[0])
         else:
             self.size = size
         self.reg_status = reg_status
@@ -422,10 +424,10 @@ class DMAReadController(object):
 
         self.empty = [0, 1]
         self.finished = [2, 3]
-        self.empty[0] = empty0
-        self.empty[1] = empty1
-        self.finished[0] = finished0
-        self.finished[1] = finished1
+        self.empty[0] = 1 << empty0
+        self.empty[1] = 1 << empty1
+        self.finished[0] = 1 << finished0
+        self.finished[1] = 1 << finished1
 
         self.device.write_register(self.reg_base0, self.mem_base[0])
         self.device.write_register(self.reg_base1, self.mem_base[1])
@@ -449,37 +451,55 @@ class DMAReadController(object):
             NysaCommError:
                 An error in communication (Timeout, Disconnected)
         """
+        #self.debug = True
         if (not self.finished_status[0]) and (not self.finished_status[1]):
+            if self.debug: print "GFS: Finished status: 0, 0"
             status = self.device.read_register(self.reg_status)
+            if self.debug: print "GFS: status: 0x%0X" % status
             self.finished_status[0] = ((status & self.finished[0]) > 0)
             self.finished_status[1] = ((status & self.finished[1]) > 0)
             self.busy_status[0] = ((status & self.empty[0]) == 0)
             self.busy_status[1] = ((status & self.empty[1]) == 0)
+            if self.debug: print "GFS: busy Status: %s, %s" % \
+                (str(self.busy_status[1]), str(self.busy_status[0]))
+            if self.debug: print "GFS: Finished: Status: %s, %s" % \
+                (str(self.finished_status[1]), str(self.finished_status[0]))
 
         if self.finished_status[0] and self.finished_status[1]:
+            if self.debug: print "GFS: Both Channels are ready"
             if self.next_finished == 0:
+                if self.debug: print "GFS: Get data from channel 0"
                 self.finished_status[0] = False
                 self.busy_status[0] = False
                 self.next_finished = 1
+                #self.debug = False
                 return 1
             else:
+                if self.debug: print "GFS: Get data from channel 1"
                 self.finished_status[1] = False
                 self.busy_status[1] = False
                 self.next_finished = 0
+                #self.debug = False
                 return 2
 
         self.next_finished = 0
 
         if self.finished_status[0]:
+            if self.debug: print "GFS: Channel 0 is ready"
             self.finished_status[0] = False
             self.busy_status[0] = False
+            #self.debug = False
             return 1
 
         if self.finished_status[1]:
+            if self.debug: print "GFS: Channel 1 is ready"
             self.finished_status[1] = False
             self.busy_status[1] = False
+            #self.debug = False
             return 2
 
+        #self.debug = False
+        if self.debug: print "GFS: No Channels are ready now"
         return 0
 
     def is_busy(self):
@@ -490,6 +510,7 @@ class DMAReadController(object):
             return True
         return False
 
+    '''
     def anticipate_read(self, single = True):
         if self.finished_status[0] and self.finished_status[1]:
             #Both blocks are already ready
@@ -500,7 +521,7 @@ class DMAReadController(object):
                 #One side is busy the other is finished
                 return
             #Side 0 is finished but and side 1 is not busy
-            self.device.write_register(self.reg_size[1], self.size)
+            self.device.write_register(self.reg_size1, self.size)
             if self.finished_status[0]:
                 self.next_finished = 0
             if single:
@@ -511,7 +532,7 @@ class DMAReadController(object):
                 #One side is busy and the other is finshed
                 return
             #Side 1 is finished and side 0 is not busy
-            self.device.write_register(self.reg_size[0], self.size)
+            self.device.write_register(self.reg_size0, self.size)
             if self.finished_status[1]:
                 self.next_finished = 1
             if single:
@@ -524,25 +545,25 @@ class DMAReadController(object):
 
         if self.busy_status[0]:
             #Block 1 is not doing anything
-            self.device.write_register(self.reg_size[1], self.size)
+            self.device.write_register(self.reg_size1, self.size)
             self.next_finished = 0
             if single:
                 return
 
         if self.busy_status[1]:
             #Block 0 is not doing anything
-            self.device.write_register(self.reg_size[0], self.size)
+            self.device.write_register(self.reg_size0, self.size)
             self.next_finished = 1
             if single:
                 return
 
         #Both sides are not busy and are not doign anything
-        self.device.write_register(self.reg_size[0], self.size)
+        self.device.write_register(self.reg_size0, self.size)
         self.next_finished = 0
         if single:
             return
-        self.device.write_register(self.reg_size[1], self.size)
-
+        self.device.write_register(self.reg_size1, self.size)
+    '''
 
     def read(self, anticipate = False):
         """
@@ -571,30 +592,50 @@ class DMAReadController(object):
                 Error in communication
         """
 
+        self.debug = False
         buf = Array('B')
+        if self.debug: print "READ: Entered"
         finished_status = self._get_finished_block()
+        if self.debug: print "READ: Busy: %s" % str(self.is_busy())
         if (finished_status == 0) and not self.is_busy():
             #Request more data
-            self.device.write_register(self.reg_size[0], self.size)
+            if self.debug: print "READ: There is no data ready, initiate a capture"
+            self.device.write_register(self.reg_size0, self.size)
 
-        self.device.wait_for_interrupt(self.timeout)
-        finished_status = self._get_finished_block()
-        if (finished_status == 0) and not self.is_busy():
+        elif (finished_status == 0) and self.is_busy():
+            self.device.wait_for_interrupts(self.timeout)
+            finished_status = self._get_finished_block()
+
+        if (finished_status == 0):
+            if self.debug: print "READ: No Data is ready, returning an empty buffer"
             return buf
 
         if finished_status == 1:
-            buf = self.device.read_memory(self.mem_block[0], self.size)
+            if self.debug: print "READ: buffer 0 is ready"
+            if self.debug: print "self.mem_base: 0x%08X, size: 0x%08X" % (self.mem_base[0], self.size)
+            buf = self.device.read_memory(self.mem_base[0], self.size)
             if anticipate:
-                self.device.write_register(self.reg_size[0], self.size)
-                if self.busy_status[1]:
+                if self.debug: print "READ: Setting up an anticipate read for channel 1"
+                if self.debug: print "READ: Busy Status[1]: %s" % str(self.busy_status[1])
+                if not self.busy_status[1]:
+                    if self.debug: print "READ: Writing to register for size[1], to initiate a transfer"
+                    self.device.write_register(self.reg_size1, self.size)
+                else:
                     self.next_finished = 1
         else:
-            buf = self.device.read_memory(self.mem_block[1], self.size)
+            if self.debug: print "READ: buffer 1 is ready"
+            if self.debug: print "self.mem_base: 0x%08X, size: 0x%08X" % (self.mem_base[1], self.size)
+            buf = self.device.read_memory(self.mem_base[1], self.size)
             if anticipate:
-                self.device.write_register(self.reg_size[1], self.size)
-                if self.busy_status[0]:
+                if self.debug: print "READ: Setting up an anticipate read for channel 0"
+                if self.debug: print "READ: Busy Status[0]: %s" % str(self.busy_status[0])
+                if not self.busy_status[0]:
+                    if self.debug: print "READ: Writing to register for size[0], to initiate a transfer"
+                    self.device.write_register(self.reg_size0, self.size)
+                else:
                     self.next_finished = 0
 
+        self.debug = False
         return buf
 
 class DMAWriteController(object):
@@ -695,9 +736,9 @@ class DMAWriteController(object):
         self.reg_base = [0, 0]
         self.reg_size = [0, 0]
         self.reg_base[0] = reg_base0
-        self.reg_size[0] = reg_size0
+        self.reg_size0 = reg_size0
         self.reg_base[1] = reg_base1
-        self.reg_size[1] = reg_size1
+        self.reg_size1 = reg_size1
         self.timeout = timeout
 
         self.empty = [0, 1]
@@ -757,18 +798,18 @@ class DMAWriteController(object):
             if (available_blocks == 1):
                 #Mem 0 is available
                 self.device.write_memory(self.mem_base[0], buf[position: position + size + 1])
-                self.device.write_register(self.reg_size[0], size / 4)
+                self.device.write_register(self.reg_size0, size / 4)
                 position += size
 
             elif (available_blocks == 2):
                 #Mem 1 is available
                 self.device.write_memory(self.mem_base[1], buf[position: position + size + 1])
-                self.device.write_register(self.reg_size[1], size / 4)
+                self.device.write_register(self.reg_size1, size / 4)
                 position += size
 
             elif (available_blocks == 3):
                 self.device.write_memory(self.mem_base[0], buf[position: position + size + 1])
-                self.device.write_register(self.reg_size[0], size / 4)
+                self.device.write_register(self.reg_size0, size / 4)
                 position += size
 
                 size = self.size
@@ -779,7 +820,7 @@ class DMAWriteController(object):
                     return
 
                 self.device.write_memory(self.mem_base[1], buf[position: position + size + 1])
-                self.device.write_register(self.reg_size[1], size / 4)
+                self.device.write_register(self.reg_size1, size / 4)
                 position += size
 
             else:
@@ -791,7 +832,7 @@ class DMAWriteController(object):
                     self.device.wait_for_interrupts(timeout)
 
                 elif timeout is None:
-                    self.device.wait_for_interrupt(10)
+                    self.device.wait_for_interrupts(10)
 
 
 
