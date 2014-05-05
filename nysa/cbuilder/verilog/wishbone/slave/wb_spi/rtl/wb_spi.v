@@ -50,6 +50,7 @@
 
 	identification of your device 0 - 65536
 	DRT_ID:  4
+  DRT_SUB_ID: 1
 
 	flags (read drt.txt in the slave/device_rom_table directory 1 means
 	a standard device
@@ -99,15 +100,15 @@ output reg      [31:0]	          o_wbs_dat;
 output reg			                  o_wbs_ack;
 output reg			                  o_wbs_int;
 
-// SPI signals                                     
+// SPI signals
 output          [`SPI_SS_NB-1:0]  ss_pad_o;         // slave select
 output                            sclk_pad_o;       // serial clock
 output                            mosi_pad_o;       // master out slave in
 input                             miso_pad_i;       // master in slave out
-                                               
+
 // Internal signals
 reg       [`SPI_DIVIDER_LEN-1:0] divider;          // Divider register
-reg       [`SPI_CTRL_BIT_NB-1:0] ctrl;             // Control and status register
+reg       [31:0]                 ctrl;             // Control and status register
 reg             [`SPI_SS_NB-1:0] ss;               // Slave select register
 reg                     [32-1:0] wbs_dat;           // wb data out
 wire         [`SPI_MAX_CHAR-1:0] rx;               // Rx register
@@ -126,7 +127,7 @@ wire                             tip;              // transfer in progress
 wire                             pos_edge;         // recognize posedge of sclk
 wire                             neg_edge;         // recognize negedge of sclk
 wire                             last_bit;         // marks last character bit
-  
+
 
 
 parameter SPI_CTRL        = 4'h0;
@@ -147,7 +148,7 @@ assign spi_tx_sel[0]   = i_wbs_cyc & i_wbs_stb & i_wbs_we & (i_wbs_adr[3:0] == S
 assign spi_tx_sel[1]   = i_wbs_cyc & i_wbs_stb & i_wbs_we & (i_wbs_adr[3:0] == SPI_TX_1);
 assign spi_tx_sel[2]   = i_wbs_cyc & i_wbs_stb & i_wbs_we & (i_wbs_adr[3:0] == SPI_TX_2);
 assign spi_tx_sel[3]   = i_wbs_cyc & i_wbs_stb & i_wbs_we & (i_wbs_adr[3:0] == SPI_TX_3);
- 
+
 
 always @ (posedge clk) begin
 	if (rst) begin
@@ -170,19 +171,19 @@ always @ (posedge clk) begin
 		if (o_wbs_ack & ~ i_wbs_stb)begin
 			o_wbs_ack   <= 0;
 		end
-    
+
     if (go && last_bit && pos_edge) begin
       ctrl[8]     <=  0;
 
     end
-    
+
 		if (i_wbs_stb & i_wbs_cyc) begin
 			//master is requesting somethign
 			if (i_wbs_we && !tip) begin
 				//write request
-				case (i_wbs_adr) 
+				case (i_wbs_adr)
 					SPI_CTRL: begin
-            ctrl      <=  i_wbs_dat[15:0];
+            ctrl      <=  i_wbs_dat;
 					end
 					SPI_DIVIDER: begin
             divider <=  i_wbs_dat[31:0];
@@ -195,7 +196,7 @@ always @ (posedge clk) begin
 				endcase
 			end
 
-			else begin 
+			else begin
 				//read request
 				case (i_wbs_adr)
 					SPI_RX_0: begin
@@ -211,7 +212,7 @@ always @ (posedge clk) begin
             o_wbs_dat <= rx[`SPI_MAX_CHAR-1:96];
 					end
 					SPI_CTRL: begin
-            o_wbs_dat <= {{32-`SPI_CTRL_BIT_NB{1'b0}}, ctrl};
+            o_wbs_dat <= ctrl;
 					end
 					SPI_DIVIDER: begin
             o_wbs_dat <=  divider;
@@ -220,7 +221,7 @@ always @ (posedge clk) begin
             o_wbs_dat <= {{32-`SPI_SS_NB{1'b0}}, ss};
 					end
           SPI_CLOCK_RATE: begin
-            o_wbs_dat <= `CLOCK_RATE; 
+            o_wbs_dat <= `CLOCK_RATE;
           end
 					default: begin
             //user should write here
@@ -233,7 +234,7 @@ always @ (posedge clk) begin
 	end
 end
 
- 
+
 assign rx_negedge = ctrl[`SPI_CTRL_RX_NEGEDGE];
 assign tx_negedge = ctrl[`SPI_CTRL_TX_NEGEDGE];
 assign go         = ctrl[`SPI_CTRL_GO];
@@ -241,40 +242,40 @@ assign char_len   = ctrl[`SPI_CTRL_CHAR_LEN];
 assign lsb        = ctrl[`SPI_CTRL_LSB];
 assign ie         = ctrl[`SPI_CTRL_IE];
 assign ass        = ctrl[`SPI_CTRL_ASS];
- 
+
 assign ss_pad_o = ~((ss & {`SPI_SS_NB{tip & ass}}) | (ss & {`SPI_SS_NB{!ass}}));
 
 spi_clgen clgen (
-  .clk_in(clk), 
-  .rst(rst), 
-  .go(go), 
-  .enable(tip), 
+  .clk_in(clk),
+  .rst(rst),
+  .go(go),
+  .enable(tip),
   .last_clk(last_bit),
-  .divider(divider), 
-  .clk_out(sclk_pad_o), 
-  .pos_edge(pos_edge), 
+  .divider(divider),
+  .clk_out(sclk_pad_o),
+  .pos_edge(pos_edge),
   .neg_edge(neg_edge)
 );
-  
+
 spi_shift shift (
-  .clk(clk), 
-  .rst(rst), 
+  .clk(clk),
+  .rst(rst),
   .len(char_len[`SPI_CHAR_LEN_BITS - 1:0]),
-  .latch(spi_tx_sel[3:0]), 
-  .byte_sel(4'hF), 
-  .lsb(lsb), 
-  .go(go), 
-  .pos_edge(pos_edge), 
-  .neg_edge(neg_edge), 
-  .rx_negedge(rx_negedge), 
+  .latch(spi_tx_sel[3:0]),
+  .byte_sel(4'hF),
+  .lsb(lsb),
+  .go(go),
+  .pos_edge(pos_edge),
+  .neg_edge(neg_edge),
+  .rx_negedge(rx_negedge),
   .tx_negedge(tx_negedge),
-  .tip(tip), 
-  .last(last_bit), 
-  .p_in(i_wbs_dat), 
-  .p_out(rx), 
-  .s_clk(sclk_pad_o), 
-  .s_in(miso_pad_i), 
+  .tip(tip),
+  .last(last_bit),
+  .p_in(i_wbs_dat),
+  .p_out(rx),
+  .s_clk(sclk_pad_o),
+  .s_in(miso_pad_i),
   .s_out(mosi_pad_o)
 );
 endmodule
-  
+
