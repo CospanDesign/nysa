@@ -82,6 +82,13 @@ class Controller(NysaBaseController):
         super (Controller, self).__init__()
         self.actions = SFCameraActions()
         self.m = AppModel()
+        self.debug = False
+        self.actions.sf_camera_run.connect(self.run)
+        self.actions.sf_camera_reset.connect(self.reset)
+        self.actions.sf_camera_stop.connect(self.stop)
+
+    def __del__(self):
+        self.camera_util.stop()
 
     @staticmethod
     def get_name():
@@ -90,8 +97,9 @@ class Controller(NysaBaseController):
 
     def _initialize(self, platform, image_id):
         self.v = CameraWidget(self.status, self.actions)
-        self.camera = SFCamera(platform[2], camera_id = 3, i2c_id = 2)
-        self.camera_util = CameraUtils(self.camera)
+        self.camera = SFCamera(platform[2], camera_id = 2, i2c_id = 1)
+        self.camera_util = CameraUtils(self.camera, self.actions, self.debug)
+        self.camera_util.setup_camera()
 
     def start_standalone_app(self, platform, image_id, debug = False):
         app = QApplication (sys.argv)
@@ -131,6 +139,18 @@ class Controller(NysaBaseController):
     @staticmethod
     def get_device_unique_id():
         return None
+
+    def run(self):
+        self.status.Important(self, "Initiate new thread")
+        self.camera_util.run()
+
+    def stop(self):
+        self.status.Important(self, "Stop Reading")
+        self.camera_util.stop()
+
+    def reset(self):
+        self.status.Important(self, "Reset Camera")
+        self.camera_util.reset()
 
 
 def main(argv):

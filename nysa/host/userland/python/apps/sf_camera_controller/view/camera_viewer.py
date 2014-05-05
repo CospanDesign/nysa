@@ -43,9 +43,11 @@ class CameraViewer(QGraphicsView):
         self.image_viewer = ImageViewer(640, 480, status, actions)
         self.scene = QGraphicsScene(self)
         self.scene.addItem(self.image_viewer)
+        self.setScene(self.scene)
         self.fitInView(QRectF(0.0, 0.0, 640.0, 480.0), Qt.KeepAspectRatio)
 
     def scale_view(self, factor):
+        print "Scale View"
         factor = self.transform().scale(factor,
                                         factor).mapRect(QRectF(0, 0, 1, 1)).width()
 
@@ -54,6 +56,7 @@ class CameraViewer(QGraphicsView):
             self.scale(factor, factor)
 
     def scale_fit(self):
+        self.status.Debug(self, "Scale Fit")
         self.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
 
     def reload_image(self):
@@ -75,13 +78,19 @@ class ImageViewer(QGraphicsWidget):
 
         self.setGeometry(0, 0, width, height)
         self.actions.sf_camera_read_ready.connect(self.new_image)
+        self.img = None
 
     def resize_view(self, width, height):
         self.setGeometry(0, 0, width, height)
 
     def new_image(self, image):
+        #print "New Image: %s" % str(image)
+        #print "Size of scene: %d, %d" % (self.scene().sceneRect().width(), self.scene().sceneRect().height())
         self.img = image
-        self.scene().invalidate()
+        self.scene().invalidate(self.scene().sceneRect())
 
     def paint(self, painter, option, widget):
-        painter.drawImage(QPoint(0, 0), self.img)
+        #print "painting..."
+        if self.img is not None:
+            painter.drawImage(QPoint(0, 0), self.img)
+
