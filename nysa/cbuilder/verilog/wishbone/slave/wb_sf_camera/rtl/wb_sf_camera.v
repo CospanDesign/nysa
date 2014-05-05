@@ -292,8 +292,8 @@ assign  w_image_debug_en    = control[`CONTROL_IMAGE_DEBUG];
 //assign  status[`STATUS_MEMORY_0_EMPTY]      = w_memory_0_empty;
 //assign  status[`STATUS_MEMORY_1_EMPTY]      = w_memory_1_empty;
 assign  status                              = { 24'h0,
-                                                (r_memory_0_size > 0),
-                                                (r_memory_1_size > 0),
+                                                (r_memory_1_size == 0),
+                                                (r_memory_0_size == 0),
                                                 w_captured,
                                                 w_busy,
                                                 w_locked,
