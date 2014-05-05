@@ -42,12 +42,14 @@ from dionysus.dionysus import Dionysus
 from driver import gpio
 from driver import i2c
 from driver import i2s
+from driver import spi
 
 
 devices = {
         "GPIO":gpio,
         "I2C":i2c,
-        "I2S":i2s
+        "I2S":i2s,
+        "SPI":spi
         }
 
 
@@ -243,7 +245,9 @@ def main(argv):
 
 
     if args.test[0].upper() in devices:
-        dev_index = dyn.find_device(3)
+        dev_id = dyn.get_id_from_name(args.test[0].upper())
+        #print "%s: Device id: %d" % (args.test[0].upper(), dev_id)
+        dev_index = dyn.find_device(dev_id)
         devices[args.test[0].upper()].unit_test(dyn, dev_index)
     else:
         print "Nothing to test"
