@@ -199,7 +199,7 @@ wb_i2c s1 (
 
   .clk        (clk                  ),
   .rst        (rst                  ),
-                                    
+
   .i_wbs_we   (w_wbs1_we            ),
   .i_wbs_cyc  (w_wbs1_cyc           ),
   .i_wbs_dat  (w_wbs1_dat_i         ),
@@ -217,7 +217,7 @@ wb_i2c s1 (
 wishbone_interconnect wi (
   .clk        (clk                  ),
   .rst        (rst                  ),
-                                    
+
   .i_m_we     (w_wbm_we             ),
   .i_m_cyc    (w_wbm_cyc            ),
   .i_m_stb    (w_wbm_stb            ),
@@ -226,7 +226,7 @@ wishbone_interconnect wi (
   .o_m_dat    (w_wbm_dat_o          ),
   .i_m_adr    (w_wbm_adr            ),
   .o_m_int    (w_wbm_int            ),
-                                    
+
   .o_s0_we    (w_wbs0_we            ),
   .o_s0_cyc   (w_wbs0_cyc           ),
   .o_s0_stb   (w_wbs0_stb           ),
@@ -235,7 +235,7 @@ wishbone_interconnect wi (
   .i_s0_dat   (w_wbs0_dat_o         ),
   .o_s0_adr   (w_wbs0_adr           ),
   .i_s0_int   (w_wbs0_int           ),
-                                    
+
   .o_s1_we    (w_wbs1_we            ),
   .o_s1_cyc   (w_wbs1_cyc           ),
   .o_s1_stb   (w_wbs1_stb           ),
@@ -291,10 +291,10 @@ initial begin
     //while there is still data to be read from the file
     while (!$feof(fd_in)) begin
       //read in a command
-      read_count = $fscanf (fd_in, "%h:%h:%h:%h\n", 
-                                  r_in_data_count, 
-                                  r_in_command, 
-                                  r_in_address, 
+      read_count = $fscanf (fd_in, "%h:%h:%h:%h\n",
+                                  r_in_data_count,
+                                  r_in_command,
+                                  r_in_address,
                                   r_in_data);
 
       //Handle Frindge commands/comments
@@ -338,7 +338,7 @@ initial begin
         `SLEEP_CLK(1);
         while (~command_finished) begin
           request_more_data_ack         <= 0;
-      
+
           if ((r_in_command & 32'h0000FFFF) == 1) begin
             if (request_more_data && ~request_more_data_ack) begin
               read_count      = $fscanf(fd_in, "%h\n", r_in_data);
@@ -346,7 +346,7 @@ initial begin
               request_more_data_ack     <= 1;
             end
           end
-      
+
           //so time porgresses wait a tick
           `SLEEP_CLK(1);
           //this doesn't need to be here, but there is a weird behavior in iverilog
@@ -374,9 +374,6 @@ end
 //initial begin
 //    $monitor("%t, data: %h, state: %h, execute command: %h", $time, w_wbm_dat_o, state, execute_command);
 //end
-
-
-
 always @ (posedge clk) begin
   if (rst) begin
     state                     <= IDLE;
