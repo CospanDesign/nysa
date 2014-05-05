@@ -1,7 +1,7 @@
 {
 	"BASE_DIR":"~/projects/ibuilder_project",
 	"board":"dionysus",
-  "IMAGE_ID":0,
+  "IMAGE_ID":258,
 	"PROJECT_NAME":"example_project",
 	"TEMPLATE":"wishbone_template.json",
 	"INTERFACE":{
@@ -82,10 +82,6 @@
           "loc":"pmoda1",
           "direction":"output"
         },
-        "sclk_pad_o":{
-          "loc":"pmoda4",
-          "direction":"output"
-        },
         "mosi_pad_o":{
           "loc":"pmoda2",
           "direction":"output"
@@ -93,6 +89,10 @@
         "miso_pad_i":{
           "loc":"pmoda3",
           "direction":"input"
+        },
+        "sclk_pad_o":{
+          "loc":"pmoda4",
+          "direction":"output"
         }
       }
     }
@@ -138,11 +138,11 @@
 					"loc":"dq[15:0]",
 					"direction":"inout"
 				},
-				"io_sdram_data_mask[1]":{
+				"o_sdram_data_mask[1]":{
 					"loc":"dqmh",
 					"direction":"output"
 				},
-				"io_sdram_data_mask[0]":{
+				"o_sdram_data_mask[0]":{
 					"loc":"dqml",
 					"direction":"output"
 				}

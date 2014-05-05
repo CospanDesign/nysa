@@ -1,7 +1,7 @@
 {
 	"BASE_DIR":"~/projects/ibuilder_project",
 	"board":"dionysus",
-  "IMAGE_ID":0,
+  "IMAGE_ID":257,
 	"PROJECT_NAME":"example_project",
 	"TEMPLATE":"wishbone_template.json",
 	"INTERFACE":{
@@ -53,39 +53,43 @@
 					"loc":"led[1:0]",
 					"direction":"output"
 				},
- 				"gpio_in[1:0]":{
+				"gpio_in[3:2]":{
 					"loc":"button[1:0]",
 					"direction":"input"
 				}
 			}
   	},
-    "sdcard":{
-      "filename":"wb_spi.v",
+    "i2c1":{
+      "filename":"wb_i2c.v",
       "bind":{
-        "ss_pad_o[0]":{
-          "loc":"s10",
-          "direction":"output"
+        "scl":{
+          "loc":"pmoda3",
+          "direction":"inout"
         },
-        "sclk_pad_o":{
-          "loc":"s13",
-          "direction":"output"
-        },
-        "mosi_pad_o":{
-          "loc":"s11",
-          "direction":"output"
-        },
-        "miso_pad_i":{
-          "loc":"s12",
-          "direction":"input"
+        "sda":{
+          "loc":"pmoda4",
+          "direction":"inout"
         }
       }
-    }
-  },
+		},
+    "i2c2":{
+      "filename":"wb_i2c.v",
+      "bind":{
+        "scl":{
+          "loc":"pmodb3",
+          "direction":"inout"
+        },
+        "sda":{
+          "loc":"pmodb4",
+          "direction":"inout"
+        }
+      }
+		}
+	},
   "MEMORY":{
 		"mem1":{
 			"filename":"wb_sdram.v",
 			"bind":{
-	
 				"o_sdram_clk":{
 					"loc":"sdram_clk",
 					"direction":"output"
@@ -135,9 +139,16 @@
 		}
 	},
 
-	"bind": {
+	"bind":{
+    "clk":{
+      "direction":"input",
+      "loc":"clk"
+    },
+    "rst":{
+      "direction":"input",
+      "loc":"rst"
+    }
 	},
 	"constraint_files":[
 	]
-
 }

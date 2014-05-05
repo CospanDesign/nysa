@@ -40,3 +40,5 @@ sed -i 's/:\"o_sdram_clk\"/:\"sdram_clk\"/g' *.json
 #sed -i 'a/\"board\"/\"IMAGE_ID\":0,/g dionysus_gpio_mem.json
 
 sed -i 's/sycamore_projects/ibuilder_project/g' *.json
+
+sed -i 's/io_sdram_data_mask/o_sdram_data_mask/g' *.json
