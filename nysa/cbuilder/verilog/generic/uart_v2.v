@@ -4,21 +4,21 @@ Distributed under the MIT license.
 Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in 
-the Software without restriction, including without limitation the rights to 
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-of the Software, and to permit persons to whom the Software is furnished to do 
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
 so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all 
+The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
@@ -28,7 +28,7 @@ SOFTWARE.
 `include "project_defines.v"
 `timescale 1 ns/1 ps
 
-`define PRESCALER_COUNT 8 
+`define PRESCALER_COUNT 8
 
 `define HALF_PERIOD `PRESCALER_COUNT / 2
 `define FULL_PERIOD `PRESCALER_COUNT
@@ -86,7 +86,7 @@ localparam RX_RECEIVED           = 6;
 //TX state machine
 localparam TX_IDLE               = 0;
 localparam TX_SENDING            = 1;
-localparam TX_DELAY_RESTART      = 2;  
+localparam TX_DELAY_RESTART      = 2;
 
 
 //Registers/Wires
@@ -146,15 +146,15 @@ always @ (posedge clk) begin
     end
 
 //    $display ("%m clock_div: %d", default_clock_div);
-//    $display ("%m half period: %d", default_clock_div * (`HALF_PERIOD)); 
-//    $display ("%m full period: %d", default_clock_div * (`FULL_PERIOD)); 
+//    $display ("%m half period: %d", default_clock_div * (`HALF_PERIOD));
+//    $display ("%m full period: %d", default_clock_div * (`FULL_PERIOD));
 
   end
   else begin
 
     //counters
 
-    
+
     //decrement the rx_clk_divider
     if (rx_clk_divider == 0) begin
       rx_clk_divider  <= clock_div;
@@ -220,7 +220,7 @@ always @ (posedge clk) begin
         if (rx_countdown == 0) begin
           if (rx) begin
             rx_byte   <= rx_data;
-            rx_state  <= RX_RECEIVED; 
+            rx_state  <= RX_RECEIVED;
           end
           else begin
             rx_state  <= RX_ERROR;
@@ -229,7 +229,7 @@ always @ (posedge clk) begin
       end
       RX_DELAY_RESTART: begin
         if (rx_countdown == 0) begin
-          rx_state  <= RX_IDLE; 
+          rx_state  <= RX_IDLE;
         end
       end
       RX_ERROR: begin
@@ -238,7 +238,7 @@ always @ (posedge clk) begin
       end
       RX_RECEIVED: begin
         received  <= 1;
-        rx_state  <= RX_IDLE; 
+        rx_state  <= RX_IDLE;
       end
       default: begin
         rx_state <= RX_IDLE;

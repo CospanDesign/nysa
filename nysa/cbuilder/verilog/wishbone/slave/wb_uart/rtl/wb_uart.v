@@ -60,6 +60,10 @@ SOFTWARE.
 `define STATUS_READ_INTERRUPT     3
 `define STATUS_WRITE_INTERRUPT    4
 
+//`define BAUDRATE 115200
+//`define DIVISOR 8
+
+//`define DEFAULT_CLOCK_DIVISOR (`CLOCK_RATE / (`BAUDRATE * `DIVISOR))
 
 module wb_uart (
   input               clk,
@@ -149,10 +153,10 @@ uart_controller uc  (
   .rst                 (rst                          ),
 
   //Physical Lines
-  .rx                  (rx                           ),
-  .tx                  (tx                           ),
-  .cts                 (cts                          ),
-  .rts                 (rts                          ),
+  .rx                  (i_rx                         ),
+  .tx                  (o_tx                         ),
+  .cts                 (o_cts                        ),
+  .rts                 (i_rts                        ),
 
   //Control/Status
   .control_reset       (control[`CONTROL_RESET]      ),
@@ -242,11 +246,11 @@ always @ (posedge clk) begin
 
     //Control
     if (control[`CONTROL_READ_INTERRUPT] && !read_empty) begin
-      $display ("\tWB_UART: READ INTERRUPT!");
+      //$display ("\tWB_UART: READ INTERRUPT!");
       o_wbs_int                           <=  1;
     end
     if (control[`CONTROL_WRITE_INTERRUPT] && !write_full) begin
-      $display ("\tWB_UART: WRITE INTERRUPT!");
+      //$display ("\tWB_UART: WRITE INTERRUPT!");
       o_wbs_int                           <=  1;
     end
 
@@ -286,8 +290,9 @@ always @ (posedge clk) begin
               dw_countdown            <=  dw_countdown - 1;
             end
             if (write_count == 0) begin
-              dw_countdown            <=  3;
               o_wbs_ack               <=  1;
+              //Consumed all data from the user
+              write_en                <=  0;
             end
             else begin
               write_count             <=  write_count - 1;
@@ -296,57 +301,63 @@ always @ (posedge clk) begin
         end
         //not a continuation of a write
         else begin
-          case (i_wbs_adr) 
-            REG_CONTROL: begin
-              control                 <=  i_wbs_dat[31:0];
-            end
-            REG_STATUS: begin
-              //USER CANNOT WRITE ANYTHING TO STATUS
-            end
-            REG_PRESCALER: begin
-              //USER CANNOT WRITE ANYTHING TO PRESCALER
-            end
-            REG_CLOCK_DIV: begin
-              //the host will have to calculate out the baudrate
-              clock_div               <=  i_wbs_dat[31:0];
-              set_clock_div           <=  1;
-              $display("user wrote %h", i_wbs_dat);
-            end
-            REG_WRITE_COUNT: begin
-              //USER ANNOT WRITE ANYTHING TO WRITE COUNT
-            end
-            REG_WRITE: begin
-              $display ("Starting a write cycle");
-              //this is where the start of a UART write will begin, subsequent burst reads after this will be written to a output FIFO
-              //I need a flag that will inidicate that the user will be writting to the buffer
-
-              //write register
-              write_en                <=  1;
-              dw_countdown            <=  1;
-              if (i_wbs_dat[31:16] <= 2) begin
-                dw_countdown          <=  i_wbs_dat[17:16] - 1;
+          if (!o_wbs_ack) begin
+            case (i_wbs_adr) 
+              REG_CONTROL: begin
+                control                 <=  i_wbs_dat[31:0];
+                o_wbs_ack               <=  1;
               end
-              if (i_wbs_dat[31:16] == 0) begin
-                write_count           <=  0;
-                write_en              <=  0;
+              REG_STATUS: begin
+                //USER CANNOT WRITE ANYTHING TO STATUS
+                o_wbs_ack               <=  1;
               end
-              if (i_wbs_dat[31:16]    <= 2) begin
-                write_count           <=  i_wbs_dat[31:16]  - 1;
+              REG_PRESCALER: begin
+                //USER CANNOT WRITE ANYTHING TO PRESCALER
+                o_wbs_ack               <=  1;
               end
-              else begin
-                write_count           <=  i_wbs_dat[31:16];
+              REG_CLOCK_DIV: begin
+                //the host will have to calculate out the baudrate
+                clock_div               <=  i_wbs_dat[31:0];
+                set_clock_div           <=  1;
+                $display("user wrote %h", i_wbs_dat);
+                o_wbs_ack               <=  1;
               end
-            end
-            REG_READ_COUNT: begin
-              //USER CANNOT WRITE ANYTHING TO READ COUNT
-              user_read_count         <=  i_wbs_dat;
-            end
-            REG_READ: begin
-              //USER CANNOT WRITE ANYTHING TO THE READ
-            end
-            default: begin
-            end
-          endcase
+              REG_WRITE_COUNT: begin
+                //USER CANNOT WRITE ANYTHING TO WRITE COUNT
+                o_wbs_ack               <=  1;
+              end
+              REG_WRITE: begin
+                if (!o_wbs_ack) begin
+                  $display ("Starting a write cycle");
+                  //this is where the start of a UART write will begin, subsequent burst reads after this will be written to a output FIFO
+                  //I need a flag that will inidicate that the user will be writting to the buffer
+                  
+                  //write register
+                  write_en                <=  1;
+                  dw_countdown            <=  1;
+                  if (i_wbs_dat[31:16] == 0) begin
+                    write_count           <=  0;
+                    write_en              <=  0;
+                  end
+                  else begin
+                    write_count           <=  i_wbs_dat[31:16] - 1;
+                  end
+                end
+              end
+              REG_READ_COUNT: begin
+                //USER CANNOT WRITE ANYTHING TO READ COUNT
+                user_read_count         <=  i_wbs_dat;
+                o_wbs_ack               <=  1;
+              end
+              REG_READ: begin
+                //USER CANNOT WRITE ANYTHING TO THE READ
+                o_wbs_ack               <=  1;
+              end
+              default: begin
+                o_wbs_ack               <=  1;
+              end
+            endcase
+          end 
         end
       end
 
@@ -415,6 +426,7 @@ always @ (posedge clk) begin
             case (i_wbs_adr)
               REG_CONTROL: begin
                 o_wbs_dat <= control;
+                o_wbs_ack <= 1;
               end
               REG_STATUS: begin
                 //reset all status flags on a READ
@@ -425,9 +437,11 @@ always @ (posedge clk) begin
                 status[`STATUS_WRITE_INTERRUPT]            <=  0;
                 o_wbs_dat                                 <= status;
                 o_wbs_int                                 <=  0;
+                o_wbs_ack <= 1;
               end
               REG_PRESCALER: begin
                 o_wbs_dat           <= prescaler;
+                o_wbs_ack <= 1;
               end
               REG_CLOCK_DIV: begin
                 if (clock_div ==  0) begin
@@ -436,15 +450,19 @@ always @ (posedge clk) begin
                 else begin
                   o_wbs_dat         <= clock_div;
                 end
+                o_wbs_ack <= 1;
               end
               REG_WRITE_COUNT: begin
                 o_wbs_dat           <=  write_available;
+                o_wbs_ack <= 1;
               end
               REG_WRITE: begin
                 o_wbs_dat           <=  32'h00000000;
+                o_wbs_ack <= 1;
               end
               REG_READ_COUNT: begin
                 o_wbs_dat           <=  read_count;
+                o_wbs_ack <= 1;
               end
               REG_READ: begin
                 $display ("User requested data");
