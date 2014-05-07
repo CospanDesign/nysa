@@ -36,7 +36,7 @@ SOFTWARE.
 
 
 module uart_v2 #(
-  parameter DEFAULT_BAUDRATE = 57600
+  parameter DEFAULT_BAUDRATE = 115200
 )(
   clk,
   rst,
