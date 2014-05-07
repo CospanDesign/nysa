@@ -43,13 +43,16 @@ from driver import gpio
 from driver import i2c
 from driver import i2s
 from driver import spi
+from driver import uart
 
 
 devices = {
         "GPIO":gpio,
         "I2C":i2c,
         "I2S":i2s,
-        "SPI":spi
+        "SPI":spi,
+        "UART":uart
+
         }
 
 
