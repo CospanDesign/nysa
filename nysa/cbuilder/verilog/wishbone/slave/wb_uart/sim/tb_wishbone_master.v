@@ -548,7 +548,9 @@ always @ (posedge clk) begin
           if (w_out_status[7:0] == (~(8'h02))) begin
             $display ("TB: Read Response Good");
             if (w_out_data_count > 0) begin
-              if (data_read_count < w_out_data_count) begin
+              $display("TB: w_out_data_count: %d", w_out_data_count);
+              if (data_read_count <= w_out_data_count) begin
+                $display ("TB: Read more data...");
                 state           <=  READ_MORE_DATA;
                 timeout_count   <=  0;
                 data_read_count <=  data_read_count + 1;
@@ -573,7 +575,7 @@ always @ (posedge clk) begin
           $display ("TB: \tRead Data: %h", w_out_data);
           data_read_count       <=  data_read_count + 1;
         end
-        if (data_read_count >= r_in_data_count) begin
+        if (data_read_count > r_in_data_count) begin
           state                 <=  FINISHED;
         end
       end

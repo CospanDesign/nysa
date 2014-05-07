@@ -207,6 +207,7 @@ always @ (posedge clk) begin
 
     //write
     write_en                <=  0;
+    read_en                 <=  0;
 
     write_count             <=  0;
     dw_countdown            <=  0;
@@ -254,6 +255,12 @@ always @ (posedge clk) begin
       o_wbs_int                           <=  1;
     end
 
+    if (i_wbs_cyc == 0) begin
+      //at the end of a cycle disable the special case of writing to the UART FIFO
+      write_en                          <=  0;
+      read_en                           <=  0;
+    end
+
     //when the master acks our ack, then put our ack down
     if (o_wbs_ack && ~i_wbs_stb)begin
       o_wbs_ack <= 0;
@@ -292,7 +299,6 @@ always @ (posedge clk) begin
             if (write_count == 0) begin
               o_wbs_ack               <=  1;
               //Consumed all data from the user
-              write_en                <=  0;
             end
             else begin
               write_count             <=  write_count - 1;
@@ -302,7 +308,7 @@ always @ (posedge clk) begin
         //not a continuation of a write
         else begin
           if (!o_wbs_ack) begin
-            case (i_wbs_adr) 
+            case (i_wbs_adr)
               REG_CONTROL: begin
                 control                 <=  i_wbs_dat[31:0];
                 o_wbs_ack               <=  1;
@@ -331,7 +337,7 @@ always @ (posedge clk) begin
                   $display ("Starting a write cycle");
                   //this is where the start of a UART write will begin, subsequent burst reads after this will be written to a output FIFO
                   //I need a flag that will inidicate that the user will be writting to the buffer
-                  
+
                   //write register
                   write_en                <=  1;
                   dw_countdown            <=  1;
@@ -357,7 +363,7 @@ always @ (posedge clk) begin
                 o_wbs_ack               <=  1;
               end
             endcase
-          end 
+          end
         end
       end
 
@@ -399,7 +405,7 @@ always @ (posedge clk) begin
                 end
               endcase
 
-              
+
               if (local_read_count == 3) begin
                 $display ("WB_UART (%g): Sending an Ack for a  32 bit data packet to the host", $time);
                 o_wbs_ack         <=  1;
