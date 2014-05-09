@@ -61,18 +61,18 @@ READ_COUNT          = 6
 READ_DATA           = 7
 
 #Control Bit values
-CONTROL_RESET       = 1 << 0
-CONTROL_RTS_CTS_FC  = 1 << 1
-CONTROL_DTS_DSR_FC  = 1 << 2
-CONTROL_INT_READ    = 1 << 3
-CONTROL_INT_WRITE   = 1 << 4
+CONTROL_RESET       = 0
+CONTROL_RTS_CTS_FC  = 1
+CONTROL_DTS_DSR_FC  = 2
+CONTROL_INT_READ    = 3
+CONTROL_INT_WRITE   = 4
 
 #Status Bit values
-STATUS_OVFL_TX      = 1 << 0
-STATUS_OVFL_RX      = 1 << 1
-STATUS_UFL_RX       = 1 << 2
-STATUS_INT_READ     = 1 << 3
-STATUS_INT_WRITE    = 1 << 4
+STATUS_OVFL_TX      = 0
+STATUS_OVFL_RX      = 1
+STATUS_UFL_RX       = 2
+STATUS_INT_READ     = 3
+STATUS_INT_WRITE    = 4
 
 
 class UARTError (Exception):
@@ -134,9 +134,6 @@ class UART(Driver):
         print "dev id: %d" % dev_id
         super(UART, self).__init__(nysa, dev_id, debug)
 
-    def __del__(self):
-        self.enable_uart(False)
-
     def get_control(self):
         """get_control
 
@@ -192,6 +189,10 @@ class UART(Driver):
         self.status =  self.read_register(STATUS)
         return self.status
 
+    def reset(self):
+        self.get_status()
+        self.set_control(0)
+        self.set_register_bit(CONTROL, CONTROL_RESET)
 
     def is_read_overflow(self):
         """is_read_overflow
@@ -426,11 +427,15 @@ class UART(Driver):
         Raises:
           NysaCommError: Error in communication
         """
+        byte_count = count
         available = self.get_read_count()
         if available < count:
             count = available
+
         #Tell the core we are going to read the specified amount
         self.write_register(READ_COUNT, count)
+
+        count = byte_count
 
         if count <= 2:
             count = 1
@@ -439,13 +444,10 @@ class UART(Driver):
             count = (count / 4) + 1
 
         if self.debug:
-            print "Reading %d bytes" % count
-
-
-        if self.debug:
+            print "Reading %d bytes" % byte_count
             print "Output byte count:\n" + str(count)
 
-        return self.read(READ_DATA, count)
+        return self.read(READ_DATA, count)[0:byte_count]
 
     def get_read_count(self):
         """get_read_count
@@ -532,11 +534,11 @@ class UART(Driver):
         prescaler = self.read_register(PRESCALER)
         print "prescaler: %d" % prescaler
         clock_divider = self.read_register(CLOCK_DIVIDER)
-        print "clock divide: %d" % clock_divide
+        print "clock divide: %d" % clock_divider
 
         if prescaler == 0:
             raise UARTError("Prescaler read from UART core is 0 (That's bad)")
-        return prescaler / clock_divide
+        return prescaler / clock_divider
 
     def set_baudrate(self, baudrate=115200):
         """set_baudrate
@@ -630,7 +632,7 @@ class UART(Driver):
         if self.debug:
             print "Enable the read interrupt"
 
-        self.set_register_bit(CONTORL, CONTROL_INT_READ)
+        self.set_register_bit(CONTROL, CONTROL_INT_READ)
 
     def disable_read_interrupt(self):
         """disable_read_interrupt
@@ -675,16 +677,21 @@ class UART(Driver):
         control = self.get_control()
         control = control & ~(CONTROL_INT_WRITE | CONTROL_INT_READ)
         self.set_control(control)
+        self.get_status()
 
 
 def unit_test(nysa, dev_id):
     """Unit test for UART
     """
     uart = UART(nysa, dev_id, debug = True)
+    #uart.reset()
+    uart.set_control(0)
     print "Testing UART config"
     baudrate = uart.get_baudrate()
     print "Initial baudrate = %d" % baudrate
     print "Setting baudrate to 115200"
+    uart.set_baudrate(115200)
+    '''
     uart.set_baudrate(57600)
     if uart.get_baudrate() > (57600 - (57600 * .01)) and uart.get_baudrate() < (57600 + (57600 * .01)) :
         print "Baudrate is within 1% of target"
@@ -695,12 +702,12 @@ def unit_test(nysa, dev_id):
     uart.set_baudrate(baudrate)
 
     print "\tXXX: Cannot test hardware flow control!"
+    '''
+    print "\tControl: 0x%08X" % uart.get_control()
 
     print "Writing a string"
-    uart.write_string("STEAM ROXORS THE BIG ONE!1!!\n")
-    time.sleep(1)
+    uart.write_string("STEAM ROXORS THE BIG ONE!1!!\r\n")
 
-    print "Read: %s: " % self.read_string(-1)
 
 
 
@@ -711,27 +718,36 @@ def unit_test(nysa, dev_id):
     uart.disable_interrupts()
     print "Testing receive interrupt"
     uart.enable_read_interrupt()
+    print "\tControl: 0x%08X" % uart.get_control()
 
-    print "Waiting 10 second for receive interrupts"
-    if uart.wait_for_interrupts(1) > 0:
-        if uart.is_interrupt_for_slave(uart.dev_id):
+    print "Read: %s " % uart.read_string(-1)
+    uart.get_status()
+
+    print "Waiting 5 second for receive interrupts"
+    if uart.wait_for_interrupts(10) > 0:
+        if uart.is_interrupt_for_slave():
             print "Found a read interrupt"
 
         print "Read: %s" % uart.read_string(-1)
 
-    uart.disable_read_interrupt()
+    print "After waiting for interupt"
+
+    print "\tControl: 0x%08X" % uart.get_control()
+
+    #uart.disable_read_interrupt()
 
     print "Testing write interrupt"
     uart.enable_write_interrupt()
     print "Waiting 1 second for write interrupts"
-    if uart.wait_for_interrupts(1) > 0:
-        if uart.is_interrupt_for_slave(uart.dev_id):
-            print "Found a write interrupt!"
+    #if uart.wait_for_interrupts(1) > 0:
+    #    if uart.is_interrupt_for_slave():
+    #        print "Found a write interrupt!"
+    
+    #uart.disable_write_interrupt()
 
-    uart.disable_write_interrupt()
+    #print "Testing write"
 
-    print "Testing write"
-
+    """
     print "Writing the maximum amount of data possible"
     write_max = uart.get_write_available() - 2
     print "Max: %d" % write_max
@@ -739,7 +755,7 @@ def unit_test(nysa, dev_id):
     num = 0
     try:
         for i in range (0, write_max):
-            num = (i) % 255
+            num = (i) % 256
             if (i / 256) % 2 == 1:
                 data_out.append( 255 - (num))
             else:
@@ -794,6 +810,7 @@ def unit_test(nysa, dev_id):
     if uart.is_read_overflow():
         print "Read overflow"
 
+    """
 
 
 
