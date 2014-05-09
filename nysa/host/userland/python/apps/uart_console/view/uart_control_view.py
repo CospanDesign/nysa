@@ -80,6 +80,7 @@ class UARTControlView(QWidget):
         layout.addRow("Local Echo", self.local_echo_cb)
 
         self.setLayout(layout)
+        self.setMaximumWidth(500)
 
 
     def baudrate_changed(self):
@@ -93,3 +94,4 @@ class UARTControlView(QWidget):
 
     def flowcontrol_changed(self):
         self.actions.uart_flowcontrol_change.emit(self.flowcontrol_combo.currentText())
+

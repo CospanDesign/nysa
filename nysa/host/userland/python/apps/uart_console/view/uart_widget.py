@@ -26,18 +26,20 @@ import os
 
 from PyQt4.QtGui import QWidget
 from PyQt4.QtGui import QHBoxLayout
-from PyQt4.QtGui import QTextEdit
 
 from uart_control_view import UARTControlView
+from uart_console import UARTConsole
 
 class UARTWidget(QWidget):
 
-    def __init__(self, status = None, actions = None):
+    def __init__(self, status, actions):
         super (UARTWidget, self).__init__()
+        self.status = status
+        self.actions = actions
         self.setWindowTitle("Standalone UART Widget")
         layout = QHBoxLayout()
 
-        self.te = QTextEdit()
+        self.te = UARTConsole(status, actions)
         self.te.setText("Text!")
         self.ucv = UARTControlView(status, actions)
         layout.addWidget(self.te)
