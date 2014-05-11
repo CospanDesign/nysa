@@ -99,6 +99,7 @@ class Dionysus (Nysa):
         #Latency can go down to 2 but there is a small chance there will be a
         #crash
         latency  = 2
+        Ftdi.add_type(self.vendor, self.product, 0x700, "ft2232h")
         self.dev.open(self.vendor, self.product, 0, serial = self.sernum)
 
         #Drain the input buffer
