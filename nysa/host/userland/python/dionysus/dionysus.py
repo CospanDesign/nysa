@@ -57,7 +57,7 @@ INTERRUPT_COUNT = 32
 
 #50 mS sleep between interrupt checks
 #INTERRUPT_SLEEP = 0.050
-INTERRUPT_SLEEP = 1
+INTERRUPT_SLEEP = 0.050
 
 class ReaderThread(threading.Thread):
 
@@ -79,45 +79,62 @@ class ReaderThread(threading.Thread):
         self.finish = True
 
     def register_interrupt_cb(self, index, callback):
+        print "Registering Callback for device: %d" % index
         if index > INTERRUPT_COUNT - 1:
             raise NysaCommError("Index of interrupt device is out of range (> %d)" % (INTERRUPT_COUNT - 1))
-        self.interrupts_cb[index] = callback
+        self.interrupts_cb[index].append(callback)
+
+    def unregister_interrupt_cb(self, index, callback = None):
+        print "Unregister Callback for device: %d" % index
+        if index > INTERRUPT_COUNT -1:
+            raise NysaCommError("Index of interrupt device is out of range (> %d)" % (INTERRUPT_COUNT - 1))
+        interrupt_list = self.interrupts_cb[index]
+        if callback is None:
+            interrupt_list = []
+
+        elif callback in interrupt_list:
+            interrupt_list.remove(callback)
 
     def run(self):
         if self.debug: print "Reader thread started"
         while not self.finish:
-            time.sleep(INTERRUPT_SLEEP)
             data = ""
             if self.lock.acquire(False):
-                print "got lock"
-                pr = self.dev.usb_read_timeout
-                self.dev.usb_read_timeout = 0
+                #print "got lock"
                 data = self.dev.read_data(13)
-                self.dev.usb_read_timeout = pr
+                #print "release lock"
                 self.lock.release()
-                print "release lock"
             
                 if len(data) > 0:
-                    interrupts = (data[9]  << 24 |
-                                  data[10] << 16 |
-                                  data[11] << 8  |
-                                  data[12])
+
+                    data = Array('B', data)
+                    if self.debug: print "Data: %s" % str(data)
+                    if data[0] != 0xDC:
+                        continue
+                    self.d.interrupts = (data[9]  << 24 |
+                                         data[10] << 16 |
+                                         data[11] << 8  |
+                                         data[12])
                 
-                    if self.debug: print "Got Interrupts: 0x%08X" % interrupts
-                    self.process_interrupts(interrupts)
-                else:
-                    print "No data"
+                    if self.debug: print "Got Interrupts: 0x%08X" % self.d.interrupts
+                    self.process_interrupts(self.d.interrupts)
+            time.sleep(INTERRUPT_SLEEP)
 
     def process_interrupts(self, interrupts):
         for i in range(INTERRUPT_COUNT):
             if (interrupts & 1 << i) == 0:
                 continue
-            if len(self.interrupt_cb[i]) == 0:
+            if len(self.interrupts_cb[i]) == 0:
                 continue
             #Call all callbacks
             if self.debug: print "Calling callback for: %d" % i
-            for cb in self.interrupt_cb[i]:
-                cb()
+            for cb in self.interrupts_cb[i]:
+                try:
+                    cb()
+                except TypeError:
+                    #If an error occured when calling a callback removed if from
+                    #our list
+                    self.interrupts_cb.remove(cb)
 
 class Dionysus (Nysa):
     """
@@ -148,6 +165,8 @@ class Dionysus (Nysa):
             self.reset()
 
         self.reader_thread = ReaderThread(self.dev, self, self.lock, debug = True)
+        self.reader_thread.setName("Reader Thread")
+        self.reader_thread.setDaemon(True)
         self.reader_thread.start()
 
     def __del__(self):
@@ -408,7 +427,7 @@ class Dionysus (Nysa):
                 raise NysaCommError ("Timeout while waiting for response")
             
             
-            response = self.dev.read_data(8)
+            response = self.dev.read_data(12)
             rsp = Array('B')
             rsp.fromstring(response)
             if self.debug:
@@ -619,6 +638,41 @@ class Dionysus (Nysa):
             
             return core_data
 
+    def register_interrupt_callback(self, index, callback):
+        """ register_interrupt
+
+        Setup the thread to call the callback when an interrupt is detected
+
+        Args:
+            index (Integer): bit position of the device
+                if the device is 1, then set index = 1
+            callback: a function to call when an interrupt is detected
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+        self.reader_thread.register_interrupt_cb(index, callback)
+
+    def unregister_interrupt_callback(self, index, callback = None):
+        """ unregister_interrupt_callback
+
+        Removes an interrupt callback from the reader thread list
+
+        Args:
+            index (Integer): bit position of the associated device
+                EX: if the device that will receive callbacks is 1, index = 1
+            callback: a function to remove from the callback list
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing (This function fails quietly if ther callback is not found)
+        """
+        self.reader_thread.unregister_interrupt_cb(index, callback)
 
     def wait_for_interrupts(self, wait_time = 1):
         """ wait_for_interrupts
@@ -651,34 +705,35 @@ class Dionysus (Nysa):
         timeout = time.time() + wait_time
 
         temp = Array('B')
-        while time.time() < timeout:
-            response = self.dev.read_data(1)
-            rsp = Array('B')
-            rsp.fromstring(response)
-            temp.extend(rsp)
-            if 0xDC in rsp:
+
+        with self.lock:
+            while time.time() < timeout:
+                response = self.dev.read_data(1)
+                rsp = Array('B')
+                rsp.fromstring(response)
+                temp.extend(rsp)
+                if 0xDC in rsp:
+                    if self.debug:
+                        print "Received an interrupt response!"
+                    break
+            
+            if not 0xDC in rsp:
                 if self.debug:
-                    print "Received an interrupt response!"
-                break
+                    print "Dionysus (Wait for Interrupts): Response not found"
+                #self.debug = False
+                return False
+            
+            read_total = 13
+            read_count = len(rsp)
 
-        if not 0xDC in rsp:
-            if self.debug:
-                print "Dionysus (Wait for Interrupts): Response not found"
-            #self.debug = False
-            return False
-
-        read_total = 13
-        read_count = len(rsp)
-
-
-        while (time.time() < timeout) and (read_count < read_total):
-            response = self.dev.read_data(read_total - read_count)
-            temp = Array ('B')
-            temp.fromstring(response)
-            if len(temp) > 0:
-                rsp += temp
-                read_count = len(rsp)
-
+            while (time.time() < timeout) and (read_count < read_total):
+                response = self.dev.read_data(read_total - read_count)
+                temp = Array ('B')
+                temp.fromstring(response)
+                if len(temp) > 0:
+                    rsp += temp
+                    read_count = len(rsp)
+            
         index = rsp.index(0xDC) + 1
         read_data = Array('B')
         read_data.extend(rsp[index:])

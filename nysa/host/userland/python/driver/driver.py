@@ -42,6 +42,55 @@ class Driver(object):
         self.dev_id = dev_id + 1
         if debug: print "Dev ID: %d" % self.dev_id
         self.debug = debug
+        self.interrupt_detected = False
+
+    def __del__(self):
+        self.unregister_interrupt_callback()
+
+    def register_interrupt_callback(self, callback = None):
+        """register_interrupt_callback
+
+        Register a function to be called when an interrupt occurs
+
+        if left no callback is supplied then a local function will be called.
+
+        This local function will set a flag to indicate that a register has
+        occured
+
+        Args:
+            callback (Callable): this is the function to call when an
+                interrupt occurs. If left blank this will set a local variable
+                that can be polled with 'wait_for_interrupt'
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+        if callback is None:
+            callback = self.interrupt_callback
+
+        self.n.register_interrupt_callback(self.dev_id, callback)
+
+    def unregister_interrupt_callback(self, callback = None):
+        """unregister_interrupt_callback
+
+        Unregister a function from the interrupt callable list
+
+        if no callback is supplied then a the local function will be removed
+
+        Args:
+            callback (Callable): This is the function to call when an interrupt
+                occurs. If left blank all the callbacks will be removed
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+        self.n.unregister_interrupt_callback(self.dev_id, callback = callback)
 
     def set_timeout(self, timeout):
         """set_timeout
@@ -269,8 +318,14 @@ class Driver(object):
 
         Raises:
         """
+        if self.interrupt_detected:
+            self.interrupt_detected = False
+            return True
         self.n.wait_for_interrupts(wait_time)
         return self.n.is_interrupt_for_slave(self.dev_id)
+
+    def interrupt_callback(self):
+        self.interrupt_detected = True
 
     def is_interrupt_for_slave(self):
         """

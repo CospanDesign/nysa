@@ -295,7 +295,6 @@ class GPIO(Driver):
         """
         return self.read_register(INTERRUPTS)
 
-
 def unit_test(n):
     """unit_test
  

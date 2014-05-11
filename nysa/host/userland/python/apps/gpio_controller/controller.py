@@ -153,6 +153,7 @@ class Controller(NysaBaseController):
         self.v.set_register(2, self.gpio.get_interrupts())
         self.v.set_register(3, self.gpio.get_interrupt_enable())
         self.v.set_register(4, self.gpio.get_interrupt_edge())
+        self.gpio.register_interrupt_callback(self.interrupt_callback)
 
     def start_standalone_app(self, platform, device_index):
         #print "Device Index: %d" % device_index
@@ -254,9 +255,21 @@ class Controller(NysaBaseController):
         self.n.enable_register_bit(self.dev_index, 4, index, val)
         self.mutex.unlock()
 
+    def interrupt_callback(self):
+        print "Interrupt Detected"
+        self.mutex.lock()
+        value = self.gpio.get_port_raw()
+        interrupts = self.gpio.get_interrupts()
+        while interrupts == 0:
+            interrupts = self.gpio.get_interrupts()
 
+        while interrupts != 0:
+            interrupts = self.gpio.get_interrupts()
 
-
+        self.v.set_register(2, self.gpio.get_interrupts())
+        self.gpio_actions.gpio_input_changed.emit(value)
+        self.mutex.unlock()
+ 
 
 def main(argv):
     #Parse out the commandline arguments

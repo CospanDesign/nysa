@@ -702,7 +702,7 @@ class Nysa(object):
           AssertionError: This function must be overriden by a board specifific
           implementation
         """
-        raise AssertionError("wait_for_interrupts function i not implemented")
+        raise AssertionError("wait_for_interrupts function is not implemented")
 
     def is_interrupt_for_slave(self, device_id):
         """is_interrupt_for_slave
@@ -724,6 +724,43 @@ class Nysa(object):
         if ( (1 << device_id) & self.interrupts) > 0:
             return True
         return False
+
+    def register_interrupt_callback(self, index, callback):
+        """ register_interrupt
+
+        Setup the thread to call the callback when an interrupt is detected
+
+        Args:
+            index (Integer): bit position of the device
+                if the device is 1, then set index = 1
+            callback: a function to call when an interrupt is detected
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+        raise AssertionError("register_interrupt_callback function is not implemented")
+
+    def unregister_interrupt_callback(self, index, callback = None):
+        """ unregister_interrupt_callback
+
+        Removes an interrupt callback from the reader thread list
+
+        Args:
+            index (Integer): bit position of the associated device
+                EX: if the device that will receive callbacks is 1, index = 1
+            callback: a function to remove from the callback list
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing (This function fails quietly if ther callback is not found)
+        """
+        raise AssertionError("unregister_interrupt_callback function is not implemented")
+
 
     def find_device(self, dev_id, sub_id = None, unique_id = None):
         """
