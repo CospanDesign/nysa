@@ -193,9 +193,8 @@ assign          writing   = (i_wbs_cyc && i_wbs_we && ((write_count > 0) || (i_w
 
 always @ (posedge clk) begin
   if (rst) begin
-    o_wbs_dat <= 32'h0;
-    o_wbs_ack <= 0;
-    o_wbs_int <= 0;
+    o_wbs_dat               <= 32'h0;
+    o_wbs_ack               <= 0;
 
     control                 <=  8'h0;
     write_strobe            <=  0;
@@ -246,14 +245,8 @@ always @ (posedge clk) begin
     end
 
     //Control
-    if (control[`CONTROL_READ_INTERRUPT] && !read_empty) begin
-      //$display ("\tWB_UART: READ INTERRUPT!");
-      o_wbs_int                           <=  1;
-    end
-    if (control[`CONTROL_WRITE_INTERRUPT] && !write_full) begin
-      //$display ("\tWB_UART: WRITE INTERRUPT!");
-      o_wbs_int                           <=  1;
-    end
+    o_wbs_int <=  (control[`CONTROL_READ_INTERRUPT] && !read_empty) ||
+                  (control[`CONTROL_WRITE_INTERRUPT] && !write_full);
 
     if (i_wbs_cyc == 0) begin
       //at the end of a cycle disable the special case of writing to the UART FIFO
@@ -436,12 +429,12 @@ always @ (posedge clk) begin
               end
               REG_STATUS: begin
                 //reset all status flags on a READ
-                status[`STATUS_TRANSMIT_OVERFLOW]          <=  0;
-                status[`STATUS_READ_OVERFLOW]              <=  0;
-                status[`STATUS_READ_UNDERFLOW]             <=  0;
-                status[`STATUS_READ_INTERRUPT]             <=  0;
-                status[`STATUS_WRITE_INTERRUPT]            <=  0;
                 o_wbs_dat                                 <= status;
+                status[`STATUS_TRANSMIT_OVERFLOW]         <=  0;
+                status[`STATUS_READ_OVERFLOW]             <=  0;
+                status[`STATUS_READ_UNDERFLOW]            <=  0;
+                status[`STATUS_READ_INTERRUPT]            <=  0;
+                status[`STATUS_WRITE_INTERRUPT]           <=  0;
                 o_wbs_int                                 <=  0;
                 o_wbs_ack <= 1;
               end
