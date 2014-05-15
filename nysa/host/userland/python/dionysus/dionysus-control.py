@@ -276,6 +276,7 @@ class DionysusController():
         self.dev = Ftdi()
         frequency = 30.0E6
         latency  = 4
+        Ftdi.add_type(self.vendor, self.product, 0x700, "ft2232h")
         self.dev.open(self.vendor, self.product, 0)
 
         #Drain the input buffer

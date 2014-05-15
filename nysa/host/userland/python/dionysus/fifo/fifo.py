@@ -17,6 +17,7 @@ class FifoController(object):
 
     def set_sync_fifo(self, frequency = 30.0E6, latency = 2):
         """Configure the interface for synchronous FIFO mode"""
+        self.f.add_type(self.vendor, self.product, 0x700, "ft2232h")
         self.f.open(self.vendor, self.product, 0)
         #Drain the input buffer
         self.f.purge_buffers()
@@ -38,6 +39,7 @@ class FifoController(object):
     def set_async_fifo(self, frequency=6.0E6, latency = 2):
         """Configure the interface for asynchronous FIFO mode"""
         #Open FTDI Interface
+        self.f.add_type(self.vendor, self.product, 0x700, "ft2232h")
         self.f.open(self.vendor,
                     self.product, 
                     self.SYNC_FIFO_INTERFACE, 

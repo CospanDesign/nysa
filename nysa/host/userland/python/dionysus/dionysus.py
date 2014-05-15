@@ -33,7 +33,6 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 """
 import sys
 import os
-import time
 import threading
 import time
 from array import array as Array
@@ -56,13 +55,14 @@ from bitbang.bitbang import BitBangController
 INTERRUPT_COUNT = 32
 
 #50 mS sleep between interrupt checks
-#INTERRUPT_SLEEP = 0.050
 INTERRUPT_SLEEP = 0.050
+#INTERRUPT_SLEEP = 1
 
 class ReaderThread(threading.Thread):
 
     def __init__(self, dev, dionysus, lock, debug):
         super(ReaderThread, self).__init__()
+        debug = True
         self.dev = dev
         if self.dev is None:
             raise NysaCommError("FTDI controller is not setup")
@@ -100,24 +100,31 @@ class ReaderThread(threading.Thread):
         while not self.finish:
             data = ""
             if self.lock.acquire(False):
-                #print "got lock"
+                #if self.debug: print "got lock"
                 data = self.dev.read_data(13)
-                #print "release lock"
-                self.lock.release()
+                #if self.debug: print "release lock"
             
                 if len(data) > 0:
-
+                    print ".",
                     data = Array('B', data)
                     if self.debug: print "Data: %s" % str(data)
+                    print "Data: %s" % str(data)
                     if data[0] != 0xDC:
                         continue
-                    self.d.interrupts = (data[9]  << 24 |
-                                         data[10] << 16 |
-                                         data[11] << 8  |
-                                         data[12])
+                    if len(data) >= 13:
+                        self.d.interrupts = (data[9]  << 24 |
+                                             data[10] << 16 |
+                                             data[11] << 8  |
+                                             data[12])
                 
-                    if self.debug: print "Got Interrupts: 0x%08X" % self.d.interrupts
-                    self.process_interrupts(self.d.interrupts)
+                        if self.debug: print "Got Interrupts: 0x%08X" % self.d.interrupts
+                        self.process_interrupts(self.d.interrupts)
+                    #print "Purge buffers"
+                    #self.dev.purge_buffers()
+                self.lock.release()
+            else:
+                print "Lock not aquired"
+
             time.sleep(INTERRUPT_SLEEP)
 
     def process_interrupts(self, interrupts):
@@ -129,12 +136,15 @@ class ReaderThread(threading.Thread):
             #Call all callbacks
             if self.debug: print "Calling callback for: %d" % i
             for cb in self.interrupts_cb[i]:
+                print "Callbak for 2: %s" % str(cb)
                 try:
                     cb()
+                    print "back from callback"
                 except TypeError:
                     #If an error occured when calling a callback removed if from
                     #our list
                     self.interrupts_cb.remove(cb)
+                    print "Error need to remove callback"
 
 class Dionysus (Nysa):
     """
@@ -163,8 +173,8 @@ class Dionysus (Nysa):
         except NysaCommError:
             self.timeout = btimeout
             self.reset()
-
-        self.reader_thread = ReaderThread(self.dev, self, self.lock, debug = True)
+        #debug = True
+        self.reader_thread = ReaderThread(self.dev, self, self.lock, debug = debug)
         self.reader_thread.setName("Reader Thread")
         self.reader_thread.setDaemon(True)
         self.reader_thread.start()
@@ -174,7 +184,7 @@ class Dionysus (Nysa):
         self.reader_thread.stop()
         print "Waiting to join"
         self.reader_thread.join()
-        self.debug = True
+        #self.debug = True
         if self.debug: print "Reader thread joined"
         self.dev.close()
 
@@ -254,35 +264,37 @@ class Dionysus (Nysa):
         """
 
 
-        read_data = Array('B')
-        #Set up the ID and the 'Read command (0x02)'
-        write_data = Array('B', [0xCD, 0x02])
-        if memory_device:
-            if self.debug:
-                print "Read from Memory Device"
-            #'OR' the 0x10 flag to indicate that we are using the memory bus
-            write_data = Array('B', [0xCD, 0x12])
-
-        #Add the length value to the array
-        fmt_string = "%06X" % length
-        write_data.fromstring(fmt_string.decode('hex'))
-
-        #Add the device Number
-
-        #XXX: Memory devices don't have an offset (should they?)
-        offset_string = "00"
-        if not memory_device:
-            offset_string = "%02X" % device_id
-
-        write_data.fromstring(offset_string.decode('hex'))
-
-        #Add the address
-        addr_string = "%06X" % address
-        write_data.fromstring(addr_string.decode('hex'))
-        if self.debug:
-            print "DEBUG: Data read string: %s" % str(write_data)
-
+        #self.debug = True
         with self.lock:
+            if self.debug: print "Reading..."
+            read_data = Array('B')
+            #Set up the ID and the 'Read command (0x02)'
+            write_data = Array('B', [0xCD, 0x02])
+            if memory_device:
+                if self.debug:
+                    print "Read from Memory Device"
+                #'OR' the 0x10 flag to indicate that we are using the memory bus
+                write_data = Array('B', [0xCD, 0x12])
+            
+            #Add the length value to the array
+            fmt_string = "%06X" % length
+            write_data.fromstring(fmt_string.decode('hex'))
+            
+            #Add the device Number
+            
+            #XXX: Memory devices don't have an offset (should they?)
+            offset_string = "00"
+            if not memory_device:
+                offset_string = "%02X" % device_id
+            
+            write_data.fromstring(offset_string.decode('hex'))
+            
+            #Add the address
+            addr_string = "%06X" % address
+            write_data.fromstring(addr_string.decode('hex'))
+            if self.debug:
+                print "DEBUG: Data read string: %s" % str(write_data)
+
             self.dev.purge_buffers()
             self.dev.write_data(write_data)
             
@@ -325,22 +337,26 @@ class Dionysus (Nysa):
                     rsp += temp
                     read_count = len(rsp)
             
-        if self.debug:
-            print "Read Length: %d, Total Length: %d" % (len(rsp), total_length)
-            print "Time left on timeout: %d" % (timeout - time.time())
-        
-            print "Response Length: %d" % len(rsp)
-            print "Response Status: %s" % str(rsp[:8])
-            print "Response Data:\n\t%s" % str(rsp[8:])
-        
-        #Strip away the communication status information
-        if self.debug:
-            print "DEBUG: Read Response: %s" % str(rsp[0:8])
-            print "Response Data:\n\t%s" % str(rsp[8:12])
-        return rsp[8:]
+            #self.debug = True
+            if self.debug:
+                print "Read Length: %d, Total Length: %d" % (len(rsp), total_length)
+                print "Time left on timeout: %d" % (timeout - time.time())
+            
+                print "Response Length: %d" % len(rsp)
+                print "Response Status: %s" % str(rsp[:8])
+                print "Response Data:\n\t%s" % str(rsp[8:])
+            #self.debug = False
+            
+            #Strip away the communication status information
+            if self.debug:
+                print "DEBUG: Read Response: %s" % str(rsp[0:8])
+                print "Response Data:\n\t%s" % str(rsp[8:12])
+
+            #self.debug = True
+            return rsp[8:]
 
 
-    def write(self, device_id, address, data=None, memory_device=False):
+    def write(self, device_id, address, data, memory_device=False):
         """write
 
         Write data to a Nysa image
@@ -370,37 +386,38 @@ class Dionysus (Nysa):
             NysaCommError
         """
 
-        length = len(data) / 4
-        #Create an Array with the identification byte and code for writing
-        data_out = Array ('B', [0xCD, 0x01])
-        if memory_device:
-            if self.debug:
-                print "Memory Device"
-            data_out = Array('B', [0xCD, 0x11])
-        
-        #Append the length into the first 24 bits
-        fmt_string = "%06X" % length
-        data_out.fromstring(fmt_string.decode('hex'))
-        offset_string = "00"
-        if not memory_device:
-            offset_string = "%02X" % device_id
-        data_out.fromstring(offset_string.decode('hex'))
-        addr_string = "%06X" % address
-        data_out.fromstring(addr_string.decode('hex'))
-        data_out.extend(data)
-        if self.debug:
-            print "Length: %d" % len(data)
-            print "Reported Length: %d" % length
-            print "Writing: %s" % str(data_out[0:9])
-            print "\tData: %s" % str(data_out[9:13])
-        
         with self.lock:
+            length = len(data) / 4
+            #Create an Array with the identification byte and code for writing
+            data_out = Array ('B', [0xCD, 0x01])
+            if memory_device:
+                if self.debug:
+                    print "Memory Device"
+                data_out = Array('B', [0xCD, 0x11])
+            
+            #Append the length into the first 24 bits
+            fmt_string = "%06X" % length
+            data_out.fromstring(fmt_string.decode('hex'))
+            offset_string = "00"
+            if not memory_device:
+                offset_string = "%02X" % device_id
+            data_out.fromstring(offset_string.decode('hex'))
+            addr_string = "%06X" % address
+            data_out.fromstring(addr_string.decode('hex'))
+            data_out.extend(data)
+            if self.debug:
+                print "Length: %d" % len(data)
+                print "Reported Length: %d" % length
+                print "Writing: %s" % str(data_out[0:9])
+                print "\tData: %s" % str(data_out[9:13])
+        
             #Avoid the akward stale bug
             self.dev.purge_buffers()
             self.dev.write_data(data_out)
             rsp = Array ('B')
-            #if len(data_out) < 100:
-            #    print "Data Out: %s" % str(data_out)
+            #self.debug = True
+            if self.debug and (len(data_out) < 100):
+                print "Data Out: %s" % str(data_out)
             
             timeout = time.time() + self.timeout
             
@@ -413,6 +430,7 @@ class Dionysus (Nysa):
                         if self.debug:
                             print "Got a response"
                         break
+            #self.debug = False
             
             
             if len(rsp) > 0:
