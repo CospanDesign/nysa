@@ -69,6 +69,8 @@ class CameraViewer(QGraphicsView):
                 Qt.Key_Space: lambda: self.reload_image(),
                 Qt.Key_Equal: lambda: self.scale_fit(),
         }
+        if event.key() in task_list:
+            task_list[event.key()]()
 
 class ImageViewer(QGraphicsWidget):
     def __init__(self, width, height, status, actions):
