@@ -47,6 +47,47 @@ class Driver(object):
     def __del__(self):
         self.unregister_interrupt_callback()
 
+    @staticmethod
+    def get_core_id():
+        """
+        Returns the identification number of the device this module controls
+
+        Args:
+            Nothing
+
+        Returns (Integer):
+            Number corresponding to the device in the drt.json file
+
+        Raises:
+            DRTError: Device ID Not found in drt.json
+        """
+        raise AssertionError("get_core_id() function is not implemented")
+
+    @staticmethod
+    def get_core_sub_id():
+        """Returns the identification of the specific implementation of this
+        controller
+
+        Example: Cospan Design wrote the HDL GPIO core with sub_id = 0x01
+            this module was designed to interface and exploit features that
+            are specific to the Cospan Design version of the GPIO controller.
+
+            Some controllers may add extra functionalities that others do not
+            sub_ids are used to differentiate them and select the right python
+            controller for those HDL modules
+
+        Args:
+            Nothing
+
+        Returns (Integer):
+            Number ID for the HDL Module that this controls
+            (Note: 0 = generic control or baseline funtionality of the module)
+
+        Raises:
+            Nothing
+        """
+        raise AssertionError("get_core_id() function is not implemented")
+
     def register_interrupt_callback(self, callback = None):
         """register_interrupt_callback
 
