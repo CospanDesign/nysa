@@ -346,6 +346,23 @@ class UART(Driver):
         data.fromstring(string)
         self.write_raw(data)
 
+    def write_byte(self, data):
+        """write_byte
+
+        Writes a byte of data over the UART
+
+        Args:
+          int: byte of data to send
+
+        Return:
+          Nothing
+
+        Raises:
+          NysaCommError
+        """
+        write_data = Array('B', [data])
+        self.write_raw(write_data)
+
     def write_raw(self, data = Array('B')):
         """write_raw
 
@@ -620,7 +637,7 @@ class UART(Driver):
         if self.debug:
             print "Disable flow control"
         control = self.get_control()
-        control = control & ~(CONTROL_RTS_CTS_FC | CONTROL_DTR_DSR_FC)
+        control = control & ~(CONTROL_RTS_CTS_FC | CONTROL_DTS_DSR_FC)
         self.set_control(control)
 
 
@@ -707,11 +724,6 @@ def unit_test(nysa, dev_id):
 
     print "Writing a string"
     uart.write_string("STEAM ROXORS THE BIG ONE!1!!\r\n")
-
-
-
-
-
 
 
     print "disable all interrupts"
