@@ -364,7 +364,7 @@ class Nysa(object):
         """
         self.write(0, address, data, memory_device = True)
 
-    def write(self, device_id, address, data = None, memory_device = False):
+    def write(self, device_id, address, data, memory_device = False):
         """write
 
         Generic write command usd to write data to a Nysa image, this will be
@@ -384,6 +384,8 @@ class Nysa(object):
           AssertionError: This function must be overriden by a board specific
           implementation
         """
+        if len(data) == 0:
+            raise NysaCommError("Data length cannot be 0")
         raise AssertionError("write function is not implemented")
 
 
