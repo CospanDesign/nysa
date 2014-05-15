@@ -95,13 +95,13 @@ class FauxNysa(Nysa):
         Nysa.__init__(self, debug)
         self.dev_dict = dev_dict
 
-    def read(self, device_id, address, length = 1, mem_device = False):
+    def read(self, device_id, address, length = 1, memory_device = False):
         read_array = Array('B')
         for i in range(length * 4):
             read_array.append(i)
         return read_array
 
-    def write(self, device_id, address, data=None, mem_device=False):
+    def write(self, device_id, address, data, memory_device=False):
         return
 
     def ping(self):
@@ -153,3 +153,12 @@ class FauxNysa(Nysa):
     def wait_for_interrupts(self, wait_time = 1):
         time.sleep(0.1)
         return
+
+
+    def register_interrupt_callback(self, index, callback):
+        pass
+
+    def unregister_interrupt_callback(self, index, callback = None):
+        pass
+
+
