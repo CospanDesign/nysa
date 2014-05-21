@@ -226,6 +226,15 @@ def main(argv):
         print "Dionysus not found!"
         return
 
+
+    #THREAD DEBUGGNG!
+    time.sleep(1)
+    print "Exiting!"
+    return
+
+
+
+
     dyn.ping()
     print "Reading DRT"
     dyn.read_drt()
