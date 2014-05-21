@@ -65,6 +65,8 @@ SOFTWARE.
 
 //`define DEFAULT_CLOCK_DIVISOR (`CLOCK_RATE / (`BAUDRATE * `DIVISOR))
 
+`define INTERRUPT_SLEEP_TIMEOUT   (`CLOCK_RATE / 100)
+
 module wb_uart (
   input               clk,
   input               rst,
@@ -146,6 +148,9 @@ reg   [31:0]          user_read_count;
 wire                  reading;
 wire                  writing;
 
+reg   [31:0]          interrupt_sleep;
+wire                  interrupt_ready;
+
 //Submodules
 
 uart_controller uc  (
@@ -188,6 +193,12 @@ integer         i;
 assign          reading   = ((i_wbs_cyc && !i_wbs_we && (read_count > 0) && (i_wbs_adr == REG_READ)) || read_en);
 assign          writing   = (i_wbs_cyc && i_wbs_we && ((write_count > 0) || (i_wbs_adr == REG_WRITE)));
 
+assign          interrupt_ready = (!o_wbs_ack && !i_wbs_cyc && !write_en && !read_en) &&
+                      (user_read_count == 0) &&
+                        ((control[`CONTROL_READ_INTERRUPT] && !read_empty) ||
+                         (control[`CONTROL_WRITE_INTERRUPT] && !write_full));
+
+
 
 //Synchronous Logic
 
@@ -218,6 +229,7 @@ always @ (posedge clk) begin
     clock_div               <=  0;
 
     o_wbs_int               <=  0;
+    interrupt_sleep         <=  `INTERRUPT_SLEEP_TIMEOUT;
 
 
   end
@@ -245,8 +257,21 @@ always @ (posedge clk) begin
     end
 
     //Control
-    o_wbs_int <=  (control[`CONTROL_READ_INTERRUPT] && !read_empty) ||
-                  (control[`CONTROL_WRITE_INTERRUPT] && !write_full);
+    if (!interrupt_ready) begin
+      o_wbs_int         <=  0;
+    end
+
+    if (o_wbs_int) begin
+      interrupt_sleep   <=  0;
+    end
+    else if (interrupt_ready && !o_wbs_int) begin
+      if (interrupt_sleep < `INTERRUPT_SLEEP_TIMEOUT) begin
+        interrupt_sleep <=  interrupt_sleep + 1;
+      end
+      else begin
+        o_wbs_int       <=  1;
+      end
+    end
 
     if (i_wbs_cyc == 0) begin
       //at the end of a cycle disable the special case of writing to the UART FIFO
@@ -406,6 +431,7 @@ always @ (posedge clk) begin
               if (user_read_count == 0) begin
                 $display ("WB_UART (%g): Finished reading all the user's data", $time);
                 o_wbs_ack         <=  1;
+                read_en           <=  0;
               end
               else begin
                 local_read_count  <=  local_read_count + 1;
@@ -435,8 +461,7 @@ always @ (posedge clk) begin
                 status[`STATUS_READ_UNDERFLOW]            <=  0;
                 status[`STATUS_READ_INTERRUPT]            <=  0;
                 status[`STATUS_WRITE_INTERRUPT]           <=  0;
-                o_wbs_int                                 <=  0;
-                o_wbs_ack <= 1;
+                o_wbs_ack                                 <=  1;
               end
               REG_PRESCALER: begin
                 o_wbs_dat           <= prescaler;

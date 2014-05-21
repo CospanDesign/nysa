@@ -48,7 +48,7 @@ SOFTWARE.
 `define OUTPUT_FILE "sim/master_output_test_data.txt"
 
 
-`define CLK_HALF_PERIOD 10
+`define CLK_HALF_PERIOD 5
 `define CLK_PERIOD (2 * `CLK_HALF_PERIOD)
 
 `define SLEEP_HALF_CLK #(`CLK_HALF_PERIOD)
@@ -248,7 +248,7 @@ wire              test_is_transmitting;
 wire              test_rx_error;
 
 
-uart_v2  u_test (
+uart_v3  u_test (
   .clk             (clk                  ),
   .rst             (rst                  ),
   .rx              (tx                   ),
