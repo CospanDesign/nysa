@@ -1,6 +1,6 @@
 #! /usr/bin/python
 
-# Copyright (c) 2014 name (email@example.com)
+# Copyright (c) 2014 Cospan Design LLC (dave.mccoy@cospandesign.com)
 
 # This file is part of Nysa (wiki.cospandesign.com/index.php?title=Nysa).
 #
@@ -19,14 +19,14 @@
 
 
 """
-app template controller
+UART Console
 """
-
-__author__ = 'email@example.com (name)'
 
 import os
 import sys
 import argparse
+import time
+from array import array as Array
 
 from PyQt4.Qt import QApplication
 from PyQt4 import QtCore
@@ -36,6 +36,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
 from driver.uart import UART
+from uart_actions import UARTActions
 
 from apps.common.nysa_base_controller import NysaBaseController
 import apps
@@ -56,8 +57,16 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 from platform_scanner import PlatformScanner
 import status
 
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir,
+                             "protocol_utils",
+                             "uart"))
 
-from uart_actions import UARTActions
+
+from uart_engine import UARTEngine
+
+
 
 DESCRIPTION = "\n" \
 "\n"\
@@ -75,14 +84,33 @@ class Controller(NysaBaseController):
 
     def __init__(self):
         super (Controller, self).__init__()
+        self.uart = None
         self.actions = UARTActions()
+        self.actions.uart_baudrate_change.connect(self.baudrate_change)
+        self.actions.uart_flowcontrol_change.connect(self.flowcontrol_change)
+        self.actions.uart_data_out.connect(self.uart_data_out)
+        self.actions.uart_read_data.connect(self.uart_read_data)
 
     @staticmethod
     def get_name():
         return "UART Console"
 
     def _initialize(self, platform, device_index):
+        self.uart = UART(platform[2], device_index)
         self.v = UARTWidget(self.status, self.actions)
+
+        #Setup the UART
+        self.uart.set_baudrate(self.v.get_baudrate())
+        self.flowcontrol_change(self.v.get_flowcontrol())
+        data = self.uart.read_all_data()
+        #self.v.append_text(data.tostring())
+        self.v.append_text(data.tostring())
+        self.uart.disable_interrupts()
+
+        self.engine = UARTEngine(self.uart, self.actions, self.status)
+
+        self.actions.uart_data_in.connect(self.uart_data_in)
+        self.uart.enable_read_interrupt()
 
     def start_standalone_app(self, platform, device_index, debug = False):
         app = QApplication (sys.argv)
@@ -109,16 +137,53 @@ class Controller(NysaBaseController):
 
     @staticmethod
     def get_device_id():
-        return None
+        return UART.get_core_id()
 
     @staticmethod
     def get_device_sub_id():
+        #return UART.get_core_sub_id()
         return None
 
     @staticmethod
     def get_device_unique_id():
         return None
 
+    def uart_data_out(self, data):
+        if self.uart is None:
+            return
+        d = Array('B')
+        d.fromstring(data)
+        #print "data: %s" % str(d)
+        if len(data) > 0:
+            self.uart.write_string(data)
+            if d[0] == 13:
+                self.uart.write_byte(10)
+
+    def uart_read_data(self):
+        data = self.uart.read_all_data()
+        if len(data) > 0:
+            self.uart_data_in(data.tostring())
+
+    def uart_data_in(self, data):
+        #print "data in: %s" % data
+        self.v.append_text(data)
+        self.uart.get_status()
+
+    def baudrate_change(self, baudrate):
+        self.uart.set_baudrate(baudrate)
+
+    def flowcontrol_change(self, flowcontrol):
+        flowcontrol = str(flowcontrol)
+        if flowcontrol.lower() == "none":
+            self.uart.disable_flowcontrol()
+
+        elif flowcontrol.lower() == "soft":
+            self.uart.enable_soft_flowcontrol()
+
+        elif flowcontrol.lower() == "hardware":
+            self.uart.enable_hard_flowcontrol()
+
+        self.uart.enable_hard_flowcontrol()
 
 def main(argv):
     #Parse out the commandline arguments

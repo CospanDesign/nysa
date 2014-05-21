@@ -17,6 +17,10 @@ class _UARTActions(QtCore.QObject):
     uart_baudrate_change = QtCore.pyqtSignal(int, name = "uart_baudrate_change")
     uart_local_echo_en = QtCore.pyqtSignal(bool, name = "uart_local_echo_en")
     uart_flowcontrol_change = QtCore.pyqtSignal(str, name = "uart_flowcontrol_change")
+    uart_read_data = QtCore.pyqtSignal(name = "uart_read_data")
+
+    uart_data_out = QtCore.pyqtSignal(str, name = "uart_data_out")
+    uart_data_in = QtCore.pyqtSignal(str, name = "uart_data_in")
 
     def __init__(self, parent = None):
         super (_UARTActions, self).__init__(parent)
