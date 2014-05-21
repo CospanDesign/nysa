@@ -60,15 +60,13 @@ INTERRUPT_SLEEP = 0.050
 
 class ReaderThread(threading.Thread):
 
-    def __init__(self, dev, dionysus, lock, debug):
+    def __init__(self, dev, interrupt_update_callback, lock, debug):
         super(ReaderThread, self).__init__()
-        debug = True
         self.dev = dev
-        if self.dev is None:
-            raise NysaCommError("FTDI controller is not setup")
-        self.d = dionysus
+
+        self.interrupt_update_callback = interrupt_update_callback
         self.lock = lock
-        self.finish = False
+        self.term_flag = False
         self.debug = debug
         self.interrupts_cb = []
         for i in range(INTERRUPT_COUNT):
@@ -76,7 +74,10 @@ class ReaderThread(threading.Thread):
 
     def stop(self):
         print "Finish!"
-        self.finish = True
+        self.term_flag = True
+
+    def update_interrupts(self, interrupts):
+        print "Updating interrupt..."
 
     def register_interrupt_cb(self, index, callback):
         print "Registering Callback for device: %d" % index
@@ -97,31 +98,50 @@ class ReaderThread(threading.Thread):
 
     def run(self):
         if self.debug: print "Reader thread started"
-        while not self.finish:
+        while not self.term_flag:
             data = ""
             if self.lock.acquire(False):
-                #if self.debug: print "got lock"
-                data = self.dev.read_data(13)
-                #if self.debug: print "release lock"
-            
-                if len(data) > 0:
-                    print ".",
-                    data = Array('B', data)
-                    if self.debug: print "Data: %s" % str(data)
-                    print "Data: %s" % str(data)
-                    if data[0] != 0xDC:
-                        continue
-                    if len(data) >= 13:
-                        self.d.interrupts = (data[9]  << 24 |
-                                             data[10] << 16 |
-                                             data[11] << 8  |
-                                             data[12])
-                
-                        if self.debug: print "Got Interrupts: 0x%08X" % self.d.interrupts
-                        self.process_interrupts(self.d.interrupts)
-                    #print "Purge buffers"
-                    #self.dev.purge_buffers()
-                self.lock.release()
+                try:
+                    #print "+",
+                    #if self.debug: print "got lock"
+                    
+                    data = self.dev.read_data_bytes(13)
+                    #if self.debug: print "release lock"
+                    
+                    if len(data) > 0 and 220 in data:
+                        offset = data.index(220)
+                        if offset > 0:
+                            data = data[offset:]
+                            data += self.dev.read_data_bytes(offset)
+
+                        #print ".",
+                        #data = Array('B', data)
+                        if len(data) > 2:
+                            print "Data: %s" % str(data)
+                        #print "Data: %s" % str(data)
+                        if data[0] == 50 and data[1] == 96:
+                            data = self.dev.read_data_bytes(2)
+
+                        if data[0] != 0xDC:
+                            continue
+                        if len(data) >= 13:
+                            interrupts = (data[9]  << 24 |
+                                          data[10] << 16 |
+                                          data[11] << 8  |
+                                          data[12])
+                    
+                            if self.debug: print "Got Interrupts: 0x%08X" % interrupts
+                            self.process_interrupts(interrupts)
+                            self.interrupt_update_callback(interrupts)
+                        #print "Purge buffers"
+                        #self.dev.purge_buffers()
+                except:
+                    print "Exception when reading interrupts!"
+                    pass
+
+                finally:
+                    self.lock.release()
+                    #print "- "
             else:
                 print "Lock not aquired"
 
@@ -136,15 +156,16 @@ class ReaderThread(threading.Thread):
             #Call all callbacks
             if self.debug: print "Calling callback for: %d" % i
             for cb in self.interrupts_cb[i]:
-                print "Callbak for 2: %s" % str(cb)
                 try:
+                    print ">",
                     cb()
-                    print "back from callback"
+                    print "<",
                 except TypeError:
                     #If an error occured when calling a callback removed if from
                     #our list
                     self.interrupts_cb.remove(cb)
                     print "Error need to remove callback"
+
 
 class Dionysus (Nysa):
     """
@@ -157,11 +178,16 @@ class Dionysus (Nysa):
         Nysa.__init__(self, debug)
         self.vendor = idVendor
         self.product = idProduct
-        self.dev = Ftdi()
         self.sernum = sernum
+
+        self.debug = debug
+        self.dev = None
+        self.lock = threading.Lock()
+        
+
+        self.dev = Ftdi()
         self._open_dev()
         self.name = "Dionysus"
-        self.lock = threading.Lock()
         self.debug = debug
         try:
             #XXX: Hack to fix a strange bug where FTDI
@@ -173,17 +199,21 @@ class Dionysus (Nysa):
         except NysaCommError:
             self.timeout = btimeout
             self.reset()
+
         #debug = True
-        self.reader_thread = ReaderThread(self.dev, self, self.lock, debug = debug)
+        self.reader_thread = ReaderThread(self.dev, self.interrupt_update_callback, self.lock, debug = debug)
         self.reader_thread.setName("Reader Thread")
-        self.reader_thread.setDaemon(True)
+        #self.reader_thread.setDaemon(True)
         self.reader_thread.start()
 
     def __del__(self):
         print "Close reader thread"
-        self.reader_thread.stop()
-        print "Waiting to join"
-        self.reader_thread.join()
+        self.lock.aquire()
+        if (self.reader_thread is not None) and self.reader_thread.isAlive():
+            self.reader_thread.stop()
+            print "Waiting to join"
+            self.reader_thread.join()
+        self.lock.release()
         #self.debug = True
         if self.debug: print "Reader thread joined"
         self.dev.close()
@@ -262,8 +292,6 @@ class Dionysus (Nysa):
         Raises:
             NysaCommError
         """
-
-
         #self.debug = True
         with self.lock:
             if self.debug: print "Reading..."
@@ -294,6 +322,12 @@ class Dionysus (Nysa):
             write_data.fromstring(addr_string.decode('hex'))
             if self.debug:
                 print "DEBUG: Data read string: %s" % str(write_data)
+
+            '''
+            d = self.dev.read_data_bytes(13)
+            if d > 0:
+                print "D: %s" % str(d)
+            '''
 
             self.dev.purge_buffers()
             self.dev.write_data(write_data)
@@ -339,20 +373,16 @@ class Dionysus (Nysa):
             
             #self.debug = True
             if self.debug:
-                print "Read Length: %d, Total Length: %d" % (len(rsp), total_length)
-                print "Time left on timeout: %d" % (timeout - time.time())
-            
-                print "Response Length: %d" % len(rsp)
-                print "Response Status: %s" % str(rsp[:8])
-                print "Response Data:\n\t%s" % str(rsp[8:])
-            #self.debug = False
-            
-            #Strip away the communication status information
-            if self.debug:
-                print "DEBUG: Read Response: %s" % str(rsp[0:8])
-                print "Response Data:\n\t%s" % str(rsp[8:12])
+                print "DEBUG READ:"
+                print "\tRead Length: %d, Total Length: %d" % (len(rsp), total_length)
+                #print "Time left on timeout: %d" % (timeout - time.time())
 
-            #self.debug = True
+                print "\tResponse Length: %d" % len(rsp)
+                print "\tResponse Status: %s" % str(rsp[:8])
+                print "\tResponse Dev ID: %d Addr: 0x%06X" % (rsp[4], (rsp[5] << 16 | rsp[6] << 8 | rsp[7]))
+                print "\tResponse Data:\n\t%s" % str(rsp[8:])
+            #self.debug = False
+            #self.debug = False
             return rsp[8:]
 
 
@@ -412,6 +442,13 @@ class Dionysus (Nysa):
                 print "\tData: %s" % str(data_out[9:13])
         
             #Avoid the akward stale bug
+            '''
+            d = self.dev.read_data_bytes(13)
+            if d > 0:
+                print "D: %s" % str(d)
+            '''
+
+
             self.dev.purge_buffers()
             self.dev.write_data(data_out)
             rsp = Array ('B')
@@ -766,4 +803,6 @@ class Dionysus (Nysa):
         return True
 
 
+    def interrupt_update_callback(self, interrupts):
+        self.interrupts = interrupts
 
