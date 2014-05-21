@@ -444,27 +444,30 @@ class UART(Driver):
         Raises:
           NysaCommError: Error in communication
         """
-        byte_count = count
         available = self.get_read_count()
         if available < count:
             count = available
 
-        #Tell the core we are going to read the specified amount
-        self.write_register(READ_COUNT, count)
-
-        count = byte_count
-
-        if count <= 2:
-            count = 1
+        if count <= 4:
+            word_count = 1
         else:
             #count = ((count - 2) / 4) + 1
-            count = (count / 4) + 1
+            word_count = (count / 4) + 1
 
+
+        #Tell the core we are going to read the specified amount of bytes
+        self.write_register(READ_COUNT, count)
+        data = self.read(READ_DATA, word_count)[0:count]
+
+        self.debug = True 
         if self.debug:
-            print "Reading %d bytes" % byte_count
-            print "Output byte count:\n" + str(count)
+            print "Reading %d bytes" % count
+            print "Output byte count: " + str(count)
+            print "Byte Data: %s" %  str(data)
+        self.debug = False
 
-        return self.read(READ_DATA, count)[0:byte_count]
+
+        return data
 
     def get_read_count(self):
         """get_read_count
@@ -503,7 +506,12 @@ class UART(Driver):
             print "read all the data in the UART input FIFO"
 
         count = self.get_read_count()
-        return self.read_raw(count)
+        data = Array('B')
+        while count > 0:
+            data.extend(self.read_raw(count))
+            count = self.get_read_count()
+            #time.sleep(0.05)
+        return data
 
     def get_write_available(self):
         """get_write_available
