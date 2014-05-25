@@ -128,7 +128,7 @@ always @ (posedge clk) begin
 
     //have we passed the clock divider count
     rx_clock_div_count        <=  rx_clock_div_count + 1;
-    if (rx_clock_div_count > rx_clock_div) begin
+    if (rx_clock_div_count >= rx_clock_div) begin
        rx_prescaler_count     <=  rx_prescaler_count + 1;
       rx_clock_div_count      <=  0;
     end
@@ -149,7 +149,7 @@ always @ (posedge clk) begin
       end
       RX_CHECK_START: begin
         //--|__*__|XX XX|XX XX|XX XX|XX XX|XX XX|XX XX|XX XX|XX XX|-- --
-        if (rx_prescaler_count >= (`HALF_PERIOD - 1)) begin
+        if (rx_prescaler_count >= (`HALF_PERIOD)) begin
           rx_prescaler_count  <=  0;
           if (!rx) begin
             rx_state          <=  RX_READING;
@@ -161,10 +161,10 @@ always @ (posedge clk) begin
       end
       RX_READING: begin
         //--|__ __|XX*XX|XX*XX|XX*XX|XX*XX|XX*XX|XX*XX|XX*XX|XX*XX|-- --
-        if (rx_prescaler_count >= (`FULL_PERIOD - 1)) begin
-          rx_data             <=  {rx, rx_data[(`BIT_LENGTH - 1):1]};
+        if (rx_prescaler_count >= (`FULL_PERIOD)) begin
+          rx_data             <=  {rx, rx_data[7:1]};
           rx_prescaler_count  <=  0;
-          if (rx_bit_count    >=  (`BIT_LENGTH - 1)) begin
+          if (rx_bit_count    >=  7) begin
             //Finished
             rx_state          <=  RX_CHECK_STOP;
           end
@@ -175,9 +175,10 @@ always @ (posedge clk) begin
       end
       RX_CHECK_STOP: begin
         //--|__ __|XX XX|XX XX|XX XX|XX XX|XX XX|XX XX|XX XX|XX XX|--*--
-        if (rx_prescaler_count >= (`FULL_PERIOD - 1)) begin
+        if (rx_prescaler_count >= (`FULL_PERIOD)) begin
           if (rx) begin
             rx_byte           <=  rx_data;
+            //$display ("FOUND DATA!!!: %h", rx_data);
             received          <=  1;
             rx_state          <=  RX_IDLE;
           end
@@ -222,19 +223,19 @@ always @ (posedge clk) begin
     case (tx_state)
       TX_IDLE: begin
         tx                    <=  1;
-        tx_clock_div_count    <=  0;
+        tx_clock_div_count    <=  1;
         tx_prescaler_count    <=  0;
         if (transmit) begin
-          tx_data             <=  tx_byte;
           tx                  <=  0;
+          tx_data             <=  tx_byte;
           tx_bit_count        <=  0;
           tx_state            <=  TX_SENDING;
         end
       end
       TX_SENDING: begin
-        if (tx_prescaler_count >= (`FULL_PERIOD - 1)) begin
+        if (tx_prescaler_count >= (`FULL_PERIOD)) begin
           tx_prescaler_count  <=  0;
-          if (tx_bit_count < (`BIT_LENGTH - 1)) begin
+          if (tx_bit_count < 8) begin
             tx                <=  tx_data[0];
             tx_data           <=  {1'b0, tx_data[7:1]};
             tx_bit_count      <=  tx_bit_count + 1;
@@ -246,7 +247,7 @@ always @ (posedge clk) begin
         end
       end
       TX_FINISHED: begin
-        if (tx_prescaler_count >= (`FULL_PERIOD - 1)) begin
+        if (tx_prescaler_count >= (`FULL_PERIOD)) begin
           tx_state            <=  TX_IDLE;
         end
       end
