@@ -73,20 +73,20 @@ class ReaderThread(threading.Thread):
             self.interrupts_cb.append([])
 
     def stop(self):
-        print "Finish!"
+        if self.debug: print "Finish!"
         self.term_flag = True
 
     def update_interrupts(self, interrupts):
         print "Updating interrupt..."
 
     def register_interrupt_cb(self, index, callback):
-        print "Registering Callback for device: %d" % index
+        if self.debug: print "Registering Callback for device: %d" % index
         if index > INTERRUPT_COUNT - 1:
             raise NysaCommError("Index of interrupt device is out of range (> %d)" % (INTERRUPT_COUNT - 1))
         self.interrupts_cb[index].append(callback)
 
     def unregister_interrupt_cb(self, index, callback = None):
-        print "Unregister Callback for device: %d" % index
+        if self.debug: print "Unregister Callback for device: %d" % index
         if index > INTERRUPT_COUNT -1:
             raise NysaCommError("Index of interrupt device is out of range (> %d)" % (INTERRUPT_COUNT - 1))
         interrupt_list = self.interrupts_cb[index]
@@ -100,50 +100,53 @@ class ReaderThread(threading.Thread):
         if self.debug: print "Reader thread started"
         while not self.term_flag:
             data = ""
-            if self.lock.acquire(False):
-                try:
-                    #print "+",
-                    #if self.debug: print "got lock"
-                    
-                    data = self.dev.read_data_bytes(13)
-                    #if self.debug: print "release lock"
-                    
-                    if len(data) > 0 and 220 in data:
-                        offset = data.index(220)
-                        if offset > 0:
-                            data = data[offset:]
-                            data += self.dev.read_data_bytes(offset)
-
-                        #print ".",
-                        #data = Array('B', data)
-                        if len(data) > 2:
-                            print "Data: %s" % str(data)
-                        #print "Data: %s" % str(data)
-                        if data[0] == 50 and data[1] == 96:
-                            data = self.dev.read_data_bytes(2)
-
-                        if data[0] != 0xDC:
-                            continue
-                        if len(data) >= 13:
-                            interrupts = (data[9]  << 24 |
-                                          data[10] << 16 |
-                                          data[11] << 8  |
-                                          data[12])
-                    
-                            if self.debug: print "Got Interrupts: 0x%08X" % interrupts
-                            self.process_interrupts(interrupts)
-                            self.interrupt_update_callback(interrupts)
-                        #print "Purge buffers"
-                        #self.dev.purge_buffers()
-                except:
-                    print "Exception when reading interrupts!"
-                    pass
-
-                finally:
-                    self.lock.release()
-                    #print "- "
-            else:
-                print "Lock not aquired"
+            try:
+                if self.lock.acquire(False):
+                    try:
+                        #print "+",
+                        #if self.debug: print "got lock"
+                        
+                        data = self.dev.read_data_bytes(13)
+                        #if self.debug: print "release lock"
+                        
+                        if len(data) > 0 and 220 in data:
+                            offset = data.index(220)
+                            if offset > 0:
+                                data = data[offset:]
+                                data += self.dev.read_data_bytes(offset)
+                
+                            #print ".",
+                            #data = Array('B', data)
+                            if len(data) > 2:
+                                if self.debug: print "Data: %s" % str(data)
+                            #print "Data: %s" % str(data)
+                            if data[0] == 50 and data[1] == 96:
+                                data = self.dev.read_data_bytes(2)
+                
+                            if data[0] != 0xDC:
+                                continue
+                            if len(data) >= 13:
+                                interrupts = (data[9]  << 24 |
+                                              data[10] << 16 |
+                                              data[11] << 8  |
+                                              data[12])
+                        
+                                if self.debug: print "Got Interrupts: 0x%08X" % interrupts
+                                self.process_interrupts(interrupts)
+                                self.interrupt_update_callback(interrupts)
+                            #print "Purge buffers"
+                            #self.dev.purge_buffers()
+                    except:
+                        if self.debug: print "Exception when reading interrupts!"
+                        pass
+                
+                    finally:
+                        self.lock.release()
+                        #print "- "
+                else:
+                    if self.debug: print "Lock not aquired"
+            except:
+                pass
 
             time.sleep(INTERRUPT_SLEEP)
 
@@ -157,9 +160,7 @@ class ReaderThread(threading.Thread):
             if self.debug: print "Calling callback for: %d" % i
             for cb in self.interrupts_cb[i]:
                 try:
-                    print ">",
                     cb()
-                    print "<",
                 except TypeError:
                     #If an error occured when calling a callback removed if from
                     #our list
@@ -203,17 +204,17 @@ class Dionysus (Nysa):
         #debug = True
         self.reader_thread = ReaderThread(self.dev, self.interrupt_update_callback, self.lock, debug = debug)
         self.reader_thread.setName("Reader Thread")
-        #self.reader_thread.setDaemon(True)
+        self.reader_thread.setDaemon(True)
         self.reader_thread.start()
 
     def __del__(self):
         print "Close reader thread"
-        self.lock.aquire()
-        if (self.reader_thread is not None) and self.reader_thread.isAlive():
-            self.reader_thread.stop()
-            print "Waiting to join"
-            self.reader_thread.join()
-        self.lock.release()
+        #self.lock.aquire()
+        #if (self.reader_thread is not None) and self.reader_thread.isAlive():
+        #    self.reader_thread.stop()
+        #    print "Waiting to join"
+        #    self.reader_thread.join()
+        #self.lock.release()
         #self.debug = True
         if self.debug: print "Reader thread joined"
         self.dev.close()
@@ -322,12 +323,6 @@ class Dionysus (Nysa):
             write_data.fromstring(addr_string.decode('hex'))
             if self.debug:
                 print "DEBUG: Data read string: %s" % str(write_data)
-
-            '''
-            d = self.dev.read_data_bytes(13)
-            if d > 0:
-                print "D: %s" % str(d)
-            '''
 
             self.dev.purge_buffers()
             self.dev.write_data(write_data)
@@ -523,11 +518,12 @@ class Dionysus (Nysa):
             timeout = time.time() + self.timeout
             
             while time.time() < timeout:
-                response = self.dev.read_data(5)
-                if self.debug:
-                    print ".",
-                rsp = Array ('B')
-                rsp.fromstring(response)
+                #response = self.dev.read_data(5)
+                #if self.debug:
+                #    print ".",
+                #rsp = Array ('B')
+                #rsp.fromstring(response)
+                rsp = self.dev.read_data_bytes(5)
                 temp.extend(rsp)
                 if 0xDC in rsp:
                     if self.debug:
@@ -545,7 +541,8 @@ class Dionysus (Nysa):
             read_data.extend(rsp[index:])
             
             num = 3 - index
-            read_data.fromstring(self.dev.read_data(num))
+            #read_data.fromstring(self.dev.read_data(num))
+            read_data.extend(self.dev.read_data_bytes(num))
             
             if self.debug:
                 print "Success"
