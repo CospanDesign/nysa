@@ -330,14 +330,10 @@ class Dionysus (Nysa):
             timeout = time.time() + self.timeout
             rsp = Array ('B')
             while time.time() < timeout:
-                response = self.dev.read_data(1)
-                if len(response) > 0:
-                    rsp = Array('B')
-                    rsp.fromstring(response)
-                    if rsp[0] == 0xDC:
-                        if self.debug:
-                            print "Got a response"
-                        break
+                rsp = self.dev.read_data_bytes(1)
+                if len(rsp) > 0 and rsp[0] == 0xDC:
+                    if self.debug: print "Got a Response"
+                    break
             
             if len(rsp) > 0:
                 if rsp[0] != 0xDC:
@@ -359,12 +355,8 @@ class Dionysus (Nysa):
             total_length = length * 4 + 8
             
             while (time.time() < timeout) and (read_count < total_length):
-                response = self.dev.read_data(total_length - read_count)
-                temp = Array('B')
-                temp.fromstring(response)
-                if len(temp) > 0:
-                    rsp += temp
-                    read_count = len(rsp)
+                rsp += self.dev.read_data_bytes(total_length - read_count)
+                read_count = len(rsp)
             
             #self.debug = True
             if self.debug:
@@ -454,14 +446,11 @@ class Dionysus (Nysa):
             timeout = time.time() + self.timeout
             
             while time.time() < timeout:
-                response = self.dev.read_data(1)
-                if len(response) > 0:
-                    rsp = Array('B')
-                    rsp.fromstring(response)
-                    if rsp[0] == 0xDC:
-                        if self.debug:
-                            print "Got a response"
-                        break
+                #response = self.dev.read_data_bytes(1)
+                rsp = self.dev.read_data_bytes(1)
+                if len(rsp) > 0 and rsp[0] == 0xDC:
+                    if self.debug: print "Got a response"
+                    break
             #self.debug = False
             
             
@@ -477,9 +466,7 @@ class Dionysus (Nysa):
                 raise NysaCommError ("Timeout while waiting for response")
             
             
-            response = self.dev.read_data(12)
-            rsp = Array('B')
-            rsp.fromstring(response)
+            rsp = self.dev.read_data_bytes(12)
             if self.debug:
                 print "DEBUG: Write Response: %s" % str(rsp[0:8])
                 #print "Response: %s" % str(rsp)
@@ -518,11 +505,6 @@ class Dionysus (Nysa):
             timeout = time.time() + self.timeout
             
             while time.time() < timeout:
-                #response = self.dev.read_data(5)
-                #if self.debug:
-                #    print ".",
-                #rsp = Array ('B')
-                #rsp.fromstring(response)
                 rsp = self.dev.read_data_bytes(5)
                 temp.extend(rsp)
                 if 0xDC in rsp:
@@ -541,7 +523,6 @@ class Dionysus (Nysa):
             read_data.extend(rsp[index:])
             
             num = 3 - index
-            #read_data.fromstring(self.dev.read_data(num))
             read_data.extend(self.dev.read_data_bytes(num))
             
             if self.debug:
@@ -626,9 +607,7 @@ class Dionysus (Nysa):
             
             temp = Array ('B')
             while time.time() < timeout:
-                response = self.dev.read_data(1)
-                rsp = Array('B')
-                rsp.fromstring(response)
+                rsp = self.dev.read_data_bytes(1)
                 temp.extend(rsp)
                 if 0xDC in rsp:
                     print "Read a response from the core dump"
@@ -647,12 +626,8 @@ class Dionysus (Nysa):
             #Wishbone Master
             timeout = time.time() + wait_time
             while (time.time() < timeout) and (read_count < read_total):
-                response = self.dev.read_data(read_total - read_count)
-                temp = Array('B')
-                temp.fromstring(response)
-                if len(temp) > 0:
-                    rsp += temp
-                    read_count = len(rsp)
+                rsp += self.dev.read_data_bytes(read_total - read_count)
+                read_count = len(rsp)
             
             
             count = (rsp[1] << 16 | rsp[2] << 8 | rsp[3]) * 4
@@ -667,12 +642,8 @@ class Dionysus (Nysa):
             temp = Array ('B')
             rsp = Array('B')
             while (time.time() < timeout) and (read_count < read_total):
-                response = self.dev.read_data(read_total - read_count)
-                temp = Array('B')
-                temp.fromstring(response)
-                if len(temp) > 0:
-                    rsp += temp
-                    read_count = len(rsp)
+                rsp += self.dev.read_data_bytes(read_total - read_count)
+                read_count = len(rsp)
             
             if self.debug:
                 print "Length read: %d" % (len(rsp) / 4)
@@ -756,17 +727,14 @@ class Dionysus (Nysa):
         #self.debug = True
         timeout = time.time() + wait_time
 
-        temp = Array('B')
+        #temp = Array('B')
+        rsp = Array('B')
 
         with self.lock:
             while time.time() < timeout:
-                response = self.dev.read_data(1)
-                rsp = Array('B')
-                rsp.fromstring(response)
-                temp.extend(rsp)
+                rsp = self.dev.read_data_bytes(1)
                 if 0xDC in rsp:
-                    if self.debug:
-                        print "Received an interrupt response!"
+                    if self.debug: print "Received an interrupt response!"
                     break
             
             if not 0xDC in rsp:
@@ -779,18 +747,12 @@ class Dionysus (Nysa):
             read_count = len(rsp)
 
             while (time.time() < timeout) and (read_count < read_total):
-                response = self.dev.read_data(read_total - read_count)
-                temp = Array ('B')
-                temp.fromstring(response)
-                if len(temp) > 0:
-                    rsp += temp
-                    read_count = len(rsp)
+                rsp += self.dev.read_data_bytes(read_total - read_count)
+                read_count = len(rsp)
             
         index = rsp.index(0xDC) + 1
         read_data = Array('B')
         read_data.extend(rsp[index:])
-
-        #print "Raw Interrupt read: %s" % str(read_data)
 
         self.interrupts = read_data[-4] << 24 | read_data[-3] << 16 | read_data[-2] << 8 | read_data[-1]
 
