@@ -27,6 +27,8 @@ class _GPIOActions(QtCore.QObject):
     interrupt_en_changed = QtCore.pyqtSignal(int, bool, name = "interrupt_en_changed")
     interrupt_edge_changed = QtCore.pyqtSignal(int, bool, name = "interrupt_edge_changed")
 
+    gpio_interrupt = QtCore.pyqtSignal(name = "gpio_interrupt")
+
 
 
     def __init__(self, parent = None):
