@@ -108,7 +108,7 @@ class UARTEngine(QObject):
         self.uart.register_interrupt_callback(self.interrupt_callback)
 
     def interrupt_callback(self):
-        print "Interrupt callback"
+        #print "Interrupt callback"
         QtCore.QMetaObject.invokeMethod(self.engine_worker,
                                         "process",
                                         QtCore.Qt.QueuedConnection)
