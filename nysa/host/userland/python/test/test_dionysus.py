@@ -228,9 +228,6 @@ def main(argv):
 
 
     #THREAD DEBUGGNG!
-    time.sleep(1)
-    print "Exiting!"
-    return
 
 
 
