@@ -603,7 +603,7 @@ initial begin
   rts                 <=  0;
   #100
   test_transmit       <=  0;
-  test_tx_byte        <=  8'h12;
+  test_tx_byte        <=  8'h55;
   #1000
 
   test_transmit       <=  1;
@@ -617,7 +617,7 @@ initial begin
 
   #100
   test_transmit       <=  0;
-  test_tx_byte        <=  8'h55;
+  test_tx_byte        <=  8'hAA;
   #1000
 
   test_transmit       <=  1;
