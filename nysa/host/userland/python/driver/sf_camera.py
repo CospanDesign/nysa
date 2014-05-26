@@ -30,7 +30,7 @@ http://wiki.cospandesign.com/index.php?title=Wb_sf_camera
 """
 
 
-__author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
+__author__ = 'Cospan Design: info@cospandesign.com'
 
 import sys
 import os

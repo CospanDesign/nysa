@@ -395,8 +395,6 @@ class NysaDMAException(Exception):
     DMA setup for write is read from
     DMA setup for read has ben written to
     '''
-
-
     pass
 
 class DMAReadController(object):
@@ -605,61 +603,6 @@ class DMAReadController(object):
         if self.busy_status[0] or self.busy_status[1]:
             return True
         return False
-
-    '''
-    def anticipate_read(self, single = True):
-        if self.finished_status[0] and self.finished_status[1]:
-            #Both blocks are already ready
-            return
-
-        if self.finished_status[0]:
-            if self.busy_status[1]:
-                #One side is busy the other is finished
-                return
-            #Side 0 is finished but and side 1 is not busy
-            self.device.write_register(self.reg_size1, self.size)
-            if self.finished_status[0]:
-                self.next_finished = 0
-            if single:
-                return
-
-        if self.finished_status[1]:
-            if self.busy_status[0]:
-                #One side is busy and the other is finshed
-                return
-            #Side 1 is finished and side 0 is not busy
-            self.device.write_register(self.reg_size0, self.size)
-            if self.finished_status[1]:
-                self.next_finished = 1
-            if single:
-                return
-
-        #Both sides are not finished
-        if self.busy_status[0] and self.busy_status[1]:
-            #Both sides are busy
-            return
-
-        if self.busy_status[0]:
-            #Block 1 is not doing anything
-            self.device.write_register(self.reg_size1, self.size)
-            self.next_finished = 0
-            if single:
-                return
-
-        if self.busy_status[1]:
-            #Block 0 is not doing anything
-            self.device.write_register(self.reg_size0, self.size)
-            self.next_finished = 1
-            if single:
-                return
-
-        #Both sides are not busy and are not doign anything
-        self.device.write_register(self.reg_size0, self.size)
-        self.next_finished = 0
-        if single:
-            return
-        self.device.write_register(self.reg_size1, self.size)
-    '''
 
     def read(self, anticipate = False):
         """
