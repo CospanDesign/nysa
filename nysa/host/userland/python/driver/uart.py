@@ -745,8 +745,8 @@ def unit_test(nysa, dev_id):
 
     print "Waiting 5 second for receive interrupts"
     if uart.wait_for_interrupts(10) > 0:
-        if uart.is_interrupt_for_slave():
-            print "Found a read interrupt"
+        #if uart.is_interrupt_for_slave():
+        print "Found a read interrupt"
 
         print "Read: %s" % uart.read_string(-1)
 

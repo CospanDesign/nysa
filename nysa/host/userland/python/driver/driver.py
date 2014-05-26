@@ -43,6 +43,9 @@ class Driver(object):
         if debug: print "Dev ID: %d" % self.dev_id
         self.debug = debug
         self.interrupt_detected = False
+        #print "interrupts: 0x%08X" % self.n.interrupts
+        self.n.interrupts = (self.n.interrupts & ~(1 << self.dev_id))
+        #print "interrupts: 0x%08X" % self.n.interrupts
 
     def __del__(self):
         self.unregister_interrupt_callback()
@@ -362,17 +365,14 @@ class Driver(object):
         if self.interrupt_detected:
             self.interrupt_detected = False
             return True
-        self.n.wait_for_interrupts(wait_time)
-        return self.n.is_interrupt_for_slave(self.dev_id)
+        retval = self.n.wait_for_interrupts(wait_time, self.dev_id)
+        self.n.interrupts &= ~(1 << self.dev_id)
+        return retval
+
+        #return self.n.is_interrupt_for_slave(self.dev_id)
 
     def interrupt_callback(self):
         self.interrupt_detected = True
-
-    def is_interrupt_for_slave(self):
-        """
-        Pass through for nysa 'is_interrupt_for_slave()
-        """
-        return self.n.is_interrupt_for_slave(self.dev_id)
 
     def register_dump(self):
         """
@@ -642,7 +642,9 @@ class DMAReadController(object):
             self.device.write_register(self.reg_size0, self.size)
 
         elif (finished_status == 0) and self.is_busy():
+            #print "Waiting for interrupts",
             self.device.wait_for_interrupts(self.timeout)
+            #print "Got interrupts"
             finished_status = self._get_finished_block()
 
         if (finished_status == 0):

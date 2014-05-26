@@ -190,7 +190,8 @@ class Dionysus (Nysa):
             self.timeout = btimeout
         except NysaCommError:
             self.timeout = btimeout
-            self.reset()
+
+        self.reset()
 
         self.interrupts = 0x00
         self.events = []
@@ -207,7 +208,7 @@ class Dionysus (Nysa):
         self.reader_thread.start()
 
     def __del__(self):
-        print "Close reader thread"
+        if self.debug: print "Close reader thread"
         #self.lock.aquire()
         #if (self.reader_thread is not None) and self.reader_thread.isAlive():
         #    self.reader_thread.stop()
@@ -736,11 +737,13 @@ class Dionysus (Nysa):
         with self.lock:
             #Check if we have interrupts
             if (self.interrupts & (1 << dev_id)) > 0:
+                #print "Found existing interrupts"
                 return True
             #if we don't have interrupts clear the associated event
             e.clear()
 
         if e.wait(wait_time):
+            #print "Found interrupts"
             return True
         e.set()
         return False

@@ -338,10 +338,10 @@ def unit_test(n):
     print "Waiting for 5 seconds for the interrupts to fire"
     if gpio.wait_for_interrupts(5):
         print "Interrupt detected!\n"
-        if gpio.is_interrupt_for_slave():
-            print "Interrupt for GPIO detected!"
-            print "Interrupts: 0x%08X" % gpio.get_interrupts()
-            print "Read value: 0x%08X" % gpio.get_port_raw()
+        #if gpio.is_interrupt_for_slave():
+        print "Interrupt for GPIO detected!"
+        print "Interrupts: 0x%08X" % gpio.get_interrupts()
+        print "Read value: 0x%08X" % gpio.get_port_raw()
 
     print "Interrupts: 0x%08X" % gpio.get_interrupts()
 

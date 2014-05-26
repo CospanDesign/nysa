@@ -139,6 +139,7 @@ class I2C(Driver):
     def __init__(self, nysa, dev_id, debug = False):
         print "dev id: %d" % dev_id
         super(I2C, self).__init__(nysa, dev_id, debug)
+        self.reset_i2c_core()
 
     def __del__(self):
         self.enable_i2c(False)
@@ -535,13 +536,13 @@ class I2C(Driver):
         if self.wait_for_interrupts(wait_time = 1):
             if self.debug:
                 print "got interrupt for start"
-            if self.is_interrupt_for_slave():
-                status = self.get_status()
-                if self.debug:
-                    self.print_status(status)
-                if (status & STATUS_READ_ACK_N) > 0:
-                    self.register_dump()
-                    raise I2CError("Did not recieve an ACK while writing I2C ID: 0x%02X" % i2c_id)
+            #if self.is_interrupt_for_slave():
+            status = self.get_status()
+            if self.debug:
+                self.print_status(status)
+            if (status & STATUS_READ_ACK_N) > 0:
+                self.register_dump()
+                raise I2CError("Did not recieve an ACK while writing I2C ID: 0x%02X" % i2c_id)
         else:
             if self.debug:
                 self.print_status(self.get_status())
@@ -562,11 +563,11 @@ class I2C(Driver):
                 if self.wait_for_interrupts(wait_time = 1):
                     if self.debug:
                         print "got interrupt for data"
-                    if self.is_interrupt_for_slave():
-                        status = self.get_status()
-                        #self.print_status(status)
-                        if (status & STATUS_READ_ACK_N) > 0:
-                            raise I2CError("Did not receive an ACK while writing data")
+                #if self.is_interrupt_for_slave():
+                    status = self.get_status()
+                    #self.print_status(status)
+                    if (status & STATUS_READ_ACK_N) > 0:
+                        raise I2CError("Did not receive an ACK while writing data")
                 else:
                     raise I2CError("Timed out while waiting for interrupt durring send data")
 
@@ -590,10 +591,10 @@ class I2C(Driver):
             if self.wait_for_interrupts(wait_time = 1):
                 if self.debug:
                     print "got interrupt for the last byte"
-                if self.is_interrupt_for_slave():
-                    status = self.get_status()
-                    if (status & STATUS_READ_ACK_N) > 0:
-                        raise I2CError("Did not receive an ACK while writing data")
+                #if self.is_interrupt_for_slave():
+                status = self.get_status()
+                if (status & STATUS_READ_ACK_N) > 0:
+                    raise I2CError("Did not receive an ACK while writing data")
             else:
                 raise I2CError("Timed out while waiting for interrupt while sending the last byte")
 
@@ -660,12 +661,12 @@ class I2C(Driver):
         if self.wait_for_interrupts(wait_time = 1):
             if self.debug:
                 print "got interrupt for start"
-            if self.is_interrupt_for_slave():
-                status = self.get_status()
-                if self.debug:
-                    self.print_status(status)
-                if (status & STATUS_READ_ACK_N) > 0:
-                    raise I2CError("Did not recieve an ACK while writing I2C ID")
+            #if self.is_interrupt_for_slave():
+            status = self.get_status()
+            if self.debug:
+                self.print_status(status)
+            if (status & STATUS_READ_ACK_N) > 0:
+                raise I2CError("Did not recieve an ACK while writing I2C ID")
 
         else:
             if self.debug:
