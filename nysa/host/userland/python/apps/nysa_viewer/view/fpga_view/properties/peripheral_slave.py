@@ -42,7 +42,6 @@ class PeripheralSlaveProperties(PropertiesBase):
         self.set_scripts_list(scripts)
         self.config_dict = config_dict
         self.nysa = n
-        self.name.setText(name)
-        #Setup the reset of the config dict
+        #Setup the rest of the config dict
 
 

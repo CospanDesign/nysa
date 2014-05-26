@@ -95,7 +95,7 @@ class Controller(NysaBaseController):
         #Change this for your app
         return "Sparkfun 640x480 Camera Controller"
 
-    def _initialize(self, platform, image_id):
+    def _initialize(self, platform):
         self.v = CameraWidget(self.status, self.actions)
         self.camera = SFCamera(platform[2], camera_id = 2, i2c_id = 1)
         self.camera_util = CameraUtils(self.camera, self.actions, self.debug)
@@ -109,11 +109,12 @@ class Controller(NysaBaseController):
         else:
             self.status.set_level(status.StatusLevel.INFO)
 
-        self._initialize(platform, image_id)
+        self._initialize(platform)
         sys.exit(app.exec_())
 
     def start_tab_view(self, platform):
-        self._initialize()
+        self.status = status.Status()
+        self._initialize(platform)
 
     def get_view(self):
         return self.v

@@ -67,6 +67,8 @@ class ScriptManager(QObject):
         from apps.gpio_controller.controller import Controller as gpio_controller
         from apps.memory_controller.controller import Controller as mem_controller
         from apps.i2c_controller.controller import Controller as i2c_controller
+        from apps.sf_camera_controller.controller import Controller as sf_controller
+        from apps.uart_console.controller import Controller as uart_controller
         #print "DIR: %s" % (str(dir(self)))
 
         script_list = NysaBaseController.plugins
@@ -97,7 +99,7 @@ class ScriptManager(QObject):
         for script_entry in self.scripts:
             if image_id != 0 and script_entry[IMAGE_ID_POS] == image_id:
                 script_dict[script_entry[NAME_POS]] = None
-                script_dict[script_entry[NAME_POS]] == script_entry[SCRIPT_POS]
+                script_dict[script_entry[NAME_POS]] = script_entry[SCRIPT_POS]
         return script_dict
 
     def get_device_script(self, dev_id, sub_id = None, unique_id = None):
