@@ -109,8 +109,9 @@ class Controller(NysaBaseController):
         return "GPIO Controller"
 
     def __del__(self):
-        if self.reader_thread is not None:
-            del (self.reader_thread)
+        #if self.reader_thread is not None:
+        #    del (self.reader_thread)
+        pass
 
     def __init__(self):
         super (Controller, self).__init__()
@@ -127,7 +128,8 @@ class Controller(NysaBaseController):
 
         self.gpio_actions.read_start_stop.connect(self.read_start_stop)
         self.gpio_actions.gpio_input_changed.connect(self.gpio_input_changed)
-        self.reader_thread = None
+        self.gpio_actions.gpio_interrupt.connect(self.process_interrupts)
+        #self.reader_thread = None
 
     def _initialize(self, platform, device_index):
         self.v = GPIOWidget(count = 32, gpio_actions = self.gpio_actions)
@@ -139,7 +141,7 @@ class Controller(NysaBaseController):
         self.dev_index = device_index + 1
 
         #Initialize the thread with a 40mS timeout
-        self.reader_thread = ReaderThread(self.gpio, self.mutex, .040, self.gpio_actions)
+        #self.reader_thread = ReaderThread(self.gpio, self.mutex, .040, self.gpio_actions)
 
 
         self.v.add_register(0, "GPIO Value", initial_value = self.gpio.get_port_raw())
@@ -153,6 +155,7 @@ class Controller(NysaBaseController):
         self.v.set_register(2, self.gpio.get_interrupts())
         self.v.set_register(3, self.gpio.get_interrupt_enable())
         self.v.set_register(4, self.gpio.get_interrupt_edge())
+        self.gpio.register_interrupt_callback(self.interrupt_callback)
 
     def start_standalone_app(self, platform, device_index):
         #print "Device Index: %d" % device_index
@@ -197,6 +200,7 @@ class Controller(NysaBaseController):
 
     def read_start_stop(self, start_stop, rate):
         print "Enter Read/startstop"
+        '''
         if start_stop:
             #Start
             if not self.reader_thread.isRunning():
@@ -211,6 +215,7 @@ class Controller(NysaBaseController):
             del(self.reader_thread)
             #Wait till thread is finished
             self.reader_thread = ReaderThread(self.gpio, self.mutex, rate, self.gpio_actions)
+        '''
 
     def gpio_input_changed(self, value):
         print "Input Changed"
@@ -219,44 +224,41 @@ class Controller(NysaBaseController):
 
     def register_get_pressed(self, index):
         print "Register Get Pressed: %d" % index
-        self.mutex.lock()
         value = self.n.read_register(self.dev_index, index)
-        self.mutex.unlock()
         self.v.set_register(index, value)
 
     def register_set_pressed(self, index, value):
         print "Register Set Pressed: %d: %d" % (index, value)
-        self.mutex.lock()
         self.n.write_register(self.dev_index, index, value)
-        self.mutex.unlock()
 
     def gpio_out_changed(self, index, val):
         print "GPIO Out: %d : %s" % (index, str(val))
-        self.mutex.lock()
         self.gpio.set_bit_value(index, val)
-        self.mutex.unlock()
 
     def direction_changed(self, index, val):
         print "GPIO Direction: %d : %s" % (index, str(val))
-        self.mutex.lock()
         self.n.enable_register_bit(self.dev_index, 1, index, val)
-        self.mutex.unlock()
 
     def interrupt_en_changed(self, index, val):
         print "Interrupt En Changed: %d : %s" % (index, str(val))
-        self.mutex.lock()
         self.n.enable_register_bit(self.dev_index, 3, index, val)
-        self.mutex.unlock()
 
     def interrupt_edge_changed(self, index, val):
         print "Interrupt Edge Changed: %d : %s" % (index, str(val))
-        self.mutex.lock()
         self.n.enable_register_bit(self.dev_index, 4, index, val)
-        self.mutex.unlock()
 
+    def process_interrupts(self):
+        value = self.gpio.get_port_raw()
+        interrupts = self.gpio.get_interrupts()
+        self.v.set_register(2, interrupts)
 
+        while interrupts != 0:
+            interrupts = self.gpio.get_interrupts()
+        self.gpio_actions.gpio_input_changed.emit(value)
 
-
+    def interrupt_callback(self):
+        self.gpio_actions.gpio_interrupt.emit()
+ 
 
 def main(argv):
     #Parse out the commandline arguments

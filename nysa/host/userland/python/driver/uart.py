@@ -346,6 +346,23 @@ class UART(Driver):
         data.fromstring(string)
         self.write_raw(data)
 
+    def write_byte(self, data):
+        """write_byte
+
+        Writes a byte of data over the UART
+
+        Args:
+          int: byte of data to send
+
+        Return:
+          Nothing
+
+        Raises:
+          NysaCommError
+        """
+        write_data = Array('B', [data])
+        self.write_raw(write_data)
+
     def write_raw(self, data = Array('B')):
         """write_raw
 
@@ -427,27 +444,30 @@ class UART(Driver):
         Raises:
           NysaCommError: Error in communication
         """
-        byte_count = count
         available = self.get_read_count()
         if available < count:
             count = available
 
-        #Tell the core we are going to read the specified amount
-        self.write_register(READ_COUNT, count)
-
-        count = byte_count
-
-        if count <= 2:
-            count = 1
+        if count <= 4:
+            word_count = 1
         else:
             #count = ((count - 2) / 4) + 1
-            count = (count / 4) + 1
+            word_count = (count / 4) + 1
 
+
+        #Tell the core we are going to read the specified amount of bytes
+        self.write_register(READ_COUNT, count)
+        data = self.read(READ_DATA, word_count)[0:count]
+
+        self.debug = True 
         if self.debug:
-            print "Reading %d bytes" % byte_count
-            print "Output byte count:\n" + str(count)
+            print "Reading %d bytes" % count
+            print "Output byte count: " + str(count)
+            print "Byte Data: %s" %  str(data)
+        self.debug = False
 
-        return self.read(READ_DATA, count)[0:byte_count]
+
+        return data
 
     def get_read_count(self):
         """get_read_count
@@ -486,7 +506,12 @@ class UART(Driver):
             print "read all the data in the UART input FIFO"
 
         count = self.get_read_count()
-        return self.read_raw(count)
+        data = Array('B')
+        while count > 0:
+            data.extend(self.read_raw(count))
+            count = self.get_read_count()
+            #time.sleep(0.05)
+        return data
 
     def get_write_available(self):
         """get_write_available
@@ -620,7 +645,7 @@ class UART(Driver):
         if self.debug:
             print "Disable flow control"
         control = self.get_control()
-        control = control & ~(CONTROL_RTS_CTS_FC | CONTROL_DTR_DSR_FC)
+        control = control & ~(CONTROL_RTS_CTS_FC | CONTROL_DTS_DSR_FC)
         self.set_control(control)
 
 
@@ -709,11 +734,6 @@ def unit_test(nysa, dev_id):
     uart.write_string("STEAM ROXORS THE BIG ONE!1!!\r\n")
 
 
-
-
-
-
-
     print "disable all interrupts"
     uart.disable_interrupts()
     print "Testing receive interrupt"
@@ -725,8 +745,8 @@ def unit_test(nysa, dev_id):
 
     print "Waiting 5 second for receive interrupts"
     if uart.wait_for_interrupts(10) > 0:
-        if uart.is_interrupt_for_slave():
-            print "Found a read interrupt"
+        #if uart.is_interrupt_for_slave():
+        print "Found a read interrupt"
 
         print "Read: %s" % uart.read_string(-1)
 

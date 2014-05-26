@@ -39,10 +39,14 @@ class UARTConsole(QTextEdit):
         self.actions.uart_local_echo_en.connect(self.enable_local_edit)
     
     def keyPressEvent(self, event):
+        #print "Key event: %s" % str(dir(event))
         if self.local_echo:
             super(UARTConsole, self).keyPressEvent(event)
         else:
             pass
+        #print "%s" % event.text()
+        #self.actions.uart_data_out.emit(event.key)
+        self.actions.uart_data_out.emit(event.text())
 
     def setText(self, text):
         super(UARTConsole, self).setText(text)
@@ -50,6 +54,10 @@ class UARTConsole(QTextEdit):
 
     def append(self, text):
         super(UARTConsole, self).append(text)
+        self.moveCursor(QTextCursor.End)
+
+    def append_text(self, text):
+        self.textCursor().insertText(text)
         self.moveCursor(QTextCursor.End)
 
     def enable_local_edit(self, enable):

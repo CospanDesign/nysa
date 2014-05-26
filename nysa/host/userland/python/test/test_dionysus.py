@@ -114,11 +114,11 @@ def test_memory(dyn, dev_index):
 
 
     data_out = Array('B')
-    for i in range (0, 4 * size):
+    for i in range (0, size):
         data_out.append((i % 255))
 
     print "Writing 0x%08X bytes of data" % (len(data_out))
-    state = time.time()
+    start = time.time()
     dyn.write_memory(0, data_out)
     end = time.time()
     print "Write Time: %f" % (end - start)
@@ -137,13 +137,13 @@ def test_memory(dyn, dev_index):
         print "\tincomming: %d" % len(data_in)
 
     for i in range(len(data_out)):
-        if data_out[i] != data_in[i]:
+        if int(data_out[i]) != int(data_in[i]):
             fail = True
             print "Mismatch at: {0:>8}: WRITE (Hex):[{0:>8}] Read (Hex): [{0:>8}]".format(
                         hex(i),
                         hex(data_out[i]),
                         hex(data_in[i]))
-            if faile_count >= 16:
+            if fail_count >= 16:
                 break
             fail_count += 1
 
@@ -232,20 +232,16 @@ def main(argv):
     print "Printing DRT"
     dyn.pretty_print_drt()
 
-
     if args.memory:
         print "Test Memory"
         for i in range(dyn.get_number_of_devices()):
             if dyn.is_memory_device(i):
                 test_memory(dyn, i)
 
-
-
     if args.list_devices:
         print "List the cores that can be tested"
         list_cores(dyn)
         sys.exit(0)
-
 
     if args.test[0].upper() in devices:
         dev_id = dyn.get_id_from_name(args.test[0].upper())

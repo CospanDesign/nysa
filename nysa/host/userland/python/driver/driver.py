@@ -42,6 +42,99 @@ class Driver(object):
         self.dev_id = dev_id + 1
         if debug: print "Dev ID: %d" % self.dev_id
         self.debug = debug
+        self.interrupt_detected = False
+        #print "interrupts: 0x%08X" % self.n.interrupts
+        self.n.interrupts = (self.n.interrupts & ~(1 << self.dev_id))
+        #print "interrupts: 0x%08X" % self.n.interrupts
+
+    def __del__(self):
+        self.unregister_interrupt_callback()
+
+    @staticmethod
+    def get_core_id():
+        """
+        Returns the identification number of the device this module controls
+
+        Args:
+            Nothing
+
+        Returns (Integer):
+            Number corresponding to the device in the drt.json file
+
+        Raises:
+            DRTError: Device ID Not found in drt.json
+        """
+        raise AssertionError("get_core_id() function is not implemented")
+
+    @staticmethod
+    def get_core_sub_id():
+        """Returns the identification of the specific implementation of this
+        controller
+
+        Example: Cospan Design wrote the HDL GPIO core with sub_id = 0x01
+            this module was designed to interface and exploit features that
+            are specific to the Cospan Design version of the GPIO controller.
+
+            Some controllers may add extra functionalities that others do not
+            sub_ids are used to differentiate them and select the right python
+            controller for those HDL modules
+
+        Args:
+            Nothing
+
+        Returns (Integer):
+            Number ID for the HDL Module that this controls
+            (Note: 0 = generic control or baseline funtionality of the module)
+
+        Raises:
+            Nothing
+        """
+        raise AssertionError("get_core_id() function is not implemented")
+
+    def register_interrupt_callback(self, callback = None):
+        """register_interrupt_callback
+
+        Register a function to be called when an interrupt occurs
+
+        if left no callback is supplied then a local function will be called.
+
+        This local function will set a flag to indicate that a register has
+        occured
+
+        Args:
+            callback (Callable): this is the function to call when an
+                interrupt occurs. If left blank this will set a local variable
+                that can be polled with 'wait_for_interrupt'
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+        if callback is None:
+            callback = self.interrupt_callback
+
+        self.n.register_interrupt_callback(self.dev_id, callback)
+
+    def unregister_interrupt_callback(self, callback = None):
+        """unregister_interrupt_callback
+
+        Unregister a function from the interrupt callable list
+
+        if no callback is supplied then a the local function will be removed
+
+        Args:
+            callback (Callable): This is the function to call when an interrupt
+                occurs. If left blank all the callbacks will be removed
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+        self.n.unregister_interrupt_callback(self.dev_id, callback = callback)
 
     def set_timeout(self, timeout):
         """set_timeout
@@ -269,14 +362,17 @@ class Driver(object):
 
         Raises:
         """
-        self.n.wait_for_interrupts(wait_time)
-        return self.n.is_interrupt_for_slave(self.dev_id)
+        if self.interrupt_detected:
+            self.interrupt_detected = False
+            return True
+        retval = self.n.wait_for_interrupts(wait_time, self.dev_id)
+        self.n.interrupts &= ~(1 << self.dev_id)
+        return retval
 
-    def is_interrupt_for_slave(self):
-        """
-        Pass through for nysa 'is_interrupt_for_slave()
-        """
-        return self.n.is_interrupt_for_slave(self.dev_id)
+        #return self.n.is_interrupt_for_slave(self.dev_id)
+
+    def interrupt_callback(self):
+        self.interrupt_detected = True
 
     def register_dump(self):
         """
@@ -299,8 +395,6 @@ class NysaDMAException(Exception):
     DMA setup for write is read from
     DMA setup for read has ben written to
     '''
-
-
     pass
 
 class DMAReadController(object):
@@ -510,61 +604,6 @@ class DMAReadController(object):
             return True
         return False
 
-    '''
-    def anticipate_read(self, single = True):
-        if self.finished_status[0] and self.finished_status[1]:
-            #Both blocks are already ready
-            return
-
-        if self.finished_status[0]:
-            if self.busy_status[1]:
-                #One side is busy the other is finished
-                return
-            #Side 0 is finished but and side 1 is not busy
-            self.device.write_register(self.reg_size1, self.size)
-            if self.finished_status[0]:
-                self.next_finished = 0
-            if single:
-                return
-
-        if self.finished_status[1]:
-            if self.busy_status[0]:
-                #One side is busy and the other is finshed
-                return
-            #Side 1 is finished and side 0 is not busy
-            self.device.write_register(self.reg_size0, self.size)
-            if self.finished_status[1]:
-                self.next_finished = 1
-            if single:
-                return
-
-        #Both sides are not finished
-        if self.busy_status[0] and self.busy_status[1]:
-            #Both sides are busy
-            return
-
-        if self.busy_status[0]:
-            #Block 1 is not doing anything
-            self.device.write_register(self.reg_size1, self.size)
-            self.next_finished = 0
-            if single:
-                return
-
-        if self.busy_status[1]:
-            #Block 0 is not doing anything
-            self.device.write_register(self.reg_size0, self.size)
-            self.next_finished = 1
-            if single:
-                return
-
-        #Both sides are not busy and are not doign anything
-        self.device.write_register(self.reg_size0, self.size)
-        self.next_finished = 0
-        if single:
-            return
-        self.device.write_register(self.reg_size1, self.size)
-    '''
-
     def read(self, anticipate = False):
         """
         Returns a block of data and prepare for consequtive reads when the
@@ -603,7 +642,9 @@ class DMAReadController(object):
             self.device.write_register(self.reg_size0, self.size)
 
         elif (finished_status == 0) and self.is_busy():
+            #print "Waiting for interrupts",
             self.device.wait_for_interrupts(self.timeout)
+            #print "Got interrupts"
             finished_status = self._get_finished_block()
 
         if (finished_status == 0):

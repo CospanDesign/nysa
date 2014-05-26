@@ -14,7 +14,7 @@ ${NYSA}/cbuilder/verilog/wishbone/master/wishbone_master.v
 ${NYSA}/cbuilder/verilog/generic/dual_port_bram.v
 ${NYSA}/cbuilder/verilog/generic/uart_fifo.v
 ${NYSA}/cbuilder/verilog/generic/uart_controller.v
-${NYSA}/cbuilder/verilog/generic/uart_v2.v
+${NYSA}/cbuilder/verilog/generic/uart_v3.v
 
 
 rtl/wb_uart.v

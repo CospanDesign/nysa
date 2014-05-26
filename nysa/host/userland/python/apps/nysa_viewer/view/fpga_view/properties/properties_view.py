@@ -78,10 +78,10 @@ class PropertiesView(QWidget):
         self.clear_layout()
         self.nothing_params.show()
 
-    def setup_bus(self, config_dict, n, scripts):
+    def setup_bus(self, name, config_dict, n, scripts):
         #Populate the view for an entire bus
         self.clear_layout()
-        self.main_bus_params.set_config_dict(config_dict)
+        self.main_bus_params.set_config_dict(name, config_dict, n, scripts)
         self.main_bus_params.show()
 
     def setup_host_interface(self):

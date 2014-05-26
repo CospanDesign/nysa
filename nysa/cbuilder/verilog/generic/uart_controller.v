@@ -166,41 +166,41 @@ uart_fifo uf_tx (
 );
 
 uart_fifo uf_rx (
-  .clk(clk),
-  .rst(rst || control_reset),
-  
-  .size(read_size),
+  .clk             (clk                  ),
+  .rst             (rst || control_reset ),
 
-  .write_strobe(received),
-  .write_available(rx_write_available),
-  .write_data(rx_byte),
-  
-  .read_strobe(read_strobe),
-  .read_count(read_count),
-  .read_data(read_data),
-  .overflow(read_overflow),
-  .underflow(rx_underflow),
-  .full(rx_full),
-  .empty(read_empty)
+  .size            (read_size            ),
+
+  .write_strobe    (received             ),
+  .write_available (rx_write_available   ),
+  .write_data      (rx_byte              ),
+
+  .read_strobe     (read_strobe          ),
+  .read_count      (read_count           ),
+  .read_data       (read_data            ),
+  .overflow        (read_overflow        ),
+  .underflow       (rx_underflow         ),
+  .full            (rx_full              ),
+  .empty           (read_empty           )
 );
 
 //Low Level UART
-uart_v2 u (
-  .clk(clk),
-  .rst(rst || control_reset),
-  .rx(rx),
-  .tx(tx),
-  .transmit(transmit),
-  .tx_byte(tx_byte),
-  .received(received),
-  .rx_byte(rx_byte),
-  .is_receiving(is_receiving),
-  .is_transmitting(is_transmitting),
-  .rx_error(rx_error),
-  .set_clock_div(set_clock_div),
-  .user_clock_div(clock_div),
-  .default_clock_div(default_clock_div),
-  .prescaler(prescaler)
+uart_v3 u (
+  .clk               (clk                  ),
+  .rst               (rst || control_reset ),
+  .rx                (rx                   ),
+  .tx                (tx                   ),
+  .transmit          (transmit             ),
+  .tx_byte           (tx_byte              ),
+  .received          (received             ),
+  .rx_byte           (rx_byte              ),
+  .is_receiving      (is_receiving         ),
+  .is_transmitting   (is_transmitting      ),
+  .rx_error          (rx_error             ),
+  .set_clock_div     (set_clock_div        ),
+  .user_clock_div    (clock_div            ),
+  .default_clock_div (default_clock_div    ),
+  .prescaler         (prescaler            )
 );
 
 

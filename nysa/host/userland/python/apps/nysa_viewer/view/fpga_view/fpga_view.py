@@ -113,8 +113,8 @@ class FPGAImage(QWidget):
     def slave_deselected(self, name, bus, config_dict):
         self.bpv.slave_deselected(name, bus, config_dict)
 
-    def setup_bus_properties(self, config_dict, n, scripts):
-        self.bpv.setup_bus(config_dict, n, scripts)
+    def setup_bus_properties(self, name, config_dict, n, scripts):
+        self.bpv.setup_bus(name, config_dict, n, scripts)
 
     def sizeHint (self):
         size = QSize()

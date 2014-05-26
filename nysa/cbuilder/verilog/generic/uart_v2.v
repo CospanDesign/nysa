@@ -28,11 +28,11 @@ SOFTWARE.
 `include "project_defines.v"
 `timescale 1 ns/1 ps
 
-`define PRESCALER_COUNT 8
+`define PRESCALER_COUNT 16
 
-`define HALF_PERIOD `PRESCALER_COUNT / 2
+`define HALF_PERIOD (`PRESCALER_COUNT >> 1)
 `define FULL_PERIOD `PRESCALER_COUNT
-`define TWO_PERIODS (`PRESCALER_COUNT * 2)
+`define TWO_PERIODS (`PRESCALER_COUNT << 1)
 
 
 module uart_v2 #(
@@ -40,15 +40,18 @@ module uart_v2 #(
 )(
   clk,
   rst,
-  rx,
+
   tx,
   transmit,
   tx_byte,
-  received,
-  rx_byte,
-  is_receiving,
   is_transmitting,
+
+  rx,
   rx_error,
+  rx_byte,
+  received,
+  is_receiving,
+
   prescaler,
   set_clock_div,
   user_clock_div,
@@ -163,18 +166,18 @@ always @ (posedge clk) begin
       end
     end
     else begin
-      rx_clk_divider <= rx_clk_divider - 1;
+      rx_clk_divider            <= rx_clk_divider - 1;
     end
 
     //decrement the tx_clk_divider
     if (tx_clk_divider == 0) begin
-      tx_clk_divider  <= clock_div;
+      tx_clk_divider            <= clock_div;
       if (tx_countdown > 0) begin
-        tx_countdown  <= tx_countdown - 1;
+        tx_countdown            <= tx_countdown - 1;
       end
     end
     else begin
-      tx_clk_divider <= tx_clk_divider - 1;
+      tx_clk_divider            <= tx_clk_divider - 1;
     end
 
 
@@ -184,9 +187,9 @@ always @ (posedge clk) begin
 //--*____|
         //A low pulse on the receive line indicates a start of data
         if (!rx) begin
-          rx_clk_divider  <=  clock_div;
-          rx_countdown  <=  `HALF_PERIOD;
-          rx_state    <=  RX_CHECK_START;
+          rx_clk_divider        <= clock_div;
+          rx_countdown          <= `HALF_PERIOD;
+          rx_state              <= RX_CHECK_START;
         end
       end
       RX_CHECK_START: begin
@@ -195,53 +198,56 @@ always @ (posedge clk) begin
 //----|__*__|????|????|????
           if (!rx) begin
             //pulse is still low
-            rx_countdown    <= `FULL_PERIOD;
-            rx_bits_remaining <=  7;
-            rx_state      <= RX_READ_BITS;
+            rx_countdown        <= `FULL_PERIOD;
+            rx_bits_remaining   <=  7;
+            rx_state            <= RX_READ_BITS;
+            rx_data             <=  0;
           end
           else begin
-            rx_state      <=  RX_ERROR;
+            rx_state            <=  RX_ERROR;
           end
         end
       end
       RX_READ_BITS: begin
         if (rx_countdown == 0) begin
-          rx_data         <=  {rx, rx_data[7:1]};
-          rx_countdown      <=  `FULL_PERIOD;
-          rx_bits_remaining   <=  rx_bits_remaining - 1;
+          rx_data               <=  {rx, rx_data[7:1]};
+          rx_countdown          <=  `FULL_PERIOD;
           //should be halfway through a bit
           //shift the data in from left to right
-          if (rx_bits_remaining == 0) begin
-            rx_state      <=  RX_CHECK_STOP;
+          if (rx_bits_remaining > 0) begin
+            rx_bits_remaining   <=  rx_bits_remaining - 1;
+          end
+          else begin
+            rx_state            <=  RX_CHECK_STOP;
           end
         end
       end
       RX_CHECK_STOP: begin
         if (rx_countdown == 0) begin
           if (rx) begin
-            rx_byte   <= rx_data;
-            rx_state  <= RX_RECEIVED;
+            rx_byte             <= rx_data;
+            rx_state            <= RX_RECEIVED;
           end
           else begin
-            rx_state  <= RX_ERROR;
+            rx_state            <= RX_ERROR;
           end
         end
       end
       RX_DELAY_RESTART: begin
         if (rx_countdown == 0) begin
-          rx_state  <= RX_IDLE;
+          rx_state              <= RX_IDLE;
         end
       end
       RX_ERROR: begin
-        rx_countdown  <= `FULL_PERIOD;
-        rx_state    <= RX_DELAY_RESTART;
+        rx_countdown            <= `FULL_PERIOD;
+        rx_state                <= RX_DELAY_RESTART;
       end
       RX_RECEIVED: begin
-        received  <= 1;
-        rx_state  <= RX_IDLE;
+        received                <= 1;
+        rx_state                <= RX_IDLE;
       end
       default: begin
-        rx_state <= RX_IDLE;
+        rx_state                <= RX_IDLE;
       end
     endcase
     //transmit state machine

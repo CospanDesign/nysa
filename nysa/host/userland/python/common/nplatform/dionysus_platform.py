@@ -54,12 +54,12 @@ class DionysusPlatform(Platform):
         devices = usb.core.find(find_all = True)
         for device in devices:
             if device.idVendor == self.vendor and device.idProduct == self.product:
-                sernum = usb.util.get_string(device, 64, device.iSerialNumber)
+                #sernum = usb.util.get_string(device, 64, device.iSerialNumber)
                 #print "Found a Dionysus Device: Serial Number: %s" % sernum
 
-                self.add_device_dict(sernum, Dionysus(idVendor = self.vendor, 
+                self.add_device_dict(device.serial_number, Dionysus(idVendor = self.vendor, 
                                                       idProduct = self.product,
-                                                      sernum = sernum,
+                                                      sernum = device.serial_number,
                                                       debug = False))
         return self.dev_dict
 

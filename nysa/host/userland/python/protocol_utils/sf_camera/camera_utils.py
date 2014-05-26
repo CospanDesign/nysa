@@ -48,6 +48,37 @@ class IMAGE_SIZES(object):
     SUB_QCIF = 8
     ZSUB_QCIF = 9
 
+class CameraWorker(QThread):
+    sf_interrupt = pyqtSignal(name = "sf_camera_interrupt")
+
+    def __init__(self, camera, width, height, mutex, img_format, actions, debug = False):
+        super (CameraWorker, self).__init__()
+        self.debug = debug
+        self.camera = camera
+        self.mutex = mutex
+        self.actions = actions
+        self.width = width
+        self.height = height
+        self.img_format = img_format
+
+        self.captured = False
+        self.image_in_queue = False
+        self.busy = False
+
+    def read_interrupt(self):
+        with self.mutex:
+            self.sf_interrupt.emit()
+
+    def process_interrupt(self):
+        with self.mutex:
+            self.busy = True
+            image = self.camera.read_raw_image()
+            qimage = QImage(image, self.width, self.height, self.img_format)
+            #For Debug purpose save the image
+            #qimage.save("image.png", "png")
+            self.busy = False
+            self.actions.sf_camera_read_ready.emit(qimage)
+
 class CameraThreadWorker(QThread):
 
     def __init__(self, camera, width, height, mutex, img_format, actions, debug = False):

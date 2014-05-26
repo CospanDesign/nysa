@@ -580,7 +580,7 @@ always @ (posedge clk) begin
           endcase
         end
         //not handling an input, if there is an interrupt send it to the user
-        else if (i_per_ack == 0 & o_per_stb == 0 & o_per_cyc == 0) begin
+        else if (!i_per_ack && !o_per_stb && !o_per_cyc && i_out_ready) begin
           //hack for getting the i_data_count before the io_handler decrements it
             //local_data_count  <= i_data_count;
             //work around to add a delay
@@ -605,6 +605,9 @@ always @ (posedge clk) begin
       state <= IDLE;
       end
     endcase
+    if (!i_per_int) begin
+      prev_int <= 0;
+    end
   end
   //handle output
   prev_reset  <=  rst;

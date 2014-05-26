@@ -40,7 +40,7 @@ class UARTWidget(QWidget):
         layout = QHBoxLayout()
 
         self.te = UARTConsole(status, actions)
-        self.te.setText("Text!")
+        #self.te.setText("Text!")
         self.ucv = UARTControlView(status, actions)
         layout.addWidget(self.te)
         layout.addWidget(self.ucv)
@@ -48,8 +48,14 @@ class UARTWidget(QWidget):
         self.show()
 
     def append_text(self, text):
-        self.te.append(text)
+        #self.te.append(text)
+        self.te.append_text(text)
 
     def clear_text(self):
         self.te.setText("")
 
+    def get_baudrate(self):
+        return self.ucv.get_baudrate()
+
+    def get_flowcontrol(self):
+        return self.ucv.get_flowcontrol()

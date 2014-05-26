@@ -30,7 +30,7 @@ http://wiki.cospandesign.com/index.php?title=Wb_sf_camera
 """
 
 
-__author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
+__author__ = 'Cospan Design: info@cospandesign.com'
 
 import sys
 import os
@@ -342,6 +342,7 @@ class SFCamera(Driver):
         Raises:
             NysaCommError
         """
+        self.i2c.reset_i2c_core()
         self.clear_register_bit(CONTROL, CONTROL_CAMERA_RESET)
         time.sleep(.2)
         self.set_register_bit(CONTROL, CONTROL_CAMERA_RESET)

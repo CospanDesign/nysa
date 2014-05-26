@@ -73,19 +73,20 @@ class UARTControlView(QWidget):
                                          "Hardware"])
         self.flowcontrol_combo.setCurrentIndex(0)
         self.flowcontrol_combo.currentIndexChanged.connect(self.flowcontrol_changed)
-                                         
+
+        self.read_button = QPushButton("Read UART")
+        self.read_button.clicked.connect(self.actions.uart_read_data)
 
         layout.addRow("Set Baudrate", self.baudrate_combo)
         layout.addRow("Flow Control", self.flowcontrol_combo)
         layout.addRow("Local Echo", self.local_echo_cb)
+        layout.addRow("Read the UART Data", self.read_button)
 
         self.setLayout(layout)
         self.setMaximumWidth(500)
 
-
     def baudrate_changed(self):
-        br = self.baudrate_combo.currentText()
-        br = int(str(br), 10)
+        br = self.get_baudrate()
         self.status.Verbose(self, "Set Baudrate to: %d" % br)
         self.actions.uart_baudrate_change.emit(br)
 
@@ -93,5 +94,12 @@ class UARTControlView(QWidget):
         self.actions.uart_local_echo_en.emit(self.local_echo_cb.isChecked())
 
     def flowcontrol_changed(self):
-        self.actions.uart_flowcontrol_change.emit(self.flowcontrol_combo.currentText())
+        self.actions.uart_flowcontrol_change.emit(self.get_flowcontrol())
 
+    def get_baudrate(self):
+        br = self.baudrate_combo.currentText()
+        br = int(str(br), 10)
+        return br
+
+    def get_flowcontrol(self):
+        return self.flowcontrol_combo.currentText()

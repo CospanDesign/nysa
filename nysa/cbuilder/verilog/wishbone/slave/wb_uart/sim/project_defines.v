@@ -9,4 +9,5 @@
 `define SIM
 
 `define CLOCK_RATE 50000000
+//`define CLOCK_RATE 1000
 `endif

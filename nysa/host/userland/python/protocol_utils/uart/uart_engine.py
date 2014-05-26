@@ -30,6 +30,7 @@ import json
 from array import array as Array
 
 from PyQt4 import QtCore
+from PyQt4.QtCore import QObject
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
@@ -41,21 +42,75 @@ from driver.uart import UARTError
 class UARTEngineError(Exception):
     pass
 
-class UARTEngineThread(QtCore.QThread):
-    def __init__(self, engine, uart, mutex, delay, actions, init_commands, loop_commands, server):
-        super(UARTEngineThread, self).__init__()
+class UARTEngineWorker(QObject):
 
+    finished = QtCore.pyqtSignal()
+    dataReady = QtCore.pyqtSignal(list, dict)
+
+    def __init__(self):
+        super (UARTEngineWorker, self).__init__()
+
+    @QtCore.pyqtSlot(object, object, object, object)
+    def thread_init(self, uart, mutex, actions, status):
         self.uart = uart
-        self.engine = engine
         self.mutex = mutex
-        self.delay = int(delay * 1000)
         self.actions = actions
+        self.status = status
+
         self.term_flag = False
-        self.loop_commands = loop_commands
-        self.init_pos = 0
-        self.loop_pos = 0
-        self.pause = False
-        self.step = False
-        self.step_loop = False
-        self.server = server
+        self.actions = actions
+
+    @QtCore.pyqtSlot()
+    def process(self):
+        #Get all the data from the UART
+        data = self.uart.read_all_data()
+        self.uart.get_status()
+        if len(data) > 0:
+            self.actions.uart_data_in.emit(data.tostring())
+
+class UARTThread(QtCore.QThread):
+    def __init__(self):
+        super (UARTThread, self).__init__()
+
+    def start(self):
+        super (UARTThread, self).start()
+
+    def run(self):
+        super (UARTThread, self).run()
+
+class UARTEngine(QObject):
+
+    def __init__(self, uart, actions, status):
+        super (UARTEngine, self).__init__()
+        self.actions = actions
+        self.status = status
+        self.status.Verbose(self, "Started")
+        self.mutex = QtCore.QMutex()
+        self.uart = uart
+
+        #Create the thread and worker
+        self.engine_thread = UARTThread()
+        self.engine_worker = UARTEngineWorker()
+
+        self.engine_worker.moveToThread(self.engine_thread)
+        self.engine_thread.start()
+
+
+        QtCore.QMetaObject.invokeMethod(self.engine_worker, 
+                                        'thread_init',
+                                        QtCore.Qt.QueuedConnection,
+                                        QtCore.Q_ARG(object, self.uart),
+                                        QtCore.Q_ARG(object, self.mutex),
+                                        QtCore.Q_ARG(object, self.actions),
+                                        QtCore.Q_ARG(object, self.status))
+
+        self.uart.unregister_interrupt_callback(None)
+        self.uart.register_interrupt_callback(self.interrupt_callback)
+
+    def interrupt_callback(self):
+        #print "Interrupt callback"
+        QtCore.QMetaObject.invokeMethod(self.engine_worker,
+                                        "process",
+                                        QtCore.Qt.QueuedConnection)
+
 
