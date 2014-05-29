@@ -101,7 +101,7 @@ class Controller(NysaBaseController):
         self.camera_util = CameraUtils(self.camera, self.actions, self.debug)
         self.camera_util.setup_camera()
 
-    def start_standalone_app(self, platform, image_id, debug = False):
+    def start_standalone_app(self, platform, debug = False):
         app = QApplication (sys.argv)
         self.status = status.ClStatus()
         if debug:
@@ -215,7 +215,7 @@ def main(argv):
         s.Fatal(None, "Didn't find a platform to use!")
 
     c = Controller()
-    c.start_standalone_app(plat, image_id, debug)
+    c.start_standalone_app(plat, debug)
 
 if __name__ == "__main__":
     main(sys.argv)

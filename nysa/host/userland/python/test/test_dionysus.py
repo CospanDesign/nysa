@@ -52,7 +52,6 @@ devices = {
         "I2S":i2s,
         "SPI":spi,
         "UART":uart
-
         }
 
 
