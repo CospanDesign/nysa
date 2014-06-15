@@ -559,6 +559,5 @@ always @ (posedge clk) begin
     end
   end//not reset
 end
-end
 
 endmodule
