@@ -151,7 +151,7 @@ reg     [27:0]    data_read_count;
 
 
 //Spi Stuff
-wire  [7:0]       ss_pad_o;
+wire  [31:0]      ss_pad_o;
 wire              sclk_pad_o;
 wire              mosi_pad_o;
 reg               miso_pad_i;
@@ -203,7 +203,7 @@ wb_spi s1 (
   .o_wbs_dat  (w_wbs1_dat_o         ),
   .i_wbs_adr  (w_wbs1_adr           ),
   .o_wbs_int  (w_wbs1_int           ),
-                                    
+
   .ss_pad_o   (ss_pad_o             ),
   .sclk_pad_o (sclk_pad_o           ),
   .mosi_pad_o (mosi_pad_o           ),

@@ -41,47 +41,43 @@
 `include "spi_defines.v"
 `include "timescale.v"
 
-module spi_shift (
+module spi_shift #(
+  parameter SPI_CHAR_LEN_BITS = 10
+)(
 
-  input                          clk,          // system clock
-  input                          rst,          // reset
-  input                    [3:0] latch,        // latch signal for storing the data in shift register
-  input [`SPI_CHAR_LEN_BITS-1:0] len,          // data len in bits (minus one)
-  input                          lsb,          // lbs first on the line
-  input                          go,           // start stansfer
-  input                          pos_edge,     // recognize posedge of sclk
-  input                          neg_edge,     // recognize negedge of sclk
-  input                          rx_negedge,   // s_in is sampled on negative edge
-  input                          tx_negedge,   // s_out is driven on negative edge
-  output                         tip,          // transfer in progress
-  output                         last,         // last bit
-  input                   [31:0] p_in,         // parallel in
-  output  reg[`SPI_MAX_CHAR-1:0] p_out,        // parallel out
-  input                          s_clk,        // serial clock
-  input                          s_in,         // serial in
-  output                         s_out,        // serial out
-  input       [127:0]            mosi_data
+  input                           clk,          // system clock
+  input                           rst,          // reset
+  input       [31:0]              len,          // data len in bits (minus one)
+  input                           lsb,          // lbs first on the line
+  input                           go,           // start stansfer
+  input                           pos_edge,     // recognize posedge of sclk
+  input                           neg_edge,     // recognize negedge of sclk
+  input                           rx_negedge,   // s_in is sampled on negative edge
+  input                           tx_negedge,   // s_out is driven on negative edge
+  output  reg                     tip,          // transfer in progress
+  output                          last,         // last bit
+  input                           s_clk,        // serial clock
+  input                           s_in,         // serial in
+  output  reg                     s_out,        // serial out
+  output  reg [SPI_MAX_CHAR-1:0]  miso_data,    // parallel out
+  input       [SPI_MAX_CHAR-1:0]  mosi_data     // parallel out
 );
+
+localparam  SPI_MAX_CHAR        = 2 ** SPI_CHAR_LEN_BITS;
+
 
 //Local Parameters
 
 //Registers/Wires
-reg                             s_out;
-reg                             tip;
-
-reg     [`SPI_CHAR_LEN_BITS:0]  cnt;          // data bit count
-reg     [`SPI_MAX_CHAR-1:0]     data;         // shift register
-wire    [`SPI_CHAR_LEN_BITS:0]  rx_bit_pos;   // next bit position
+reg     [31:0]                  cnt;          // data bit count
+reg     [SPI_MAX_CHAR-1:0]      data;         // shift register
 wire                            rx_clk;       // rx clock enable
 wire                            tx_clk;       // tx clock enable
+
 
 //Submodules
 
 //Asynchronous Logic
-assign tx_bit_pos = lsb ? len - cnt : cnt;
-assign rx_bit_pos = lsb ? len - (rx_negedge ? cnt + {{`SPI_CHAR_LEN_BITS{1'b0}},1'b1} : cnt) :
-                          (rx_negedge ? cnt : cnt - {{`SPI_CHAR_LEN_BITS{1'b0}},1'b1});
-
 assign last = !(|cnt);
 
 assign rx_clk = (rx_negedge ? neg_edge : pos_edge) && (!last || s_clk);
@@ -101,7 +97,7 @@ always @(posedge clk) begin
     else begin
       //if len is zero then we put in the max
       //else put in the number specified
-      cnt <=  !(|len) ? {1'b1, {`SPI_CHAR_LEN_BITS{1'b0}}} : {1'b0, len};
+      cnt <=  !(|len) ? {1'b1, {SPI_CHAR_LEN_BITS{1'b0}}} : len;
     end
   end
 end
@@ -130,12 +126,12 @@ always @(posedge clk) begin
   else begin
     if (tx_clk && tip) begin
       if (!lsb) begin
-        s_out         <=  data[127];
-        data     <=  {data[126:0], 1'b1};
+        s_out         <=  data[(SPI_MAX_CHAR - 1)];
+        data     <=  {data[(SPI_MAX_CHAR - 2):0], 1'b1};
       end
       else begin
         s_out         <=  data[0];
-        data     <=  {1'b1, data[127:1]};
+        data     <=  {1'b1, data[(SPI_MAX_CHAR - 1):1]};
       end
     end
     if (!tip) begin
@@ -147,12 +143,12 @@ end
 // Receiving bits from the line
 always @(posedge clk) begin
   if (rst) begin
-    p_out     <=  0;
+    miso_data     <=  0;
   end
   else begin
     if (rx_clk) begin
       //Clock data in on the receive clock
-      p_out <=  {p_out[126:0], s_in};
+      miso_data <=  {miso_data[(SPI_MAX_CHAR - 2):0], s_in};
     end
   end
 end

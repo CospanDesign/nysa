@@ -38,68 +38,11 @@
 ////                                                              ////
 //////////////////////////////////////////////////////////////////////
 
-//
-// Number of bits used for devider register. If used in system with
-// low frequency of system clock this can be reduced.
-// Use SPI_DIVIDER_LEN for fine tuning theexact number.
-//
-//`define SPI_DIVIDER_LEN_8
-//`define SPI_DIVIDER_LEN_16
-//`define SPI_DIVIDER_LEN_24
-`define SPI_DIVIDER_LEN_32
-
-`define SPI_DIVIDER_LEN       32   // Can be set from 25 to 32 
-
-//
-// Maximum nuber of bits that can be send/received at once. 
-// Use SPI_MAX_CHAR for fine tuning the exact number, when using
-// SPI_MAX_CHAR_32, SPI_MAX_CHAR_24, SPI_MAX_CHAR_16, SPI_MAX_CHAR_8.
-//
-`define SPI_MAX_CHAR_128
-
-`define SPI_MAX_CHAR          128  // Can only be set to 128 
-`define SPI_CHAR_LEN_BITS     7
-//
-// Number of device select signals. Use SPI_SS_NB for fine tuning the 
-// exact number.
-//
-`define SPI_SS_NB_8
-//`define SPI_SS_NB_16
-//`define SPI_SS_NB_24
-//`define SPI_SS_NB_32
-
-`ifdef SPI_SS_NB_8
-  `define SPI_SS_NB             8    // Can be set from 1 to 8
-`endif
-`ifdef SPI_SS_NB_16
-  `define SPI_SS_NB             16   // Can be set from 9 to 16
-`endif
-`ifdef SPI_SS_NB_24
-  `define SPI_SS_NB             24   // Can be set from 17 to 24
-`endif
-`ifdef SPI_SS_NB_32
-  `define SPI_SS_NB             32   // Can be set from 25 to 32
-`endif
-
-//
-// Bits of WISHBONE address used for partial decoding of SPI registers.
-//
-`define SPI_OFS_BITS	          4:2
-
-//
-// Number of bits in ctrl register
-//
-`define SPI_CTRL_BIT_NB         14
-
-//
-// Control register bit position
-//
-`define SPI_CTRL_ASS            13
-`define SPI_CTRL_IE             12
-`define SPI_CTRL_LSB            11
-`define SPI_CTRL_TX_NEGEDGE     10
-`define SPI_CTRL_RX_NEGEDGE     9
-`define SPI_CTRL_GO             8
-`define SPI_CTRL_RES_1          7
-`define SPI_CTRL_CHAR_LEN       6:0
+`define SPI_CTRL_INV_CLK        6
+`define SPI_CTRL_ASS            5
+`define SPI_CTRL_LSB            4
+`define SPI_CTRL_TX_NEGEDGE     3
+`define SPI_CTRL_RX_NEGEDGE     2
+`define SPI_CTRL_IE             1
+`define SPI_CTRL_GO             0
 

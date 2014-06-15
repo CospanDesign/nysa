@@ -14,7 +14,7 @@
 #/home/cospan/Projects/nysa/nysa/cbuilder/verilog/generic/<some name here>.v
 
 rtl/spi_defines.v
-rtl/spi_clgen.v
+rtl/spi_clkgen.v
 rtl/spi_shift.v
 rtl/timescale.v
 rtl/wb_spi.v
