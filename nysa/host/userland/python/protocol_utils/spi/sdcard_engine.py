@@ -41,48 +41,64 @@ from driver.spi import SPI
 SLAVE_SELECT_BIT = 0
 
 #COMMANDS
-CMD_IDLE        = Array('B', [0x40, 0x00, 0x00, 0x00, 0x00])
-CMD_SETUP       = Array('B', [0x48, 0x00, 0x00, 0x01, 0x08])
-#Setup Card
-#High Capacity Card         (bit 38)
-#High Power Mode            (bit 36)
-#Use Current Voltage Level  (bit 24)
-#Use 3.3V
-#CMD_INIT        = Array('B', [0x41, 0x58, 0x10, 0x00, 0x00])
-CMD_READ_CID    = Array('B', [0x42, 0x00, 0x00, 0x00, 0x00])
-CMD_READ_CSD    = Array('B', [0x49, 0x00, 0x00, 0x00, 0x00])
-CMD_READ_STATUS = Array('B', [0x41, 0x00, 0x00, 0x00, 0x00])
+CMD0            = Array('B', [0x40, 0x00, 0x00, 0x00, 0x00])
+CMD8            = Array('B', [0x48, 0x00, 0x00, 0x01, 0x08])
+CMD58           = Array('B', [0x7A, 0x00, 0x00, 0x00, 0x00])
+CMD55           = Array('B', [0x77, 0x00, 0x00, 0x00, 0x00])
+#SDC Support
+ACMD41          = Array('B', [0x69, 0x10, 0x00, 0x00, 0x00])
+#SDHC/SDXC Support
+#ACMD41          = Array('B', [0x69, 0x50, 0x00, 0x00, 0x00])
 
+CMD13           = Array('B', [0x4D, 0x00, 0x00, 0x00, 0x00])
 
 #Register Definitions
-R1_IDLE_STATE     = 1 << 0
-R1_ERASE_RESET    = 1 << 1
-R1_ILLEGAL_CMD    = 1 << 2
-R1_CRC_ERR        = 1 << 3
-R1_ERASE_SEQ_ERR  = 1 << 4
-R1_ADDR_ERR       = 1 << 5
-R1_PARAM_ERR      = 1 << 6
+R1_IDLE_STATE                   = 1 << 0
+R1_ERASE_RESET                  = 1 << 1
+R1_ILLEGAL_CMD                  = 1 << 2
+R1_CRC_ERR                      = 1 << 3
+R1_ERASE_SEQ_ERR                = 1 << 4
+R1_ADDR_ERR                     = 1 << 5
+R1_PARAM_ERR                    = 1 << 6
+
+R2_PARAMETER_ERROR              = 1 << 14
+R2_ADDRESS_ERROR                = 1 << 13
+R2_ERASE_SEQ_ERROR              = 1 << 12
+R2_COMM_CRC_ERROR               = 1 << 11
+R2_ILLEGAL_CMD                  = 1 << 10
+R2_ERASE_RESET                  = 1 << 9
+R2_IN_IDLE_STATE                = 1 << 8
+R2_OUT_OF_RANGE                 = 1 << 7
+R2_ERASE_PARAM                  = 1 << 6
+R2_WP_VIOLATION                 = 1 << 5
+R2_CARD_ECC_FAILED              = 1 << 4
+R2_CC_ERROR                     = 1 << 3
+R2_ERRROR                       = 1 << 2
+R2_WP_ERASE_SKIP                = 1 << 1
+R2_CARD_IS_LOCKED               = 1 << 0
 
 
+STATE_START                     = 0
+STATE_VOLTAGE_CHECK             = 1
+STATE_VOLTAGE_CHECK_RESPONSE    = 2
+STATE_READ_OCR                  = 3
+STATE_INIT_CARD_1               = 4
+STATE_INIT_CARD_2               = 5
+STATE_READY                     = 6
+STATE_ERROR                     = -1
 
 class SDCARDEngineError(Exception):
     pass
 
 class SDCARDWorker(QtCore.QThread):
+    init_transaction = QtCore.pyqtSignal(object, int, name = "init_transaction")
     init_worker = QtCore.pyqtSignal(object, object, name="sdcard_worker_init")
-    reset_sdcard = QtCore.pyqtSignal(name="sdcard_reset")
-    setup_sdcard = QtCore.pyqtSignal(name="sdcard_setup")
-    init_sdcard = QtCore.pyqtSignal(name="sdcard_init")
-    read_sdcard_cid = QtCore.pyqtSignal(name="read_sdcard_cid")
+    sdcard_response = QtCore.pyqtSignal(object, name = "sdcard_response")
 
     def __init__(self):
         super(SDCARDWorker, self).__init__()
         self.init_worker.connect(self.init_sdcard_worker)
-        self.reset_sdcard.connect(self.reset_card)
-        self.setup_sdcard.connect(self.setup_card)
-        self.init_sdcard.connect(self.init_card)
-        self.read_sdcard_cid.connect(self.read_cid)
-
+        self.init_transaction.connect(self.process_transaction)
 
     def generate_crc(self, data):
         crc = 0
@@ -100,28 +116,84 @@ class SDCARDWorker(QtCore.QThread):
         crc = crc & 0xFF
         return crc
 
-    def send_command(self, command, response_bit_length, en_crc = True):
-        length = len(command) * 8
-        if en_crc:
-            length = (len(command) + 1) * 8
-        length += (response_bit_length * 8) + 8
-        print "Command Length: %d" % length
-        self.spi.set_character_length(length)
-        crc = self.generate_crc(command)
-        data = Array('B', command)
-        if en_crc:
-            data.append(crc)
-        print "Full Command:"
-        for d in data:
-            print "%02X " % d,
+    def init_sdcard_worker(self, spi, actions):
+        print "SDWorker Engine: Initializing worker"
+        self.spi = spi
+        self.actions = actions
 
-        print ""
-        self.spi.set_write_data(data)
+        self.spi.set_tx_polarity(True)
+        self.spi.set_rx_polarity(True)
+        self.spi.set_spi_slave_select(SLAVE_SELECT_BIT, False)
+        self.spi.auto_ss_control_enable(False)
+        self.spi.set_lsb_enable(False)
+
+        #Set Clock Rate to 1MHz
+        self.spi.set_spi_clock_rate(400000)
+        self.spi.set_slave_select_raw(0x00)
+        self.spi.set_character_length(80)
+        self.spi.set_write_data(Array('B'))
         self.spi.start_transaction()
+
+        time.sleep(0.10)
         while self.spi.is_busy():
             time.sleep(0.01)
 
-        return self.spi.get_read_data(response_bit_length)
+        self.spi.set_spi_slave_select(SLAVE_SELECT_BIT, True)
+        self.spi.auto_ss_control_enable(True)
+
+    def process_transaction(self, data, response_byte_length):
+        en_crc = True
+        if en_crc:
+            crc = self.generate_crc(data)
+            data.append(crc)
+
+        #response_bit_length = response_byte_length * 8 + 8
+        response_bit_length = response_byte_length * 8
+        #print "SDWorker Engine: Full Command: ",
+        #for d in data:
+        #    print "%02X " % d,
+        #print ""
+
+        self.spi.enable_manual_slave_select(SLAVE_SELECT_BIT, True)
+        read_data = self.spi.transaction(data, 8, SLAVE_SELECT_BIT, False)
+        #read_data = self.spi.transaction(data, response_bit_length, SLAVE_SELECT_BIT, False)
+        while read_data[0] == 0xFF:
+            read_data = self.spi.transaction(Array('B'), 8, SLAVE_SELECT_BIT, False)
+
+        if (response_bit_length - 8) > 0:
+            read_data.extend(self.spi.transaction(Array('B'), response_bit_length - 8, SLAVE_SELECT_BIT, False))
+
+        self.spi.enable_manual_slave_select(SLAVE_SELECT_BIT, True)
+        #print "SDWorker Engine: Read Data: %s" % str(read_data)
+        self.sdcard_response.emit(read_data)
+
+class SDCARDEngine (QtCore.QObject):
+
+    def __init__(self, spi_driver, status, actions):
+        super (SDCARDEngine, self).__init__()
+
+        self.status = status
+        self.status.Info(self, "Reset SPI-SDCARD Interface")
+        self.sdcard_worker = None
+        self.spi = spi_driver
+
+        self.actions = actions
+        self.status.Verbose(self, "Starting SDCARD Engine")
+        self.state = STATE_START
+        #Create a worker object and move it to it's own thread
+        self.sdcard_worker = SDCARDWorker()
+
+        self.sdcard_worker.sdcard_response.connect(self.state_machine)
+        self.worker_thread = QtCore.QThread()
+        self.worker_thread.setObjectName("SDCard Worker")
+        self.sdcard_worker.moveToThread(self.worker_thread)
+
+        self.sdcard_worker.init_worker.emit(self.spi, self.actions)
+        self.state_machine(None)
+
+        #self.sdcard_worker.spi = self.spi
+        #self.sdcard_worker.actions = self.actions
+        #self.sdcard_worker.process_transaction(CMD0, 1)
 
     def print_r1_response(self, r1):
         print "R1 (%02X) States:" % r1
@@ -138,84 +210,127 @@ class SDCARDWorker(QtCore.QThread):
         if (r1 & R1_PARAM_ERR) > 0:
             print "\tPARAMETER ERROR"
 
-    def init_sdcard_worker(self, spi, actions):
-        print "Initializing worker"
-        self.spi = spi
-        self.actions = actions
+    def check_r1_response(self, r1):
+        if (r1 & 0xFE) > 0:
+            return False
+        if (r1 & R1_IDLE_STATE) > 0:
+            return True
+        return False
 
-        self.spi.set_tx_polarity(True)
-        self.spi.set_rx_polarity(True)
-        self.spi.auto_ss_control_enable(False)
-        self.spi.set_lsb_enable(False)
-        #Set Clock Rate to 1MHz
-        self.spi.set_spi_clock_rate(100000)
-        self.spi.set_slave_select_raw(0x00)
-        self.spi.set_character_length(80)
-        self.spi.set_write_data(Array('B', [0xFF, 0xFF, 0xFF, 0xFF,
-                                            0xFF, 0xFF, 0xFF, 0xFF,
-                                            0xFF, 0xFF, 0xFF, 0xFF,
-                                            0xFF, 0xFF, 0xFF, 0xFF]))
-        self.spi.start_transaction()
-        time.sleep(0.10)
-        while self.spi.is_busy():
-            time.sleep(0.01)
-        self.spi.set_spi_slave_select(SLAVE_SELECT_BIT, True)
-        self.spi.auto_ss_control_enable(True)
+    def check_r2_response(self, r2):
+        r = ((r2[0] << 8) | r2[1])
 
-    def reset_card(self):
-        read_data = self.send_command(CMD_IDLE, 1, True)
-        print "read data: %s" % read_data
-        r1 = read_data[0]
-        self.print_r1_response(r1)
-        self.actions.sdcard_reset.emit()
-
-    def setup_card(self):
-        read_data = self.send_command(CMD_SETUP, 5, True)
-        print "read data: %s" % read_data
-        r1 = read_data[0]
-        r7 = read_data[3]
-        self.print_r1_response(r1)
-        print "0x%02X" % r7
-
-    def init_card(self):
-        read_data = self.send_command(CMD_INIT, 1, True)
-        print "read data: %s" % read_data
-        r1 = read_data[0]
-        self.print_r1_response(r1)
-
-    def read_cid(self):
-        read_data = self.send_command(CMD_CID, 5, True)
-        print "read data: %s" % read_data
-        r1 = read_data[0]
-        self.print_r1_response(r1)
+        if (r & R2_PARAMETER_ERROR):
+            print "R2 Parameter Error"
+        if (r & R2_ADDRESS_ERROR):
+            print "R2 Address Error"
+        if (r & R2_ERASE_SEQ_ERROR):
+            print "R2 Sequence Error"
+        if (r & R2_COMM_CRC_ERROR):
+            print "R2 Comm CRC Error"
+        if (r & R2_ILLEGAL_CMD):
+            print "R2 Illegal Command"
+        if (r & R2_ERASE_RESET):
+            print "R2 Erase Reset"
+        if (r & R2_IN_IDLE_STATE):
+            print "R2 Idle"
+        if (r & R2_OUT_OF_RANGE):
+            print "R2 Out of range error"
+        if (r & R2_ERASE_PARAM):
+            print "R2 Erase Parameter"
+        if (r & R2_WP_VIOLATION):
+            print "R2 Write Violation"
+        if (r & R2_CARD_ECC_FAILED):
+            print "R2 ECC Failed"
+        if (r & R2_CC_ERROR):
+            print "R2 CC Error"
+        if (r & R2_ERRROR):
+            print "R2 Error!"
+        if (r & R2_WP_ERASE_SKIP):
+            print "R2 Write Protect Erase Skipped"
+        if (r & R2_CARD_IS_LOCKED):
+            print "R2 Card is locked"
 
 
+    def check_r3_response(self, r3):
+        if not self.check_r1_response(r3[0]):
+            print "Card standard response failed..."
+            self.print_r1_response(r7[0])
+            return False
+        print "r3 Response (OCR): %s" % str(r3[1:])
 
-class SDCARDEngine (QtCore.QObject):
+    def check_r7_response(self, r7):
+        if not self.check_r1_response(r7[0]):
+            print "Card standard response failed..."
+            self.print_r1_response(r7[0])
+            return False
 
-    def __init__(self, spi_driver, status, actions):
-        super (SDCARDEngine, self).__init__()
+        #Check Voltage Acceptable
+        if r7[3] & 0x3 == 0:
+            #Voltage Accepted:
+            #0000b: Not Defined
+            #0001b: 2.7V - 3.6V
+            #0010b: Reserved for low voltage
+            #0100b: Reserved
+            #1000b: Reserved
+            #Others (Not Defined)
+            return False
 
-        self.status = status
-        self.status.Info(self, "Reset SPI-SDCARD Interface")
-        self.sdcard_worker = None
-        self.spi = spi_driver
+        return True
 
-        self.actions = actions
-        self.status.Verbose(self, "Starting SDCARD Engine")
-        self.start_worker()
+    def state_machine(self, response):
+        if self.state == STATE_START:
+            print "CMD0: Reset Card"
+            self.state = STATE_VOLTAGE_CHECK
+            self.sdcard_worker.init_transaction.emit(CMD0, 1)
 
-    def start_worker(self, delay = 0.1):
-        self.sdcard_worker = SDCARDWorker()
-        self.worker_thread = QtCore.QThread()
-        self.worker_thread.setObjectName("SDCard Worker")
-        self.sdcard_worker.moveToThread(self.worker_thread)
-        self.sdcard_worker.init_worker.emit(self.spi, self.actions)
-        self.sdcard_worker.reset_sdcard.emit()
-        self.sdcard_worker.setup_sdcard.emit()
-        #self.sdcard_worker.init_sdcard.emit()
+        elif self.state == STATE_VOLTAGE_CHECK:
+            self.print_r1_response(response[0])
+            print "CMD8: Voltage Check"
+            self.state = STATE_VOLTAGE_CHECK_RESPONSE
+            self.sdcard_worker.init_transaction.emit(CMD8, 5)
 
-    def set_custom_speed(self, rate):
-        self.status.Debug(self, "Set SDCARD Rate to a custom rate: %dkHz" % rate)
-        self.spi.set_custom_speed(rate)
+        elif self.state == STATE_VOLTAGE_CHECK_RESPONSE:
+            print "Checking response from command 8"
+            if not self.check_r7_response(response):
+                print "Found F8 Flags, device is good!"
+                self.state = STATE_ERROR
+                return
+
+            self.state = STATE_READ_OCR
+            print "CMD58: Get OCR"
+            self.sdcard_worker.init_transaction.emit(CMD58, 5)
+
+        elif self.state == STATE_READ_OCR:
+            print "OCR Response"
+            self.check_r3_response(response)
+            self.state = STATE_INIT_CARD_1
+            self.sdcard_worker.init_transaction.emit(CMD55, 1)
+
+        elif self.state == STATE_INIT_CARD_1:
+            self.check_r1_response(response[0])
+            self.state = STATE_INIT_CARD_2
+            self.sdcard_worker.init_transaction.emit(ACMD41, 1)
+
+        elif self.state == STATE_INIT_CARD_2:
+            #print "Initialize card response"
+            self.check_r1_response(response[0])
+            self.state = STATE_READY
+
+        elif self.state == STATE_READY:
+            print "Card Ready!"
+            self.check_r1_response(response[0])
+
+        elif self.state == STATE_ERROR:
+            print "ERROR STATE!"
+        else:
+            print "Error in state machine"
+            return
+
+
+    def write(self, data):
+        pass
+
+    def read(self, length):
+        pass
 

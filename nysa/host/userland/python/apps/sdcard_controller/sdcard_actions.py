@@ -17,6 +17,8 @@ class _SDCARDActions(QtCore.QObject):
     sdcard_read_status = QtCore.pyqtSignal(int, name = "sdcard_read_status")
     sdcard_reset = QtCore.pyqtSignal(name = "sdcard_reset_finished")
 
+    #sdcard_response = QtCore.pyqtSignal(object, name = "sdcard_transaction_response")
+
     def __init__(self, parent = None):
         super (_SDCARDActions, self).__init__(parent)
 

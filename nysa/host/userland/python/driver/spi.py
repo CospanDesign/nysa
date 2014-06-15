@@ -52,27 +52,21 @@ from driver import Driver
 COSPAN_DESIGN_SPI_MODULE = 0x01
 
 #Register Constants
-CONTROL             = 0
-CLOCK_RATE          = 1
-CLOCK_DIVIDER       = 2
-SLAVE_SELECT        = 3
-READ_DATA0          = 4
-READ_DATA1          = 5
-READ_DATA2          = 6
-READ_DATA3          = 7
-WRITE_DATA0         = 8
-WRITE_DATA1         = 9
-WRITE_DATA2         = 10
-WRITE_DATA3         = 11
+CONTROL                     = 0
+CLOCK_RATE                  = 1
+CLOCK_DIVIDER               = 2
+SLAVE_SELECT                = 3
+BIT_COUNT                   = 4
+MAX_BITSIZE                 = 5
 
 #Control/Status bit values
-CONTROL_CHARACTER_LENGTH  = 0
-CONTROL_GO_BUSY           = 8
-CONTROL_RX_NEGATIVE       = 9
-CONTROL_TX_NEGATIVE       = 10
-CONTROL_LSB_ENABLE        = 11
-CONTROL_INTERRUPT_ENABLE  = 12
-CONTROL_AUTO_SLAVE_SEL    = 13
+CONTROL_GO_BUSY             = 0
+CONTROL_INTERRUPT_ENABLE    = 1
+CONTROL_RX_NEGATIVE         = 2
+CONTROL_TX_NEGATIVE         = 3
+CONTROL_LSB_ENABLE          = 4
+CONTROL_AUTO_SLAVE_SEL      = 5
+CONTROL_INV_CLOCK           = 6
 
 
 
@@ -134,9 +128,20 @@ class SPI(Driver):
 
     def __init__(self, nysa, dev_id, debug = False):
         super(SPI, self).__init__(nysa, dev_id, debug)
+        self._calculate_data_size()
+        self.set_control(0)
 
     def __del__(self):
         pass
+
+    def _calculate_data_size(self):
+        self.max_bit_length = self.get_max_character_length()
+        print "SPI max bit length: %d" % self.max_bit_length
+        self.data_register_size = (self.max_bit_length + 31) / 32
+        self.read_data_reg = 6
+        self.write_data_reg = self.read_data_reg + self.data_register_size
+        print "SPI Read Register: %d" % self.read_data_reg
+        print "SPI Write Register: %d" % self.write_data_reg
 
     def get_control(self):
         """get_control
@@ -170,6 +175,86 @@ class SPI(Driver):
         """
         self.write_register(CONTROL, control)
 
+    def set_spi_mode(self, mode):
+        """
+
+        sets the SPI Mode
+
+        Args:
+            mode (integer):
+                0 = SPI Mode 0
+                1 = SPI Mode 1
+                2 = SPI Mode 2
+                3 = SPI Mode 3
+
+        Returns:
+            Nothing
+
+        Raises:
+            NysaCommError: Error in communcation
+            SPIError: Mode requested range < 0 or > 3
+        """
+        if (mode < 0) or (mode > 3):
+            raise SPIError("Mode can only be 0 - 3, not %d" % mode)
+
+        if type(mode) is not int:
+            raise SPIError("Mode must be an integer, not a %s" % str(type(mode)))
+
+        if (mode == 0) or (mode == 1):
+            self.invert_clock(False)
+        else:
+            self.invert_clock(True)
+
+        if (mode == 0):
+            self.set_rx_polarity(False)
+            self.set_tx_polarity(False)
+
+        if (mode == 1):
+            self.set_rx_polarity(True)
+            self.set_tx_polarity(True)
+
+        if (mode == 2):
+            self.set_rx_polarity(False)
+            self.set_tx_polarity(False)
+
+        if (mode == 3):
+            self.set_rx_polarity(True)
+            self.set_tx_polarity(True)
+
+    def invert_clock(self, enable):
+        """
+        switch the polarity of the clock
+
+        Args:
+            enable (bool):
+                True: Invert the clock
+                False: Normal Clock polarity
+
+        Returns:
+            Nothing
+
+        Raises:
+            NysaCommError: Error in communcation
+        """
+        self.enable_register_bit(CONTROL, CONTROL_INV_CLOCK, enable)
+
+    def get_max_character_length(self):
+        """
+
+        Returns the maximum bitsize that this image can read/write
+
+        Args:
+            Nothing
+
+        Return:
+            32-bit value of the length of the maximum bitsize that the core can
+            send down
+
+        Raises:
+            NysaCommError: Error in communication
+        """
+        return self.read_register(MAX_BITSIZE)
+
     def get_character_length(self):
         """get_character_length
 
@@ -190,18 +275,14 @@ class SPI(Driver):
         Raises:
           NysaCommError: Error in communication
         """
-        control = self.get_control()
-        char_len = control & 0x07F
-        if char_len == 0x00:
-            char_len == 0x080
-        return char_len
+        return self.read_register(BIT_COUNT)
 
     def set_character_length(self, character_length):
         """set_character_length
 
         sets the length of a character transaction
 
-        Args:
+        rgs:
             Length of a charater transaction
                 0x001 = 1
                 0x002 = 2
@@ -215,13 +296,9 @@ class SPI(Driver):
         Raises:
             NysaCommError: Error in communication
         """
-        if character_length >= 0x080:
+        if character_length >= self.max_bit_length:
             character_length = 0x00
-        control = self.get_control()
-        #Clear the previous
-        control &= ~0x007F
-        control |= character_length
-        self.set_control(control)
+        self.write_register(BIT_COUNT, character_length)
 
     def set_tx_polarity(self, positive):
         """set_tx_polarity
@@ -308,6 +385,7 @@ class SPI(Driver):
             NysaCommError: Error in communication
             SPIError: SPI core is not ready
         """
+        #print "start transaction with :%d bits to write" % (self.get_character_length())
         if self.is_register_bit_set(CONTROL, CONTROL_GO_BUSY):
             raise SPIError("SPI Not Ready")
 
@@ -489,7 +567,7 @@ class SPI(Driver):
         """
         clock_rate = self.get_clock_rate()
         divider = self.get_clock_divider()
-        if self.debug: print "Divider: %d" % divider
+        if self.debug: print "SPI Divider: %d" % divider
         value = (clock_rate / (divider + 1)) * 2
         return value
 
@@ -613,12 +691,13 @@ class SPI(Driver):
         Raises:
             NysaCommError: Error in communication
         """
-        char_len = self.get_character_length() / 8
-        read_data = self.read(READ_DATA0, 4)
+        #print "SPI control: 0x%08X" % self.get_control()
+        #print "SPI Reading from register: 0x%02X" % self.read_data_reg
+        read_data = self.read(self.read_data_reg, self.data_register_size)
         #if self.debug:
-        #print "Read Data: %s" % str(read_data)
-        if read_length > 8:
-            read_length = 8
+        #print "SPI Read Data: %s" % str(read_data)
+        if read_length > self.max_bit_length:
+            read_length = self.max_bit_length
         return read_data[-read_length:]
 
     def set_write_data(self, write_data):
@@ -637,15 +716,123 @@ class SPI(Driver):
         """
         lsb = self.is_lsb_enabled()
 
+        #print "SPI control: 0x%08X" % self.get_control()
+        #print "SPI Writing to register: 0x%02X" % self.write_data_reg
         if lsb:
-            while len(write_data) < 16:
+            while len(write_data) < self.data_register_size * 4:
                 write_data.insert(0, 0xFF)
-            self.write(WRITE_DATA0, write_data)
+            self.write(self.write_data_reg, write_data)
 
         else:
-            while len(write_data) < 16:
+            while len(write_data) < self.data_register_size * 4:
                 write_data.append(0xFF)
-            self.write(WRITE_DATA0, write_data)
+            #print "SPI \t\tWrite Data: %s: Length: %d" % (str(write_data), len(write_data) / 4)
+            self.write(self.write_data_reg, write_data)
+
+    def enable_manual_slave_select(self, slave_select_bit, enable):
+        if self.is_auto_ss():
+            self.auto_ss_control_enable(False)
+
+        if self.get_slave_select_raw() != (1 << slave_select_bit):
+            self.set_select_raw(1 << slave_select_bit)
+
+        self.set_spi_slave_select(slave_select_bit, enable)
+
+    def transaction(self, write_data, response_bit_length = 0, slave_select_bit = 1, auto_slave_select = True):
+
+        total_bit_length = (len(write_data) * 8) + response_bit_length
+        read_data = Array('B')
+        #print "SPI total bit length: %d" % total_bit_length
+
+        if auto_slave_select:
+            self.set_slave_select_raw(0x00)
+            self.auto_ss_control_enable(True)
+            self.set_spi_slave_select(slave_select_bit, True)
+
+            if self.max_bit_length > total_bit_length:
+                #print "SPI Auto SS Mode"
+                #print "SPI Write Data: %s" % str(write_data)
+                self.set_character_length(total_bit_length)
+                self.set_write_data(write_data)
+                self.start_transaction()
+                while self.is_busy():
+                    time.sleep(0.01)
+
+                return self.get_read_data(response_bit_length / 8)
+
+        #Because there is more data than can fit inside the internal buffer of
+        #the SPI register we need to manually control the SPI register
+
+        #We will read all data as it comes in and parse it out after we are finished
+        #print "SPI manual slave select mode"
+        if auto_slave_select:
+            self.set_slave_select_raw(0x00)
+            self.auto_ss_control_enable(False)
+            #self.set_slave_select_raw(1 << slave_select_bit)
+            self.set_spi_slave_select(slave_select_bit, True)
+
+        while len(write_data) > 0:
+            if (len(write_data) * 8) >= self.max_bit_length:
+                #print "SPI write data bit length >= max bit length: %d >= %d" % ((len(write_data) * 8), self.max_bit_length)
+                wd = write_data[0:self.max_bit_length / 8]
+                write_data = write_data[self.max_bit_length / 8:]
+                self.set_character_length(self.max_bit_length)
+                self.set_write_data(wd)
+                self.start_transaction()
+                while self.is_busy():
+                    print ".",
+                    time.sleep(0.01)
+                #print "Reading: %d bytes" % (self.max_bit_length / 8)
+                read_data.extend(self.get_read_data(self.max_bit_length / 8))
+            else:
+                bit_length = len(write_data) * 8
+                #print "SPI write data bit length < max bit length: %d < %d" % (bit_length, self.max_bit_length)
+                self.set_write_data(write_data)
+                self.set_character_length(bit_length)
+                self.start_transaction()
+                while self.is_busy():
+                    print ".",
+                    time.sleep(0.01)
+                #read_data.extend(self.read(self.read_data_reg, len(write_data)))
+                #print "Reading: %d bytes" % (len(write_data))
+                read_data.extend(self.get_read_data(len(write_data)))
+                write_data = Array('B')
+                #print "...Read data: %s" % str(read_data)
+
+        #brlen = response_bit_length + 8
+        brlen = response_bit_length
+        self.set_write_data(Array('B'))
+        while brlen > 0:
+            if brlen >= self.max_bit_length:
+                #print "SPI read length >= max_bit_length: %d >= %d" % (brlen, self.max_bit_length)
+                self.set_character_length(self.max_bit_length)
+                self.start_transaction()
+                while self.is_busy():
+                    print ".",
+                    time.sleep(0.01)
+                read_data.extend(self.get_read_data(self.max_bit_length / 8))
+                #print "Reading: %d bytes" % (self.max_bit_length)
+                brlen -= self.max_bit_length
+            else:
+                #print "SPI read length < max_bit_length: %d < %d" % (brlen, self.max_bit_length)
+                self.set_character_length(brlen)
+                self.start_transaction()
+                while self.is_busy():
+                    print ".",
+                    time.sleep(0.01)
+                read_data.extend(self.get_read_data(brlen / 8))
+                #print "Reading: %d bytes" % (brlen / 8)
+                brlen = 0
+
+
+        if auto_slave_select:
+            self.set_slave_select_raw(0x00)
+            self.auto_ss_control_enable(True)
+            #self.set_slave_select_raw(1 << slave_select_bit)
+            self.set_spi_slave_select(slave_select_bit, True)
+            #print "SPI: Final total read data: %s" % str(read_data)
+
+        return read_data[-(response_bit_length / 8):]
 
 def unit_test(nysa, dev_id):
 
@@ -791,8 +978,8 @@ def unit_test(nysa, dev_id):
     spi.set_rx_polarity(True)
 
     print "Setting Write Data"
-    write_data = Array('B', [0x80, 0xFF, 0xFF, 0xFF])
-    spi.set_character_length(32)
+    write_data = Array('B', [0xAA, 0xAA, 0xAA, 0xAA])
+    spi.set_character_length(0)
     spi.set_write_data(write_data)
 
     print "start a transaction"
@@ -803,7 +990,7 @@ def unit_test(nysa, dev_id):
         print "busy!"
 
     print "Getting read data:"
-    read_data = spi.get_read_data(8)
+    read_data = spi.get_read_data(0)
     print "Read data: %s" % str(read_data)
 
 

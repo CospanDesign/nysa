@@ -97,7 +97,9 @@ class Controller(NysaBaseController):
         self.v = View(self.status, self.actions)
         self.v.setup_simple_text_output_view()
         self.spi = SPI(platform[2], dev_id = 1)
+
         self.engine = SDCARDEngine(self.spi, self.status, self.actions)
+        #self.engine.init_sdcard()
 
     def start_standalone_app(self, platform, debug = False):
         app = QApplication (sys.argv)
