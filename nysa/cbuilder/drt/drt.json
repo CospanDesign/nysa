@@ -65,6 +65,14 @@
       "description":"LCD Display",
       "ID":"0x000F"
     },
+    "Stepper Motor":{
+      "description":"Stepper Motor Controller",
+      "ID":"0x0010"
+    },
+    "Clock Synth":{
+      "description":"Clock Synthesizer",
+      "ID":"0x0011"
+    },
     "DMA Reader":{
       "description":"A test core for DMA Reader",
       "ID":"0x0064"
