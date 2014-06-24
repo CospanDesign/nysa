@@ -44,8 +44,7 @@ module stepper (
   input               i_continuous,
   input               i_direction,
   input       [31:0]  i_steps,
-  output      [31:0]  o_step_pos,
-  output      [31:0]  o_curr_pos,
+  output              o_move_strobe,
 
   input       [31:0]  i_step_run_period,
   input       [31:0]  i_step_walk_period,
@@ -75,8 +74,8 @@ wire                  bp_micro_step;
 wire                  bp_continuous;
 wire                  bp_direction;
 wire        [31:0]    bp_steps;
-wire        [31:0]    bp_step_pos;
-wire        [31:0]    bp_curr_pos;
+wire                  bp_move_strobe;
+
 
 wire        [31:0]    bp_step_run_period;
 wire        [31:0]    bp_step_walk_period;
@@ -134,6 +133,7 @@ bipolar_stepper bps(
   .i_continuous           (bp_continuous          ),
   .i_direction            (bp_direction           ),
   .i_steps                (bp_steps               ),
+  .o_move_strobe          (bp_move_strobe         ),
 
   .i_step_run_period      (bp_step_run_period     ),
   .i_step_walk_period     (bp_step_walk_period    ),
@@ -157,6 +157,8 @@ assign bp_direction       = i_direction;
 assign bp_continuous      = i_continuous;
 
 assign  bp_go                   = (i_bipolar_stepper)   ? i_go    :
+                                  1'b0;
+assign  o_move_strobe           = (i_bipolar_stepper)   ? bp_move_strobe :
                                   1'b0;
 
 assign  bp_stop                 = (i_bipolar_stepper)   ? i_stop    :

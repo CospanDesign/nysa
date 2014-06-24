@@ -13,13 +13,13 @@ module bipolar_micro_stepper #(
   input               i_stop,
 
   //Position
-  input       [31:0]  i_total_full_steps,
   input       [31:0]  i_current_position,
   output      [31:0]  o_current_position,
 
   input       [7:0]   i_step_pos,
   output      [7:0]   o_step_pos,
   output      [31:0]  o_step_count,
+  output  reg         o_move_strobe,
 
   //Step Modifiers
   input               i_continuous,
@@ -183,8 +183,11 @@ always @ (posedge clk) begin
     hbridge_map                     <=  4'b0000;
     direction                       <=  0;
     continuous                      <=  0;
+    o_move_strobe                   <=  0;
   end
   else begin
+    o_move_strobe                   <=  0;
+
     if (micro_current_period_count < micro_current_period) begin
       micro_current_period_count   <=  micro_current_period_count + 1;
     end
@@ -231,6 +234,7 @@ always @ (posedge clk) begin
 
         //Micro Step Count
         if (micro_current_period_count >= micro_current_period) begin
+          o_move_strobe             <=  1;
           if (pwm_direction) begin
             pwm_step_pos            <=  pwm_step_pos + 1;
           end
@@ -247,6 +251,7 @@ always @ (posedge clk) begin
             hbridge_map[micro_step_hbridge_pwm[step_pos]] <=  micro_step_pwm;
           end
           else begin
+
             hbridge_map             <=  step_path[step_pos];
           end
         end

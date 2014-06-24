@@ -50,8 +50,6 @@ SOFTWARE.
 *   Count between steps
 * SHOOT_THROUGH_DELAY: (value)
 *   Count of dead space between steps
-* CURRENT_STEP: (value, read only)
-*   Current step count
 * CURRENT_POSITION:
 *   Current position of the stepper
 * PWM_UNIT_PERIOD:
@@ -81,7 +79,9 @@ SOFTWARE.
 */
 `include "project_defines.v"
 
-module wb_stepper (
+module wb_stepper #(
+  parameter           DEFAULT_MAX_POSITION = 32'd200
+)(
   input               clk,
   input               rst,
 
@@ -117,8 +117,8 @@ localparam    RUN_PERIOD            = 32'h00000007;
 localparam    STEP_ACCELLERATION    = 32'h00000008;
 localparam    MICRO_STEP_HOLD       = 32'h00000009;
 localparam    SHOOT_THROUGH_DELAY   = 32'h0000000A;
-localparam    CURRENT_STEP          = 32'h0000000B;
 localparam    CURRENT_POSITION      = 32'h0000000C;
+localparam    MAX_POSITION          = 32'h0000000D;
 
 //configuration
 localparam    CONFIG_UNIPOLAR       = 0;
@@ -144,8 +144,8 @@ localparam    STATUS_ERR_BAD_STEP   = 9;
 localparam    STATUS_ERR_BAD_CONFIG = 10;
 
 //Local Registers/Wires
-reg           [31:0]  configuration;
-reg           [31:0]  control;
+reg           [2:0]   configuration;
+reg           [6:0]   control;
 wire          [31:0]  status;
 reg           [31:0]  steps;
 reg           [31:0]  step_run_period;
@@ -153,6 +153,7 @@ reg           [31:0]  step_walk_period;
 reg           [31:0]  shoot_through_period;
 reg           [31:0]  micro_step_hold;
 reg           [31:0]  accelleration;
+reg           [31:0]  max_position;
 
 //Configuration
 wire                  bipolar_stepper;
@@ -178,9 +179,13 @@ reg                   err_bad_command;
 reg                   err_bad_config;
 wire                  bad_config;
 wire                  err_condition;
+wire                  move_strobe;
 
-wire          [31:0]  step_pos;
-wire          [31:0]  curr_pos;
+//Step/Position information
+wire          [31:0]  micro_step_count;
+wire          [31:0]  half_step_count;
+wire          [31:0]  full_step_count;
+reg           [31:0]  curr_pos;
 
 reg                   prev_busy;
 
@@ -205,8 +210,8 @@ stepper stpr (
   .i_continuous           (continuous             ),
   .i_direction            (direction              ),
   .i_steps                (steps                  ),
-  .o_step_pos             (step_pos               ),
-  .o_curr_pos             (curr_pos               ),
+  .o_move_strobe          (move_strobe            ),
+
 
   .i_step_run_period      (step_run_period        ),
   .i_step_walk_period     (step_walk_period       ),
@@ -246,6 +251,9 @@ assign  bad_config                  = (( i_wbs_dat[CONFIG_UNIPOLAR] && i_wbs_dat
                                        ((i_wbs_dat[CONFIG_UNIPOLAR] || i_wbs_dat[CONFIG_BIPOLAR]) == 0));
 assign  err_condition               = err_bad_config || err_bad_command;
 
+assign  micro_step_count            = 32'h00000010;
+assign  half_step_count             = 32'h00000100;
+assign  full_step_count             = 32'h00000200;
 
 //Synchronous Logic
 always @ (posedge clk) begin
@@ -262,6 +270,7 @@ always @ (posedge clk) begin
     accelleration       <= 0;
     shoot_through_period<= 0;
     micro_step_hold     <= 0;
+    max_position        <= DEFAULT_MAX_POSITION;
 
     go                  <= 0;
     stop                <= 0;
@@ -300,13 +309,13 @@ always @ (posedge clk) begin
         //write request
         case (i_wbs_adr)
           CONFIGURATION: begin
-            configuration         <=  i_wbs_dat;
+            configuration         <=  i_wbs_dat[2:0];
             if (bad_config) begin
               err_bad_config      <=  1;
             end
           end
           CONTROL: begin
-            control               <=  i_wbs_dat;
+            control               <=  i_wbs_dat[6:0];
           end
           COMMAND: begin
             case (i_wbs_dat)
@@ -341,6 +350,9 @@ always @ (posedge clk) begin
           end
           MICRO_STEP_HOLD: begin
             micro_step_hold       <=  i_wbs_dat;
+          end
+          MAX_POSITION: begin
+            max_position          <=  i_wbs_dat;
           end
           default: begin
           end
@@ -385,14 +397,14 @@ always @ (posedge clk) begin
             SHOOT_THROUGH_DELAY: begin
               o_wbs_dat           <=  shoot_through_period;
             end
-            CURRENT_STEP: begin
-              o_wbs_dat           <=  curr_pos;
-            end
             CURRENT_POSITION: begin
               o_wbs_dat           <=  curr_pos;
             end
             CLOCK_RATE: begin
               o_wbs_dat           <=  `CLOCK_RATE;
+            end
+            MAX_POSITION: begin
+             o_wbs_dat            <=   max_position;
             end
             default: begin
               o_wbs_dat           <=  0;
@@ -403,6 +415,75 @@ always @ (posedge clk) begin
       o_wbs_ack                   <= 1;
     end
     prev_busy                     <=  busy;
+  end
+end
+
+
+always @ (posedge clk) begin
+  if (rst) begin
+    curr_pos                      <=  0;
+  end
+  else begin
+    if (max_position == 0) begin
+      curr_pos                    <=  0;
+    end
+    else begin
+      if (move_strobe) begin
+        if (direction) begin
+          if (micro_step) begin
+            if (curr_pos + micro_step_count > max_position) begin
+              curr_pos <= (curr_pos + micro_step_count) - max_position;
+            end
+            else begin
+              curr_pos <= curr_pos + micro_step_count;
+            end
+          end
+          else if (half_step) begin
+            if ((curr_pos + half_step_count) > max_position) begin
+              curr_pos <= (curr_pos + half_step_count) - max_position;
+            end
+            else begin
+              curr_pos <= curr_pos + half_step_count;
+            end
+          end
+          else if (full_step) begin
+            if (curr_pos + full_step_count > max_position) begin
+              curr_pos <= (curr_pos + full_step_count) - max_position;
+            end
+            else begin
+              curr_pos <= curr_pos + full_step_count;
+            end
+          end
+        end
+        else begin
+          if (micro_step) begin
+            if (micro_step_count > curr_pos) begin
+              curr_pos  <=  max_position - (micro_step_count - curr_pos);
+            end
+            else begin
+              curr_pos  <=  curr_pos - micro_step_count;
+            end
+          end
+          else if (half_step) begin
+            if (half_step_count > curr_pos) begin
+              curr_pos  <=  max_position - (half_step_count - curr_pos);
+            end
+            else begin
+              curr_pos  <=  curr_pos - half_step_count;
+            end
+
+          end
+          else if (full_step) begin
+            if (full_step_count > curr_pos) begin
+              curr_pos  <=  max_position - (full_step_count - curr_pos);
+            end
+            else begin
+              curr_pos  <=  curr_pos - full_step_count;
+            end
+          end
+        end
+      end
+    end
   end
 end
 

@@ -59,8 +59,6 @@ module bipolar_stepper (
   input               i_stop,
 
   //Position
-  input       [31:0]  i_total_full_steps,
-  output  reg [31:0]  o_current_position,
 
   //Errors
   output  reg         o_err_bad_step,
@@ -74,6 +72,7 @@ module bipolar_stepper (
   input               i_continuous,
   input               i_direction,
   input       [31:0]  i_steps,
+  output              o_move_strobe,
 
   //Counts
   input       [31:0]  i_step_run_period,
@@ -134,7 +133,6 @@ reg                   direction;
 reg     [31:0]        max_step_count;
 reg     [31:0]        step_count;
 wire    [31:0]        steps_left;
-reg     [7:0]         max_pos;
 
 reg     [31:0]        run_period;
 reg     [31:0]        step_delay;
@@ -148,6 +146,8 @@ wire    [31:0]        step_inc_map  [3:0];
 wire    [31:0]        max_pos_map   [3:0];
 
 reg     [3:0]         hbridge_map;
+reg                   move_strobe;
+reg     [31:0]        current_position;
 
 
 //Accelleration Controller
@@ -165,6 +165,7 @@ wire                  micro_busy;
 wire    [31:0]        micro_position;
 wire    [31:0]        micro_step_count;
 wire    [7:0]         micro_step_pos;
+wire                  micro_move_strobe;
 
 //Submodules
 bipolar_micro_stepper #(
@@ -183,13 +184,13 @@ bipolar_micro_stepper #(
   .i_stop             (i_stop                   ),
 
   .i_micro_step_hold  (i_micro_step_hold        ),
-  .i_total_full_steps (i_total_full_steps       ),
-  .i_current_position (o_current_position       ),
+  .i_current_position (current_position         ),
   .o_current_position (micro_position           ),
 
   .i_step_pos         (step_pos                 ),
   .o_step_pos         (micro_step_pos           ),
   .o_step_count       (micro_step_count         ),
+  .o_move_strobe      (micro_move_strobe        ),
 
   .i_continuous       (i_continuous             ),
   .i_direction        (i_direction              ),
@@ -244,9 +245,11 @@ assign in_half_steps              =  {8'h0, i_steps[31:8]};
 assign step_change                = (i_micro_step) ?
                                       (prev_step_count != micro_step_count):
                                       (prev_step_count != step_count);
-assign steps_left                 = (i_micro_step) ? 
+assign steps_left                 = (i_micro_step) ?
                                       (max_step_count - micro_step_count):
                                       (max_step_count - step_count);
+
+assign o_move_strobe              = i_micro_step ? micro_move_strobe : move_strobe;
 
 //Synchronous Logic
 always @ (posedge clk) begin
@@ -264,14 +267,15 @@ always @ (posedge clk) begin
     step_delay                <=  0;
 
     step_pos                  <=  0;
-    max_pos                   <=  0;
 
     shoot_through_period      <=  0;
     shoot_through_count       <=  0;
 
-    o_current_position        <=  0;
+    current_position          <=  0;
+    move_strobe               <=  0;
   end
   else begin
+    move_strobe               <=  0;
     case (state)
       IDLE: begin
         //Localize all inputs so the user cannot suddenly change the state of
@@ -350,12 +354,13 @@ always @ (posedge clk) begin
       end
       PROCESS_SLEEP: begin
         if (step_delay < current_period) begin
-          step_delay              <=  step_delay + 1;
+          step_delay          <=  step_delay + 1;
         end
         else begin
           if (!continuous) begin
             step_count        <=  step_count + 1;
           end
+          move_strobe         <=  1;
           if (direction) begin
             //Positive Direction
             if (step_pos >= max_pos_map[step_type]) begin
@@ -397,7 +402,7 @@ always @ (posedge clk) begin
         hbridge_map               <=  4'b0000;
         if (!i_go && !micro_busy) begin
           if (step_type == MICRO_STEP) begin
-            o_current_position    <=  micro_position;
+            current_position      <=  micro_position;
           end
           state                   <=  IDLE;
         end
