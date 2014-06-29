@@ -36,7 +36,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
 from ibuilder.lib import ibuilder
 
-example_dir = os.path.join(nysa_base, "ibuilder", "example_project", "dionysus_gpio_mem.json")
+EXAMPLE_DIR = os.path.join(nysa_base, "ibuilder", "example_project", "dionysus_gpio_mem.json")
 
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
@@ -48,13 +48,13 @@ EPILOG = "\n" \
 "Examples:\n" + \
 "\n" + \
 "Generate an ibuilder project directory:\n" + \
-"\tibuilder.py %s\n" % example_dir + \
+"\timage_builder.py %s\n" % EXAMPLE_DIR + \
 "\n" + \
 "Generate an ibuilder project directory then compress using tar/gzip format:\n" + \
-"\tibuilder.py -c %s\n" % example_dir + \
+"\timage_builder.py -c %s\n" % EXAMPLE_DIR + \
 "\n" + \
 "Generate an ibuilder project directory then compress using zip format:\n" + \
-"\tibuilder.py -z %s\n" % example_dir + \
+"\timage_builder.py -z %s\n" % EXAMPLE_DIR + \
 "\n"
 
 
