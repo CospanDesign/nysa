@@ -80,7 +80,7 @@ SOFTWARE.
 `include "project_defines.v"
 
 module wb_stepper #(
-  parameter           DEFAULT_MAX_POSITION = 32'd200
+  parameter           DEFAULT_MAX_POSITION = (32'd200) << 9
 )(
   input               clk,
   input               rst,
@@ -117,8 +117,8 @@ localparam    RUN_PERIOD            = 32'h00000007;
 localparam    STEP_ACCELLERATION    = 32'h00000008;
 localparam    MICRO_STEP_HOLD       = 32'h00000009;
 localparam    SHOOT_THROUGH_DELAY   = 32'h0000000A;
-localparam    CURRENT_POSITION      = 32'h0000000C;
-localparam    MAX_POSITION          = 32'h0000000D;
+localparam    CURRENT_POSITION      = 32'h0000000B;
+localparam    MAX_POSITION          = 32'h0000000C;
 
 //configuration
 localparam    CONFIG_UNIPOLAR       = 0;
@@ -131,6 +131,7 @@ localparam    CONTROL_CONTINUOUS    = 1;
 localparam    CONTROL_FULL_STEP     = 4;
 localparam    CONTROL_HALF_STEP     = 5;
 localparam    CONTROL_MICRO_STEP    = 6;
+localparam    CONTROL_DUMMY_STEP    = 7;  //Don't use this step position
 
 //commands
 localparam    COMMAND_GO            = 32'h00000001;
@@ -218,7 +219,6 @@ stepper stpr (
   .i_step_accelleration   (accelleration          ),
   .i_micro_step_hold      (micro_step_hold        ),
   .i_shoot_through_period (shoot_through_period   ),
-
 
   .o_hbridge0_l           (o_hbridge0_l           ),
   .o_hbridge0_r           (o_hbridge0_r           ),

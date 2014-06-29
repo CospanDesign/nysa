@@ -83,6 +83,8 @@ reg     [31:0]        pwm_step_pos;
 wire                  pwm_direction;
 
 wire    [31:0]        steps_left;
+wire    [31:0]        pwm_period;
+wire    [31:0]        ms_step_pwm_duty;
 
 //Submodules
 pwm micro_pwm(
@@ -90,11 +92,14 @@ pwm micro_pwm(
   .rst          (rst                              ),
 
   .en           (micro_step_pwm_en                ),
-  .period       (PWM_PERIOD           << CLOCK_DIV),
-  .duty_cycle   (micro_step_pwm_duty  << CLOCK_DIV),
+  .period       (pwm_period                       ),
+  .duty_cycle   (ms_step_pwm_duty                 ),
 
   .out          (micro_step_pwm                   )
 );
+
+assign pwm_period                 = PWM_PERIOD  << CLOCK_DIV;
+assign ms_step_pwm_duty           = micro_step_pwm_duty <<  CLOCK_DIV;
 
 //Asynchronous Logic
 assign o_busy                     = (i_go | (state != IDLE));
