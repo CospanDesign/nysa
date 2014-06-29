@@ -295,7 +295,7 @@ class GPIO(Driver):
         """
         return self.read_register(INTERRUPTS)
 
-def unit_test(n):
+def unit_test(n, dev_id = None, debug = False):
     """unit_test
  
     Run the unit test of the GPIO

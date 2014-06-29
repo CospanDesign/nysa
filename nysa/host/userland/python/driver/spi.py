@@ -834,7 +834,7 @@ class SPI(Driver):
 
         return read_data[-(response_bit_length / 8):]
 
-def unit_test(nysa, dev_id):
+def unit_test(nysa, dev_id, debug = False):
 
     spi = SPI(nysa, dev_id)
     clock_rate = spi.get_clock_rate()

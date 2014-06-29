@@ -44,6 +44,7 @@ from driver import i2c
 from driver import i2s
 from driver import spi
 from driver import uart
+from driver import stepper
 
 
 devices = {
@@ -51,7 +52,8 @@ devices = {
         "I2C":i2c,
         "I2S":i2s,
         "SPI":spi,
-        "UART":uart
+        "UART":uart,
+        "STEPPER":stepper
         }
 
 
@@ -74,6 +76,7 @@ EPILOG = "\n" \
 
 
 debug = False
+verbose = False
 
 def test_memory(dyn, dev_index):
     print "Testing memory @ %d" % dev_index
@@ -172,7 +175,7 @@ def perform_unit_tests(dyn, core = None):
     pass
 
 def list_cores(dyn):
-    from nysa.host.userland.python import driver
+    import driver
     #Get a list of the devices from the DRT
     #Get a of devices found in Dionysus from the DRT
     #Go through the driver directory and find all the drivers available
@@ -187,9 +190,13 @@ def main(argv):
         epilog = EPILOG
     )
     debug = False
+    verbose = False
     parser.add_argument("-d", "--debug",
                         action='store_true',
                         help="Enable Debug messages")
+    parser.add_argument("-v", "--verbose",
+                        action='store_true',
+                        help="Enable Verbose debugging of dionysus core")
     parser.add_argument("-m", "--memory",
                         action='store_true',
                         help="Test Memory")
@@ -208,9 +215,14 @@ def main(argv):
         print "Debug Enabled"
         debug = True
 
+    if args.verbose:
+        print "Verbose Debug Enable"
+        print "Display messages from dionysus"
+        verbose = True
+
     dyn = None
     try:
-        dyn = Dionysus(debug = debug)
+        dyn = Dionysus(debug = verbose)
     except IOError, ex:
         #print "PyFtdi IOError while openning: %s" % str(ex)
         print "Dionysus not found!"
@@ -238,15 +250,17 @@ def main(argv):
                 test_memory(dyn, i)
 
     if args.list_devices:
-        print "List the cores that can be tested"
-        list_cores(dyn)
-        sys.exit(0)
+        for d in devices:
+            print "Device: %s" % str(d)
+        #print "List the cores that can be tested"
+        #list_cores(dyn)
+        #sys.exit(0)
 
     if args.test[0].upper() in devices:
         dev_id = dyn.get_id_from_name(args.test[0].upper())
         #print "%s: Device id: %d" % (args.test[0].upper(), dev_id)
         dev_index = dyn.find_device(dev_id)
-        devices[args.test[0].upper()].unit_test(dyn, dev_index)
+        devices[args.test[0].upper()].unit_test(dyn, dev_index, debug = debug)
     else:
         print "Nothing to test"
 

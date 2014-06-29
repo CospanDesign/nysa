@@ -724,7 +724,7 @@ class I2C(Driver):
 
 
 
-def unit_test(nysa, dev_id):
+def unit_test(nysa, dev_id, debug = False):
     print "Unit test!"
     i2c = I2C(nysa, dev_id)
 

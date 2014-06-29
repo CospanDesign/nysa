@@ -705,10 +705,10 @@ class UART(Driver):
         self.get_status()
 
 
-def unit_test(nysa, dev_id):
+def unit_test(nysa, dev_id, debug = False):
     """Unit test for UART
     """
-    uart = UART(nysa, dev_id, debug = True)
+    uart = UART(nysa, dev_id, debug = debug)
     #uart.reset()
     uart.set_control(0)
     print "Testing UART config"
