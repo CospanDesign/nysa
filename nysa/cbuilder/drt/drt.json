@@ -65,7 +65,7 @@
       "description":"LCD Display",
       "ID":"0x000F"
     },
-    "Stepper Motor":{
+    "STEPPER":{
       "description":"Stepper Motor Controller",
       "ID":"0x0010"
     },
