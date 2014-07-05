@@ -80,7 +80,7 @@ class Controller(NysaBaseController):
         #Change this for your app
         return "app_template"
 
-    def _initialize(self):
+    def _initialize(self, platform, device_index):
         self.v = View(self.status, self.actions)
         self.v.setup_simple_text_output_view()
 
