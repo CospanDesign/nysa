@@ -169,7 +169,11 @@ wire                  micro_move_strobe;
 
 //Submodules
 bipolar_micro_stepper #(
+  `ifdef SIM
+  .CLOCK_DIV          (1                        )
+  `else
   .CLOCK_DIV          (4                        )
+  `endif
 )bms(
   .clk                (clk                      ),
   .rst                (rst                      ),

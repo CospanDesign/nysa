@@ -370,7 +370,7 @@ always @ (posedge clk) begin
               o_wbs_dat           <=  control;
             end
             COMMAND: begin
-              o_wbs_dat           <=  COMMAND_GO;
+              o_wbs_dat           <=  {30'h0, stop, go};
             end
             STATUS: begin
               o_wbs_dat           <=  status;

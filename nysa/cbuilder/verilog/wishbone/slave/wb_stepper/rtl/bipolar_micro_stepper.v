@@ -202,6 +202,8 @@ always @ (posedge clk) begin
         current_position            <=  i_current_position;
         step_pos                    <=  i_step_pos;
         current_period_count        <=  0;
+        step_count                  <=  0;
+        micro_step_count            <=  0;
         if (i_go) begin
           hbridge_map               <=  step_path[step_pos];
           total_step_count          <=  in_steps;
