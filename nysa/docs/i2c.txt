@@ -14,3 +14,5 @@ Each slave device has a 7-bit/10-bit address. The master initiates a transaction
 The protocol only defines the Physical and Data Link Layer. The behavior of I2C devices vary. Writes are relatively straight forward usually initated by indicating a 'write' transaction when sending the address and then data to populate the device's registers. Reading is usually acomplished by initiating a transaction as a 'write' to indicate what register(s) to read from and then initiating a read to read the data.
 
 DESCRIPTION END
+
+
