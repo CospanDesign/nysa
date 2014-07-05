@@ -716,10 +716,10 @@ def unit_test(nysa, dev_id, debug = False):
     if debug:
         stepper.print_status(stepper.get_status())
     #Setup the walk period
-    stepper.set_walk_period         (0x00F00000)
+    stepper.set_walk_period         (0x00100000)
     stepper.set_run_period          (0x00008000)
     #stepper.set_step_accelleration(1000)
-    stepper.set_step_accelleration  (       1000)
+    stepper.set_step_accelleration  (      1000)
     stepper.set_micro_step_hold     (         0)
     stepper.set_max_position        (       200)
     print "Max position: %d" % stepper.get_max_position()
@@ -730,9 +730,9 @@ def unit_test(nysa, dev_id, debug = False):
     #stepper.set_direction(0)    # Reverse
            
     #Set to full steps
-    stepper.set_full_step()
+    #stepper.set_full_step()
     #stepper.set_half_step()
-    #stepper.set_micro_step()
+    stepper.set_micro_step()
     if debug:
         stepper.print_status(stepper.get_status())
 
@@ -774,6 +774,8 @@ def unit_test(nysa, dev_id, debug = False):
 
     print "Current Position: 0x%08X" % (stepper.get_current_position())
     print "Final Delta T (Seconds): %f" % (time.time() - start)
+    print "Final Status: 0x%08X" % (stepper.get_status())
+    print "Final Command: 0x%08X" % (stepper.get_command())
     #while (stepper.wait_for_interrupts()):
     #    print "Waiting for interrupts..."
     #    time.sleep(10)
