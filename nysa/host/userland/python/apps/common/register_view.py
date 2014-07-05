@@ -144,7 +144,6 @@ class RegisterView(QWidget):
         print "Setting: 0x%08X" % val
         self.set_pressed_signal.emit(index, val)
 
-
     def custom_validator(self, index):
         try:
             val = int(str(self.registers[index].text()), 16)
