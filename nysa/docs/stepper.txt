@@ -1,0 +1,12 @@
+Version
+  7/01/2014: Initial Stepper Description
+
+DESCRIPTION START
+
+Stepper Motor Controller
+
+Control Bipolar Stepper Motors.
+
+Full Steps/Half Steps/Micro Steps are all supported
+
+DESCRIPTION END
