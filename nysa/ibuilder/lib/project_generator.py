@@ -120,7 +120,7 @@ class ProjectGenerator:
         utils.recursive_dict_name_fix(self.template_tags)
 
         
-    def generate_project(self, config_filename, debug=False):
+    def generate_project(self, config_filename, output_directory = None, debug=False):
         """Generate the folders and files for the project
        
         Using the project tags and template tags this function generates all
@@ -131,6 +131,7 @@ class ProjectGenerator:
        
         Args:
           config_filename: name of the JSON configuration file
+            output_directory: Path to override default output directory
        
         Return:
           True: Success
@@ -142,6 +143,9 @@ class ProjectGenerator:
           SapError
         """
         self.read_config_file(config_filename)
+        if output_directory is not None:
+            self.project_tags["BASE_DIR"] = output_directory
+
         board_dict = utils.get_board_config(self.project_tags["board"])
         cfiles = []
 

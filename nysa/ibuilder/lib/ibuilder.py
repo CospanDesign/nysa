@@ -93,9 +93,7 @@ def get_output_dir(filename, dbg = False):
   f.close()
   return utils.resolve_path(config_dict["BASE_DIR"])
 
-
-
-def generate_project(filename, user_paths = [], dbg=False):
+def generate_project(filename, user_paths = [], output_directory = None, dbg = False):
   """Generate a FPGA project
   
   The type of phroject is specific to the vendor called. For example, if the 
@@ -105,6 +103,7 @@ def generate_project(filename, user_paths = [], dbg=False):
   Args:
     filename: Name of the configuration file to be read
     user_paths: Paths used to search for modules
+    output_directory: Path to override default output directory
 
   Returns:
     A result of success or fail
@@ -116,5 +115,6 @@ def generate_project(filename, user_paths = [], dbg=False):
   """
   #print "IBUILDER User paths: %s" % str(user_paths)
   pg = project_generator.ProjectGenerator(user_paths)
-  result = pg.generate_project(filename, debug = dbg)
+  result = pg.generate_project(filename, output_directory = output_directory, debug = dbg)
   return result
+
