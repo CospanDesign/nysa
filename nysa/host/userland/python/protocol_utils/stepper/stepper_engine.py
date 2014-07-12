@@ -109,15 +109,17 @@ class StepperWorker(QtCore.QThread):
         time.sleep(.2)
         while (self.stepper.is_busy()):
             time.sleep(.2)
-            #self.actions.stepper_update_register.emit(11, self.stepper.get_current_position)
+            curr_raw_position = self.stepper.get_current_position()
+            curr_float_angle = (curr_raw_position / 512.0 * self.angle_divisor)
+            #print "Current Position 0x%08X : %f" % (curr_raw_position, (curr_raw_position / 512.0 * self.angle_divisor))
+            print "Current Position 0x%08X : %f" % (curr_raw_position, curr_float_angle)
+            self.actions.stepper_update_register.emit(11, curr_raw_position)
+            self.actions.stepper_update_actual_angle.emit(curr_float_angle)
 
         #DEBUG!!
         for i in range(13):
             self.actions.stepper_update_register.emit(i, self.stepper.read_register(i))
         #self.actions.stepper_update_register.emit(11, self.stepper.get_current_position)
-
-
-
 
 class StepperEngine (QtCore.QObject):
 
@@ -211,7 +213,6 @@ class StepperEngine (QtCore.QObject):
                                         'update_max_position',
                                         QtCore.Qt.QueuedConnection,
                                         QtCore.Q_ARG(int, config_dict["num_steps"]))
-       
 
         for i in range(13):
             self.actions.stepper_update_register.emit(i, self.stepper.read_register(i))
