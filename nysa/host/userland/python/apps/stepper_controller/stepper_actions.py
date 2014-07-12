@@ -25,6 +25,7 @@ class _StepperActions(QtCore.QObject):
     stepper_update_configuration = QtCore.pyqtSignal(object, name = "stepper_update_configuration")
 
     stepper_update_register = QtCore.pyqtSignal(int, int, name = "stepper_update_register")
+    stepper_update_actual_angle = QtCore.pyqtSignal(float, name = "stepper_update_actual_arm")
 
     #stepper_response = QtCore.pyqtSignal(object, name = "stepper_transaction_response")
 

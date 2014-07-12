@@ -67,16 +67,17 @@ class StepperMotorWidget(QWidget):
 
         self.stepper_motor = StepperGraphicsItem(self)
 
-        self.actual_arm = StepperMotorArm(self.status,
-                                          self.actions,
-                                          USER_RECT_COLOR,
-                                          solid = False,
-                                          movable = True)
         self.user_arm = StepperMotorArm(  self.status,
                                           self.actions,
                                           USER_RECT_COLOR,
                                           solid = True,
                                           movable = False)
+
+        self.actual_arm = StepperMotorArm(self.status,
+                                          self.actions,
+                                          USER_RECT_COLOR,
+                                          solid = False,
+                                          movable = True)
 
         self.scene.addItem(self.stepper_motor)
         self.scene.addItem(self.actual_arm)
@@ -86,7 +87,10 @@ class StepperMotorWidget(QWidget):
         self.setLayout(l)
 
         self.show()
+        self.actions.stepper_update_actual_angle.connect(self.update_actual_angle)
 
+    def update_actual_angle(self, angle):
+        self.user_arm.setRotation(-angle)
 
 class StepperGraphicsItem (QGraphicsItem):
     """Generic box used for flow charts"""

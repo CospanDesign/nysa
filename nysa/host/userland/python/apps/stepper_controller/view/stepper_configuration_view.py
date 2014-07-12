@@ -51,7 +51,8 @@ class StepperConfigurationView(QWidget):
             "   min-width : 3em;    "\
             "}                      "
         )
-        name.setAlignment(Qt.AlignCenter)
+        name.setAlignment(Qt.AlignCenter | Qt.AlignTop) 
+
 
         self.manufacturer = QLineEdit("")
         self.model = QLineEdit("")
@@ -81,7 +82,7 @@ class StepperConfigurationView(QWidget):
         config_dict["accelleration"]    = "0.01"
         config_dict["num_steps"]        = '200'
         config_dict["walk_period"]      = '0.1'
-        config_dict["run_period"]       = '0.02'
+        config_dict["run_period"]       = '0.01'
         config_dict["stepper_type"]     = "bipolar"
         self.load_configuration(config_dict)
 

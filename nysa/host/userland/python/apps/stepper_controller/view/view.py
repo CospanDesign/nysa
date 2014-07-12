@@ -68,8 +68,8 @@ class View(QWidget):
         control_layout = QVBoxLayout()
 
 
-        self.te = QTextEdit()
-        self.te.setText("Text!")
+        #self.te = QTextEdit()
+        #self.te.setText("Text!")
 
         #Add the save/loader and the rest of the main interface views
         layout.addWidget(self.sl)
@@ -79,7 +79,7 @@ class View(QWidget):
         interface_layout.addLayout(main_layout)
         control_layout.addWidget(self.control_view)
         main_layout.addWidget(self.config_view)
-        main_layout.addWidget(self.te)
+        #main_layout.addWidget(self.te)
         interface_layout.addLayout(control_layout)
 
         #interface_layout.addWidget(self.te)
