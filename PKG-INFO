@@ -1,0 +1,191 @@
+
+Name: nysa
+Version: 0.1.1
+Summary: FPGA development and interface tools
+Home-page: http://wiki.cospandesign.com/index.php?title=Nysa
+Author: Cospan Design
+Author-email: dave.mccoy@cospandesign.com
+License: LICENSE.txt
+Description: ===========
+  Nysa
+  ===========
+
+  Simplify both generation of HDL for FPGAs and interacting with FPGAs
+
+  FPGAs are extremely flexible.
+
+  They can be used to:
+    * Communicate with devices that employ one ore more standard and/or
+      non-standard protocols.
+      * An example of a standard protocol is communicating with an
+        accellerometer using I2C or a GPS using UART.
+      * An example of a non-standard protocol is communicating with
+        a camera using a parallel vendor specific protocol.
+    * Interface with devices at rates unachevable with
+      microcontrollers
+
+  Unfortunately FPGA require a lot of resources and knowledge before one can
+  get the coveted initial "blinky" analogy up and running. Not only does one
+  need to know about the physical constraints of an FPGA but understand how it
+  interacts with a hardware description language.
+
+
+  What is Nysa
+  ============
+
+  * A set of tools to interface with FPGAs as an extension to your host
+    computer. Using Python you can create either command line or graphical
+    applications to interact with a nysa image on an FPGA. The lower level
+    data transactions with the FPGA is abstracted away in python modules
+    leaving the developer free to use the FPGA as though all the modules on
+    the FPGA were native components of the computer.
+
+    For example a GPS attached to an FPGA through a UART core will behave the
+    same way as a GPS attached to a desktop computer through an FTDI cable
+
+    All nysa FPGA images contain an internal PROM which can be used to
+    determine what the FPGA will behave like. For example if the user were
+    to load the 'dionysus_default.json' image into the FPGA the user would
+    read the 'Device ROM Table' to find that the FPGA has a GPIO core and a
+    Memory core. The user can then use the GPIO driver to interface with
+    that GPIO device.
+
+    For an example run the 'nysa_gui.py' application for a graphical interface
+    users can explore the FPGA by selecting a visual module and clicking
+    on a script in the script list in the right.
+
+  * A set of tools to generate FPGA images using only json configuration files
+
+    Here is an excerpt from the 'dionysus_default.json' configuration file,
+    this excerpt is all that is required to add the GPIO core to the FPGA.
+
+      ...
+
+			"SLAVES":{
+				"gpio1":{
+					"filename":"wb_gpio.v",
+          "unique_id":1,
+					"bind":{
+						"gpio_out[1:0]":{
+							"loc":"led[1:0]",
+							"direction":"output"
+						},
+						"gpio_in[3:2]":{
+							"loc":"button[1:0]",
+							"direction":"input"
+						}
+					}
+      	}
+      },
+
+      ...
+
+
+    The above exerpts adds the module defined by 'wb_gpio.v' into the image
+    with the name: 'gpio1'. The output pins 'gpio_out[0]', 'gpio_out[1]' to
+    pins 'led[0]' and 'led[1]' respectively and 'gpio_in[0]', 'gpio_in[1]' to
+    pins 'button[0]' and 'button[1]' respectively. It also gives the module
+    a unique identification number '1' just in case there are similar modules
+    in the ROM
+
+    To make your own image just copy any one of the 40+ configuration files
+    and modify it. A more descriptive tutorial is in process
+
+    At the time of this writing there following modules are currently
+    supported:
+
+    * GPIO (wb_gpio): Standard GPIOs
+    * BRAM (wb_bram): Use an internal BRAM as a generic memory block
+    * I2C (wb_i2c): standard Inter Integrated Circuit protocol
+    * I2S (wb_i2s): standard Inter Integrated Circuit Sound protocol
+    * SPI (wb_spi): Serial Peripheral Interface
+    * UART (wb_uart): Universal Asynchronous Receiver and Transmitter
+    * Logic Analyzer (wb_logic_analyzer): An entire 32-bit logic analyzer
+    * New Haven LCD Writer (wb_nh_lcd): Interface with the New Haven LCD
+      Controller: <http://youtu.be/QLlUxiCfyig>
+    * SDRAM (wb_sdram): standard Syncronous Dynamic Random Access Memory
+      A core designed to work with the SDRAM on Dionysus enables seamless
+      access to the SDRAM as though it were a flat memory map.
+    * Spark Fun Camera (wb_sf_camera): Stream video at a blazing 15-20 FPS
+      using the camera board attached to Dionysus or future boards.
+    * Stepper Motor Controller (wb_stepper): Control a stepper motor
+
+    Can't find the core you are looking for. Make your own!
+
+  * A set of tools to prototype and simulate HDL that is compliant with the
+    above tools.
+
+    A set of scripts are available to help you get started building your own
+    wishbone compliant core that will also work with nysa
+
+    After running the core generation script users will end up with a folder
+    that will immediately build wishbone slave compliant module by going to
+    the associated directory and typing:
+
+      'scons'
+
+    Users can edit the stimulus file in 'sim/master_input_test_data.txt' to
+    send a variety of stimulus to your module including reading and writing to
+    the modules 24-bit address space and then simulate the module using.
+
+      'scons sim'
+
+    finally users can view the waveforms of the module by typing:
+
+      'scons wave'
+
+    where a gtkwave instantiation will start
+
+
+
+
+  What Nysa is NOT
+  ================
+
+  * A general FPGA development environment
+  * A platform for soft core processors. There are many projects that already
+    to that including OpenCores and Papilion
+
+
+
+  Description
+  ===========
+
+  The suite is split into three subgroups.
+
+  host
+  ----
+  A set of host tools used to interface with an FPGA
+
+  * board packages used to interface with a specific board such as
+    communicating with Dionysus over USB 2.0
+  * board independent userland drivers used to interact with cores within
+    an FPGA
+  * utilities to simplify the core interactions such as CameraUtils used to
+    continuously grab images off of the camera.
+
+  ibuilder
+  --------
+  Image Builder (ibuilder): Generate FPGA images that can be downloaded onto a
+  board such as Dionysus.
+
+  running the 'image_builder.py <name of the configuration file>' will
+  generate a directory that can be used to build an image for the FPGA.
+
+  (A Xilinx toolchain is required)
+
+  simply go into the directory of the project and type
+
+  'scons'
+
+  upload the generated image with the board specific utility. As an example to
+  upload an image to dionysus use:
+
+  'dionysus-control.py <path/to/top.bin>'
+
+  cbuilder
+  --------
+  Core Builder (cbuilder): Generates individual cores to interface with a sensor, IC or process an algorithm
+
+  create a new core with the GUI, command line version to follow
+
