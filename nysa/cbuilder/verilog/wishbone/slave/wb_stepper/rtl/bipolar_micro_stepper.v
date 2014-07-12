@@ -224,6 +224,7 @@ always @ (posedge clk) begin
           micro_current_period_count<=  0;
           micro_step_pwm_en         <=  0;
           hbridge_map               <=  step_path[step_pos];
+          o_move_strobe             <=  1;
           state                     <= PROCESS_STEP;
 
           if (pwm_direction) begin
