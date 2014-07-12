@@ -13,9 +13,9 @@ They can be used to:
 * Exchange data with a processor
 
 
-Unfortunately FPGA require a lot of resources and knowledge before one can 
-get the coveted initial "blinky" analogy up and running. Not only does one 
-need to know about the physical constraints of an FPGA but understand how it 
+Unfortunately FPGA require a lot of resources and knowledge before one can
+get the coveted initial "blinky" analogy up and running. Not only does one
+need to know about the physical constraints of an FPGA but understand how it
 interacts with a hardware description language.
 
 ##What Nysa is:
@@ -33,36 +33,36 @@ interacts with a hardware description language.
 * Used to develop stand alone FPGA platforms, independent of the host
 
 
-##Description: 
+##Description:
 
 The suite is split into three subgroups, although Nysa can be run entirely from the command line Nysa was designed to be used as a GUI plugin for IDE. (Specifically Ninja-IDE)
 
 ###cbuilder (Core Builder): Generates individual cores to interface with a sensor, IC, or process an algorithm.
 * there are tools and scripts provided to simplify the process of synthesizing and simulating a verilog module
-* the cores are used by ibuilder to generate FPGA images that will call on a 
+* the cores are used by ibuilder to generate FPGA images that will call on a
     created core in a predefined manner.
   * For example: perhaps a sensor simply requires an I2C interface. The user
-    can specify this in the metadata and the host will read this metadata and 
+    can specify this in the metadata and the host will read this metadata and
     use either a python script or even a kernel driver to interface with this
     device
 
 ###ibuilder (Image Builder): Generates FPGA images to go onto a board
-* Generates PlanAhead projects and associated scripts to build a bit or 
+* Generates PlanAhead projects and associated scripts to build a bit or
   binary file that can be used to program an FPGA
-* users can use either the command line interface or the graphical user 
+* users can use either the command line interface or the graphical user
   interface (GUI) called "Image Builder"
 
 ###Host: Host side software
 * this section is split up into two sections
-  * kernelland: low level code designed to facilitate communication between 
+  * kernelland: low level code designed to facilitate communication between
     the FPGA and the kernel itself
     * the benefit of this model is that end-users will interact with devices
       in the same way they would interact
       with other devices on their computer
-      * For example: When you attach a usb->serial device on your computer 
-        a new device appears in the /dev directory. When an Nysa based 
+      * For example: When you attach a usb->serial device on your computer
+        a new device appears in the /dev directory. When an Nysa based
         design is attached to a Linux box the kernel will behave in a similar
-        fashion and generate devices 
+        fashion and generate devices
         inside the /dev directory.
   * userland: the end user will use the scripts and libraries here to interact
     with their script
