@@ -1,0 +1,109 @@
+#! /usr/bin/python
+
+#Distributed under the MIT licesnse.
+#Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
+
+#Permission is hereby granted, free of charge, to any person obtaining a copy of
+#this software and associated documentation files (the "Software"), to deal in 
+#the Software without restriction, including without limitation the rights to 
+#use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
+#of the Software, and to permit persons to whom the Software is furnished to do 
+#so, subject to the following conditions:
+#
+#The above copyright notice and this permission notice shall be included in all 
+#copies or substantial portions of the Software.
+#
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+#SOFTWARE.
+
+import sys
+import os
+import argparse
+
+sys.path.append(os.path.abspath(".."))
+
+from nysa.cbuilder.drt import drt
+
+SCRIPT_NAME = os.path.basename(__file__)
+
+__author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
+
+DESCRIPTION = "\n" \
+"Manage Nysa Devices\n"
+
+EPILOG = "\n" \
+"Examples:\n" + \
+"\n" + \
+"View Devices:\n" + \
+"\t%s -l\n" % (SCRIPT_NAME) + \
+"\n" + \
+"Print the device number given the string name\n" + \
+"\t%s -n gpio\n" % (SCRIPT_NAME) + \
+"\n" + \
+"Returns the device number as the return status\n" + \
+"\t%s -i gpio\n" % (SCRIPT_NAME) + \
+"\t\tHow to use: %s -i gpio ; echo$?\n" % (SCRIPT_NAME)
+#"\n" + \
+#"Debug data:\n" + \
+#"\t%s -d\n" % (SCRIPT_NAME) + \
+
+def print_device_list():
+    dev_list = drt.get_device_list()
+    print "Available Devices:"
+    for dev in dev_list:
+        if int(dev["ID"], 16) == 0:
+            continue
+
+        #print "%s (0x%02X): %s" % (dev["name"], int(dev["ID"], 16), dev["description"])
+        print "{0:20} 0x{1:0=2X} : {2}".format(dev["name"], int(dev["ID"], 16), dev["description"])
+
+def get_num_from_name(name):
+    dev_list = drt.get_device_list()
+    for dev in dev_list:
+        if dev["name"].lower() == name.lower():
+            return int(dev["ID"], 16)
+
+    return None
+ 
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+      description=DESCRIPTION,
+      epilog=EPILOG
+    )
+ 
+    debug = False
+    #Add an argument to the parser
+    parser.add_argument("-d", "--debug", action='store_true', help="Output test debug information")
+    parser.add_argument("-l", "--device_list", action='store_true', help="List the devices")
+    parser.add_argument("-n", "--name", type = str, nargs=1, default="", help = "Specify a device name to get the device number (Returns hex string)")
+    parser.add_argument("-i", "--integer", type = str, nargs=1, default="", help = "Specify a device name to get the device number (Returns number)")
+
+    parser.parse_args()
+    args = parser.parse_args()
+ 
+    if args.debug:
+        print "Debug Enable"
+        debug = True
+
+    if args.name is not "":
+        if debug: print "Got Name (String): %s" % args.name[0]
+        index = get_num_from_name(args.name[0])
+        print "0x%02X" % index
+
+    elif args.integer is not "":
+        if debug: print "Got Name (Integer): %s" % args.integer[0]
+        index = get_num_from_name(args.integer[0])
+        sys.exit(index)
+
+    elif args.device_list:
+        print_device_list()
+
+
