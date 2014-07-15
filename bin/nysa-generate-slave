@@ -1,0 +1,150 @@
+#! /usr/bin/python
+
+#Distributed under the MIT licesnse.
+#Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
+
+#Permission is hereby granted, free of charge, to any person obtaining a copy of
+#this software and associated documentation files (the "Software"), to deal in 
+#the Software without restriction, including without limitation the rights to 
+#use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
+#of the Software, and to permit persons to whom the Software is furnished to do 
+#so, subject to the following conditions:
+#
+#The above copyright notice and this permission notice shall be included in all 
+#copies or substantial portions of the Software.
+#
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+#SOFTWARE.
+
+
+import sys
+import os
+import argparse
+
+sys.path.append(os.path.abspath(".."))
+
+from nysa.cbuilder.drt import drt
+from nysa.cbuilder.scripts.cbuilder_factory import CBuilderFactory
+
+EXAMPLE_DIR = os.path.join("home", "user", "Projects", "cbuilder_projects", "project1")
+SCRIPT_NAME = os.path.basename(__file__)
+
+__author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
+
+DESCRIPTION = "\n" \
+"Create Nysa Slave Projects\n"
+
+EPILOG = "\n" \
+"Examples:\n" + \
+"\n" + \
+"Generate a Wishbone slave project\n" + \
+"\tID of 0x01 (GPIO)\n" + \
+"\tOutput Directory: %s\n" % EXAMPLE_DIR + \
+"\n" + \
+"\t\t%s 1 %s\n" % (SCRIPT_NAME, EXAMPLE_DIR)+ \
+"\n" + \
+"Generate a Wishbone slave project with a sub id number\n" + \
+"\tID of 0x02 (UART)\n" + \
+"\tSub ID of 0x02\n" + \
+"\tOutput Directory: %s\n" % EXAMPLE_DIR + \
+"\n" + \
+"\t\t%s --subid=2 2 %s\n" % (SCRIPT_NAME, EXAMPLE_DIR)+ \
+"\n" + \
+"Generate a Wishbone memory slave project\n" + \
+"\tOutput Directory: %s\n" % EXAMPLE_DIR + \
+"\n" + \
+"\t\t%s --memory %s\n" % (SCRIPT_NAME, EXAMPLE_DIR)+ \
+"\n" + \
+"Generate an Axi slave project\n" + \
+"\tID of 0x04 (SPI)\n" + \
+"\tOutput Directory: %s\n" % EXAMPLE_DIR + \
+"\n" + \
+"\t\t%s --axi 4 %s\n" % (SCRIPT_NAME, EXAMPLE_DIR)+ \
+"\n"
+
+
+def print_device_list():
+    dev_list = drt.get_device_list()
+    print "Available Devices:"
+    for dev in dev_list:
+        print "%s" % str(dev)
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+      description=DESCRIPTION,
+      epilog=EPILOG
+    )
+ 
+    debug = False
+    cb = {}
+    cb["name"] = None
+    cb["drt_id"] = 0
+    cb["drt_sub_id"] = 0
+    cb["drt_size"] = 0
+    cb["bus_type"] = "slave"
+    cb["type"] = "wishbone"
+    cb["subtype"] = "peripheral"
+    cb["base"] = os.path.abspath(os.path.dirname(__file__))
+
+    #Add an argument to the parser
+    #Optional
+    parser.add_argument("-d", "--debug", action='store_true', help="Output test debug information")
+    parser.add_argument("--axi", action='store_true', default = False, help = "Set the bus type as AXI (Wishbone by default)")
+    parser.add_argument("--memory", action='store_true', default = False, help = "Generate a memory slave core")
+    parser.add_argument("--subid", type=str, nargs=1, default="0", help = "Specify the sub ID number, used to identify a unique version of a device Example: a unique GPIO that uses internal PWMs would have a unique Sub ID to differentiate itself from other GPIO devices")
+
+    #Required
+    parser.add_argument("slaveid", type = str, nargs='?', default="NONE", help="Specify the slave identification number, use \"nysa-device-list\" to view a list of possible device IDs")
+    parser.add_argument("output", type = str, nargs=1, help="Specify a location for the generated project")
+    parser.parse_args()
+    args = parser.parse_args()
+ 
+
+    #Parse the command line arguments
+    #CBuilderFactory(cb)
+    if args.debug:
+        print "Debug Enable"
+        debug = True
+    
+    if (args.slaveid == "NONE") and not args.memory:
+        print "Error: No slave ID is given and a memory device was not specified, either a slave ID must be specified or the memory flag must be set"
+        sys.exit(-1)
+
+    if args.memory:
+        #Memory Device
+        if debug: "Memory Device"
+        cb["drt_id"] = 5
+        cb["subtype"] = "memory"
+ 
+    if (args.slaveid != "NONE"):
+        value = args.slaveid
+        if value.isdigit():
+            value = int(value, 10)
+        else:
+            value = int(value, 16)
+
+        if debug: print "Value: 0x%02X" % value
+
+    if args.axi:
+        if debug: print "Axi Bus"
+        cb["type"] = "axi"
+    else:
+        cb["type"] = "wishbone"
+        if debug: print "Wishbone Bus"
+
+    #print "args.output: %s" % str(args.output)
+    if len(args.output) == 0:
+        print "Error: An output directory must be specified!"
+        sys.exit(-2)
+
+    print "Output directory: %s" % str(args.output[0])
+
+
+
