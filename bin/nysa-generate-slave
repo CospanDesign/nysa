@@ -28,11 +28,13 @@ import argparse
 
 sys.path.append(os.path.abspath(".."))
 
+
 from nysa.cbuilder.drt import drt
 from nysa.cbuilder.scripts.cbuilder_factory import CBuilderFactory
 
 EXAMPLE_DIR = os.path.join("home", "user", "Projects", "cbuilder_projects", "project1")
 SCRIPT_NAME = os.path.basename(__file__)
+LOCAL_DIR = os.path.abspath(".")
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
@@ -42,29 +44,32 @@ DESCRIPTION = "\n" \
 EPILOG = "\n" \
 "Examples:\n" + \
 "\n" + \
-"Generate a Wishbone slave project\n" + \
+"Generate a Wishbone slave project in the current directory\n" + \
 "\tID of 0x01 (GPIO)\n" + \
-"\tOutput Directory: %s\n" % EXAMPLE_DIR + \
 "\n" + \
-"\t\t%s 1 %s\n" % (SCRIPT_NAME, EXAMPLE_DIR)+ \
+"\t\t%s --slaveid 1\n" % (SCRIPT_NAME)+ \
 "\n" + \
-"Generate a Wishbone slave project with a sub id number\n" + \
+"Generate a Wishbone slave project with a sub id number in a specified directory\n" + \
 "\tID of 0x02 (UART)\n" + \
 "\tSub ID of 0x02\n" + \
 "\tOutput Directory: %s\n" % EXAMPLE_DIR + \
 "\n" + \
-"\t\t%s --subid=2 2 %s\n" % (SCRIPT_NAME, EXAMPLE_DIR)+ \
+"\t\t%s --slaveid 2 --subid=2 --output %s\n" % (SCRIPT_NAME, EXAMPLE_DIR)+ \
+"\n" + \
+"Generate a Wishbone slave project with a specified DRT flags\n" + \
+"\tID of 0x02 (UART)\n" + \
+"\tFlags of 0x01 = 'Standard Device'\n" + \
+"\n" + \
+"\t\t%s --slaveid 2 --flags=1\n" % SCRIPT_NAME+ \
 "\n" + \
 "Generate a Wishbone memory slave project\n" + \
-"\tOutput Directory: %s\n" % EXAMPLE_DIR + \
 "\n" + \
-"\t\t%s --memory %s\n" % (SCRIPT_NAME, EXAMPLE_DIR)+ \
+"\t\t%s --memory\n" % SCRIPT_NAME + \
 "\n" + \
 "Generate an Axi slave project\n" + \
 "\tID of 0x04 (SPI)\n" + \
-"\tOutput Directory: %s\n" % EXAMPLE_DIR + \
 "\n" + \
-"\t\t%s --axi 4 %s\n" % (SCRIPT_NAME, EXAMPLE_DIR)+ \
+"\t\t%s --axi --slaveid 4\n" % SCRIPT_NAME + \
 "\n"
 
 
@@ -88,6 +93,7 @@ if __name__ == "__main__":
     cb["drt_id"] = 0
     cb["drt_sub_id"] = 0
     cb["drt_size"] = 0
+    cb["drt_flags"] = 1
     cb["bus_type"] = "slave"
     cb["type"] = "wishbone"
     cb["subtype"] = "peripheral"
@@ -95,27 +101,64 @@ if __name__ == "__main__":
 
     #Add an argument to the parser
     #Optional
-    parser.add_argument("-d", "--debug", action='store_true', help="Output test debug information")
-    parser.add_argument("--axi", action='store_true', default = False, help = "Set the bus type as AXI (Wishbone by default)")
-    parser.add_argument("--memory", action='store_true', default = False, help = "Generate a memory slave core")
-    parser.add_argument("--subid", type=str, nargs=1, default="0", help = "Specify the sub ID number, used to identify a unique version of a device Example: a unique GPIO that uses internal PWMs would have a unique Sub ID to differentiate itself from other GPIO devices")
-
+    parser.add_argument("-d",
+                        "--debug",
+                        action='store_true',
+                        help="Output test debug information")
+    parser.add_argument("--axi",
+                        action='store_true',
+                        default = False,
+                        help = "Set the bus type as AXI (Wishbone by default)")
+    parser.add_argument("--memory",
+                        action='store_true',
+                        default = False,
+                        help = "Generate a memory slave core")
+    parser.add_argument("--slaveid",
+                        type = str,
+                        nargs=1,
+                        default=None,
+                        help="Specify the slave identification number, use \"nysa-device-list\" to view a list of possible device IDs")
+    parser.add_argument("--subid",
+                        type=str,
+                        nargs=1,
+                        default="0",
+                        help = "Specify the sub ID number, used to identify a unique version of a device Example: a unique GPIO that uses internal PWMs would have a unique Sub ID to differentiate itself from other GPIO devices")
+    parser.add_argument("--flags",
+                        type=str,
+                        nargs=1,
+                        default="1",
+                        help = "Specify default flags that should be put into the module, these can be overriden in the module by overwritting the DRT_FLAGS metavariable")
+    parser.add_argument("-o",
+                        "--output",
+                        type = str,
+                        nargs=1,
+                        default=[LOCAL_DIR],
+                        help="Specify a location for the generated project, defaults to current directory")
     #Required
-    parser.add_argument("slaveid", type = str, nargs='?', default="NONE", help="Specify the slave identification number, use \"nysa-device-list\" to view a list of possible device IDs")
-    parser.add_argument("output", type = str, nargs=1, help="Specify a location for the generated project")
+    parser.add_argument("name",
+                        type = str,
+                        nargs=1,
+                        default=None,
+                        help="Specify the name of the project file")
     parser.parse_args()
     args = parser.parse_args()
+    value = 0
  
 
     #Parse the command line arguments
-    #CBuilderFactory(cb)
     if args.debug:
         print "Debug Enable"
         debug = True
     
-    if (args.slaveid == "NONE") and not args.memory:
+    if args.slaveid is None and not args.memory:
         print "Error: No slave ID is given and a memory device was not specified, either a slave ID must be specified or the memory flag must be set"
+        parser.print_help()
         sys.exit(-1)
+
+    if args.slaveid is not None and args.memory:
+        print "Error: Slave ID and Memory Cannot be specified at the same time"
+        parser.print_help()
+        sys.exit(-2)
 
     if args.memory:
         #Memory Device
@@ -123,13 +166,12 @@ if __name__ == "__main__":
         cb["drt_id"] = 5
         cb["subtype"] = "memory"
  
-    if (args.slaveid != "NONE"):
-        value = args.slaveid
+    else:
+        value = args.slaveid[0]
         if value.isdigit():
             value = int(value, 10)
         else:
             value = int(value, 16)
-
         if debug: print "Value: 0x%02X" % value
 
     if args.axi:
@@ -139,12 +181,11 @@ if __name__ == "__main__":
         cb["type"] = "wishbone"
         if debug: print "Wishbone Bus"
 
-    #print "args.output: %s" % str(args.output)
-    if len(args.output) == 0:
-        print "Error: An output directory must be specified!"
-        sys.exit(-2)
+    cb["base"] = args.output[0]
+    if debug: print "Output directory: %s" % str(cb["base"])
 
-    print "Output directory: %s" % str(args.output[0])
+    cb["name"] = args.name[0]
 
+    cbuilder = CBuilderFactory(cb)
 
 
