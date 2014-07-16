@@ -33,7 +33,8 @@ class CBuilderSlave(GenericCBuilder):
     try:
       os.mkdir(dir_path)
     except OSError, err:
-      print "Directory already exists"
+      #print "Directory already exists"
+      pass
     
     slave_file = os.path.join(self.get_project_dir(), "rtl", self.pdict["name"] + ".v")
 
@@ -74,7 +75,7 @@ class CBuilderSlave(GenericCBuilder):
     #Create all the directories first
     for node in node_list:
       if os.path.isdir(node):
-        print "Directory: %s" % node
+        #print "Directory: %s" % node
         d = os.path.basename(node)
         dest_path = ""
         if base_dir is None:
@@ -125,7 +126,7 @@ class CBuilderSlave(GenericCBuilder):
           continue
 
         if filename == "tb_wishbone_master.v":
-          print "Processing tb_wishbone_master"
+          #print "Processing tb_wishbone_master"
           f = open(node)
           template = Template(f.read())
           f.close()
