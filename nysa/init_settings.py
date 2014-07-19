@@ -24,7 +24,7 @@ def main():
       f = open(path, 'w')
       json.dump(data, f)
       f.close()
-    except IOError, err:
+    except IOError as err:
       #print str(err)
       sys.exit(3)
     sys.exit(0)
@@ -37,7 +37,7 @@ def main():
     data = json.loads(s)
     
     f.close()
-  except IOError, err:
+  except IOError as err:
     #print str(err)
     sys.exit(2)
   
@@ -47,7 +47,7 @@ def main():
     f = open(path, 'w')
     json.dump(data, f)
     f.close()
-  except IOError, err:
+  except IOError as err:
     #print str(err)
     sys.exit(3)
 
