@@ -40,13 +40,13 @@ class SimPlatform(Platform):
         super (SimPlatform, self).__init__(status)
 
     def get_type(self):
-        self.status.Verbose(self, "Returnig 'sim' type")
+        #self.status.Verbose(self, "Returnig 'sim' type")
         return "sim"
 
     def scan(self):
-        self.status.Verbose(self, "Scannig...")
+        #self.status.Verbose(self, "Scannig...")
         configs = self.find_all_sims()
-        self.status.Verbose(self, "scan: %s" % str(configs))
+        #self.status.Verbose(self, "scan: %s" % str(configs))
         sim_dict = {}
         for f in configs:
             #print "Config: %s" % f
@@ -54,7 +54,7 @@ class SimPlatform(Platform):
             unique = os.path.split(f)[-1]
             unique = os.path.splitext(unique)[0]
             fn = FauxNysa(d)
-            self.status.Important(self, "Found: %s" % unique)
+            #self.status.Important(self, "Found: %s" % unique)
             sim_dict[unique] = fn
 
 

@@ -37,56 +37,11 @@ import time
 from array import array as Array
 
 
-p = os.path.join(os.path.dirname(__file__),
-                 os.pardir,
-                 os.pardir,
-                 os.pardir)
-#print "Path: %s" % os.path.abspath(p)
-sys.path.append(p)
-from nysa import Nysa
-
-p = os.path.join(os.path.dirname(__file__),
-                 os.pardir,
-                 os.pardir,
-                 os.pardir,
-                 os.pardir,
-                 os.pardir,
-                 os.pardir,
-                 "ibuilder",
-                 "lib")
-#print "Path: %s" % os.path.abspath(p)
-sys.path.append(p)
-
-p = os.path.join(os.path.dirname(__file__),
-                 os.pardir,
-                 os.pardir,
-                 os.pardir,
-                 os.pardir,
-                 os.pardir,
-                 os.pardir,
-                 "ibuilder",
-                 "lib",
-                 "gen_scripts")
-
-#print "Path: %s" % os.path.abspath(p)
-sys.path.append(p)
-from gen_drt import GenDRT
-
-p = os.path.join(os.path.dirname(__file__),
-                 os.pardir,
-                 os.pardir,
-                 os.pardir,
-                 os.pardir,
-                 os.pardir,
-                 os.pardir,
-                 "cbuilder",
-                 "drt")
-sys.path.append(p)
-import drt as drt_controller
-from drt import DRTError
-from drt import DRTManager
-
-
+from nysa.host.userland.python.nysa import Nysa
+from nysa.cbuilder.drt import drt as drt_controller
+from nysa.cbuilder.drt.drt import DRTError
+from nysa.cbuilder.drt.drt import DRTManager
+from nysa.ibuilder.lib.gen_scripts.gen_drt import GenDRT
 
 
 class FauxNysa(Nysa):

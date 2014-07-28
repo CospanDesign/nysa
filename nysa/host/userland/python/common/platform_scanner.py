@@ -30,17 +30,12 @@ from inspect import ismodule
 from PyQt4.Qt import *
 from PyQt4.QtCore import *
 
-from status import ClStatus
-
 from nplatform.nplatform import Platform
 
 class PlatformScanner(QObject):
     def __init__(self, status = None):
         super(PlatformScanner, self).__init__()
-        if status is None:
-            self.status = ClStatus()
-        else:
-            self.status = status
+        self.status = status
         self.n = None
         self.uid = None
         self.dev_type = None

@@ -36,8 +36,8 @@ import os
 import json
 
 from gen import Gen
-import utils
-import verilog_utils as vutils
+from nysa.ibuilder.lib import utils
+import nysa.ibuilder.lib.verilog_utils as vutils
 from string import Template
 from string import atoi
 

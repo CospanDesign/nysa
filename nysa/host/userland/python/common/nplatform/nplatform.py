@@ -39,6 +39,7 @@ class Platform(object):
     def __init__(self, status = None):
         super (Platform, self).__init__()
         self.dev_dict = {}
+        self.status = status
         if status is None:
             self.status = ClStatus()
         else:

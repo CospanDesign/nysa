@@ -24,13 +24,9 @@ import os
 
 from array import array as Array
 
-sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir))
-
-import nysa
-from nysa import Nysa
-from nysa import NysaCommError
-from nysa import NysaError
+from nysa.host.userland.python.nysa import Nysa
+from nysa.host.userland.python.nysa import NysaCommError
+from nysa.host.userland.python.nysa import NysaError
 
 
 class Driver(object):

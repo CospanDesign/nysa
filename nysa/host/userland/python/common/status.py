@@ -66,6 +66,7 @@ class _ClStatus(object):
         #print "Staring CL Status"
         self.level = StatusLevel.VERBOSE
 
+
     def Verbose (self, c, text):
         if self.CheckLevel(StatusLevel.VERBOSE):
             self.status_output("Verbose", c, text, color = cyan)
@@ -191,6 +192,7 @@ class _Status(QWidget):
         QWidget.__init__(self)
         self.level = StatusLevel.VERBOSE
         self.init_ui()
+        print "inspace: %s" % str(inspect.stack()[2])
        
         self.Verbose(self, "Hello World!")
 
