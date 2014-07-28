@@ -22,9 +22,10 @@ interacts with a hardware description language.
 
 * A flexible I/O peripheral expansion for a host.
   * This host can be a desktop computer a laptop an Android tablet or even a microcontroller
-* A platform to build interfaces to complex sensors.
+* A platform to build interfaces to complex sensors and algorithms.
   * Cameras
   * LCD screens
+  * Process data
 
 ##What Nysa is NOT:
 
@@ -35,39 +36,24 @@ interacts with a hardware description language.
 
 ##Description:
 
-The suite is split into three subgroups, although Nysa can be run entirely from the command line Nysa was designed to be used as a GUI plugin for IDE. (Specifically Ninja-IDE)
+The suite is split into three subgroups: cbuilder (generates verilog modules), ibuilder (generates FPGA images) and host (host side software used to interface with an FPGA)
 
 ###cbuilder (Core Builder): Generates individual cores to interface with a sensor, IC, or process an algorithm.
-* there are tools and scripts provided to simplify the process of synthesizing and simulating a verilog module
-* the cores are used by ibuilder to generate FPGA images that will call on a
-    created core in a predefined manner.
-  * For example: perhaps a sensor simply requires an I2C interface. The user
-    can specify this in the metadata and the host will read this metadata and
-    use either a python script or even a kernel driver to interface with this
-    device
+* Utilities to create Wishbone slave modules that can be used within a Nysa image.
+  * The created module includes.
+    * An actual verilog module the user edits.
+    * Software tools to build, simulate and view the waveform of the simulations using gtkwave.
+    * A simple mechanism that allows users to easily introduce different stimulus on the core.
+* The verilog modules generated here are fed into ibuilder to be used within an actual FPGA image.
 
 ###ibuilder (Image Builder): Generates FPGA images to go onto a board
-* Generates PlanAhead projects and associated scripts to build a bit or
-  binary file that can be used to program an FPGA
-* users can use either the command line interface or the graphical user
-  interface (GUI) called "Image Builder"
+* Using only a configuration file users can generate an FPGA image specifying the behavior they want from the FPGA.
+* Generates PlanAhead projects and associated scripts to build a bit or binary file that can be used to program an FPGA.
 
 ###Host: Host side software
-* this section is split up into two sections
-  * kernelland: low level code designed to facilitate communication between
-    the FPGA and the kernel itself
-    * the benefit of this model is that end-users will interact with devices
-      in the same way they would interact
-      with other devices on their computer
-      * For example: When you attach a usb->serial device on your computer
-        a new device appears in the /dev directory. When an Nysa based
-        design is attached to a Linux box the kernel will behave in a similar
-        fashion and generate devices
-        inside the /dev directory.
-  * userland: the end user will use the scripts and libraries here to interact
-    with their script
-    * interaction can be accomplished by communicating directly with the FPGA
-      or by means of a standard linux device
-      using the procedure described in the kernelland portion
+* Interface with an FPGA image using Python or c. An simple low level API is defined to detect and interact with an FPGA board.
+* Users can simply plug in an FPGA board, such as Dionysus, and the host computer can query the FPGA for it's behavior.
+* Writing drivers for a module is as simple as creating a Python module or a C library.
+* Writing applications for Nysa based FPGAs are simpler than writing software to control native components on a desktop, laptop or an embedded device.
 
 
