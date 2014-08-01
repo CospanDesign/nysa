@@ -6,30 +6,21 @@ import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
-from ibuilder.lib import utils
+from nysa.ibuilder.lib import utils
+
+import json
+
+GPIO_TAGS = json.load(open(os.path.join(os.path.dirname(__file__), "mock", "gpio_module_tags.txt"), 'r'))
+SDRAM_TAGS = json.load(open(os.path.join(os.path.dirname(__file__), "mock", "sdram_module_tags.txt"), 'r'))
 
 class Test (unittest.TestCase):
     """Unit test for utils"""
- 
+
     def setUp(self):
         base = os.path.join( os.path.dirname(__file__),
-                             os.pardir)
+                            os.pardir)
         self.nysa_base = os.path.abspath(base)
         self.dbg = False
-
-    def test_arbitor_count(self):
-        """gets the module tags and detects if there is any arbitor hosts"""
-        filename = utils.find_rtl_file_location("wb_gpio.v")
-        tags = utils.get_module_tags(filename, debug=self.dbg)
-        self.assertEqual(len(tags["arbitor_masters"]), 0)
-        
-        filename = utils.find_rtl_file_location("wb_console.v")
-        tags = utils.get_module_tags(filename, debug=self.dbg)
-        self.assertEqual(len(tags["arbitor_masters"]), 2)
-
-    def test_create_dir(self):
-        """create a directory"""
-        result = utils.create_dir(os.path.join(os.path.expanduser("~"), "sandbox", "temp"))
 
     def test_remove_comments(self):
         """try and remove all comments from a buffer"""
@@ -69,7 +60,7 @@ class Test (unittest.TestCase):
             testfile.close()
         except:
             result = False
-       
+
         self.assertEqual(result, True)
 
     def test_find_rtl_file_location_user_cbuilder(self):
@@ -83,7 +74,7 @@ class Test (unittest.TestCase):
         except IOError, err:
             print "Failed to write file" + str(err)
             return
-       
+
         result = utils.find_rtl_file_location(  "temp.v",
                                             [os.path.expanduser("~/sandbox")],
                                             debug=False)
@@ -94,130 +85,38 @@ class Test (unittest.TestCase):
             testfile.close()
         except:
             result = False
-        
+
         self.assertEqual(result, True)
 
 
 
     def test_resolve_path(self):
         """given a filename with or without the ~ return a filename with the ~ expanded"""
-  
+
         filename1 = "/filename1"
         filename = utils.resolve_path(filename1)
-        #print "first test: " + filename
-        #if (filename == filename1):
-      #   print "test1: they are equal!"
         self.assertEqual(filename, "/filename1")
-  
+
         filename2 = "~/filename2"
         filename = utils.resolve_path(filename2)
         correct_result = os.path.expanduser("~") + "/filename2"
-        #print "second test: " + filename + " should equal to: " + correct_result
-        #if (correct_result == filename):
-      #   print "test2: they are equal!"
         self.assertEqual(correct_result, filename)
         filename = filename.strip()
- 
-    def test_read_slave_tags(self):
-        """try and extrapolate all info from the slave file"""
-  
-        filename = utils.find_rtl_file_location("wb_gpio.v")
-        drt_keywords = [
-          "DRT_ID",
-          "DRT_FLAGS",
-          "DRT_SIZE"
-        ]
-        tags = utils.get_module_tags(filename, keywords = drt_keywords, debug=self.dbg)
-  
-        io_types = [
-          "input",
-          "output",
-          "inout"
-        ]
-        #
-        #for io in io_types:
-        # for port in tags["ports"][io].keys():
-        #   print "Ports: " + port
-  
-        self.assertEqual(True, True)
 
-    def test_read_slave_tags_with_params(self):
-        """some verilog files have a paramter list"""
- 
-        filename = os.path.join(self.nysa_base,
-                                "cbuilder",
-                                "verilog",
-                                "wishbone",
-                                "slave",
-                                "wb_gpio",
-                                "rtl",
-                                "wb_gpio.v")
-        drt_keywords = [
-          "DRT_ID",
-          "DRT_FLAGS",
-          "DRT_SIZE"
-        ]
-        tags = utils.get_module_tags(filename, keywords = drt_keywords, debug=self.dbg)
- 
-        io_types = [
-          "input",
-          "output",
-          "inout"
-        ]
-        #
-        #for io in io_types:
-        # for port in tags["ports"][io].keys():
-        #   print "Ports: " + port
- 
-        if self.dbg:
-            print "\n\n\n\n\n\n"
-            print "module name: " + tags["module"]
-            print "\n\n\n\n\n\n"
- 
-        self.assertEqual(tags["module"], "wb_gpio")
-
-    def test_read_slave_tags_with_params_lax(self):
-        """test the LAX for the parameters"""
-        #self.dbg = True
-       
-        base_dir = os.getenv("SAPLIB_BASE")
-        filename = os.path.join( self.nysa_base,
-                                "cbuilder",
-                                "verilog",
-                                "wishbone",
-                                "slave",
-                                "wb_logic_analyzer",
-                                "rtl",
-                                "wb_logic_analyzer.v")
-        drt_keywords = [
-          "DRT_ID",
-          "DRT_FLAGS",
-          "DRT_SIZE"
-        ]
-        tags = utils.get_module_tags(filename, keywords = drt_keywords, debug=self.dbg)
-       
-        io_types = [
-          "input",
-          "output",
-          "inout"
-        ]
-        #
-        #for io in io_types:
-        # for port in tags["ports"][io].keys():
-        #   print "Ports: " + port
-       
-        if self.dbg:
-            print "\n\n\n\n\n\n"
-            print "module name: " + tags["module"]
-            print "\n\n\n\n\n\n"
-       
-        #self.dbg = False
-        self.assertEqual(tags["module"], "wb_logic_analyzer")
 
     def test_read_user_parameters(self):
+        print "Read Parameters"
         filename = utils.find_rtl_file_location("wb_gpio.v")
-        tags = utils.get_module_tags(filename, debug=self.dbg)
-       
+        #tags = vutils.get_module_tags(filename, debug=self.dbg)
+        tags = GPIO_TAGS
+        #print "GPIO TAGS: %s" % str(GPIO_TAGS)
+
+        #f = open("gpio_module_tags.txt", 'w')
+        #print "Tags: %s" % str(tags)
+        #f.write(json.dumps(tags))
+        #f.close()
+
+
         keys = tags["parameters"].keys()
         if self.dbg:
             print "reading the parameters specified by the user"
@@ -229,6 +128,7 @@ class Test (unittest.TestCase):
     def test_read_hard_slave_tags(self):
         """try and extrapolate all info from the slave file"""
         filename = os.path.join(  self.nysa_base,
+                                  "nysa",
                                   "cbuilder",
                                   "verilog",
                                   "wishbone",
@@ -241,18 +141,17 @@ class Test (unittest.TestCase):
           "DRT_FLAGS",
           "DRT_SIZE"
         ]
-        tags = utils.get_module_tags(filename, keywords = drt_keywords, debug=self.dbg)
-       
+
+
+        tags = SDRAM_TAGS
+        #print "Tags: %s" % str(tags)
+
         io_types = [
           "input",
           "output",
           "inout"
         ]
-        #
-        #for io in io_types:
-        # for port in tags["ports"][io].keys():
-        #   print "Ports: " + port
-       
+
         self.assertEqual(True, True)
 
     def test_get_net_names(self):
@@ -269,27 +168,27 @@ class Test (unittest.TestCase):
         filename = "dionysus.ucf"
         clock_rate = utils.read_clock_rate(filename, debug = self.dbg)
         self.assertEqual(int(clock_rate), 50000000)
- 
+
     def test_read_clk_with_timespec(self):
         filename = "lx9.ucf"
         clock_rate = utils.read_clock_rate(filename, debug = self.dbg)
         self.assertEqual(int(clock_rate), 100000000)
- 
- 
+
+
     def test_is_module_in_file(self):
         module_name = "uart"
         filename = "wb_gpio.v"
         result = utils.is_module_in_file(filename, module_name, debug = self.dbg)
         self.assertEqual(result, False)
-       
+
         module_name = "wb_gpio"
         filename = "wb_gpio.v"
         result = utils.is_module_in_file(filename, module_name, debug = self.dbg)
         self.assertEqual(result, True)
- 
+
     def test_get_slave_list(self):
         slave_list = utils.get_slave_list(debug = self.dbg)
- 
+
     def test_find_module_filename(self):
         module_name = "wb_spi"
         result = utils.find_module_filename(module_name, debug = self.dbg)
