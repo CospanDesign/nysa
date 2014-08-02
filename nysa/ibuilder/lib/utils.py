@@ -66,6 +66,26 @@ from ibuilder_error import IBuilderError
 
 nysa_base = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 
+
+def get_nysa_base():
+    """Returns the base directory of nysa using the configuration file in the
+      the user directory
+
+      Args:
+        Nothing
+
+      Returns:
+        Absolute directory of the Nysa base directory. This requires the user to
+        setup Nysa by running the 'init_settings.py' in the Nysa base directory
+
+      Raises:
+        NysaEnvironmentError
+    """
+    base = os.path.dirname(__file__)
+    base = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
+    return nysa_base
+
+
 def create_dir(dirname, debug=False):
     """Generate a directory with the specified location
 
@@ -153,12 +173,12 @@ def remove_comments(buf="", debug=False):
 
     return bufy
 
-def find_rtl_file_location(filename="", user_cbuilder_paths = [], debug=False):
+def find_rtl_file_location(filename="", user_paths = [], debug=False):
     """Finds a RTL file in the cbuilder rtl directory.
 
     Args:
         filename: the name of a verilog file to search for
-        user_cbuilder_paths: list of paths to search for cbuilder projects
+        user_paths: list of paths to search for cbuilder projects
 
     Returns:
         If found, The absolute path of the verilog module file,
@@ -174,73 +194,63 @@ def find_rtl_file_location(filename="", user_cbuilder_paths = [], debug=False):
         if filename in names:
             return os.path.join(root, filename)
 
-    if debug: print "Looking in custom path: %s" % user_cbuilder_paths
+    if debug: print "Looking in custom path: %s" % user_paths
 
-    for path in user_cbuilder_paths:
+    for path in user_paths:
         for root, dirs, names in os.walk(path):
             if filename in names:
                 return os.path.join(root, filename)
 
-    raise ModuleNotFound("File: %s not found, looked in %s and the default location %s" % (filename, str(user_cbuilder_paths), base_location))
+    raise ModuleNotFound("File: %s not found, looked in %s and the default location %s" % (filename, str(user_paths), base_location))
 #XXX: This should probably return none, and not an empty string upon failure
 #XXX:   perhaps even raise an error
 
 
-def get_nysa_base():
-    """Returns the base directory of nysa using the configuration file in the
-      the user directory
-
-      Args:
-        Nothing
-
-      Returns:
-        Absolute directory of the Nysa base directory. This requires the user to
-        setup Nysa by running the 'init_settings.py' in the Nysa base directory
-
-      Raises:
-        NysaEnvironmentError
-    """
-    base = os.path.dirname(__file__)
-    base = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
-    return nysa_base
-
-def get_board_names (debug = False):
+def get_board_names (user_paths = [], debug = False):
     """Returns a list of all the board names"""
     base_location = nysa_base
     base_location = os.path.join(base_location, "ibuilder", "boards")
     boards = []
 
-    for root, dirs, names in os.walk(base_location):
-        if debug:
-            print "Dirs: " + str(dirs)
+    board_locations = [base_location]
+    board_locations.extend(user_paths)
 
-        for bn in dirs:
-            boards.append(bn)
+    for bl in board_locations:
+        for root, dirs, names in os.walk(bl):
+            if debug:
+                print "Dirs: " + str(dirs)
+
+            for bn in dirs:
+                boards.append(bn)
 
     return boards
 
-def get_constraint_filenames (board_name, debug = False):
+def get_constraint_filenames (board_name, user_paths = [], debug = False):
     """Returns a list of ucf files for the specified board name"""
     board_dir = os.path.join(nysa_base, "ibuilder", "boards", board_name)
-    if debug: print "Board dir: %s" % board_dir
     cfiles = []
-    for root, dirs, names in os.walk(board_dir):
-        if debug:
-            print "names: " + str(names)
+    board_locations = [board_dir]
+    board_locations.extend(user_paths)
 
-        for name in names:
-            s = name.partition(".")[2].lower()
-
+    for bl in board_locations:
+        if debug: print "Board dir: %s" % bl
+        for root, dirs, names in os.walk(bl):
             if debug:
-                print "last: " + s
-            if s == "ucf":
-                cfiles.append(name)
+                print "names: " + str(names)
+
+            for name in names:
+                s = name.partition(".")[2].lower()
+
                 if debug:
-                    print "constraint file: %s" % name
+                    print "last: " + s
+                if s == "ucf":
+                    cfiles.append(name)
+                    if debug:
+                        print "constraint file: %s" % name
 
     return cfiles
 
-def get_board_config (board_name, debug = False):
+def get_board_config (board_name, user_paths = [], debug = False):
     """Returns a dictionary of board specific information
 
     Args:
@@ -255,6 +265,8 @@ def get_board_config (board_name, debug = False):
     """
     board_dir = os.path.join(nysa_base, "ibuilder", "boards")
     if debug: print "Board dir: %s" % board_dir
+    board_locations = [board_dir]
+    board_locations.extend(user_paths)
 
     filename = ""
     buf = ""
@@ -262,19 +274,20 @@ def get_board_config (board_name, debug = False):
 
     if debug: print "Looking for: " + board_name
 
-    for root, dirs, names in os.walk(board_dir):
-        if debug:
-            print "Dirs: " + str(dirs)
-
-        if board_name in dirs:
+    for bl in board_locations:
+        for root, dirs, names in os.walk(bl):
             if debug:
-                print "Found the directory"
+                print "Dirs: " + str(dirs)
 
-            filename = os.path.join(root, board_name)
-            filename += "/config.json"
-            if debug:
-                print "filename: %s" % filename
-            break
+            if board_name in dirs:
+                if debug:
+                    print "Found the directory"
+
+                filename = os.path.join(root, board_name)
+                filename += "/config.json"
+                if debug:
+                    print "filename: %s" % filename
+                break
 
     if len(filename) == 0:
         if debug:
@@ -301,7 +314,7 @@ def get_board_config (board_name, debug = False):
      #for debug
     return board_dict
 
-def get_net_names(constraint_filename, debug = False):
+def get_net_names(filepath, debug = False):
     """Gets a list of net in a given constraint file
 
     Args:
@@ -314,20 +327,22 @@ def get_net_names(constraint_filename, debug = False):
     Raises:
         IBuilder Error
     """
-    filepath = get_constraint_file_path(constraint_filename)
     return constraint_utils.get_net_names(filepath)
 
-def get_constraint_file_path(constraint_filename, debug = False):
+def get_constraint_file_path(constraint_filename, user_paths = [], debug = False):
     board_dir = os.path.join(nysa_base, "ibuilder", "boards")
+    board_locations = [board_dir]
+    board_locations.extend(user_paths)
     filename = ""
     buf = ""
     clock_rate = ""
     if debug: print "Looking for: " + constraint_filename
-    for root, dirs, names in os.walk(board_dir):
-        if debug: print "name: " + str(names)
-        if constraint_filename in names:
-            if debug: print "found the file!"
-            return os.path.join(root, constraint_filename)
+    for bl in board_locations:
+        for root, dirs, names in os.walk(bl):
+            if debug: print "name: " + str(names)
+            if constraint_filename in names:
+                if debug: print "found the file!"
+                return os.path.join(root, constraint_filename)
 
     if (len(filename) == 0):
         cbuilder_dir = os.path.join(nysa_base, "cbuilder", "verilog")
@@ -340,14 +355,14 @@ def get_constraint_file_path(constraint_filename, debug = False):
     raise IBuilderError("Constraint File: %s wasn't found, looked in board directories and core directories", constraint_filename)
 
 
-def read_clock_rate(constraint_filename, debug = False):
+def read_clock_rate(constraint_filepath, debug = False):
     """Returns a string of the clock rate
 
     Searches through the specified constraint file to determine if there
     is a specified clock. If no clock is specified then return 50MHz = 50000000
 
     Args:
-      constraint_filename: the name of the constraint file to search through
+      constraint_filepath: the name of the constraint file to search through
 
     Returns:
       A string representation of the clock rate
@@ -356,8 +371,7 @@ def read_clock_rate(constraint_filename, debug = False):
     Raises:
       Nothing
     """
-    filepath = get_constraint_file_path(constraint_filename)
-    return constraint_utils.read_clock_rate(filepath)
+    return constraint_utils.read_clock_rate(constraint_filepath)
 
 def _get_slave_list(directory, debug = False):
     """Gets a list of slaves given a directory"""
@@ -405,12 +419,7 @@ def _get_slave_list(directory, debug = False):
 
     return slave_list
 
-
-
-
-
-
-def get_slave_list(bus = "wishbone", user_cbuilder_paths = [], debug = False):
+def get_slave_list(bus = "wishbone", user_paths = [], debug = False):
     """Gets a list of slaves
 
     Args:
@@ -431,9 +440,10 @@ def get_slave_list(bus = "wishbone", user_cbuilder_paths = [], debug = False):
     directory = os.path.join(nysa_base, "cbuilder", "verilog", bus, "slave")
     file_list = _get_file_recursively(directory)
     slave_list = _get_slave_list(directory, debug=debug)
-    for path in user_cbuilder_paths:
-        print "utils: Checking: %s" % path
+    for path in user_paths:
+        #print "utils: Checking: %s" % path
         slave_list += _get_slave_list(path, debug=debug)
+
     return slave_list
 
 
@@ -505,9 +515,6 @@ def is_module_in_file(filename, module_name, debug = False):
 
 
 def _find_module_filename (directory, module_name, debug = False):
-    cwd = os.getcwd()
-
-    os.chdir(directory)
     filename = ""
 
     verilog_files = []
@@ -529,35 +536,27 @@ def _find_module_filename (directory, module_name, debug = False):
             filename = f
             break
 
-    os.chdir (cwd)
     if len(filename) == 0:
         raise ModuleNotFound("Searched in standard hdl/rtl location for file \
             containing the module %s" % module_name)
     return filename
 
-def find_module_filename (module_name, user_cbuilder_paths = [], debug = False):
+def find_module_filename (module_name, user_paths = [], debug = False):
     cwd = os.getcwd()
     filename = ""
     if debug: print "nysa base: %s" % nysa_base
     base = os.path.join(nysa_base, "cbuilder", "verilog")
-    if debug: print "Search directory: %s" % base
-    try:
-        return _find_module_filename(base, module_name, debug = debug)
-    except ModuleNotFound, mnf:
-        if debug: print "Did not find the file in nysa directory"
-    finally:
-        os.chdir(cwd)
+    paths = [base]
+    paths.extend(user_paths)
 
-    for path in user_cbuilder_paths:
+    if debug: print "Search directory: %s" % str(paths)
+    for p in paths:
         try:
-            return _find_module_filename(path, module_name, debug = debug)
-        except ModuleNotFound, mnf:
-            pass
-        finally:
-            os.chdir(cwd)
+            return _find_module_filename(p, module_name, debug = debug)
+        except ModuleNotFound as mnf:
+            continue
 
-    os.chdir(cwd)
-    raise ModuleNotFound ("Module %s not found: Searched in Nysa directory: %s as well as the following directories %s" % (module_name, base , str(user_cbuilder_paths)))
+    raise ModuleNotFound ("Module %s not found: Searched in Nysa directory: %s as well as the following directories %s" % (module_name, base , str(user_paths)))
 
 
 def _get_file_recursively(directory):
