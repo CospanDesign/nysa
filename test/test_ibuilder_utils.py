@@ -22,6 +22,12 @@ class Test (unittest.TestCase):
         self.nysa_base = os.path.abspath(base)
         self.dbg = False
 
+    def test_create_dir(self):
+        pass
+
+    def test_get_nysa_base(self):
+        pass
+
     def test_remove_comments(self):
         """try and remove all comments from a buffer"""
         bufin = "not comment/*comment\n*/\n//comment\n/*\nabc\n*/something//comment"
@@ -46,9 +52,8 @@ class Test (unittest.TestCase):
         """
         gets all the board names
         """
-        boards = utils.get_board_names()
+        boards = utils.get_board_names(False)
         self.assertIn("dionysus", boards)
-
 
     def test_find_rtl_file_location(self):
         """give a filename that should be in the RTL"""
