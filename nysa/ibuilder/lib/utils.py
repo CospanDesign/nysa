@@ -352,7 +352,7 @@ def get_constraint_file_path(constraint_filename, user_paths = [], debug = False
                 if debug: print "found the file!"
                 return os.path.join(root, constraint_filename)
 
-    raise IBuilderError("Constraint File: %s wasn't found, looked in board directories and core directories", constraint_filename)
+    raise IBuilderError("Constraint File: %s wasn't found, looked in board directories and core directories" % constraint_filename)
 
 
 def read_clock_rate(constraint_filepath, debug = False):

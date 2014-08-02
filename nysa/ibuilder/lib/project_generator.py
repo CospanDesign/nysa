@@ -148,31 +148,37 @@ class ProjectGenerator:
 
         board_dict = utils.get_board_config(self.project_tags["board"])
         cfiles = []
+        cpaths = []
 
         pt = self.project_tags
         if "constraint_files" in pt.keys():
             cfiles = pt["constraint_files"]
+            for c in cfiles:
+                cpaths.append(utils.get_constraint_file_path(c))
         
         #if the user didn't specify any constraint files
         #load the default
         if len(cfiles) == 0:
             if debug: print "board dict: %s" % str(board_dict)
             cfiles = board_dict["default_constraint_files"]
+            for c in cfiles:
+                cpaths.append(utils.get_constraint_file_path(c))
+
         
         #extrapolate the bus template
 #XXX: Need to check all the constraint files
         clock_rate = ""
-        for c in cfiles:
+        for c in cpaths:
             clock_rate = utils.read_clock_rate(c)
             if len(clock_rate) > 0:
                 #First place I can find the clock rate drop out
                 break
-        
+
         if len (clock_rate) == 0:
             raise PGE("Unable to find the clock rate in any of the constraint"
-                      "files: %s" % str(cfiles))
+                      "files: %s" % str(cpaths))
 
-        self.project_tags["CLOCK_RATE"] = utils.read_clock_rate(cfiles[0])
+        self.project_tags["CLOCK_RATE"] = utils.read_clock_rate(cpaths[0])
         self.read_template_file(self.project_tags["TEMPLATE"])
 
         #set all the tags within the filegen structure
@@ -227,6 +233,7 @@ class ProjectGenerator:
             sap_abs_base = os.getenv("SAPLIB_BASE")
             abs_proj_base = utils.resolve_path(self.project_tags["BASE_DIR"])
             constraint_path = self.get_constraint_path(constraint_fname)
+            #constraint_path = constraint_fname
             if len(constraint_path) == 0:
                 print ("Couldn't find constraint: %s, searched in the current directory and %s/hdl/%s" %
                     (constraint_fname, sap_abs_base, self.project_tags["board"]))
