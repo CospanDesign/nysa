@@ -67,259 +67,239 @@ from ibuilder_error import IBuilderError
 nysa_base = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
 
 def create_dir(dirname, debug=False):
-  """Generate a directory with the specified location
+    """Generate a directory with the specified location
 
-  Generate a directory even if the parent directories don't exist
+    Generate a directory even if the parent directories don't exist
 
-  Args:
-    dirname: name of the directory to create
-      example: "~/project"
+    Args:
+      dirname: name of the directory to create
+        example: "~/project"
 
-  Returns:
-    True = Success
-    False = Fail
+    Returns:
+      True = Success
+      False = Fail
 
-  Raises:
-    os.error: failed to create directory
-  """
+    Raises:
+      os.error: failed to create directory
+    """
 
-  if dirname.startswith("~"):
-    dirname = os.path.expanduser(dirname)
-  if os.path.exists(dirname):
+    if dirname.startswith("~"):
+        dirname = os.path.expanduser(dirname)
+    if os.path.exists(dirname):
+        return
+    os.makedirs(dirname)
     return
-  os.makedirs(dirname)
-  return
 
 #XXX: Is there a native function within Python that does this?
 def resolve_path(filename):
-  """Returns filename with an absolute path.
+    """Returns filename with an absolute path.
 
-  Args:
-    filename: String of the file, this could be a relative path
-      or an absolute path
+    Args:
+      filename: String of the file, this could be a relative path
+        or an absolute path
 
-  Returns:
-    A filename with an absolute path
+    Returns:
+      A filename with an absolute path
 
-  Raises:
-    Nothing
-  """
-  if (filename.startswith("~")):
-    filename = os.path.expanduser("~") + filename.strip("~")
-  return filename
+    Raises:
+      Nothing
+    """
+    if filename.startswith("~"):
+        filename = os.path.expanduser("~") + filename.strip("~")
+    return filename
 
 def remove_comments(buf="", debug=False):
-  """Remove comments from a buffer.
+    """Remove comments from a buffer.
 
-  Args:
-    buf = Buffer to remove the comments from
+    Args:
+        buf = Buffer to remove the comments from
 
-  Returns:
-    A buffer with no verilog comments in it
+    Returns:
+        A buffer with no verilog comments in it
 
-  Raises:
-    Nothing
-  """
-  #first pass remove the '//' comments
-  lines = buf.splitlines()
-  if debug:
-    print "buf:\n" + buf
-  bufx = ""
-  for line in lines:
-    line = line.partition("//")[0]
-    bufx = bufx + line + "\n"
-  if debug:
-    print "bufx:\n" + bufx
+    Raises:
+        Nothing
+    """
+    #first pass remove the '//' comments
+    lines = buf.splitlines()
+    if debug:
+        print "buf:\n" + buf
+    bufx = ""
+    for line in lines:
+        line = line.partition("//")[0]
+        bufx = bufx + line + "\n"
+    if debug:
+        print "bufx:\n" + bufx
 
-  if debug:
-    print "working on /* */ comments\n\n\n"
-  #get rid of /*, */ comments
-  buf_part = bufx.partition("/*")
-  pre_comment = ""
-  post_comment = ""
-  bufy = bufx
-  while (len(buf_part[1]) != 0):
-    pre_comment = buf_part[0]
-    post_comment = buf_part[2].partition("*/")[2]
-    #print "pre_comment: " + pre_comment
-    #print "post comment: " + post_comment
-    bufy = pre_comment + post_comment
-    buf_part = bufy.partition("/*")
+    if debug:
+        print "working on /* */ comments\n\n\n"
+    #get rid of /*, */ comments
+    buf_part = bufx.partition("/*")
     pre_comment = ""
     post_comment = ""
+    bufy = bufx
+    while (len(buf_part[1]) != 0):
+        pre_comment = buf_part[0]
+        post_comment = buf_part[2].partition("*/")[2]
+        #print "pre_comment: " + pre_comment
+        #print "post comment: " + post_comment
+        bufy = pre_comment + post_comment
+        buf_part = bufy.partition("/*")
+        pre_comment = ""
+        post_comment = ""
 
-  if debug:
-    print "buf:\n" + bufy
+    if debug:
+        print "buf:\n" + bufy
 
-  return bufy
+    return bufy
 
 def find_rtl_file_location(filename="", user_cbuilder_paths = [], debug=False):
-  """Finds a RTL file in the cbuilder rtl directory.
+    """Finds a RTL file in the cbuilder rtl directory.
 
-  Args:
-    filename: the name of a verilog file to search for
-    user_cbuilder_paths: list of paths to search for cbuilder projects
+    Args:
+        filename: the name of a verilog file to search for
+        user_cbuilder_paths: list of paths to search for cbuilder projects
 
-  Returns:
-    If found, The absolute path of the verilog module file,
-    Otherwise an empty string
+    Returns:
+        If found, The absolute path of the verilog module file,
+        Otherwise an empty string
 
-  Raises:
-    Nothing
-  """
-   #Get the base directory of Nysa and look in the cbuilder director
-  base_location = nysa_base
-  base_location = os.path.join(base_location, "cbuilder", "verilog")
-#  print "rtl dir: " + base_location
-  for root, dirs, names in os.walk(base_location):
-    if filename in names:
-#      print "Filename: " + filename
-      return os.path.join(root, filename)
+    Raises:
+      Nothing
+    """
+     #Get the base directory of Nysa and look in the cbuilder director
+    base_location = nysa_base
+    base_location = os.path.join(base_location, "cbuilder", "verilog")
+    for root, dirs, names in os.walk(base_location):
+        if filename in names:
+            return os.path.join(root, filename)
 
-  if debug: print "Looking in custom path: %s" % user_cbuilder_paths
+    if debug: print "Looking in custom path: %s" % user_cbuilder_paths
 
-  for path in user_cbuilder_paths:
-    for root, dirs, names in os.walk(path):
-      if filename in names:
-        return os.path.join(root, filename)
+    for path in user_cbuilder_paths:
+        for root, dirs, names in os.walk(path):
+            if filename in names:
+                return os.path.join(root, filename)
 
-  raise ModuleNotFound("File: %s not found, looked in %s and the default location %s" % (filename, str(user_cbuilder_paths), base_location))
+    raise ModuleNotFound("File: %s not found, looked in %s and the default location %s" % (filename, str(user_cbuilder_paths), base_location))
 #XXX: This should probably return none, and not an empty string upon failure
 #XXX:   perhaps even raise an error
 
 
 def get_nysa_base():
-  """Returns the base directory of nysa using the configuration file in the
-    the user directory
+    """Returns the base directory of nysa using the configuration file in the
+      the user directory
 
-    Args:
-      Nothing
+      Args:
+        Nothing
 
-    Returns:
-      Absolute directory of the Nysa base directory. This requires the user to
-      setup Nysa by running the 'init_settings.py' in the Nysa base directory
+      Returns:
+        Absolute directory of the Nysa base directory. This requires the user to
+        setup Nysa by running the 'init_settings.py' in the Nysa base directory
 
-    Raises:
-      NysaEnvironmentError
-  """
-  base = os.path.dirname(__file__)
-  base = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
-  #print "Nysa Base: %s" % base
-  #base = os.path.abspath(os.path.join(base, os.pardir, os.pardir))
-
-  """
-  try:
-    f = open(path)
-    s = f.read()
-    nysa_config = json.loads(s)
-    f.close()
-    #print "Opened up the configuration file"
-
-  except IOError:
-    raise NysaEnvironmentError("Error user has not set up configuration file,\
-    run 'init_settings.py' in nysa base directory")
-
-  #Get the base directory of Nysa and look in the cbuilder director
-  return nysa_config["dir"]
-  """
-  return nysa_base
+      Raises:
+        NysaEnvironmentError
+    """
+    base = os.path.dirname(__file__)
+    base = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
+    return nysa_base
 
 def get_board_names (debug = False):
-  """Returns a list of all the board names"""
-  base_location = nysa_base
-  base_location = os.path.join(base_location, "ibuilder", "boards")
-  boards = []
+    """Returns a list of all the board names"""
+    base_location = nysa_base
+    base_location = os.path.join(base_location, "ibuilder", "boards")
+    boards = []
 
-  for root, dirs, names in os.walk(base_location):
-    if debug:
-      print "Dirs: " + str(dirs)
+    for root, dirs, names in os.walk(base_location):
+        if debug:
+            print "Dirs: " + str(dirs)
 
-    for bn in dirs:
-      boards.append(bn)
+        for bn in dirs:
+            boards.append(bn)
 
-  return boards
+    return boards
 
 def get_constraint_filenames (board_name, debug = False):
-  """Returns a list of ucf files for the specified board name"""
-  board_dir = os.path.join(nysa_base, "ibuilder", "boards", board_name)
-  if debug: print "Board dir: %s" % board_dir
-  cfiles = []
-  for root, dirs, names in os.walk(board_dir):
-    if debug:
-      print "names: " + str(names)
-
-    for name in names:
-      s = name.partition(".")[2].lower()
-
-      if debug:
-        print "last: " + s
-      if s == "ucf":
-        cfiles.append(name)
+    """Returns a list of ucf files for the specified board name"""
+    board_dir = os.path.join(nysa_base, "ibuilder", "boards", board_name)
+    if debug: print "Board dir: %s" % board_dir
+    cfiles = []
+    for root, dirs, names in os.walk(board_dir):
         if debug:
-          print "constraint file: %s" % name
+            print "names: " + str(names)
 
-  return cfiles
+        for name in names:
+            s = name.partition(".")[2].lower()
+
+            if debug:
+                print "last: " + s
+            if s == "ucf":
+                cfiles.append(name)
+                if debug:
+                    print "constraint file: %s" % name
+
+    return cfiles
 
 def get_board_config (board_name, debug = False):
-  """Returns a dictionary of board specific information
+    """Returns a dictionary of board specific information
 
-  Args:
-    board_name: the name of the board to get the information from
-      Example: \"sycamore1\"
+    Args:
+        board_name: the name of the board to get the information from
+            Example: \"sycamore1\"
 
-  Returns:
-    A dictionary of the board configuration data
+    Returns:
+        A dictionary of the board configuration data
 
-  Raises:
-    Nothing
-  """
-  board_dir = os.path.join(nysa_base, "ibuilder", "boards")
-  if debug: print "Board dir: %s" % board_dir
+    Raises:
+        Nothing
+    """
+    board_dir = os.path.join(nysa_base, "ibuilder", "boards")
+    if debug: print "Board dir: %s" % board_dir
 
-  filename = ""
-  buf = ""
-  board_dict = {}
+    filename = ""
+    buf = ""
+    board_dict = {}
 
-  if debug: print "Looking for: " + board_name
+    if debug: print "Looking for: " + board_name
 
-  for root, dirs, names in os.walk(board_dir):
+    for root, dirs, names in os.walk(board_dir):
+        if debug:
+            print "Dirs: " + str(dirs)
+
+        if board_name in dirs:
+            if debug:
+                print "Found the directory"
+
+            filename = os.path.join(root, board_name)
+            filename += "/config.json"
+            if debug:
+                print "filename: %s" % filename
+            break
+
+    if len(filename) == 0:
+        if debug:
+            print "didn't find board config file"
+        return {}
+
+
+    #open up the config file
+    try:
+        file_in = open(filename)
+        buf = file_in.read()
+        board_dict = json.loads(buf)
+        file_in.close()
+        #XXX: This should probably raise an error to the calling function
+    except:
+        #fail
+        if debug:
+            print "failed to open file: " + filename
+        return ""
+
     if debug:
-      print "Dirs: " + str(dirs)
+        print "Opened up the board config file for %s" % (board_name)
 
-    if board_name in dirs:
-      if debug:
-        print "Found the directory"
-
-      filename = os.path.join(root, board_name)
-      filename += "/config.json"
-      if debug:
-        print "filename: %s" % filename
-      break
-
-  if len(filename) == 0:
-    if debug:
-      print "didn't find board config file"
-    return {}
-
-
-  #open up the config file
-  try:
-    file_in = open(filename)
-    buf = file_in.read()
-    board_dict = json.loads(buf)
-    file_in.close()
-#XXX: This should probably raise an error to the calling function
-  except:
-    #fail
-    if debug:
-      print "failed to open file: " + filename
-    return ""
-
-  if debug:
-    print "Opened up the board config file for %s" % (board_name)
-
-#for debug
-  return board_dict
+     #for debug
+    return board_dict
 
 def get_net_names(constraint_filename, debug = False):
     """Gets a list of net in a given constraint file
@@ -380,50 +360,50 @@ def read_clock_rate(constraint_filename, debug = False):
     return constraint_utils.read_clock_rate(filepath)
 
 def _get_slave_list(directory, debug = False):
-  """Gets a list of slaves given a directory"""
-  file_list = _get_file_recursively(directory)
+    """Gets a list of slaves given a directory"""
+    file_list = _get_file_recursively(directory)
 
-  if debug:
-    print "verilog files: "
-  for f in file_list:
     if debug:
-      print "\t" + f
+        print "verilog files: "
+    for f in file_list:
+        if debug:
+            print "\t" + f
 
-  slave_list = []
-  #check to see if the files are a wishbone slave file
-  for f in file_list:
-    fin = None
-    data = ""
-    try:
-      fin = open(f, "r")
-      data = fin.read()
-      fin.close()
+    slave_list = []
+    #check to see if the files are a wishbone slave file
+    for f in file_list:
+        fin = None
+        data = ""
+        try:
+            fin = open(f, "r")
+            data = fin.read()
+            fin.close()
 
-#XXX: This should probably allow the calling function to handle a failure
-    except IOError as err:
-      if debug:
-        print "failed to open: " + str(err)
-        return None
+        #XXX: This should probably allow the calling function to handle a failure
+        except IOError as err:
+            if debug:
+                print "failed to open: " + str(err)
+                return None
 
-    if "DRT_ID" not in data:
-      continue
-    if "DRT_FLAGS" not in data:
-      continue
-    if "DRT_SIZE" not in data:
-      continue
+        if "DRT_ID" not in data:
+            continue
+        if "DRT_FLAGS" not in data:
+            continue
+        if "DRT_SIZE" not in data:
+            continue
 
-    name = f.split("/")[-1]
-    if name == "wishbone_slave_template.v":
-      continue
+        name = f.split("/")[-1]
+        if name == "wishbone_slave_template.v":
+            continue
 
-    slave_list.append(f)
+        slave_list.append(f)
 
-  if debug:
-    print "slave list: "
-    for f in slave_list:
-      print "\t" + f
+    if debug:
+        print "slave list: "
+        for f in slave_list:
+            print "\t" + f
 
-  return slave_list
+    return slave_list
 
 
 
@@ -431,178 +411,167 @@ def _get_slave_list(directory, debug = False):
 
 
 def get_slave_list(bus = "wishbone", user_cbuilder_paths = [], debug = False):
-  """Gets a list of slaves
+    """Gets a list of slaves
 
-  Args:
-    bus: a string declaring the bus type, this can be
-      \"wishbone\" or \"axie\"
-    user_cbuider_paths: besides the normal paths to search for, also search
-    these paths for cbuilder slave projects
+    Args:
+      bus: a string declaring the bus type, this can be
+        \"wishbone\" or \"axie\"
+      user_cbuider_paths: besides the normal paths to search for, also search
+      these paths for cbuilder slave projects
 
-  Returns:
-    A list of slaves
+    Returns:
+      A list of slaves
 
-  Raises:
-    Nothing
-  """
+    Raises:
+      Nothing
+    """
 
-  if debug:
-    print "in get slave list"
-  directory = os.path.join(nysa_base, "cbuilder", "verilog", bus, "slave")
-
-  file_list = _get_file_recursively(directory)
-
-  slave_list = _get_slave_list(directory, debug=debug)
-
-  for path in user_cbuilder_paths:
-    print "utils: Checking: %s" % path
-    slave_list += _get_slave_list(path, debug=debug)
-
-  return slave_list
+    if debug:
+        print "in get slave list"
+    directory = os.path.join(nysa_base, "cbuilder", "verilog", bus, "slave")
+    file_list = _get_file_recursively(directory)
+    slave_list = _get_slave_list(directory, debug=debug)
+    for path in user_cbuilder_paths:
+        print "utils: Checking: %s" % path
+        slave_list += _get_slave_list(path, debug=debug)
+    return slave_list
 
 
 def is_module_in_file(filename, module_name, debug = False):
-  fbuf = ""
-
-  try:
-    filein = open(filename)
-    fbuf = filein.read()
-    filein.close()
-  except IOError as err:
-    if debug:
-      print "the file is not a full path, searching RTL"
+    fbuf = ""
 
     try:
-      filepath = find_rtl_file_location(filename)
-      filein = open(filepath)
-      fbuf = filein.read()
-      filein.close()
-    except IOError as err_int:
-      if debug:
-        print "%s is not in %s" % (module_name, filename)
-      return False
+        filein = open(filename)
+        fbuf = filein.read()
+        filein.close()
+    except IOError as err:
+        if debug:
+          print "the file is not a full path, searching RTL"
 
-  if debug:
-    print "Openning file: %s" % filename
-
-  fbuf = remove_comments(fbuf)
-  done = False
-  module_string = fbuf.partition("module")[2]
-
-  while (not done):
-    #remove the parameter and ports list from this possible module
-    module_string = module_string.partition("(")[0]
-    module_string = module_string.strip("#")
-    module_string = module_string.strip()
+        try:
+            filepath = find_rtl_file_location(filename)
+            filein = open(filepath)
+            fbuf = filein.read()
+            filein.close()
+        except IOError as err_int:
+            if debug:
+                print "%s is not in %s" % (module_name, filename)
+            return False
 
     if debug:
-      print "Searching through: %s" % module_string
+        print "Openning file: %s" % filename
 
-    if len(module_string) == 0:
-      if debug:
-        print "length of module string == 0"
-      done = True
+    fbuf = remove_comments(fbuf)
+    done = False
+    module_string = fbuf.partition("module")[2]
 
-    if module_string.endswith("("):
-      if debug:
-        print "module_string endswith \"(\""
-      module_string = module_string.strip("(")
+    while (not done):
+        #remove the parameter and ports list from this possible module
+        module_string = module_string.partition("(")[0]
+        module_string = module_string.strip("#")
+        module_string = module_string.strip()
 
-    if debug:
-      print "Looking at: %s" % module_string
+        if debug:
+            print "Searching through: %s" % module_string
 
-    if module_string == module_name:
-      #Success!
-      if debug:
-        print "Found %s in %s" % (module_string, filename)
-      return True
+        if len(module_string) == 0:
+            if debug:
+                print "length of module string == 0"
+            done = True
 
-    elif len(module_string.partition("module")[2]) > 0:
-      if debug:
-        print "Found another module in the file"
-      module_string = module_string.partition("module")[2]
+        if module_string.endswith("("):
+            if debug:
+                print "module_string endswith \"(\""
+            module_string = module_string.strip("(")
 
-    else:
-      done = True
+        if debug:
+            print "Looking at: %s" % module_string
 
-  return False
+        if module_string == module_name:
+            #Success!
+            if debug:
+                print "Found %s in %s" % (module_string, filename)
+            return True
+
+        elif len(module_string.partition("module")[2]) > 0:
+            if debug:
+                print "Found another module in the file"
+            module_string = module_string.partition("module")[2]
+
+        else:
+            done = True
+
+    return False
 
 
 def _find_module_filename (directory, module_name, debug = False):
-  cwd = os.getcwd()
+    cwd = os.getcwd()
 
-  os.chdir(directory)
-  filename = ""
+    os.chdir(directory)
+    filename = ""
 
-  verilog_files = []
-  #get all the verilog files
-  for root, dirs, files in os.walk(directory):
-    filelist = [os.path.join(root, fi) for fi in files if fi.endswith(".v")]
+    verilog_files = []
+    #get all the verilog files
+    for root, dirs, files in os.walk(directory):
+        filelist = [os.path.join(root, fi) for fi in files if fi.endswith(".v")]
+        for  f in filelist:
+            verilog_files.append(f)
 
-    for  f in filelist:
+    for f in verilog_files:
+        if debug:
+            print "serching through %s" % f
 
-      verilog_files.append(f)
+        if is_module_in_file(f, module_name):
+            while len(f.partition("/")[2]):
+                f = f.partition("/")[2]
+            if debug:
+                print "Found a file with the name: " + f
+            filename = f
+            break
 
-  for f in verilog_files:
-
-    if debug:
-      print "serching through %s" % f
-
-    if is_module_in_file(f, module_name):
-      while len(f.partition("/")[2]):
-        f = f.partition("/")[2]
-
-      if debug:
-        print "Found a file with the name: " + f
-      filename = f
-      break
-
-  os.chdir (cwd)
-  if len(filename) == 0:
-    raise ModuleNotFound("Searched in standard hdl/rtl location for file \
-      containing the module %s" % module_name)
-  return filename
-
-
-
+    os.chdir (cwd)
+    if len(filename) == 0:
+        raise ModuleNotFound("Searched in standard hdl/rtl location for file \
+            containing the module %s" % module_name)
+    return filename
 
 def find_module_filename (module_name, user_cbuilder_paths = [], debug = False):
-  cwd = os.getcwd()
-  filename = ""
-  if debug: print "nysa base: %s" % nysa_base
-  base = os.path.join(nysa_base, "cbuilder", "verilog")
-  if debug: print "Search directory: %s" % base
-  try:
-    return _find_module_filename(base, module_name, debug = debug)
-  except ModuleNotFound, mnf:
-    if debug: print "Did not find the file in nysa directory"
-  finally:
-    os.chdir(cwd)
-
-  for path in user_cbuilder_paths:
+    cwd = os.getcwd()
+    filename = ""
+    if debug: print "nysa base: %s" % nysa_base
+    base = os.path.join(nysa_base, "cbuilder", "verilog")
+    if debug: print "Search directory: %s" % base
     try:
-      return _find_module_filename(path, module_name, debug = debug)
+        return _find_module_filename(base, module_name, debug = debug)
     except ModuleNotFound, mnf:
-      pass
+        if debug: print "Did not find the file in nysa directory"
     finally:
-      os.chdir(cwd)
+        os.chdir(cwd)
 
-  os.chdir(cwd)
-  raise ModuleNotFound ("Module %s not found: Searched in Nysa directory: %s as well as the following directories %s" % (module_name, base , str(user_cbuilder_paths)))
+    for path in user_cbuilder_paths:
+        try:
+            return _find_module_filename(path, module_name, debug = debug)
+        except ModuleNotFound, mnf:
+            pass
+        finally:
+            os.chdir(cwd)
+
+    os.chdir(cwd)
+    raise ModuleNotFound ("Module %s not found: Searched in Nysa directory: %s as well as the following directories %s" % (module_name, base , str(user_cbuilder_paths)))
 
 
 def _get_file_recursively(directory):
-  file_dir_list = glob.glob(directory + "/*")
-  file_list = []
-  for f in file_dir_list:
-    if (os.path.isdir(f)):
-      if   (f.split("/")[-1] != "sim"):
-        file_list += _get_file_recursively(f)
-    elif (os.path.isfile(f)):
-      if f.endswith(".v"):
-        file_list.append(f)
+    file_dir_list = glob.glob(directory + "/*")
+    file_list = []
+    for f in file_dir_list:
+        if (os.path.isdir(f)):
+            if(f.split("/")[-1] != "sim"):
+                file_list += _get_file_recursively(f)
+        elif (os.path.isfile(f)):
+            if f.endswith(".v"):
+                file_list.append(f)
 
-  return file_list
+    return file_list
 
 
 def recursive_dict_name_fix(d):
