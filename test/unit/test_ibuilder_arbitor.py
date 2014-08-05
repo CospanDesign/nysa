@@ -23,128 +23,117 @@ SF_CAMERA_TAGS = json.load( open(os.path.join(os.path.dirname(__file__),
 
 class Test (unittest.TestCase):
     """Unit test for arbitor"""
- 
+
     def setUp(self):
-        base = os.path.join( os.path.dirname(__file__),
-                             os.pardir)
+        base = os.path.join(os.path.dirname(__file__),
+                            os.path.pardir,
+                            os.path.pardir)
         self.nysa_base = os.path.abspath(base)
         self.dbg = False
- 
+
     def test_get_number_of_arbitor_hosts_0(self):
         result = arbitor.get_number_of_arbitor_hosts(GPIO_TAGS, debug = self.dbg)
         self.assertEqual(len(result), 0)
- 
+
     def test_get_number_of_arbitor_hosts_1(self):
         result = arbitor.get_number_of_arbitor_hosts(SF_CAMERA_TAGS, debug = self.dbg)
         self.assertEqual(len(result), 1)
 
-'''
-  def test_is_arbitor_host(self):
-    """
-    test if the slave is an arbitor host
-    """
+    def test_is_arbitor_host(self):
+        """test if the slave is an arbitor host"""
+        #the first test should fail
+        result = arbitor.is_arbitor_host(GPIO_TAGS, debug = self.dbg)
+        self.assertEqual(result, False)
 
-    #the first test should fail
-    file_name = "wb_gpio.v"
-    file_name = utils.find_rtl_file_location(file_name)
-    m_tags = utils.get_module_tags(file_name, "wishbone")
-    result = arbitor.is_arbitor_host(m_tags, debug = self.dbg)
+        #the second test should pass
+        result = arbitor.is_arbitor_host(SF_CAMERA_TAGS, debug = self.dbg)
+        self.assertEqual(result, True)
 
-    self.assertEqual(result, False)
+    def test_is_arbitor_not_requried(self):
+        """test if the project_tags have been modified to show arbitor"""
+        result = False
+        tags = {}
+        #get the example project data
+        try:
+            filename = os.path.join(  self.nysa_base,
+                                      "nysa",
+                                      "ibuilder",
+                                      "example_projects",
+                                      "dionysus_default.json")
 
-    #the second test should pass
-    file_name = "wb_console.v"
-    file_name = utils.find_rtl_file_location(file_name)
-    m_tags = utils.get_module_tags(file_name, "wishbone")
-    result = arbitor.is_arbitor_host(m_tags, debug = self.dbg)
+            filein = open(filename)
+            filestr = filein.read()
+            tags = json.loads(filestr)
 
-    self.assertEqual(result, True)
+        except IOError as err:
+            print "File Error: " + str(err)
+            self.assertEqual(False, True)
 
-  def test_is_arbitor_not_requried(self):
-    """test if the project_tags have been modified to show arbitor"""
-    result = False
-    tags = {}
-    #get the example project data
-    try:
-      filename = os.path.join(  self.nysa_base,
-                                "ibuilder",
-                                "example_projects",
-                                "dionysus_default.json")
+        result = arbitor.is_arbitor_required(tags, debug = self.dbg)
+        self.assertEqual(result, False)
 
-      filein = open(filename)
-      filestr = filein.read()
-      tags = json.loads(filestr)
+    def test_is_arbitor_requried(self):
+        """test if the project_tags have been modified to show arbitor"""
+        result = False
+        tags = {}
+        #get the example project data
+        try:
+            filename = os.path.join(  self.nysa_base,
+                                      "nysa",
+                                      "ibuilder",
+                                      "example_projects",
+                                      "dionysus_sf_camera.json")
 
-    except IOError as err:
-      print "File Error: " + str(err)
-      self.assertEqual(False, True)
+            filein = open(filename)
+            filestr = filein.read()
+            tags = json.loads(filestr)
 
-    result = arbitor.is_arbitor_required(tags, debug = self.dbg)
+        except IOError as err:
+            print "File Error: " + str(err)
+            self.assertEqual(False, True)
 
-    self.assertEqual(result, False)
-
-  def test_is_arbitor_requried(self):
-    """test if the project_tags have been modified to show arbitor"""
-    result = False
-    tags = {}
-    #get the example project data
-    try:
-      filename = os.path.join(  self.nysa_base,
-                                "ibuilder",
-                                "example_projects",
-                                "arb_example.json")
-      filein = open(filename)
-      filestr = filein.read()
-      tags = json.loads(filestr)
-
-    except IOError as err:
-      print "File Error: " + str(err)
-      self.assertEqual(False, True)
-
-    result = arbitor.is_arbitor_required(tags, debug = self.dbg)
+        result = arbitor.is_arbitor_required(tags, debug = self.dbg)
+        self.assertEqual(result, True)
 
 
-    self.assertEqual(result, True)
+    def test_generate_arbitor_tags(self):
+        """test if arbitor correctly determins if an arbitor is requried"""
+        result = {}
+        tags = {}
+        #get the example project data
+        try:
+            filename = os.path.join(  self.nysa_base,
+                                      "nysa",
+                                      "ibuilder",
+                                      "example_projects",
+                                      "dionysus_sf_camera.json")
 
-  def test_generate_arbitor_tags(self):
-    """test if arbitor correctly determins if an arbitor is requried"""
-    result = {}
-    tags = {}
-    #get the example project data
-    try:
-      filename = os.path.join(  self.nysa_base,
-                                "ibuilder",
-                                "example_projects",
-                                "arb_example.json")
+            filein = open(filename)
+            filestr = filein.read()
+            tags = json.loads(filestr)
 
-      filein = open(filename)
-      filestr = filein.read()
-      tags = json.loads(filestr)
+        except IOError as err:
+            print "File Error: " + str(err)
+            self.assertEqual(False, True)
 
-    except IOError as err:
-      print "File Error: " + str(err)
-      self.assertEqual(False, True)
+        result = arbitor.generate_arbitor_tags(tags, debug = self.dbg)
 
-    result = arbitor.generate_arbitor_tags(tags, debug = self.dbg)
+        if (self.dbg):
+            for aslave in result.keys():
+                print "arbitrated slave: " + aslave
 
-    if (self.dbg):
-      for aslave in result.keys():
-        print "arbitrated slave: " + aslave
-
-        for master in result[aslave]:
-          print "\tmaster: " + master + " bus: " + result[aslave][master]
-
-
-    self.assertEqual((len(result.keys()) > 0), True)
+                for master in result[aslave]:
+                    print "\tmaster: " + master + " bus: " + result[aslave][master]
 
 
-  def test_generate_arbitor_buffer (self):
-    """generate an arbitor buffer"""
-    result = arbitor.generate_arbitor_buffer(2, debug = self.dbg)
-    if (self.dbg):
-      print "generated arbitor buffer: \n" + result
-    self.assertEqual((len(result) > 0), True)
-'''
+        self.assertEqual((len(result.keys()) > 0), True)
+
+
+    def test_generate_arbitor_buffer (self):
+        """generate an arbitor buffer"""
+        result = arbitor.generate_arbitor_buffer(2, debug = self.dbg)
+        if (self.dbg): print "generated arbitor buffer: \n" + result
+        self.assertEqual((len(result) > 0), True)
 
 if __name__ == "__main__":
   unittest.main()
