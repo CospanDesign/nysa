@@ -5,13 +5,21 @@ import json
 import sys
 import os
 
-sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir))
 
 from nysa.ibuilder.lib import utils
 from nysa.ibuilder.lib import arbitor
 
-GPIO_TAGS = json.load(open(os.path.join(os.path.dirname(__file__), "mock", "gpio_module_tags.txt"), 'r'))
-SF_CAMERA_TAGS = json.load(open(os.path.join(os.path.dirname(__file__), "mock", "sf_camera_module_tags.txt"), 'r'))
+GPIO_TAGS = json.load(open(os.path.join(os.path.dirname(__file__),
+                           os.pardir,
+                           "mock",
+                           "gpio_module_tags.txt"), 'r'))
+SF_CAMERA_TAGS = json.load( open(os.path.join(os.path.dirname(__file__),
+                            os.pardir,
+                            "mock",
+                            "sf_camera_module_tags.txt"), 'r'))
 
 class Test (unittest.TestCase):
     """Unit test for arbitor"""
