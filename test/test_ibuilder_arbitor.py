@@ -7,36 +7,30 @@ import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
-from ibuilder.lib import utils
-from ibuilder.lib import arbitor
+from nysa.ibuilder.lib import utils
+from nysa.ibuilder.lib import arbitor
+
+GPIO_TAGS = json.load(open(os.path.join(os.path.dirname(__file__), "mock", "gpio_module_tags.txt"), 'r'))
+SF_CAMERA_TAGS = json.load(open(os.path.join(os.path.dirname(__file__), "mock", "sf_camera_module_tags.txt"), 'r'))
 
 class Test (unittest.TestCase):
-  """Unit test for arbitor"""
+    """Unit test for arbitor"""
+ 
+    def setUp(self):
+        base = os.path.join( os.path.dirname(__file__),
+                             os.pardir)
+        self.nysa_base = os.path.abspath(base)
+        self.dbg = False
+ 
+    def test_get_number_of_arbitor_hosts_0(self):
+        result = arbitor.get_number_of_arbitor_hosts(GPIO_TAGS, debug = self.dbg)
+        self.assertEqual(len(result), 0)
+ 
+    def test_get_number_of_arbitor_hosts_1(self):
+        result = arbitor.get_number_of_arbitor_hosts(SF_CAMERA_TAGS, debug = self.dbg)
+        self.assertEqual(len(result), 1)
 
-  def setUp(self):
-    base = os.path.join( os.path.dirname(__file__),
-                         os.pardir)
-    self.nysa_base = os.path.abspath(base)
-    self.dbg = False
-
-  def test_get_number_of_arbitor_hosts(self):
-    #the first test should fail
-    file_name = "wb_gpio.v"
-    file_name = utils.find_rtl_file_location(file_name)
-    m_tags = utils.get_module_tags(file_name, "wishbone")
-    result = arbitor.get_number_of_arbitor_hosts(m_tags, debug = self.dbg)
-
-    self.assertEqual(len(result), 0)
-
-    #the second test should pass
-    file_name = "wb_console.v"
-    file_name = utils.find_rtl_file_location(file_name)
-    m_tags = utils.get_module_tags(file_name, "wishbone")
-    result = arbitor.get_number_of_arbitor_hosts(m_tags, debug = self.dbg)
-
-    self.assertEqual(len(result), 2)
-
-
+'''
   def test_is_arbitor_host(self):
     """
     test if the slave is an arbitor host
@@ -142,6 +136,7 @@ class Test (unittest.TestCase):
     if (self.dbg):
       print "generated arbitor buffer: \n" + result
     self.assertEqual((len(result) > 0), True)
+'''
 
 if __name__ == "__main__":
   unittest.main()
