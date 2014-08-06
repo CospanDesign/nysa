@@ -15,7 +15,7 @@ TEST_MODULE_LOCATION = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                        os.pardir,
                                        "fake",
                                        "test_wb_slave.v"))
-print "test module location: %s" % TEST_MODULE_LOCATION
+#print "test module location: %s" % TEST_MODULE_LOCATION
 
 GPIO_FILENAME = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                          os.pardir,
