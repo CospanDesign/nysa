@@ -291,7 +291,6 @@ def get_module_tags(filename="", bus="", keywords = [], user_paths = [], debug=F
         buf = slave_file.read()
 
     return get_module_buffer_tags(buf = buf,
-                                  bus = buf,
                                   keywords = keywords,
                                   user_paths = user_paths,
                                   debug = debug)
@@ -576,8 +575,18 @@ def port_cmp(x, y):
         y_name = y.strip(string.digits)
         if x_name == y_name:
             #print "%s == %s" % (x_name, y_name)
-            x_num = int(x.strip(string.letters), 10)
-            y_num = int(y.strip(string.letters), 10)
+            x_temp = x.strip(string.letters)
+            x_temp = x_temp.strip("[")
+            x_temp = x_temp.strip("]")
+
+            y_temp = y.strip(string.letters)
+            y_temp = y_temp.strip("[")
+            y_temp = y_temp.strip("]")
+
+
+
+            x_num = int(x_temp, 10)
+            y_num = int(y_temp, 10)
             #print "x:%s, y:%s, x_num:%d, y_num:%d" % (x, y, x_num, y_num)
             if x_num < y_num:
                 #print "\tx < y"

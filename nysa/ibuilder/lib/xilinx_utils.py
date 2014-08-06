@@ -46,7 +46,7 @@ def get_version_list(base_directory = None, debug=False):
     base_dirs = []
  
     if base_directory is None:
-        base_directory = DEFAULT_SEARCH_PATHS
+        base_dirs = [find_xilinx_path()]
     else:
         base_dirs = [base_directory]
  
