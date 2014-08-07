@@ -3,43 +3,125 @@
 import unittest
 import sys
 import os
+import json
 
-sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir))
 
-from ibuilder.lib import utils
-from ibuilder.lib import constraint_utils as cu
-from ibuilder.gui import wishbone_model
 
-from ibuilder.gui.wishbone_model import SlaveType
+#from ibuilder.lib import utils
+from nysa.ibuilder.lib import constraint_utils as cu
+from nysa.ibuilder.gui.wishbone_model import SlaveType
+from nysa.ibuilder.gui import wishbone_model
+
+TEST_CONSTRAINT = ""\
+        "NET \"clk\"           LOC = C10 | IOSTANDARD = LVCMOS33;\n" \
+        "NET \"clk\" TNM_NET       = \"clk\";\n" \
+        "TIMESPEC \"TS_clk\"       = PERIOD \"clk\" 100000 kHz;\n" \
+        "\n" \
+        "NET \"gpio<0>\"       LOC = B3  | IOSTANDARD = LVCMOS33 | PULLDOWN;\n" \
+        "\n" \
+        "\n" \
+        "NET \"rst\"           LOC = V4  | IOSTANDARD = LVCMOS33 | PULLDOWN;\n" \
+        "NET \"rst\"           TIG;\n" \
+        "\n" \
+        "NET \"uart_rx\"       LOC = R7  | IOSTANDARD = LVCMOS33;\n" \
+        "NET \"uart_tx\"       LOC = T7  | IOSTANDARD = LVCMOS33;\n" \
+        "\n" \
+        "\n" \
+        "CONFIG VCCAUX = \"3.3\" ;"
+
+
+EXPANDED_CONSTRAINTS_STR = ""\
+        "{\n"\
+        "  \"io_ftdi_data\": {  \"0\": {\"loc\": \"d[0]\", \"direction\": \"inout\"},\n"\
+        "                       \"1\": {\"loc\": \"d[1]\", \"direction\": \"inout\"},\n"\
+        "                       \"range\": true\n"\
+        "                    },\n"\
+        "  \"i_ftdi_clk\":  {   \"loc\": \"ftdi_clk\", \"direction\": \"input\", \"range\": false}\n"\
+        "}"
+EXPANDED_CONSTRAINTS = json.loads(EXPANDED_CONSTRAINTS_STR)
+
+CONSOLODATED_CONSTRAINTS_STR = ""\
+        "{ \n" \
+        "\"i_ftdi_clk\": {\"loc\": \"ftdi_clk\", \"direction\": \"input\"}, \n" \
+        "\"io_ftdi_data[1:0]\": {\"loc\": \"d[1:0]\", \"direction\": \"inout\"} \n" \
+        "}"
+
+CONSOLODATED_CONSTRAINTS = json.loads(CONSOLODATED_CONSTRAINTS_STR)
+
+TEST_CONFIG_FILENAME = os.path.abspath( os.path.join(os.path.dirname(__file__),
+                                        os.path.pardir,
+                                        "fake",
+                                        "test_config_file.json"))
+
+TEST_CCONSTRAINTS_FNAME = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                        os.path.pardir,
+                                        "mock",
+                                        "consolodated_constraints.txt"))
 
 class Test (unittest.TestCase):
     """Unit test for utils"""
 
     def setUp(self):
         base = os.path.join(os.path.dirname(__file__),
+                            os.pardir,
                             os.pardir)
-        self.nysa_base = os.path.abspath(base)
-        self.dbg = False
 
+        self.nysa_base = os.path.abspath(base)
+        f = open(TEST_CONFIG_FILENAME, "r")
+        self.test_config = json.load(f)
+        f.close()
+
+        #f = open(TEST_CCONSTRAINTS_FNAME, "r")
+        #self.consolodated_constraints = json.load(f)
+        #f.close()
+
+        self.dbg = False
 
     def test_get_net_names(self):
         """gets the module tags and detects if there is any arbitor hosts"""
-        filename = os.path.join(self.nysa_base, "ibuilder", "boards", "dionysus", "dionysus.ucf")
-        #print "filename: %s" % filename
+        constraints = cu.get_net_names_from_buffer(TEST_CONSTRAINT, self.dbg)
+        test_result = ["clk", "rst", "gpio[0]", "uart_rx", "uart_tx"]
+        assert len(test_result) == len(constraints)
+        for r in test_result:
+            assert r in constraints
+
+    def test_get_net_names_from_file(self):
+        filename = os.path.join(self.nysa_base, "test", "fake", "lx9.ucf")
         constraints = cu.get_net_names(filename, self.dbg)
-        #print "constraints: %s" % str(constraints)
-        self.assertIn("clk", constraints)
+        test_result = [ "clk",
+                        "rst",
+                        "gpio[0]",
+                        "gpio[1]",
+                        "gpio[2]",
+                        "gpio[3]",
+                        "led[0]",
+                        "led[1]",
+                        "led[2]",
+                        "led[3]",
+                        "uart_rx",
+                        "uart_tx"]
+
+        assert len(test_result) == len(constraints)
+        for r in test_result:
+            assert r in constraints
+
+    def test_read_clock_rate_from_buffer(self):
+        test_ucf = ""\
+            "NET \"clk\"     LOC = P51;\n" \
+            "TIMESPEC \"ts_clk\" = PERIOD \"clk\" 20 ns HIGH 50%;\n"
+
+        rate = cu.read_clock_rate_from_buffer(test_ucf)
+        self.assertEquals(rate, '50000000')
 
     def test_read_clock_rate(self):
-        filename = os.path.join(self.nysa_base, "ibuilder", "boards", "dionysus", "dionysus.ucf")
+        filename = os.path.join(self.nysa_base, "test", "fake", "test_board", "test.ucf")
+
         rate = cu.read_clock_rate(filename)
         self.assertEquals(rate, '50000000')
 
-    def test_has_range(self):
-        has_range = cu.has_range("signal")
-        self.assertFalse(has_range)
-        has_range = cu.has_range("signal[1:0]")
-        self.assertTrue(has_range)
 
     def test_parse_signal_range(self):
         name, maximum, minimum = cu.parse_signal_range("signal[31:0]")
@@ -48,28 +130,22 @@ class Test (unittest.TestCase):
         self.assertEqual(maximum, 31)
         self.assertEqual(minimum, 0)
 
-    def test_expand_user_constraints(self):
-        filename = os.path.join(self.nysa_base, "ibuilder", "example_projects", "dionysus_default.json")
-        self.c = wishbone_model.WishboneModel(config_file=filename)
-        hib = self.c.get_host_interface_bindings()
+    def test_has_range(self):
+        has_range = cu.has_range("signal")
+        self.assertFalse(has_range)
+        has_range = cu.has_range("signal[1:0]")
+        self.assertTrue(has_range)
 
-        uc = cu.expand_user_constraints(hib)
-        #print "uc: %s" % str(uc)
-        #print ""
-        self.assertIn("io_ftdi_data", uc.keys())
+    def test_expand_user_constraints(self):
+        uc = cu.expand_user_constraints(CONSOLODATED_CONSTRAINTS)
+        self.assertIn("io_ftdi_data", uc)
 
     def test_consolodate_constraints(self):
-        filename = os.path.join(self.nysa_base, "ibuilder", "example_projects", "dionysus_default.json")
-        self.c = wishbone_model.WishboneModel(config_file=filename)
-        hib = self.c.get_host_interface_bindings()
+        print "uc: %s" % str(EXPANDED_CONSTRAINTS)
+        ud = cu.consolodate_constraints(EXPANDED_CONSTRAINTS, debug = True)
+        self.assertIn("io_ftdi_data[1:0]", ud)
 
-        uc = cu.expand_user_constraints(hib)
-        self.assertIn("io_ftdi_data", uc.keys())
-
-        #print "user_dict: %s" %  str(uc)
-        ud = cu.consolodate_constraints(uc, debug = self.dbg)
-        self.assertIn("io_ftdi_data[7:0]", ud)
-
+'''
         sdram = self.c.get_slave_bindings(SlaveType.MEMORY, 0)
         #print "Pre SDRAM: %s" % str(sdram)
         sdram = cu.expand_user_constraints(sdram, debug=self.dbg)
@@ -90,7 +166,7 @@ class Test (unittest.TestCase):
         self.assertIn("gpio_in[3:2]", ud)
 
         #Test another constraint file
-        filename = os.path.join(self.nysa_base, "ibuilder", "example_projects", "lx9_default.json")
+        filename = os.path.join(self.nysa_base, "nysa", "ibuilder", "example_projects", "lx9_default.json")
         self.c = wishbone_model.WishboneModel(config_file=filename)
         hib = self.c.get_host_interface_bindings()
 
@@ -156,7 +232,7 @@ class Test (unittest.TestCase):
         ports = cu.get_only_signal_ports(e_ports)
         #print "ports: %s" % str(ports)
         #print ""
- 
+
     def test_consolodate_ports(self):
         f = utils.find_rtl_file_location("wb_sdram.v")
         parameters = utils.get_module_tags(filename=f,
@@ -174,6 +250,7 @@ class Test (unittest.TestCase):
                 self.assertDictEqual(ports[direction][port], c_ports[direction][port])
 
 
+'''
 
 
 if __name__ == "__main__":
