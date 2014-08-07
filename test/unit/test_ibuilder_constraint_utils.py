@@ -56,10 +56,6 @@ TEST_CONFIG_FILENAME = os.path.abspath( os.path.join(os.path.dirname(__file__),
                                         "fake",
                                         "test_config_file.json"))
 
-TEST_CCONSTRAINTS_FNAME = os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                        os.path.pardir,
-                                        "mock",
-                                        "consolodated_constraints.txt"))
 
 class Test (unittest.TestCase):
     """Unit test for utils"""
@@ -73,11 +69,6 @@ class Test (unittest.TestCase):
         f = open(TEST_CONFIG_FILENAME, "r")
         self.test_config = json.load(f)
         f.close()
-
-        #f = open(TEST_CCONSTRAINTS_FNAME, "r")
-        #self.consolodated_constraints = json.load(f)
-        #f.close()
-
         self.dbg = False
 
     def test_get_net_names(self):
@@ -140,10 +131,13 @@ class Test (unittest.TestCase):
         uc = cu.expand_user_constraints(CONSOLODATED_CONSTRAINTS)
         self.assertIn("io_ftdi_data", uc)
 
+
+'''
     def test_consolodate_constraints(self):
         print "uc: %s" % str(EXPANDED_CONSTRAINTS)
         ud = cu.consolodate_constraints(EXPANDED_CONSTRAINTS, debug = True)
         self.assertIn("io_ftdi_data[1:0]", ud)
+'''
 
 '''
         sdram = self.c.get_slave_bindings(SlaveType.MEMORY, 0)

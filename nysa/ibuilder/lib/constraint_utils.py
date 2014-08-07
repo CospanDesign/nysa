@@ -38,35 +38,9 @@ import copy
 from ibuilder_error import ConstraintError
 import wishbone_utils as wu
 
-def get_net_names(constraint_filename, debug = False):
-    """Gets a list of net in a given constraint file
-
-    Args:
-        constrint_filename: name of a constraint file with an absolute path
-
-    Returns:
-        A list of constraint for the module
-        NOTE: This file fails quietly and shouldn't this needs to be fixed!
-
-    Raises:
-        IBuilder Error
-    """
-
-    filename = ""
-    buf = ""
+def get_net_names_from_buffer(constraint_buffer, debug = False):
     nets = []
-
-    #open up the ucf file
-    try:
-        file_in = open(constraint_filename)
-        buf = file_in.read()
-        file_in.close()
-    except:
-        raise ConstraintError("Failed to open the filename %s" % constraint_filename)
-
-    if debug:print "Opened up the UCF file"
-
-    lines = buf.splitlines()
+    lines = constraint_buffer.splitlines()
     #first search for the TIMESPEC keyword
     for line in lines:
         line = line.lower()
@@ -92,38 +66,35 @@ def get_net_names(constraint_filename, debug = False):
 
     return nets
 
-def read_clock_rate(constraint_filename, debug = False):
-    """Returns a string of the clock rate
-
-    Searches through the specified constraint file to determine if there
-    is a specified clock. If no clock is specified then return 50MHz = 50000000
+ 
+def get_net_names(constraint_filename, debug = False):
+    """Gets a list of net in a given constraint file
 
     Args:
-      constraint_filename: the name of the constraint file to search through
+        constrint_filename: name of a constraint file with an absolute path
 
     Returns:
-      A string representation of the clock rate
-      NOTE: on error this fails quietly this should probably be different
+        A list of constraint for the module
+        NOTE: This file fails quietly and shouldn't this needs to be fixed!
 
     Raises:
-      Nothing
+        IBuilder Error
     """
-    clock_rate = ""
-
+    buf = ""
     #open up the ucf file
     try:
         file_in = open(constraint_filename)
         buf = file_in.read()
         file_in.close()
-    except IOError as err:
-        #XXX: This should probably allow the calling function to handle a failure
-        #fail
-        if debug: print "read clock rate error: %s" % str(err)
-        raise ConstraintError("Failed to open file: %s" % constraint_filename)
+    except:
+        raise ConstraintError("Failed to open the filename %s" % constraint_filename)
 
-    if debug: print "Opened up the UCF file"
+    if debug:print "Opened up the UCF file"
+    return get_net_names_from_buffer(buf)
 
-    lines = buf.splitlines()
+def read_clock_rate_from_buffer(constraint_buffer, debug = False):
+    clock_rate = ""
+    lines = constraint_buffer.splitlines()
     #first search for the TIMESPEC keyword
     for line in lines:
         line = line.lower()
@@ -185,6 +156,38 @@ def read_clock_rate(constraint_filename, debug = False):
     if debug: print "Clock Rate: " + clock_rate
     return clock_rate
 
+
+
+def read_clock_rate(constraint_filename, debug = False):
+    """Returns a string of the clock rate
+
+    Searches through the specified constraint file to determine if there
+    is a specified clock. If no clock is specified then return 50MHz = 50000000
+
+    Args:
+      constraint_filename: the name of the constraint file to search through
+
+    Returns:
+      A string representation of the clock rate
+      NOTE: on error this fails quietly this should probably be different
+
+    Raises:
+      Nothing
+    """
+
+    #open up the ucf file
+    try:
+        file_in = open(constraint_filename)
+        buf = file_in.read()
+        file_in.close()
+    except IOError as err:
+        #XXX: This should probably allow the calling function to handle a failure
+        #fail
+        if debug: print "read clock rate error: %s" % str(err)
+        raise ConstraintError("Failed to open file: %s" % constraint_filename)
+
+    if debug: print "Opened up the UCF file"
+    return read_clock_rate_from_buffer(buf, debug)
 
 def parse_signal_range(signal, debug = False):
     """
@@ -329,6 +332,7 @@ def expand_user_constraints(user_dict, debug = False):
     #if debug: print "ex_dict: %s" % str(ex_dict)
     return ex_dict
 
+'''
 def consolodate_constraints(edict, debug = False):
     edict = copy.deepcopy(edict)
     user_dict = {}
@@ -480,7 +484,7 @@ def consolodate_constraints(edict, debug = False):
     if debug: print "user_dict: %s" % str(user_dict)
 
     return user_dict
-
+'''
 
 def expand_ports(c_ports):
     """expand_ports
