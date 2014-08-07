@@ -1,4 +1,5 @@
 *.py[cod]
+test/fake/temp
 
 # VIM temporary files
 *~
