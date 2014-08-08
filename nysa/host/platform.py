@@ -1,5 +1,5 @@
-# Distributed under the MIT licesnse.
-# Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
+#Distributed under the MIT licesnse.
+#Copyright (c) 2014 Dave McCoy (dave.mccoy@cospandesign.com)
 
 #Permission is hereby granted, free of charge, to any person obtaining a copy of
 #this software and associated documentation files (the "Software"), to deal in
@@ -19,38 +19,33 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
-'''
-Log
-  6/14/2013: Initial commit
-'''
+"""
+Base Platform Script for use with Nysa Viewer
+"""
+__author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
-import os
+import argparse
 import sys
-from PyQt4.Qt import *
-from PyQt4.QtCore import *
-from PyQt4 import QtCore
-from PyQt4.QtGui import *
+import os
+import time
+from array import array as Array
 
-from slave import Slave
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir))
+class Platform(object):
 
-from defines import SLAVE_RECT
-from defines import MEMORY_SLAVE_COLOR
+    def __init__(self):
+        super (Platform, self).__init__()
+        self.dev_dict = {}
 
-class MemorySlave(Slave):
-    """Host Interface Box"""
+    def get_type(self):
+        AssertionError("Failed to implement 'get_type' function")
 
-    def __init__(self,
-                 scene,
-                 instance_name,
-                 parameters,
-                 bus):
+    def get_unique_ids(self):
+        AssertionError("Failed to implement 'get_unique_id' function")
 
-        super(MemorySlave, self).__init__(position = QPointF(0.0, 0.0),
-                                          scene = scene,
-                                          instance_name = instance_name,
-                                          color = MEMORY_SLAVE_COLOR,
-                                          rect = SLAVE_RECT,
-                                          bus = bus,
-                                          parameters = parameters)
-        self.movable(False)
+    def scan(self):
+        AssertionError("Failed to implement 'scan' function")
 
+    def add_device_dict(self, unique_id, device):
+        self.dev_dict[unique_id] = device

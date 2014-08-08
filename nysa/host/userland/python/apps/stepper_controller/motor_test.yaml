@@ -1,7 +1,0 @@
-accelleration: 0.01
-manufacturer: Manufacturer
-model: Motor 1
-num_steps: 200
-run_period: 0.01
-stepper_type: bipolar
-walk_period: 0.1

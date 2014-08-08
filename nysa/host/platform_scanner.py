@@ -26,13 +26,9 @@ import os
 from inspect import isclass
 from inspect import ismodule
 
-
-from PyQt4.Qt import *
-from PyQt4.QtCore import *
-
 from nplatform.nplatform import Platform
 
-class PlatformScanner(QObject):
+class PlatformScanner(object):
     def __init__(self, status = None):
         super(PlatformScanner, self).__init__()
         self.status = status
