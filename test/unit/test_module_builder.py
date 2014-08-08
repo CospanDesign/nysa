@@ -4,11 +4,13 @@ import unittest
 import sys
 import os
 
-sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, 'nysa'))
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                os.pardir, 
+                os.pardir))
 
-from ibuilder.lib import module_builder as mb
-from ibuilder.lib import utils
-from ibuilder.lib.ibuilder_error import IBuilderError
+from nysa.ibuilder.lib import module_builder as mb
+from nysa.ibuilder.lib import utils
+from nysa.ibuilder.lib.ibuilder_error import IBuilderError
 
 
 test_module_tags = {
@@ -153,7 +155,7 @@ class Test (unittest.TestCase):
 
     def test_generate_module(self):
         prev_dbg = self.dbg
-        self.dbg = True
+        #self.dbg = True
         MB = mb.ModuleBuilder(test_module_tags)
         buf = MB.generate_module("test_module",
                                  test_module_tags,
@@ -164,4 +166,6 @@ class Test (unittest.TestCase):
         self.dbg = prev_dbg
 
 
+if __name__ == "__main__":
+  unittest.main()
 

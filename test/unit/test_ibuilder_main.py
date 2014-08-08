@@ -4,9 +4,18 @@ import unittest
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir))
 
-from ibuilder.lib import ibuilder
+from nysa.ibuilder.lib import ibuilder
+
+TEST_CONFIG_FILENAME = os.path.abspath( os.path.join(os.path.dirname(__file__),
+                                        os.path.pardir,
+                                        "fake",
+                                        "test_config_file.json"))
+
+
 
 class Test (unittest.TestCase):
   """Unit test for ibuilder"""
@@ -33,8 +42,7 @@ class Test (unittest.TestCase):
     self.assertEqual(1, 1)
 
   def test_generate_project(self):
-    filename = os.path.join(self.nysa_base, "ibuilder", "example_projects", "dionysus_gpio_mem.json")
-    result = ibuilder.generate_project(filename)
+    result = ibuilder.generate_project(TEST_CONFIG_FILENAME)
     self.assertEqual(result, True)
 
 
