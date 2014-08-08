@@ -93,38 +93,6 @@
           }
         }
       },
-      "sim":{
-        "dir":true,
-        "files":{
-          "interface":{
-            "dir":true
-          },
-          "sim_modules":{
-            "dir":true
-          },
-          "sim_interface.v":{
-            "location":"${NYSA}/cbuilder/verilog/wishbone/host_interface/sim_interface"
-          },
-          "test.py":{
-            "location":"${NYSA}/host/userland/python/sim"
-          },
-          "top.v":{
-            "location":"${NYSA}/cbuilder/template/top",
-            "gen_script":"gen_sim_top"
-          },
-          "tb.v":{
-            "gen_script":"gen_sim_tb"
-          },
-          "Makefile":{
-            "location":"${NYSA}/host/userland/python/sim",
-            "gen_script":"gen_sim_makefile"
-          },
-          "device_rom_table.txt":{
-            "gen_script":"gen_drt"
-          }
-
-        }
-      },
       "python_examples":{
         "dir":true
       }
