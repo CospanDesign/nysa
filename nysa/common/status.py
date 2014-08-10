@@ -55,33 +55,33 @@ class _Status(object):
         self.level = StatusLevel.VERBOSE
 
 
-    def Verbose (self, c, text):
+    def Verbose (self, text):
         if self.CheckLevel(StatusLevel.VERBOSE):
-            self.status_output("Verbose", c, text, color = cyan)
+            self.status_output("Verbose", text, color = cyan)
 
-    def Debug (self, c, text):
+    def Debug (self, text):
         if self.CheckLevel(StatusLevel.DEBUG):
-            self.status_output("Debug", c, text, color = green)
+            self.status_output("Debug", text, color = green)
 
-    def Info (self, c, text):
+    def Info (self, text):
         if self.CheckLevel(StatusLevel.INFO):
-            self.status_output("Info", c, text, color = white)
+            self.status_output("Info", text, color = white)
 
-    def Important (self, c, text):
+    def Important (self, text):
         if self.CheckLevel(StatusLevel.IMPORTANT):
-            self.status_output("Important", c, text, color = blue)
+            self.status_output("Important", text, color = blue)
 
-    def Warning (self, c, text):
+    def Warning (self, text):
         if self.CheckLevel(StatusLevel.WARNING):
-            self.status_output("Warning", c, text, color = blue)
+            self.status_output("Warning", text, color = blue)
 
-    def Error (self, c, text):
+    def Error (self, text):
         if self.CheckLevel(StatusLevel.ERROR):
-            self.status_output("Error", c, text, color=red)
+            self.status_output("Error", text, color=red)
 
-    def Fatal (self, c, text):
+    def Fatal (self, text):
         if self.CheckLevel(StatusLevel.FATAL):
-            self.status_output("Fatal", c, text, color=red)
+            self.status_output("Fatal", text, color=red)
 
     def Print (self, text):
         self.status_output("", None, text)
@@ -89,16 +89,25 @@ class _Status(object):
     def PrintLine(self, text):
         self.status_output("", None, text)
 
-    def status_output(self, level, c, text, color=white):
-        if c is not None:
-            f = str(inspect.stack()[2][3])
-            #print "inspace: %s" % str(inspect.stack()[2])
-            d = "%s:%s " % (c.__class__.__name__, f)
-            text=d + text
-            print "%s%s: %s%s" % (color, level, text, white)
+    def status_output(self, level, text, color=white):
+        
+        function_name = str(inspect.stack()[2][3])
+        class_name = None
+
+        if "self" in inspect.stack()[2][0].f_locals.keys():
+            class_name = str(inspect.stack()[2][0].f_locals["self"])
+            while class_name.find(".") != -1:
+                class_name = class_name.partition(".")[2]
+            class_name = class_name.strip("(")
+            class_name = class_name.strip(")")
+
+        if class_name is not None:
+            d = "%s:%s " % (class_name, function_name)
         else:
-            #print "inspace: %s" % str(inspect.stack()[2])
-            print "%s%s: %s%s" % (color, level, text, white)
+            d = "%s: " % (function_name)
+
+        text = d + text
+        print "%s:%s: %s%s" % (color, level, text, white)
 
     def set_level(self, level):
         self.level = level
