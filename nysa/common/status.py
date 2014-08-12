@@ -52,7 +52,7 @@ class _Status(object):
     def __init__(self):
         super(_Status, self).__init__()
         #print "Staring CL Status"
-        self.level = StatusLevel.VERBOSE
+        self.level = StatusLevel.INFO
 
 
     def Verbose (self, text):
@@ -92,6 +92,9 @@ class _Status(object):
     def status_output(self, level, text, color=white):
         
         function_name = str(inspect.stack()[2][3])
+        if function_name == "<module>":
+            function_name = str(inspect.stack()[2][1]).rpartition("./")[2] + ":main"
+
         class_name = None
 
         if "self" in inspect.stack()[2][0].f_locals.keys():
@@ -101,13 +104,13 @@ class _Status(object):
             class_name = class_name.strip("(")
             class_name = class_name.strip(")")
 
-        if class_name is not None:
+        if class_name is not None and (len(class_name) > 0) and (class_name.strip() != "<module>"):
             d = "%s:%s " % (class_name, function_name)
         else:
             d = "%s: " % (function_name)
 
         text = d + text
-        print "%s:%s: %s%s" % (color, level, text, white)
+        print "%s%s: %s%s" % (color, level, text, white)
 
     def set_level(self, level):
         self.level = level
