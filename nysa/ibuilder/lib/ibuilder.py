@@ -43,78 +43,78 @@ import project_generator
 
 #XXX: should be moved to the utils.py 'create_project_config_file' uses this
 def get_interface_list (bus="wishbone"):
-  """Return a list of interfaces associates with bus
-  
-  Args:
-    bus: a string declaring the bus type, this can be
-      \"wishbone\" or \"axie\"
-
-  Returns:
-    A list of interfaces that are supported by this board
-
-  Raises:
-    Nothing
-  """
-  interface_list = []
-  return interface_list
+    """Return a list of interfaces associates with bus
+    
+    Args:
+      bus: a string declaring the bus type, this can be
+        \"wishbone\" or \"axie\"
+ 
+    Returns:
+      A list of interfaces that are supported by this board
+ 
+    Raises:
+      Nothing
+    """
+    interface_list = []
+    return interface_list
 
 def create_project_config_file(filename, bus = "wishbone", interface="uart_io_handler.v", base_dir = "~"):
-  """Generate a configuration file for a project
-  
-  Given a filename, bus type, interface and base directory of the outputted
-  project creates a json configuration file that can be used by 
-  generate_project to create an FPGA image
-  
-  Args:
-    filename: the name of the file that will be created
-      example: \"config_file.json\"
-    bus: a string declaring the bus type, this can be
-      \"wishbone\" or \"axie\"
-    interface: a string specifying the host interface module name
-      example: \"uart_io_handler.v\"
-    base_dir: the base directory of the output project
-      example: \"~/project\"
-
-  Returns:
-    Nothing
-
-  Raises:
-    IOError: An error in file generation has occured
-  """
-  return 
+    """Generate a configuration file for a project
+    
+    Given a filename, bus type, interface and base directory of the outputted
+    project creates a json configuration file that can be used by 
+    generate_project to create an FPGA image
+    
+    Args:
+      filename: the name of the file that will be created
+        example: \"config_file.json\"
+      bus: a string declaring the bus type, this can be
+        \"wishbone\" or \"axie\"
+      interface: a string specifying the host interface module name
+        example: \"uart_io_handler.v\"
+      base_dir: the base directory of the output project
+        example: \"~/project\"
+ 
+    Returns:
+      Nothing
+ 
+    Raises:
+      IOError: An error in file generation has occured
+    """
+    return 
 
 def get_output_dir(filename, dbg = False):
-  """Returns the output directory of a given configuration file"""
-  filename = utils.resolve_path(filename)
-  #let the user deal with Errors
-  if dbg: print "filename: %s" % filename
-  f = open(filename)
-  config_dict = json.loads(f.read())
-  f.close()
-  return utils.resolve_path(config_dict["BASE_DIR"])
+    """Returns the output directory of a given configuration file"""
+    filename = utils.resolve_path(filename)
+    #let the user deal with Errors
+    if dbg: print "filename: %s" % filename
+    f = open(filename)
+    config_dict = json.loads(f.read())
+    f.close()
+    return utils.resolve_path(config_dict["BASE_DIR"])
 
 def generate_project(filename, user_paths = [], output_directory = None, dbg = False):
-  """Generate a FPGA project
-  
-  The type of phroject is specific to the vendor called. For example, if the 
-  configuration file specified that the vendor is Xilinx then the generated 
-  project would be a PlanAhead project
-
-  Args:
-    filename: Name of the configuration file to be read
-    user_paths: Paths used to search for modules
-    output_directory: Path to override default output directory
-
-  Returns:
-    A result of success or fail
-      0 = Success
-      -1 = Fail
-
-  Raises:
-    IOError: An error in project generation has occured
-  """
-  #print "IBUILDER User paths: %s" % str(user_paths)
-  pg = project_generator.ProjectGenerator(user_paths)
-  result = pg.generate_project(filename, output_directory = output_directory, debug = dbg)
-  return result
+    """Generate a FPGA project
+    
+    The type of phroject is specific to the vendor called. For example, if the 
+    configuration file specified that the vendor is Xilinx then the generated 
+    project would be a PlanAhead project
+ 
+    Args:
+      filename: Name of the configuration file to be read
+      user_paths: Paths used to search for modules
+      output_directory: Path to override default output directory
+ 
+    Returns:
+      A result of success or fail
+        0 = Success
+        -1 = Fail
+ 
+    Raises:
+      IOError: An error in project generation has occured
+    """
+    #print "IBUILDER User paths: %s" % str(user_paths)
+    pg = project_generator.ProjectGenerator(user_paths)
+    result = pg.generate_project(filename, output_directory = output_directory, debug = dbg)
+    return result
 
