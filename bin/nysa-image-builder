@@ -32,6 +32,8 @@ import shutil
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
 from nysa.ibuilder.lib import ibuilder
+from nysa.common import status
+from nysa.common import site_manager
 
 EXAMPLE_DIR = os.path.join("home", "user", "Projects", "nysa", "ibuilder", "example_project", "dionyus_default.json")
 SCRIPT_NAME = os.path.basename(__file__)
@@ -96,77 +98,85 @@ def remove_output_project(root = None, debug = False):
 
 if __name__ == "__main__":
 
-  parser = argparse.ArgumentParser(
-  formatter_class=argparse.RawDescriptionHelpFormatter,
-    description=DESCRIPTION,
-    epilog=EPILOG
-  )
-
-  debug = False
-
-  #Add an argument to the parser
-  parser.add_argument("-d", "--debug", action='store_true', help="Output test debug information")
-  parser.add_argument("-o", "--output", type = str, nargs=1, default="", help="Specify a location for the generated project")
-  parser.add_argument("-c", "--compress", action='store_true', help="Compress output project in tar gzip format")
-  parser.add_argument("-z", "--zip", action='store_true', help="Compress output project in zip format")
-  parser.add_argument("config", type = str, nargs=1,  default="all", help="Configuration file to load")
-  parser.parse_args()
-  args = parser.parse_args()
-
-  output_dir = None
-
-  if args.debug:
-    print("Debug Enable")
-    debug = True
-
-  if debug: print("Generating project %s" % args.config[0])
-  if len(args.output) > 0:
-      output_dir = args.output[0]
-
-  #ibuilder.generate_project(args.config[0], dbg = debug)
-  ibuilder.generate_project(args.config[0], output_directory = output_dir, dbg = False)
-  if output_dir is None:
-    output_dir = ibuilder.get_output_dir(args.config[0])
-
-  print("Generated project %s at: %s" % (args.config[0], output_dir))
-
-  if args.compress:
-    output_dir = ibuilder.get_output_dir(args.config[0], dbg=debug)
-    name = os.path.split(output_dir)[1]
-    out_loc = os.path.split(output_dir)[0]
-
-    if debug: print("Current dir: %s" % os.getcwd())
-    if debug: print("Output Location: %s" % out_loc)
-    if debug: print("archive name: %s" % name)
-
-    archive_loc = os.path.join(out_loc, name)
-
-
-    if debug: print("Compress using gztar format")
-    name = shutil.make_archive( base_name = archive_loc,
-                                format = 'gztar',
-                                root_dir = out_loc,
-                                base_dir = name,
-                                )
-    remove_output_project(output_dir, debug=debug)
-
-  if args.zip:
-    output_dir = ibuilder.get_output_dir(args.config[0], dbg=debug)
-    name = os.path.split(output_dir)[1]
-    out_loc = os.path.split(output_dir)[0]
-
-    if debug: print("Current dir: %s" % os.getcwd())
-    if debug: print("Output Location: %s" % out_loc)
-    if debug: print("archive name: %s" % name)
-
-    archive_loc = os.path.join(out_loc, name)
-
-
-    if debug: print("Compress using zip format")
-    name = shutil.make_archive( base_name = archive_loc,
-                                format = 'zip',
-                                root_dir = out_loc,
-                                base_dir = name,
-                                )
-    remove_output_project(output_dir, debug=debug)
+    parser = argparse.ArgumentParser(
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=DESCRIPTION,
+        epilog=EPILOG
+    )
+ 
+    debug = False
+    s = status.Status()
+    s.set_level(status.StatusLevel.INFO)
+ 
+    #Add an argument to the parser
+    parser.add_argument("-v", "--verbose", action='store_true', help="Output verbose information")
+    parser.add_argument("-d", "--debug", action='store_true', help="Output test debug information")
+    parser.add_argument("-o", "--output", type = str, nargs=1, default="", help="Specify a location for the generated project")
+    parser.add_argument("-c", "--compress", action='store_true', help="Compress output project in tar gzip format")
+    parser.add_argument("-z", "--zip", action='store_true', help="Compress output project in zip format")
+    parser.add_argument("config", type = str, nargs=1,  default="all", help="Configuration file to load")
+    parser.parse_args()
+    args = parser.parse_args()
+ 
+    output_dir = None
+ 
+    if args.debug:
+        debug = True
+        s.set_level(status.StatusLevel.DEBUG)
+        s.Debug("Debug Output Enabled")
+ 
+    if args.verbose:
+        s.set_level(status.StatusLevel.VERBOSE)
+        s.Verbose("Verbose Output Enabled")
+ 
+    s.Debug("Generating Project: %s" % args.config[0])
+    if len(args.output) > 0:
+        output_dir = args.output[0]
+ 
+    #ibuilder.generate_project(args.config[0], dbg = debug)
+    ibuilder.generate_project(args.config[0], output_directory = output_dir, dbg = False)
+    if output_dir is None:
+        output_dir = ibuilder.get_output_dir(args.config[0])
+ 
+    s.Info("Generating Project %s @ %s" % (args.config[0], output_dir))
+ 
+    if args.compress:
+        output_dir = ibuilder.get_output_dir(args.config[0], dbg=debug)
+        name = os.path.split(output_dir)[1]
+        out_loc = os.path.split(output_dir)[0]
+       
+        s.Debug("Current dir: %s" % os.getcwd())
+        s.Debug("Output Location: %s" % out_loc)
+        s.Debug("archive name: %s" % name)
+       
+        archive_loc = os.path.join(out_loc, name)
+       
+       
+        s.Debug("Compress using gztar format")
+        name = shutil.make_archive( base_name = archive_loc,
+                                    format = 'gztar',
+                                    root_dir = out_loc,
+                                    base_dir = name,
+                                    )
+        remove_output_project(output_dir, debug=debug)
+ 
+    if args.zip:
+        output_dir = ibuilder.get_output_dir(args.config[0], dbg=debug)
+        name = os.path.split(output_dir)[1]
+        out_loc = os.path.split(output_dir)[0]
+ 
+        s.Debug("Current dir: %s" % os.getcwd())
+        s.Debug("Output Location: %s" % out_loc)
+        s.Debug("archive name: %s" % name)
+       
+        archive_loc = os.path.join(out_loc, name)
+       
+       
+        s.Debug("Compress using zip format")
+        name = shutil.make_archive( base_name = archive_loc,
+                                    format = 'zip',
+                                    root_dir = out_loc,
+                                    base_dir = name,
+                                    )
+        remove_output_project(output_dir, debug=debug)
 
