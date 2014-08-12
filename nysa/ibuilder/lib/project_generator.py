@@ -209,7 +209,8 @@ class ProjectGenerator:
         #Generate all the slaves
         for slave in self.project_tags["SLAVES"]:
             fdict = {"location":""}
-            file_dest = self.project_tags["BASE_DIR"] + "/rtl/bus/slave"
+            file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "bus", "slave")
+            #file_dest = self.project_tags["BASE_DIR"] + "/rtl/bus/slave"
             fn = self.project_tags["SLAVES"][slave]["filename"]
             try:
                 self.filegen.process_file(filename = fn, file_dict = fdict, directory=file_dest, debug=debug)
@@ -221,7 +222,8 @@ class ProjectGenerator:
         if ("MEMORY" in self.project_tags):
             for mem in self.project_tags["MEMORY"]:
                 fdict = {"location":""}
-                file_dest = self.project_tags["BASE_DIR"] + "/rtl/bus/slave"
+                file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "bus", "slave")
+                #file_dest = self.project_tags["BASE_DIR"] + "/rtl/bus/slave"
                 fn = self.project_tags["MEMORY"][mem]["filename"]
                 try:
                     self.filegen.process_file(filename = fn, file_dict = fdict, directory = file_dest)
@@ -238,12 +240,14 @@ class ProjectGenerator:
                 print ("Couldn't find constraint: %s, searched in the current directory and %s/hdl/%s" %
                     (constraint_fname, sap_abs_base, self.project_tags["board"]))
                 continue
-            shutil.copy (constraint_path, abs_proj_base + "/constraints/" + constraint_fname)
+            shutil.copy (constraint_path, os.path.join(abs_proj_base, "constraints", constraint_fname))
+            #shutil.copy (constraint_path, abs_proj_base + "/constraints/" + constraint_fname)
  
         #Generate the IO handler
         interface_filename = self.project_tags["INTERFACE"]["filename"]
         fdict = {"location":""}
-        file_dest = self.project_tags["BASE_DIR"] + "/rtl/bus/interface"
+        #file_dest = self.project_tags["BASE_DIR"] + "/rtl/bus/interface"
+        file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "bus", "interface")
         result = self.filegen.process_file(filename = interface_filename, file_dict=fdict , directory=file_dest)
  
         if debug:
@@ -383,7 +387,8 @@ class ProjectGenerator:
             #we don't already have this size, so add it into the list
             arb_size_list.append(arb_size)
             fn = "arbitor_" + str(arb_size) + "_masters.v"
-            d = self.project_tags["BASE_DIR"] + "/rtl/bus/arbitors"
+            #d = self.project_tags["BASE_DIR"] + "/rtl/bus/arbitors"
+            d = os.path.join(self.project_tags["BASE_DIR"], "rtl", "bus", "arbitors")
            
             self.filegen.buf = arbitor.generate_arbitor_buffer(arb_size)
             if debug: print "arbitor buffer: " + self.filegen.buf
