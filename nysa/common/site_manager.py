@@ -16,6 +16,23 @@ class SiteManager(object):
         self.site_name = site_name
         self.site_path = os.path.join(site.getuserbase(), self.site_name)
         self.local_version_path = os.path.join(self.site_path, "versions.json")
+        self.paths_path = os.path.join(self.site_path, "paths.json")
+
+        if not os.path.exists(self.site_path):
+            os.makedirs(os.path.join(self.site_path))
+
+        if not os.path.exists(self.local_version_path):
+            #Doesn't exists, create a reference to it
+            f = open(self.local_version_path, "w")
+            f.write("{}")
+            f.close()
+ 
+        if not os.path.exists(self.paths_path):
+            #Doesn't exists, create a reference to it
+            f = open(self.paths_path, "w")
+            f.write("{}")
+            f.close()
+ 
         self.remote_url = remote_url
         self.set_remote_url(remote_url)
 
@@ -32,24 +49,27 @@ class SiteManager(object):
     def _remove_local_site_dir(self):
         shutil.rmtree(self.site_path)
 
-    def get_remote_version(self):
-        return urllib2.urlopen(self.remote_version_path).read()
+    def get_remote_version_dict(self):
+        self.remote_version = json.load(urllib2.urlopen(self.remote_version_path).read())
+        return self.remote_version
 
-    def get_local_version(self):
-        if not os.path.exists(self.local_version_path):
-            #Doesn't exists, create a reference to it
-            f = open(self.local_version_path, "w")
-            f.write("{}")
-            f.close()
-                
+    def get_local_version_dict(self):
+               
         f = open(self.local_version_path, "r")
-        version = f.read()
+        self.version = json.load(f)
         f.close()
-        return version
+        return self.version
+
+    def get_paths_dict(self):
+
+        f = open(self.paths_path)
+        self.paths = json.load(f)
+        f.close()
+        return self.paths
 
     def compare_version_entry(self, entry):
-        remote_version = json.loads(self.get_remote_version())
-        local_version = json.loads(self.get_local_version())
+        remote_version = self.get_remote_version_dict()
+        local_version = self.get_local_version_dict()
         if entry not in remote_version:
             raise RemoteDefinition("%s is not within the remote version" % entry)
 
@@ -62,19 +82,17 @@ class SiteManager(object):
         return True
 
     def update_local_version(self, entry):
-        remote_version = json.loads(self.get_remote_version())
-        local_version = json.loads(self.get_local_version())
+        remote_version = self.get_remote_version_dict()
+        local_version = self.get_local_version_dict()
         local_version[entry] = remote_version[entry]
         f = open(self.local_version_path, "w")
         f.write(json.dumps(local_version))
         f.close()
 
-
     def create_local_entry(self, entry, value):
-        local_version = json.loads(self.get_local_version())
+        local_version = self.get_local_version_dict()
         local_version[entry] = value
         f = open(self.local_version_path, "w")
         f.write(json.dumps(local_version))
         f.close()
-
 
