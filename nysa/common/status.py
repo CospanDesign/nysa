@@ -92,15 +92,27 @@ class _Status(object):
     def status_output(self, level, text, color=white):
         
         function_name = str(inspect.stack()[2][3])
+        #print "function_name: %s" % function_name
         if function_name == "<module>":
             function_name = str(inspect.stack()[2][1]).rpartition("./")[2] + ":main"
 
         class_name = None
 
+        #print "\t%s" % str(dir(inspect.stack()[2][0].f_code))
+        #print "\t%s" % str(inspect.stack()[2][0].f_code.co_name)
+        #print "\t%s" % str(inspect.stack()[2][0].f_trace)
+        #print "\t%s" % str(inspect.stack()[2][0].f_globals["__name__"])
+        #print "\t%s" % str(inspect.stack()[2][0].f_globals.viewitems())
+        #print "\t%s" % str(inspect.stack()[2][0].f_locals["__class__"])
         if "self" in inspect.stack()[2][0].f_locals.keys():
+            #print "\t%s" % str(inspect.stack()[2][0].f_locals["self"])
+            #print "\t%s" % str(dir(inspect.stack()[2][0].f_locals["self"]))
+            
             class_name = str(inspect.stack()[2][0].f_locals["self"])
             while class_name.find(".") != -1:
                 class_name = class_name.partition(".")[2]
+            class_name = class_name.partition(" ")[0]
+
             class_name = class_name.strip("(")
             class_name = class_name.strip(")")
 

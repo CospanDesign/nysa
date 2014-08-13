@@ -31,7 +31,7 @@ import shutil
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
-from nysa.ibuilder.lib import ibuilder
+from nysa.ibuilder.lib import project_generator
 from nysa.common import status
 from nysa.common import site_manager
 
@@ -134,14 +134,15 @@ if __name__ == "__main__":
         output_dir = args.output[0]
  
     #ibuilder.generate_project(args.config[0], dbg = debug)
-    ibuilder.generate_project(args.config[0], output_directory = output_dir, dbg = False)
+    #ibuilder.generate_project(args.config[0], output_directory = output_dir, status = s)
+    project_generator.generate_project(args.config[0], output_directory = output_dir, status = s)
     if output_dir is None:
-        output_dir = ibuilder.get_output_dir(args.config[0])
+        output_dir = project_generator.get_output_dir(args.config[0])
  
     s.Info("Generating Project %s @ %s" % (args.config[0], output_dir))
  
     if args.compress:
-        output_dir = ibuilder.get_output_dir(args.config[0], dbg=debug)
+        output_dir = project_generator.get_output_dir(args.config[0], dbg=debug)
         name = os.path.split(output_dir)[1]
         out_loc = os.path.split(output_dir)[0]
        

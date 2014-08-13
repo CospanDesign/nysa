@@ -187,7 +187,7 @@ def find_rtl_file_location(filename="", user_paths = [], debug=False):
     Raises:
       Nothing
     """
-     #Get the base directory of Nysa and look in the cbuilder director
+    #Get the base directory of Nysa and look in the cbuilder director
     base_location = nysa_base
     base_location = os.path.join(base_location, "cbuilder", "verilog")
     for root, dirs, names in os.walk(base_location):

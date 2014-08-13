@@ -46,6 +46,46 @@ from module_processor import ModuleProcessor
 from ibuilder_error import ModuleFactoryError
 from ibuilder_error import ProjectGeneratorError as PGE
 
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.path.pardir,
+                             os.path.pardir))
+
+from common import site_manager
+from common import status
+
+
+def get_output_dir(config_filename, debug = False):
+    
+    tags = json.load(open(config_filename, "r"), object_pairs_hook=collections.OrderedDict)
+    return utils.resolve_path(tags["BASE_DIR"])
+
+def generate_project(filename, user_paths = [], output_directory = None, status = None):
+    """Generate a FPGA project
+    
+    The type of phroject is specific to the vendor called. For example, if the 
+    configuration file specified that the vendor is Xilinx then the generated 
+    project would be a PlanAhead project
+ 
+    Args:
+      filename: Name of the configuration file to be read
+      user_paths: Paths used to search for modules
+      output_directory: Path to override default output directory
+ 
+    Returns:
+      A result of success or fail
+        0 = Success
+        -1 = Fail
+ 
+    Raises:
+      IOError: An error in project generation has occured
+    """
+    #print "IBUILDER User paths: %s" % str(user_paths)
+  
+    pg = ProjectGenerator(user_paths)
+    result = pg.generate_project(filename, output_directory = output_directory, status = status)
+    return result
+
+
 class ProjectGenerator:
     """Generates IBuilder Projects"""
  
@@ -120,7 +160,7 @@ class ProjectGenerator:
         utils.recursive_dict_name_fix(self.template_tags)
 
         
-    def generate_project(self, config_filename, output_directory = None, debug=False):
+    def generate_project(self, config_filename, output_directory = None, status = None):
         """Generate the folders and files for the project
        
         Using the project tags and template tags this function generates all
@@ -142,7 +182,13 @@ class ProjectGenerator:
           IOError
           SapError
         """
+        if status: status.Debug("Openning site manager")
+
+        sm = site_manager.SiteManager("nysa")
+        path_dicts = sm.get_paths_dict()
+
         self.read_config_file(config_filename)
+        path_dict = sm.get_paths_dict()
         if output_directory is not None:
             self.project_tags["BASE_DIR"] = output_directory
 
@@ -159,7 +205,7 @@ class ProjectGenerator:
         #if the user didn't specify any constraint files
         #load the default
         if len(cfiles) == 0:
-            if debug: print "board dict: %s" % str(board_dict)
+            if status: status.Debug("loading default constraints for: %s" % board_dict["board_name"])
             cfiles = board_dict["default_constraint_files"]
             for c in cfiles:
                 cpaths.append(utils.get_constraint_file_path(c))
@@ -182,12 +228,13 @@ class ProjectGenerator:
         self.read_template_file(self.project_tags["TEMPLATE"])
 
         #set all the tags within the filegen structure
-        if debug: print "set all tags wihin filegen structure"
+        if status: status.Verbose("set all tags wihin filegen structure")
         self.filegen.set_tags(self.project_tags)
         
         #generate the project directories and files
         utils.create_dir(self.project_tags["BASE_DIR"])
-        if debug: print "generated the first dir"
+        if status: status.Verbose("generated project base direcotry: %s" %
+            utils.resolve_path(self.project_tags["BASE_DIR"]))
         
         #generate the arbitor tags, this is important because the top
         #needs the arbitor tags
@@ -201,9 +248,10 @@ class ProjectGenerator:
                     key,
                     self.project_tags["BASE_DIR"])
         
-        if debug: print "generating project directories finished"
+        if status: status.Verbose("finished generating project directories")
         
-        if debug: print "generate the arbitors"
+        if arbitor.is_arbitor_required(self.project_tags):
+            if status: status.Verbose("generate the arbitors")
         self.generate_arbitors()
         
         #Generate all the slaves
@@ -213,9 +261,10 @@ class ProjectGenerator:
             #file_dest = self.project_tags["BASE_DIR"] + "/rtl/bus/slave"
             fn = self.project_tags["SLAVES"][slave]["filename"]
             try:
-                self.filegen.process_file(filename = fn, file_dict = fdict, directory=file_dest, debug=debug)
+                self.filegen.process_file(filename = fn, file_dict = fdict, directory=file_dest, debug=False)
             except ModuleFactoryError as err:
-                print "ModuleFactoryError while generating a slave: %s" % str(err)
+                if status: status.Error("ModuleFactoryError while generating slave: %s" % str(err))
+                raise ModuleFactoryError(err)
            
             #each slave
  
@@ -228,7 +277,8 @@ class ProjectGenerator:
                 try:
                     self.filegen.process_file(filename = fn, file_dict = fdict, directory = file_dest)
                 except ModuleFactoryError as err:
-                    print "ModuleFactoryError while generating a memory slave: %s" % str(err)
+                    if status: status.Error("ModuleFactoryError while generating memory: %s" % str(err))
+                    raise ModuleFactoryError(err)
  
         #Copy the user specified constraint files to the constraints directory
         for constraint_fname in cfiles:
@@ -250,21 +300,22 @@ class ProjectGenerator:
         file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "bus", "interface")
         result = self.filegen.process_file(filename = interface_filename, file_dict=fdict , directory=file_dest)
  
-        if debug:
-            print "copy over the dependencies..."
-            print "verilog files: "
+        if status:
+            status.Verbose("verilog files: ")
             for f in self.filegen.verilog_file_list:
-                print f
-                print "dependent files: "
+                status.Verbose("\t%s" % f)
+                #if len(self.filegen.verilog_dependency_list) > 0:
+                #    status.Verbose("\t\tdependent files: ")
+        if status: status.Verbose("copy over the dependencies...")
         for d in self.filegen.verilog_dependency_list:
             fdict = {"location":""}
             file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "dependencies")
             result = self.filegen.process_file(filename = d, file_dict = fdict, directory = file_dest)
-            if debug: print d
+            if status: status.Verbose("\tDependent File: %s" % d)
  
         return True
 
-    def get_constraint_path (self, constraint_fname, debug = False):
+    def get_constraint_path (self, constraint_fname, status = False):
         """get_constraint_path
        
         given a constraint file name determine where that constraint is
