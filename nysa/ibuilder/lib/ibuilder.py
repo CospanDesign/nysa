@@ -115,8 +115,6 @@ class ProjectGenerator:
         except TypeError as err:
             raise PGE("Error reading the tags in the project file: %s" % str(err))
 
-
-
     def read_template_file(self, filename, debug=False):
         """Attemp to read in template file
 
