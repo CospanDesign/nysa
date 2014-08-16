@@ -51,9 +51,7 @@ class _Status(object):
 
     def __init__(self):
         super(_Status, self).__init__()
-        #print "Staring CL Status"
         self.level = StatusLevel.INFO
-
 
     def Verbose (self, text):
         if self.CheckLevel(StatusLevel.VERBOSE):
@@ -73,7 +71,7 @@ class _Status(object):
 
     def Warning (self, text):
         if self.CheckLevel(StatusLevel.WARNING):
-            self.status_output("Warning", text, color = blue)
+            self.status_output("Warning", text, color = yellow)
 
     def Error (self, text):
         if self.CheckLevel(StatusLevel.ERROR):
@@ -117,7 +115,7 @@ class _Status(object):
             class_name = class_name.strip(")")
 
         if class_name is not None and (len(class_name) > 0) and (class_name.strip() != "<module>"):
-            d = "%s:%s " % (class_name, function_name)
+            d = "%s:%s: " % (class_name, function_name)
         else:
             d = "%s: " % (function_name)
 
