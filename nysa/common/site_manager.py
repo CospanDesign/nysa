@@ -14,6 +14,7 @@ from urllib2 import build_opener, HTTPCookieProcessor
 SITE_PATH = os.path.join(site.getuserbase(), "nysa")
 VERSION_PATH = os.path.join(SITE_PATH, "versions.json")
 PATHS_PATH = os.path.join(SITE_PATH, "paths.json")
+BOARD_ID_PATH = os.path.join(SITE_PATH, "board_id.json")
 BOARD_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1dif3JBFwjEiNVn5hNxr2ZQ58ypy1LqTsKIlVk3pWVtE/export?format=csv"
 REMOTE_PACKAGE_URL = "http://www.cospandesign.com/nysa/packages"
 BOARD_PACKAGE_PATH = os.path.join(SITE_PATH, "boards")
@@ -30,6 +31,9 @@ def get_versions_path():
 
 def get_board_package_path():
     return BOARD_PACKAGE_PATH
+
+def get_board_id_path():
+    return BOARD_ID_PATH
 
 class LocalDefinition(Exception):
     pass
@@ -54,26 +58,33 @@ class SiteManager(object):
             f.close()
 
         self.initialize_paths_dictionary()
+        self.initialize_board_id_dictionary()
         self.remote_url = remote_url
         self.set_remote_url(remote_url)
 
+    def initialize_board_id_dictionary(self):
+        if not os.path.exists(get_board_id_path()):
+            f = open(get_board_id_path(), "w")
+            f.write("{}")
+            f.close()
+
     def initialize_paths_dictionary(self):
-        if not os.path.exists(PATHS_PATH):
+        if not os.path.exists(get_paths_path()):
             #Doesn't exists, create a reference to it
-            f = open(PATHS_PATH, "w")
+            f = open(get_paths_path(), "w")
             f.write("{}")
             f.close()
 
         path_dict = None
         try:
-            f = open(PATHS_PATH, "r")
+            f = open(get_paths_path(), "r")
             path_dict = json.load(f)
             f.close()
         except ValueError as e:
-            f = open(PATHS_PATH, "w")
+            f = open(get_paths_path(), "w")
             f.write("{}")
             f.close()
-            f = open(PATHS_PATH, "r")
+            f = open(get_paths_path(), "r")
             path_dict = json.load(f)
             f.close()
 
@@ -82,7 +93,7 @@ class SiteManager(object):
         if "verilog" not in path_dict:
             path_dict["verilog"] = []
 
-        f = open(PATHS_PATH, "w")
+        f = open(get_paths_path(), "w")
         f.write(json.dumps(path_dict))
         f.close()
 
@@ -112,10 +123,21 @@ class SiteManager(object):
 
     def get_paths_dict(self):
 
-        f = open(PATHS_PATH)
+        f = open(get_paths_path())
         path_dict = json.load(f)
         f.close()
         return path_dict
+
+    def get_local_board_names(self):
+        path_dict = self.get_paths_dict()
+        return path_dict["boards"].keys()
+
+    def get_board_directory(self, name):
+        path_dict = self.get_paths_dict()
+        name = name.lower()
+        if name not in path_dict["boards"]:
+            raise SiteManagerError("Board: %s doesn't exists" % name)
+        return path_dict["boards"][name]["path"]
 
     def board_exists(self, name):
         path_dict = self.get_paths_dict()
@@ -130,7 +152,7 @@ class SiteManager(object):
         path_dict["boards"][name] = {}
         path_dict["boards"][name]["timestamp"] = timestamp
         path_dict["boards"][name]["path"] = path
-        f = open(PATHS_PATH, "w")
+        f = open(get_paths_path(), "w")
         f.write(json.dumps(path_dict))
         f.close()
 
@@ -171,6 +193,7 @@ class SiteManager(object):
             grid_data[i].extend(row_data[i].split(","))
 
         #print "grid data: %s" % str(grid_data)
+        self.update_board_id_dict(grid_data)
         result = None
         for row in grid_data:
             #print "row: %s" % str(row)
@@ -247,4 +270,38 @@ class SiteManager(object):
         f = open(VERSION_PATH, "w")
         f.write(json.dumps(local_version))
         f.close()
+
+    def get_board_id_dict(self):
+        f = open(get_board_id_path(), "r")
+        board_id_dict = json.load(f)
+        f.close()
+        return board_id_dict
+
+    def update_board_id_dict(self, grid_data = None):
+        if grid_data is None:
+            opener = build_opener(HTTPCookieProcessor(CookieJar()))
+            resp = opener.open(BOARD_SPREADSHEET_URL)
+            data = resp.read()
+            data = data.strip()
+            row_data = data.split("\n")
+            grid_data = []
+            for i in range(len(row_data)):
+                grid_data.append([])
+                grid_data[i].extend(row_data[i].split(","))
+
+        board_id_dict = self.get_board_id_dict()
+        for row in grid_data:
+            index = grid_data.index(row)
+            if index == 0:
+                continue
+            name = row[1].lower()
+            board_id_dict[name] = index
+
+        f = open(get_board_id_path(), "w")
+        f.write(json.dumps(board_id_dict))
+        f.close()
+
+
+
+
 

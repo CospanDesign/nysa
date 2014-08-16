@@ -216,7 +216,8 @@ class ProjectGenerator(object):
         if "constraint_files" in pt.keys():
             cfiles = pt["constraint_files"]
             for c in cfiles:
-                cpaths.append(utils.get_constraint_file_path(c))
+                cpaths.append(utils.get_constraint_file_path(self.project_tags["board"], c))
+                #cpaths.append(utils.get_constraint_file_path(c))
 
         #if the user didn't specify any constraint files
         #load the default
@@ -224,7 +225,8 @@ class ProjectGenerator(object):
             if status: status.Debug("loading default constraints for: %s" % board_dict["board_name"])
             cfiles = board_dict["default_constraint_files"]
             for c in cfiles:
-                cpaths.append(utils.get_constraint_file_path(c))
+                cpaths.append(utils.get_constraint_file_path(self.project_tags["board"], c))
+                #cpaths.append(utils.get_constraint_file_path(c))
 
 
         #extrapolate the bus template
@@ -302,7 +304,7 @@ class ProjectGenerator(object):
         for constraint_fname in cfiles:
             sap_abs_base = os.getenv("SAPLIB_BASE")
             abs_proj_base = utils.resolve_path(self.project_tags["BASE_DIR"])
-            constraint_path = self.get_constraint_path(constraint_fname)
+            constraint_path = utils.get_constraint_file_path(self.project_tags["board"], constraint_fname)
             #constraint_path = constraint_fname
             if len(constraint_path) == 0:
                 print ("Couldn't find constraint: %s, searched in the current directory and %s/hdl/%s" %
@@ -332,23 +334,6 @@ class ProjectGenerator(object):
             if status: status.Verbose("\tDependent File: %s" % d)
 
         return True
-
-    def get_constraint_path (self, constraint_fname, status = False):
-        """get_constraint_path
-
-        given a constraint file name determine where that constraint is
-
-        Args:
-          constraint_fname: the name of the constraint file to search for
-
-        Return:
-          path of the constraint
-
-        Raises:
-          ProjectGeneratorError:
-            Can't find the constraint file in the board directory
-        """
-        return utils.get_constraint_file_path(constraint_fname)
 
     def recursive_structure_generator(self,
                     parent_dict = {},

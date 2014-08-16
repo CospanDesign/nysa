@@ -212,18 +212,15 @@ def find_rtl_file_location(filename="", user_paths = [], debug=False):
 
 def get_board_names (user_paths = [], debug = False):
     """Returns a list of all the board names"""
-    base_location = nysa_base
-    base_location = os.path.join(base_location, "ibuilder", "boards")
-    boards = []
+    sm = site_manager.SiteManager()
+    #Get the installed board locations
+    boards = sm.get_local_board_names()
 
-    board_locations = [base_location]
-    board_locations.extend(user_paths)
-
+    #Check user paths
+    board_locations = user_paths
     for bl in board_locations:
         for root, dirs, names in os.walk(bl):
-            if debug:
-                print "Dirs: " + str(dirs)
-
+            if debug: print "Dirs: " + str(dirs)
             for bn in dirs:
                 boards.append(bn)
 
@@ -231,10 +228,24 @@ def get_board_names (user_paths = [], debug = False):
 
 def get_constraint_filenames (board_name, user_paths = [], debug = False):
     """Returns a list of ucf files for the specified board name"""
-    board_dir = os.path.join(nysa_base, "ibuilder", "boards", board_name)
+    #board_dir = os.path.join(nysa_base, "ibuilder", "boards", board_name)
+    sm = site_manager.SiteManager()
+    board_location = None
     cfiles = []
-    board_locations = [board_dir]
-    board_locations.extend(user_paths)
+
+    try:
+        board_location = get_board_directory(board_name)
+        config_dict = get_board_config(board_name, user_paths, debug = debug)
+        if "default_constraint_files" in config_dict:
+            for cf in config_dict["default_constraint_files"]:
+                cfiles.append(os.path.join(board_location, "board", cf))
+
+    except site_manager.SiteManagerError as ex:
+        if debug: print "%s is not in the installed path, checking user paths..." % board_name
+
+    #board_locations = [board_dir]
+    #board_locations.extend(user_paths)
+    board_locations = user_paths
 
     for bl in board_locations:
         if debug: print "Board dir: %s" % bl
@@ -267,36 +278,40 @@ def get_board_config (board_name, user_paths = [], debug = False):
     Raises:
         Nothing
     """
+    sm = site_manager.SiteManager()
+    board_location = None
+    try:
+        board_location = get_board_directory(board_name)
+    except site_manager.SiteManagerError as ex:
+        if debug: print "%s is not in the installed path, checking user paths..." % board_name
+        pass
 
-    board_dir = os.path.join(nysa_base, "ibuilder", "boards")
-    if debug: print "Board dir: %s" % board_dir
-    board_locations = [board_dir]
-    board_locations.extend(user_paths)
+    if board_location is not None:
+        f = open(os.path.join(board_location, "board", "config.json"), "r")
+        config_dict = json.load(f)
+        f.close()
+        return config_dict
+
+
+    board_locations = user_paths
 
     filename = ""
     buf = ""
-    board_dict = {}
+    config_dict = {}
 
     if debug: print "Looking for: " + board_name
 
     for bl in board_locations:
         for root, dirs, names in os.walk(bl):
-            if debug:
-                print "Dirs: " + str(dirs)
-
+            if debug: print "Dirs: " + str(dirs)
             if board_name in dirs:
-                if debug:
-                    print "Found the directory"
-
-                filename = os.path.join(root, board_name)
-                filename += "/config.json"
-                if debug:
-                    print "filename: %s" % filename
+                if debug: print "Found the directory"
+                filename = os.path.join(root, board_name, "config.json")
+                if debug: print "filename: %s" % filename
                 break
 
     if len(filename) == 0:
-        if debug:
-            print "didn't find board config file"
+        if debug: print "didn't find board config file"
         return {}
 
 
@@ -304,20 +319,18 @@ def get_board_config (board_name, user_paths = [], debug = False):
     try:
         file_in = open(filename)
         buf = file_in.read()
-        board_dict = json.loads(buf)
+        config_dict = json.loads(buf)
         file_in.close()
         #XXX: This should probably raise an error to the calling function
     except:
         #fail
-        if debug:
-            print "failed to open file: " + filename
-        return ""
+        if debug: print "failed to open file: " + filename
 
     if debug:
         print "Opened up the board config file for %s" % (board_name)
 
      #for debug
-    return board_dict
+    return config_dict
 
 def get_net_names(filepath, debug = False):
     """Gets a list of net in a given constraint file
@@ -334,9 +347,26 @@ def get_net_names(filepath, debug = False):
     """
     return constraint_utils.get_net_names(filepath)
 
-def get_constraint_file_path(constraint_filename, user_paths = [], debug = False):
-    board_dir = os.path.join(nysa_base, "ibuilder", "boards")
-    board_locations = [board_dir]
+def get_constraint_file_path(board_name, constraint_filename, user_paths = [], debug = False):
+    board_name = board_name.lower()
+    """Returns a list of ucf files for the specified board name"""
+    #board_dir = os.path.join(nysa_base, "ibuilder", "boards", board_name)
+    sm = site_manager.SiteManager()
+    board_location = None
+
+    try:
+        board_location = get_board_directory(board_name)
+        config_dict = get_board_config(board_name, user_paths, debug = debug)
+        if "default_constraint_files" in config_dict:
+            for cf in config_dict["default_constraint_files"]:
+                if constraint_filename == cf:
+                    return os.path.join(board_location, "board", cf)
+
+    except site_manager.SiteManagerError as ex:
+        if debug: print "%s is not in the installed path, checking user paths..." % board_name
+
+
+
     board_locations.extend(user_paths)
     filename = ""
     buf = ""
@@ -655,12 +685,16 @@ def pretty_print_dict(d):
                      indent = 2,
                      separators=(',', ':'))
 
+def get_board_directory(board_name):
+    return site_manager.SiteManager().get_board_directory(board_name)
+
 def board_exists(board_name):
     sm = site_manager.SiteManager()
     return sm.board_exists(board_name)
 
-def install_remote_board_package(board_name, s = None):
+def install_remote_board_package(board_name, status = None):
     sm = site_manager.SiteManager()
+    s = status
     if s: s.Warning("Could not find %s on local host" % board_name)
     if not sm.remote_board_exists(board_name):
         if s: s.Fatal("Could not find %s in remote board table" % board_name)
@@ -672,4 +706,23 @@ def install_remote_board_package(board_name, s = None):
     if s: s.Important("Installing %s to %s" % (board_name, site_manager.get_board_package_path()))
     sm.install_remote_board_package(board_name)
 
+def get_board_id_dict():
+    sm = site_manager.SiteManager()
+    return sm.get_board_id_dict()
+
+def update_board_id_dict():
+    sm = site_manager.SiteManager()
+    sm.update_board_id_dict()
+
+def is_board_id_in_dict(name):
+    sm = site_manager.SiteManager()
+    bid = sm.get_board_id_dict()
+    if name not in bid:
+        return False
+    return True
+
+def get_board_id(name):
+    sm = site_manager.SiteManager()
+    bid = sm.get_board_id_dict()
+    return sm.get_board_id_dict()[name]
 

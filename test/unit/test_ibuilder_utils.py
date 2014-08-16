@@ -107,7 +107,11 @@ class Test (unittest.TestCase):
 
     def test_get_constraint_filenames(self):
         cfiles = utils.get_constraint_filenames("dionysus")
-        self.assertIn("dionysus.ucf", cfiles)
+        for cfile in cfiles:
+            if "dionysus.ucf" in cfile:
+                return
+
+        assert False
 
     def test_get_constraint_filenames_user_loc(self):
         """Set the current directory to a search location""" 

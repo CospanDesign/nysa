@@ -53,12 +53,13 @@ class GenDRT(Gen):
     def gen_script(self, tags = {}, buf = "", user_paths = [], debug = False):
         out_buf = ""
         self.user_paths = user_paths
-        board_fn = os.path.join(utils.get_nysa_base(), "ibuilder", "boards", "boards.json")
-        #print "Board Filename: %s" % board_fn
-        board_dict = json.load(open(board_fn, 'r'))
-        #print "board: %s" % tags["board"]
-        board_id = board_dict[tags["board"]]
-        #print "board: %s" % tags["image_id"]
+        board_name = tags["board"].lower()
+
+        if utils.is_board_id_in_dict(board_name):
+            utils.update_board_id_dict()
+
+        board_id = utils.get_board_id(board_name)
+
         image_id = 0
         for key in tags.keys():
             if key.lower() == "image_id":
