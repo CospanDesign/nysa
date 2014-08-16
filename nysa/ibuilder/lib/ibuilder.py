@@ -29,7 +29,7 @@ This class is used to generate projects given a configuration file
         -Added Documentation and licsense
     07/17/2013:
         -Cleaning up code
-    
+
 """
 
 __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
@@ -54,65 +54,77 @@ from common import site_manager
 from common import status
 
 
+def get_project_tags(config_filename):
+    f = open(config_filename, "r")
+    tags = json.load(f, object_pairs_hook = collections.OrderedDict)
+    f.close()
+    return tags
+
 def get_output_dir(config_filename, debug = False):
-    
-    tags = json.load(open(config_filename, "r"), object_pairs_hook=collections.OrderedDict)
+    tags = get_project_tags(config_filename)
     return utils.resolve_path(tags["BASE_DIR"])
 
 def generate_project(filename, user_paths = [], output_directory = None, status = None):
     """Generate a FPGA project
-    
-    The type of phroject is specific to the vendor called. For example, if the 
-    configuration file specified that the vendor is Xilinx then the generated 
+
+    The type of phroject is specific to the vendor called. For example, if the
+    configuration file specified that the vendor is Xilinx then the generated
     project would be a PlanAhead project
- 
+
     Args:
       filename: Name of the configuration file to be read
       user_paths: Paths used to search for modules
       output_directory: Path to override default output directory
- 
+
     Returns:
       A result of success or fail
         0 = Success
         -1 = Fail
- 
+
     Raises:
       IOError: An error in project generation has occured
     """
     #print "IBUILDER User paths: %s" % str(user_paths)
-  
-    pg = ProjectGenerator(user_paths)
-    result = pg.generate_project(filename, output_directory = output_directory, status = status)
+    tags = get_project_tags(filename)
+
+    if not utils.board_exists(tags["board"]):
+        utils.install_remote_board_package(tags["board"], status = status)
+
+    pg = ProjectGenerator(user_paths, status = status)
+    result = pg.generate_project(filename, output_directory = output_directory)
     return result
 
 
-class ProjectGenerator:
+class ProjectGenerator(object):
     """Generates IBuilder Projects"""
- 
-    def __init__(self, user_paths = []):
+
+    def __init__(self, user_paths = [], status = None):
         self.user_paths = user_paths
         self.filegen = ModuleProcessor(user_paths = self.user_paths)
         self.project_tags = {}
         self.template_tags = {}
-        return
+        self.s = status
 
     def read_config_file(self, filename="", debug=False):
         """Read in a configuration file name and create a class dictionary
-       
+
         Args:
           filename: the filename of the configuration file to read in
-       
+
         Return:
           Nothing
-       
+
         Raises:
           TypeError
         """
         try:
+            if self.s: self.s.Verbose("Reading configuration file: %s" % filename)
             self.project_tags = json.load(open(filename, "r"), object_pairs_hook=collections.OrderedDict)
         except IOError as err:
+            if self.s: self.s.Fatal("Error while loadng the project tags: %s" % str(err))
             raise PGE("Error while loadng the project tags: %s" % str(err))
         except TypeError as err:
+            if self.s: self.s.Fatal("Error reading the tags in the project file: %s" % str(err))
             raise PGE("Error reading the tags in the project file: %s" % str(err))
 
     def read_template_file(self, filename, debug=False):
@@ -142,44 +154,50 @@ class ProjectGenerator:
             if os.path.exists(test_path):
                 filename = test_path
             else:
+                if self.s: self.s.Fatal("Can't find template file at: %s" % (filename))
                 raise PGE("Can't find template file at: %s" % (filename))
         try:
+            if self.s: self.s.Verbose("Loading template file: %s" % filename)
             self.template_tags = json.load(open(filename, "r"))
         except IOError as err:
+            if self.s: self.s.Fatal("Error while loading the template tags: %s" % str(err))
             raise PGE("Error while loading the template tags: %s" % str(err))
         except TypeError as err:
+            if self.s: self.s.Fatal("Error reading the tags in the template file: %s" % str(err))
             raise PGE("Error reading the tags in the template file: %s" % str(err))
         except ValueError as err:
+            if self.s: self.s.Fatal("Error parsing JSON in template file: %s" % str(err))
             raise PGE("Error parsing JSON in template file: %s" % str(err))
 
         #Fix all paths to be compatible with the OS and
-        #Replace all "${NYSA}" with a 
+        #Replace all "${NYSA}" with a
         #print "Replace NYSA name with real paths"
         utils.recursive_dict_name_fix(self.template_tags)
 
-        
-    def generate_project(self, config_filename, output_directory = None, status = None):
+
+    def generate_project(self, config_filename, output_directory = None):
         """Generate the folders and files for the project
-       
+
         Using the project tags and template tags this function generates all
         the directories and files of the project. It will go through the template
         structure and determine what files need to be added and call either
         a generation script (in the case of \"top.v\") or simply copy the file
         over (in the case of a peripheral or memory module.
-       
+
         Args:
           config_filename: name of the JSON configuration file
             output_directory: Path to override default output directory
-       
+
         Return:
           True: Success
           False: Failure
-       
+
         Raises:
           TypeError
           IOError
           SapError
         """
+        status = self.s
         if status: status.Debug("Openning site manager")
 
         sm = site_manager.SiteManager("nysa")
@@ -199,7 +217,7 @@ class ProjectGenerator:
             cfiles = pt["constraint_files"]
             for c in cfiles:
                 cpaths.append(utils.get_constraint_file_path(c))
-        
+
         #if the user didn't specify any constraint files
         #load the default
         if len(cfiles) == 0:
@@ -208,7 +226,7 @@ class ProjectGenerator:
             for c in cfiles:
                 cpaths.append(utils.get_constraint_file_path(c))
 
-        
+
         #extrapolate the bus template
 #XXX: Need to check all the constraint files
         clock_rate = ""
@@ -219,6 +237,8 @@ class ProjectGenerator:
                 break
 
         if len (clock_rate) == 0:
+            if self.s: self.s.Fatal("Unable to find the clock rate in any of the constraint"
+                      "files: %s" % str(cpaths))
             raise PGE("Unable to find the clock rate in any of the constraint"
                       "files: %s" % str(cpaths))
 
@@ -228,30 +248,30 @@ class ProjectGenerator:
         #set all the tags within the filegen structure
         if status: status.Verbose("set all tags wihin filegen structure")
         self.filegen.set_tags(self.project_tags)
-        
+
         #generate the project directories and files
         utils.create_dir(self.project_tags["BASE_DIR"])
         if status: status.Verbose("generated project base direcotry: %s" %
             utils.resolve_path(self.project_tags["BASE_DIR"]))
-        
+
         #generate the arbitor tags, this is important because the top
         #needs the arbitor tags
         arb_tags = arbitor.generate_arbitor_tags(self.project_tags, False)
         self.project_tags["ARBITORS"] = arb_tags
-        
+
         #print "Parent dir: " + self.project_tags["BASE_DIR"]
         for key in self.template_tags["PROJECT_TEMPLATE"]["files"]:
             self.recursive_structure_generator(
                     self.template_tags["PROJECT_TEMPLATE"]["files"],
                     key,
                     self.project_tags["BASE_DIR"])
-        
+
         if status: status.Verbose("finished generating project directories")
-        
+
         if arbitor.is_arbitor_required(self.project_tags):
             if status: status.Verbose("generate the arbitors")
         self.generate_arbitors()
-        
+
         #Generate all the slaves
         for slave in self.project_tags["SLAVES"]:
             fdict = {"location":""}
@@ -263,9 +283,9 @@ class ProjectGenerator:
             except ModuleFactoryError as err:
                 if status: status.Error("ModuleFactoryError while generating slave: %s" % str(err))
                 raise ModuleFactoryError(err)
-           
+
             #each slave
- 
+
         if ("MEMORY" in self.project_tags):
             for mem in self.project_tags["MEMORY"]:
                 fdict = {"location":""}
@@ -277,7 +297,7 @@ class ProjectGenerator:
                 except ModuleFactoryError as err:
                     if status: status.Error("ModuleFactoryError while generating memory: %s" % str(err))
                     raise ModuleFactoryError(err)
- 
+
         #Copy the user specified constraint files to the constraints directory
         for constraint_fname in cfiles:
             sap_abs_base = os.getenv("SAPLIB_BASE")
@@ -290,14 +310,14 @@ class ProjectGenerator:
                 continue
             shutil.copy (constraint_path, os.path.join(abs_proj_base, "constraints", constraint_fname))
             #shutil.copy (constraint_path, abs_proj_base + "/constraints/" + constraint_fname)
- 
+
         #Generate the IO handler
         interface_filename = self.project_tags["INTERFACE"]["filename"]
         fdict = {"location":""}
         #file_dest = self.project_tags["BASE_DIR"] + "/rtl/bus/interface"
         file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "bus", "interface")
         result = self.filegen.process_file(filename = interface_filename, file_dict=fdict , directory=file_dest)
- 
+
         if status:
             status.Verbose("verilog files: ")
             for f in self.filegen.verilog_file_list:
@@ -310,20 +330,20 @@ class ProjectGenerator:
             file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "dependencies")
             result = self.filegen.process_file(filename = d, file_dict = fdict, directory = file_dest)
             if status: status.Verbose("\tDependent File: %s" % d)
- 
+
         return True
 
     def get_constraint_path (self, constraint_fname, status = False):
         """get_constraint_path
-       
+
         given a constraint file name determine where that constraint is
-       
+
         Args:
           constraint_fname: the name of the constraint file to search for
-       
+
         Return:
           path of the constraint
-       
+
         Raises:
           ProjectGeneratorError:
             Can't find the constraint file in the board directory
@@ -335,17 +355,17 @@ class ProjectGenerator:
                     key="",
                     parent_dir = "",
                     debug=False):
-       
+
         """Recursively generate all directories and files
-       
+
         Args:
           parent_dict: dictionary of the paret directory
           key: this is the name of the item to add
           parent_dir: name of the parent directory
-       
+
         Return:
           Nothing
-       
+
         Raises:
           IOError
           TypeError
@@ -358,10 +378,10 @@ class ProjectGenerator:
 
             #Get a path to this new directory
             new_dir = os.path.join(parent_dir, key)
-            if (os.path.exists(new_dir) 
+            if (os.path.exists(new_dir)
                and parent_dir is not self.project_tags["BASE_DIR"]):
                 #if we are not the base directory and the directory exists,
-                #remove it so we are clean there is a check for the base 
+                #remove it so we are clean there is a check for the base
                 #directory because the user might put the project
                 #in a pre-existing directory that would be obliterated
                 shutil.rmtree(new_dir)
@@ -398,16 +418,16 @@ class ProjectGenerator:
 
     def generate_arbitors(self, debug=False):
         """Generates all the arbitors modules from the configuration file
-       
+
         Searches for any required arbitors in the configuration file.
         Then generates the required arbitors (2 to 1, 3 to 1, etc...)
-       
+
         Args:
           Nothing
-       
+
         Return:
           The largest size arbitor generated (used for testing purposes)
-       
+
         Raises:
           TypeError
           IOError
@@ -415,16 +435,17 @@ class ProjectGenerator:
         #tags have already been set for this class
         if (not arbitor.is_arbitor_required(self.project_tags, False)):
             return 0
-       
+        if self.s: self.s.Debug("Arbitors are required for this project")
+
         arb_size_list = []
         arbitor_buffer = ""
-       
-       
+
+
         #we have some arbitors, add the tag to the project
         #  (this is needed for gen_top)
 #        arb_tags = arbitor.generate_arbitor_tags(self.project_tags, False)
 #        self.project_tags["ARBITORS"] = arb_tags
-       
+
         #for each of the items in the arbitor list create a file tags
         #item that can be proecessed by module_processor.process file
         arb_tags = self.project_tags["ARBITORS"]
@@ -433,13 +454,15 @@ class ProjectGenerator:
             arb_size = len(arb_tags[key]) + 1
             if (arb_size in arb_size_list):
                 continue
+            if self.s: self.s.Debug("Generating an Arbitor of size: %d" % arb_size)
             #we don't already have this size, so add it into the list
             arb_size_list.append(arb_size)
             fn = "arbitor_" + str(arb_size) + "_masters.v"
             #d = self.project_tags["BASE_DIR"] + "/rtl/bus/arbitors"
             d = os.path.join(self.project_tags["BASE_DIR"], "rtl", "bus", "arbitors")
-           
+
             self.filegen.buf = arbitor.generate_arbitor_buffer(arb_size)
             if debug: print "arbitor buffer: " + self.filegen.buf
             self.filegen.write_file(d, fn)
         return len(arb_size_list)
+
