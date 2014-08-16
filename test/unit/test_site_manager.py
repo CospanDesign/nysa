@@ -14,17 +14,18 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 
 from nysa.common import site_manager
 
-TEST_NAME = "ntest"
 test_rv = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, "fake"))
 #REMOTE_URL = "http:://127.0.0.1/" + test_rv
 REMOTE_URL = "http://www.cospandesign.com/nysa/packages"
+
+TEST_NAME = "nysa"
 
 
 class Test (unittest.TestCase):
     """Unit test for arbitor"""
 
     def setUp(self):
-        self.sm = site_manager.SiteManager(TEST_NAME)
+        self.sm = site_manager.SiteManager()
         if not self.sm._site_dir_exists():
             self.sm._create_site_dir()
         if not os.path.exists(self.sm.local_version_path):

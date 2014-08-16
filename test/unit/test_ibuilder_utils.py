@@ -238,62 +238,9 @@ class Test (unittest.TestCase):
         native_path = os.path.abspath(native_path)
         assert os.path.exists(native_path)
 
-    '''
-    def test_read_user_parameters(self):
-        print "Read Parameters"
-        filename = utils.find_rtl_file_location("wb_gpio.v")
-        #tags = vutils.get_module_tags(filename, debug=self.dbg)
-        tags = GPIO_TAGS
-        #print "GPIO TAGS: %s" % str(GPIO_TAGS)
-
-        #f = open("gpio_module_tags.txt", 'w')
-        #print "Tags: %s" % str(tags)
-        #f.write(json.dumps(tags))
-        #f.close()
-
-
-        keys = tags["parameters"].keys()
-        if self.dbg:
-            print "reading the parameters specified by the user"
-        self.assertIn("DEFAULT_INTERRUPT_MASK", keys)
-        if self.dbg:
-            print "make sure other parameters don't get read"
-        self.assertNotIn("ADDR_GPIO", keys)
-
-    def test_read_hard_slave_tags(self):
-        """try and extrapolate all info from the slave file"""
-        filename = os.path.join(  self.nysa_base,
-                                  "nysa",
-                                  "cbuilder",
-                                  "verilog",
-                                  "wishbone",
-                                  "slave",
-                                  "wb_sdram",
-                                  "rtl",
-                                  "wb_sdram.v")
-        drt_keywords = [
-          "DRT_ID",
-          "DRT_FLAGS",
-          "DRT_SIZE"
-        ]
-
-
-        tags = SDRAM_TAGS
-        #print "Tags: %s" % str(tags)
-
-        io_types = [
-          "input",
-          "output",
-          "inout"
-        ]
-
-        self.assertEqual(True, True)
-    '''
-
-
-
-
-
+    def test_board_exists(self):
+        assert not utils.board_exists("bad")
+        assert utils.board_exists("dionysus")
 
 if __name__ == "__main__":
     unittest.main()
