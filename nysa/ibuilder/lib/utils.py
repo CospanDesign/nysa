@@ -65,6 +65,10 @@ from ibuilder_error import NysaEnvironmentError
 from ibuilder_error import IBuilderError
 
 nysa_base = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)))
+
+from common import site_manager
+
 
 
 def get_nysa_base():
@@ -263,6 +267,7 @@ def get_board_config (board_name, user_paths = [], debug = False):
     Raises:
         Nothing
     """
+
     board_dir = os.path.join(nysa_base, "ibuilder", "boards")
     if debug: print "Board dir: %s" % board_dir
     board_locations = [board_dir]
@@ -649,4 +654,22 @@ def pretty_print_dict(d):
                      sort_keys = True,
                      indent = 2,
                      separators=(',', ':'))
+
+def board_exists(board_name):
+    sm = site_manager.SiteManager()
+    return sm.board_exists(board_name)
+
+def install_remote_board_package(board_name, s = None):
+    sm = site_manager.SiteManager()
+    if s: s.Warning("Could not find %s on local host" % board_name)
+    if not sm.remote_board_exists(board_name):
+        if s: s.Fatal("Could not find %s in remote board table" % board_name)
+        raise PGE("Could not find board %s on local host, checked remote board table" % board_name)
+
+    if s: s.Verbose("Found %s on the remote server" % board_name)
+
+    board_path = os.path.join(site_manager.get_board_package_path(), board_name)
+    if s: s.Important("Installing %s to %s" % (board_name, site_manager.get_board_package_path()))
+    sm.install_remote_board_package(board_name)
+
 
