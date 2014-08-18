@@ -382,7 +382,6 @@ def get_constraint_file_path(board_name, constraint_filename, user_paths = [], d
 
     if (len(filename) == 0):
         verilog_dirs = get_local_verilog_paths()
-        #cbuilder_dir = os.path.join(nysa_base, "cbuilder", "verilog")
         for vd in verilog_dirs:
             for root, dirs, names in os.walk(vd):
                 if debug: print "name: " + str(names)
@@ -475,7 +474,8 @@ def get_slave_list(bus = "wishbone", user_paths = [], debug = False):
 
     if debug:
         print "in get slave list"
-    directory = os.path.join(nysa_base, "cbuilder", "verilog", bus, "slave")
+    directory = get_verilog_package_path("nysa-verilog")
+    #directory = os.path.join(nysa_base, "cbuilder", "verilog", bus, "slave")
     file_list = _get_file_recursively(directory)
     slave_list = _get_slave_list(directory, debug=debug)
     for path in user_paths:
@@ -583,7 +583,8 @@ def find_module_filename (module_name, user_paths = [], debug = False):
     cwd = os.getcwd()
     filename = ""
     if debug: print "nysa base: %s" % nysa_base
-    base = os.path.join(nysa_base, "cbuilder", "verilog")
+    #base = os.path.join(nysa_base, "cbuilder", "verilog")
+    base = os.path.join(get_local_verilog_path("nysa-verilog"), "verilog")
     paths = [base]
     paths.extend(user_paths)
 
