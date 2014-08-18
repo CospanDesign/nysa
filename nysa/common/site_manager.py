@@ -16,9 +16,13 @@ VERSION_PATH = os.path.join(SITE_PATH, "versions.json")
 PATHS_PATH = os.path.join(SITE_PATH, "paths.json")
 BOARD_ID_PATH = os.path.join(SITE_PATH, "board_id.json")
 BOARD_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1dif3JBFwjEiNVn5hNxr2ZQ58ypy1LqTsKIlVk3pWVtE/export?format=csv"
-REMOTE_PACKAGE_URL = "http://www.cospandesign.com/nysa/packages"
+#REMOTE_PACKAGE_URL = "http://www.cospandesign.com/nysa/packages"
+VERILOG_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1fyr9G2sVVa1bOi3Rtg9uGz0KELReo8buoTrP8DQfNTA/export?format=csv"
 BOARD_PACKAGE_PATH = os.path.join(SITE_PATH, "boards")
+VERILOG_PACKAGE_PATH = os.path.join(SITE_PATH, "verilog")
 DEFAULT_BOARD_BRANCH = "master"
+
+paths_dict = None
 
 def get_paths_path():
     return PATHS_PATH
@@ -31,6 +35,9 @@ def get_versions_path():
 
 def get_board_package_path():
     return BOARD_PACKAGE_PATH
+
+def get_verilog_package_path():
+    return VERILOG_PACKAGE_PATH
 
 def get_board_id_path():
     return BOARD_ID_PATH
@@ -46,7 +53,7 @@ class SiteManagerError(Exception):
 
 class SiteManager(object):
 
-    def __init__(self, remote_url = REMOTE_PACKAGE_URL):
+    def __init__(self):
 
         if not os.path.exists(SITE_PATH):
             os.makedirs(os.path.join(SITE_PATH))
@@ -59,8 +66,6 @@ class SiteManager(object):
 
         self.initialize_paths_dictionary()
         self.initialize_board_id_dictionary()
-        self.remote_url = remote_url
-        self.set_remote_url(remote_url)
 
     def initialize_board_id_dictionary(self):
         if not os.path.exists(get_board_id_path()):
@@ -75,31 +80,27 @@ class SiteManager(object):
             f.write("{}")
             f.close()
 
-        path_dict = None
+        paths_dict = None
         try:
             f = open(get_paths_path(), "r")
-            path_dict = json.load(f)
+            paths_dict = json.load(f)
             f.close()
         except ValueError as e:
             f = open(get_paths_path(), "w")
             f.write("{}")
             f.close()
             f = open(get_paths_path(), "r")
-            path_dict = json.load(f)
+            paths_dict = json.load(f)
             f.close()
 
-        if "boards" not in path_dict:
-            path_dict["boards"] = {}
-        if "verilog" not in path_dict:
-            path_dict["verilog"] = []
+        if "boards" not in paths_dict:
+            paths_dict["boards"] = {}
+        if "verilog" not in paths_dict:
+            paths_dict["verilog"] = {}
 
         f = open(get_paths_path(), "w")
-        f.write(json.dumps(path_dict))
+        f.write(json.dumps(paths_dict))
         f.close()
-
-    def set_remote_url(self, remote_url):
-        self.remote_url = remote_url
-        self.remote_version_path = "%s/%s" % (remote_url, "versions.json")
 
     def _create_site_dir(self):
         os.makedirs(os.path.join(SITE_PATH))
@@ -110,51 +111,56 @@ class SiteManager(object):
     def _remove_local_site_dir(self):
         shutil.rmtree(SITE_PATH)
 
-    def get_remote_version_dict(self):
-        self.remote_version = json.load(urllib2.urlopen(self.remote_version_path).read())
-        return self.remote_version
-
-    def get_local_version_dict(self):
-
-        f = open(VERSION_PATH, "r")
-        self.version = json.load(f)
-        f.close()
-        return self.version
-
-    def get_paths_dict(self):
-
+    def get_paths_dict(self, force = False):
+        global paths_dict
+        #print "pre path dict: %s" % str(paths_dict)
+        if paths_dict is not None or force:
+            #print "\tGetting cached version"
+            return paths_dict
+        #print "\tGetting non-cached version"
         f = open(get_paths_path())
-        path_dict = json.load(f)
+        paths_dict = json.load(f)
         f.close()
-        return path_dict
+        return paths_dict
 
     def get_local_board_names(self):
-        path_dict = self.get_paths_dict()
-        return path_dict["boards"].keys()
+        paths_dict = self.get_paths_dict()
+        return paths_dict["boards"].keys()
 
     def get_board_directory(self, name):
-        path_dict = self.get_paths_dict()
+        paths_dict = self.get_paths_dict()
         name = name.lower()
-        if name not in path_dict["boards"]:
+        if name not in paths_dict["boards"]:
             raise SiteManagerError("Board: %s doesn't exists" % name)
-        return path_dict["boards"][name]["path"]
+        return paths_dict["boards"][name]["path"]
 
     def board_exists(self, name):
-        path_dict = self.get_paths_dict()
-        for board_name in path_dict["boards"]:
+        paths_dict = self.get_paths_dict()
+        for board_name in paths_dict["boards"]:
             if board_name.lower() == name.lower():
-                if os.path.exists(path_dict["boards"][board_name]["path"]):
+                if os.path.exists(paths_dict["boards"][board_name]["path"]):
                     return True
         return False
 
     def add_board(self, name, timestamp, path):
-        path_dict = self.get_paths_dict()
-        path_dict["boards"][name] = {}
-        path_dict["boards"][name]["timestamp"] = timestamp
-        path_dict["boards"][name]["path"] = path
+        paths_dict = self.get_paths_dict(force = True)
+        paths_dict["boards"][name] = {}
+        paths_dict["boards"][name]["timestamp"] = timestamp
+        paths_dict["boards"][name]["path"] = path
         f = open(get_paths_path(), "w")
-        f.write(json.dumps(path_dict))
+        f.write(json.dumps(paths_dict))
         f.close()
+        self.get_paths_dict(force = True)
+
+    def add_verilog_package(self, name, timestamp, path):
+        paths_dict = self.get_paths_dict()
+        paths_dict["verilog"][name] = {}
+        paths_dict["verilog"][name]["timestamp"] = timestamp
+        paths_dict["verilog"][name]["path"] = path
+        f = open(get_paths_path(), "w")
+        f.write(json.dumps(paths_dict))
+        f.close()
+        self.get_paths_dict(force = True)
 
     def import_board_package(self, name, url):
         opener = build_opener(HTTPCookieProcessor(CookieJar()))
@@ -241,35 +247,7 @@ class SiteManager(object):
         board_dir = os.path.join(get_board_package_path(), dir_name)
 
         self.add_board(name, timestamp, board_dir)
-
-    def compare_version_entry(self, entry):
-        remote_version = self.get_remote_version_dict()
-        local_version = self.get_local_version_dict()
-        if entry not in remote_version:
-            raise RemoteDefinition("%s is not within the remote version" % entry)
-
-        if entry not in local_version:
-            raise LocalDefinition("%s is not within local version" % entry)
-
-        if local_version[entry] != remote_version[entry]:
-            return False
-
-        return True
-
-    def update_local_version(self, entry):
-        remote_version = self.get_remote_version_dict()
-        local_version = self.get_local_version_dict()
-        local_version[entry] = remote_version[entry]
-        f = open(VERSION_PATH, "w")
-        f.write(json.dumps(local_version))
-        f.close()
-
-    def create_local_entry(self, entry, value):
-        local_version = self.get_local_version_dict()
-        local_version[entry] = value
-        f = open(VERSION_PATH, "w")
-        f.write(json.dumps(local_version))
-        f.close()
+        self.get_paths_dict(force = True)
 
     def get_board_id_dict(self):
         f = open(get_board_id_path(), "r")
@@ -301,7 +279,110 @@ class SiteManager(object):
         f.write(json.dumps(board_id_dict))
         f.close()
 
+    def get_local_verilog_package_names(self):
+        paths_dict = self.get_paths_dict()
+        return paths_dict["verilog"].keys()
+
+    def get_local_verilog_paths(self):
+        verilog_paths = []
+        paths_dict = self.get_paths_dict()
+
+        for vkey in paths_dict["verilog"]:
+            verilog_paths.append(paths_dict["verilog"][vkey]["path"])
+
+        return verilog_paths
+
+    def get_local_verilog_package_path(self, name):
+        paths_dict = self.get_paths_dict()
+        return paths_dict["verilog"][name]["path"]
+
+    def verilog_package_exists(self, name):
+        paths_dict = self.get_paths_dict()
+        if name in paths_dict["verilog"].keys():
+            return True
+        return False
+
+    def clean_verilog_package_paths(self):
+        paths_dict = self.get_paths_dict()
+        del_list = []
+        del_found = False
+        for vpackage in paths_dict["verilog"]:
+            if not os.path.exists(paths_dict["verilog"][vpackage]["path"]):
+                del_found = True
+                del_list.append(vpackage)
+
+        for vpackage in del_list:
+            del(paths_dict["verilog"][vpackage])
+
+        if del_found:
+            f = open(get_paths_path(), "w")
+            f.write(json.dumps(paths_dict))
+            f.close()
+            self.get_paths_dict(force = True)
+
+    def update_verilog_package(self, name = None, branch = None):
+        if name is None:
+            name = "nysa-verilog"
+        if branch is None:
+            branch = DEFAULT_BOARD_BRANCH
+
+        name = name.lower()
+
+        opener = build_opener(HTTPCookieProcessor(CookieJar()))
+        resp = opener.open(VERILOG_SPREADSHEET_URL)
+        data = resp.read()
+        data = data.strip()
+        row_data = data.split("\n")
+        grid_data = []
+        result = None
+        for i in range(len(row_data)):
+            grid_data.append([])
+            grid_data[i].extend(row_data[i].split(","))
+
+        #print "grid data: %s" % str(grid_data)
+        for row in grid_data:
+            index = grid_data.index(row)
+            if index == 0:
+                continue
+            remote_name = row[1].lower()
+            if remote_name == name:
+                result = row
+                #Found the package
+
+        if result is None:
+            raise SiteManagerError("Did not find remote verilog package: %s" % name)
+
+        url = result[2]
+        timestamp = result[0]
+        archive_url = None
+        if url.endswith('zip'):
+            print "Found zip file URL"
+            raise SiteManagerError("Current version of stie manager can only fetch Github URLs")
+        elif "github" not in url:
+            raise SiteManagerError("Current version of site manager can only fetch Github URLs")
+
+        if "github" in url:
+            archive_url = url + "/archive/%s.zip" % branch
 
 
+        opener = build_opener(HTTPCookieProcessor(CookieJar()))
+        resp = opener.open(archive_url)
+        data = resp.read()
+
+        tempdir = tempfile.mkdtemp()
+        temparchive = os.path.join(tempdir, "archive.zip")
+        f = open(temparchive, "w")
+        f.write(data)
+        f.close()
+
+        zf = zipfile.ZipFile(temparchive, "r")
+        zf.extractall(get_verilog_package_path())
+        zf.close()
+        shutil.rmtree(tempdir)
+        dir_name = "%s-%s" % (url.rpartition("/")[2], branch)
+
+        verilog_dir = os.path.join(get_verilog_package_path(), dir_name)
+        self.add_verilog_package(name, timestamp, verilog_dir)
+        self.get_paths_dict(force = True)
 
 

@@ -4,14 +4,12 @@ import string
 from string import Template
 from string import atoi
 
-sys.path.append(os.path.join( os.path.dirname(__file__), 
-                              "..",
-                              "..",
-                              "ibuilder",
-                              "lib"))
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.path.pardir,
+                             os.path.pardir))
 
-import utils
-import verilog_utils as vutils
+from ibuilder.lib import utils
+from ibuilder.lib import verilog_utils as vutils
 
 def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
 
@@ -22,6 +20,14 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
   buf = ""
 
   #Allow errors to pass up to the calling class
+  directory = utils.get_local_verilog_path("nysa-verilog")
+  wb_i_loc = os.path.join(  directory, 
+                            "verilog", 
+                            "wishbone", 
+                            "interconnect",
+                            "wishbone_mem_interconnect.v")
+
+  '''
   directory = os.path.dirname(__file__)
   wb_i_loc = os.path.join(  directory,
                             "..",
@@ -29,6 +35,8 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
                             "wishbone",
                             "interconnect",
                             "wishbone_mem_interconnect.v")
+  '''
+
   f = open(wb_i_loc, "r")
   buf = f.read()
   f.close()

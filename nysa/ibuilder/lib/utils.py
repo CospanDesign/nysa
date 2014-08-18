@@ -191,12 +191,12 @@ def find_rtl_file_location(filename="", user_paths = [], debug=False):
     Raises:
       Nothing
     """
-    #Get the base directory of Nysa and look in the cbuilder director
-    base_location = nysa_base
-    base_location = os.path.join(base_location, "cbuilder", "verilog")
-    for root, dirs, names in os.walk(base_location):
-        if filename in names:
-            return os.path.join(root, filename)
+    local_dirs = get_local_verilog_paths()
+
+    for d in local_dirs:
+        for root, dirs, names in os.walk(d):
+            if filename in names:
+                return os.path.join(root, filename)
 
     if debug: print "Looking in custom path: %s" % user_paths
 
@@ -205,7 +205,7 @@ def find_rtl_file_location(filename="", user_paths = [], debug=False):
             if filename in names:
                 return os.path.join(root, filename)
 
-    raise ModuleNotFound("File: %s not found, looked in %s and the default location %s" % (filename, str(user_paths), base_location))
+    raise ModuleNotFound("File: %s not found, looked in %s and the default location %s" % (filename, str(user_paths), local_dirs))
 #XXX: This should probably return none, and not an empty string upon failure
 #XXX:   perhaps even raise an error
 
@@ -353,6 +353,7 @@ def get_constraint_file_path(board_name, constraint_filename, user_paths = [], d
     #board_dir = os.path.join(nysa_base, "ibuilder", "boards", board_name)
     sm = site_manager.SiteManager()
     board_location = None
+    board_locations = []
 
     try:
         board_location = get_board_directory(board_name)
@@ -380,12 +381,14 @@ def get_constraint_file_path(board_name, constraint_filename, user_paths = [], d
                 return os.path.join(root, constraint_filename)
 
     if (len(filename) == 0):
-        cbuilder_dir = os.path.join(nysa_base, "cbuilder", "verilog")
-        for root, dirs, names in os.walk(cbuilder_dir):
-            if debug: print "name: " + str(names)
-            if constraint_filename in names:
-                if debug: print "found the file!"
-                return os.path.join(root, constraint_filename)
+        verilog_dirs = get_local_verilog_paths()
+        #cbuilder_dir = os.path.join(nysa_base, "cbuilder", "verilog")
+        for vd in verilog_dirs:
+            for root, dirs, names in os.walk(vd):
+                if debug: print "name: " + str(names)
+                if constraint_filename in names:
+                    if debug: print "found the file: %s" % os.path.join(root, constraint_filename)
+                    return os.path.join(root, constraint_filename)
 
     raise IBuilderError("Constraint File: %s wasn't found, looked in board directories and core directories" % constraint_filename)
 
@@ -725,4 +728,34 @@ def get_board_id(name):
     sm = site_manager.SiteManager()
     bid = sm.get_board_id_dict()
     return sm.get_board_id_dict()[name]
+
+def clean_verilog_package_paths():
+    sm = site_manager.SiteManager()
+    sm.clean_verilog_package_paths()
+
+def get_local_verilog_paths():
+    sm = site_manager.SiteManager()
+    temp_dirs = sm.get_local_verilog_paths()
+    local_dirs = []
+
+    package_names = sm.get_local_verilog_package_names()
+    for d in temp_dirs:
+        if os.path.exists(os.path.join(d, "verilog")):
+            local_dirs.append(os.path.join(d, "verilog"))
+        else:
+            local_dirs.append(d)
+
+    return local_dirs
+
+def update_verilog_package(name = None, branch = None):
+    sm = site_manager.SiteManager()
+    sm.update_verilog_package(name, branch)
+
+def get_local_verilog_path(name):
+    sm = site_manager.SiteManager()
+    package_names = sm.get_local_verilog_package_names()
+    if name.lower() not in package_names:
+        raise IBuilderError("Verilog package %s not found!", name)
+    return sm.get_local_verilog_package_path(name.lower())
+
 

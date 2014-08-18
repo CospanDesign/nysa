@@ -1,6 +1,13 @@
 import os
+import sys
 import string
 from string import Template
+
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.path.pardir,
+                             os.path.pardir))
+
+from ibuilder.lib import utils
 
 def generate_wb_interconnect(num_slaves = 1, add_drt = True, debug=False):
   if debug: print "Generating wishbone slave interconnect"
@@ -8,13 +15,22 @@ def generate_wb_interconnect(num_slaves = 1, add_drt = True, debug=False):
   buf = ""
 
   #Allow errors to pass up to the calling class
-  directory = os.path.dirname(__file__)
+  directory = utils.get_local_verilog_path("nysa-verilog")
   wb_i_loc = os.path.join(  directory, 
-                            "..", 
                             "verilog", 
                             "wishbone", 
                             "interconnect",
                             "wishbone_interconnect.v")
+
+
+  #directory = os.path.dirname(__file__)
+  #wb_i_loc = os.path.join(  directory, 
+  #                          "..", 
+  #                          "verilog", 
+  #                          "wishbone", 
+  #                          "interconnect",
+  #                          "wishbone_interconnect.v")
+
   f = open(wb_i_loc, "r")
   buf = f.read()
   f.close()

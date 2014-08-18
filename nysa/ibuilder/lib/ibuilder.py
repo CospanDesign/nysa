@@ -90,6 +90,10 @@ def generate_project(filename, user_paths = [], output_directory = None, status 
     if not utils.board_exists(tags["board"]):
         utils.install_remote_board_package(tags["board"], status = status)
 
+    utils.clean_verilog_package_paths()
+    if len(utils.get_local_verilog_paths()) == 0:
+        utils.update_verilog_package()
+
     pg = ProjectGenerator(user_paths, status = status)
     result = pg.generate_project(filename, output_directory = output_directory)
     return result
@@ -200,7 +204,7 @@ class ProjectGenerator(object):
         status = self.s
         if status: status.Debug("Openning site manager")
 
-        sm = site_manager.SiteManager("nysa")
+        sm = site_manager.SiteManager()
         path_dicts = sm.get_paths_dict()
 
         self.read_config_file(config_filename)

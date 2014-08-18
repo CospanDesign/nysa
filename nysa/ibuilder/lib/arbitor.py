@@ -237,8 +237,8 @@ def generate_arbitor_buffer(master_count, debug = False):
     if master_count <= 1:
         raise ArbitorError("master_count must be > 1")
 
-    filename = os.path.join(  utils.get_nysa_base(),
-                              "cbuilder",
+    directory = utils.get_local_verilog_path("nysa-verilog")
+    filename = os.path.join(  directory,
                               "verilog",
                               "wishbone",
                               "arbitor",
