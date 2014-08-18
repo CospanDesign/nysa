@@ -22,6 +22,8 @@ BOARD_PACKAGE_PATH = os.path.join(SITE_PATH, "boards")
 VERILOG_PACKAGE_PATH = os.path.join(SITE_PATH, "verilog")
 DEFAULT_BOARD_BRANCH = "master"
 
+NYSA_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
+
 paths_dict = None
 
 def get_paths_path():
@@ -97,6 +99,8 @@ class SiteManager(object):
             paths_dict["boards"] = {}
         if "verilog" not in paths_dict:
             paths_dict["verilog"] = {}
+
+        paths_dict["nysa"] = NYSA_BASE
 
         f = open(get_paths_path(), "w")
         f.write(json.dumps(paths_dict))

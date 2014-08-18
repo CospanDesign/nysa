@@ -23,8 +23,8 @@ FPGA
 
 
 def enum(*sequential, **named):
-  enums = dict(zip(sequential, range(len(sequential))), **named)
-  return type('Enum', (), enums)
+    enums = dict(zip(sequential, range(len(sequential))), **named)
+    return type('Enum', (), enums)
 
 bus_type = enum(  "wishbone",
                   "axie")
@@ -39,11 +39,7 @@ class DRTError(Exception):
     invalid JSON file.
     DRT is not defined
   """
-  def __init__(self, value):
-    self.value = value
-
-  def __str__(self):
-    return repr(self.value)
+  pass
 
 class DRTManager():
   """Manages DRT (Device ROM Table) and presents a DRT object to the user.
@@ -586,44 +582,48 @@ def get_number_of_devices(initial_block):
 
 
 def get_device_list():
-  """Return a list of device names where the index corresponds to the device
-  identification number
-
-  Args:
-    Nothing
-
-  Returns:
-    (list): List of devices
-        (index corresponds to devices identification number)
-
-  Raises:
-    Nothing
-  """
-  drt_tags = {}
-  dev_tags = {}
-  dev_list = []
-  index = 0
-  length = 0
-  try: 
-    f = open(os.path.join(os.path.dirname(__file__), "drt.json"), "r")
-    drt_tags = json.load(f)
-  except TypeError as err:
-    print "JSON Error: %s" % str(err)
-    raise DRTError("DRT Error: %s", str(err)) 
-
-  dev_tags = drt_tags["devices"]
-
-  length = len(dev_tags) 
-
-  for i in range(0, length):
-    for key in dev_tags.keys():
-      #change the hex number into a integer
-      in_str = dev_tags[key]["ID"]
-      index = int(dev_tags[key]["ID"][2:], 16)
-      if index == i:
-        dev_tags[key]["name"] = key
-        dev_list.insert(index, dev_tags[key])
-  return dev_list
+    """Return a list of device names where the index corresponds to the device
+    identification number
+ 
+    Args:
+      Nothing
+ 
+    Returns:
+      (list): List of devices
+          (index corresponds to devices identification number)
+ 
+    Raises:
+      Nothing
+    """
+    drt_tags = {}
+    dev_tags = {}
+    dev_list = []
+    index = 0
+    length = 0
+    try: 
+        f = open(os.path.join(os.path.dirname(__file__), "drt.json"), "r")
+        drt_tags = json.load(f)
+    except TypeError as err:
+        print "JSON Error: %s" % str(err)
+        raise DRTError("DRT Error: %s", str(err)) 
+ 
+    dev_tags = drt_tags["devices"]
+ 
+    length = len(dev_tags) 
+ 
+    for i in range(0, length):
+        for key in dev_tags.keys():
+            #change the hex number into a integer
+            index = None
+            if type(dev_tags[device]["ID"]) == str:
+                index = int(dev_tags[device]["ID"], 16)
+            else:
+                index = dev_tags[device]["ID"]
+       
+            if index == i:
+                dev_tags[key]["name"] = key
+                dev_list.insert(index, dev_tags[key])
+    return dev_list
 
 
 def get_board_list():
@@ -675,19 +675,21 @@ def get_device_name_from_id(device_id):
     #print "Index: 0x%04X" % device_id
     dev_tags = {}
     try: 
-      f = open(os.path.join(os.path.dirname(__file__), "drt.json"), "r")
-      drt_tags = json.load(f)
+        f = open(os.path.join(os.path.dirname(__file__), "drt.json"), "r")
+        drt_tags = json.load(f)
     except TypeError as err:
-      print "JSON Error: %s" % str(err)
-      raise DRTError("DRT Error: %s", str(err)) 
+        print "JSON Error: %s" % str(err)
+        raise DRTError("DRT Error: %s", str(err)) 
  
     dev_tags = drt_tags["devices"]
     did = 0
     for device in dev_tags:
         #print "Looking at: %s" % device
-        id_val = dev_tags[device]["ID"]
-
-        did = int(dev_tags[device]["ID"], 16)
+        did = None
+        if type(dev_tags[device]["ID"]) == str:
+            did = int(dev_tags[device]["ID"], 16)
+        else:
+            did = dev_tags[device]["ID"]
         #print "ID: 0x%04X" % did
         if did == device_id:
             return device
@@ -695,86 +697,86 @@ def get_device_name_from_id(device_id):
 
 
 def get_device_index(name):
-  """return the index of the device speicified by name
-  
-  The name can be found in the drt.json file
-  
-  Example: if name == GPIO, then 1 will be returned
-
-  Args:
-    name (string): name of the core to identify
-
-  Return:
-    device identification number
-
-  Raises:
-    Nothing
-  
-  """
-  dev_list = get_device_list()
+    """return the index of the device speicified by name
     
-  for i in range(0, len(dev_list)):
-    if name == dev_list[i]["name"]:
-      return i 
-
-  raise DRTError("Name: %s is not a known type of devices" % name) 
+    The name can be found in the drt.json file
+    
+    Example: if name == GPIO, then 1 will be returned
+ 
+    Args:
+      name (string): name of the core to identify
+ 
+    Return:
+      device identification number
+ 
+    Raises:
+      Nothing
+    
+    """
+    dev_list = get_device_list()
+      
+    for i in range(0, len(dev_list)):
+        if name == dev_list[i]["name"]:
+            return i 
+ 
+    raise DRTError("Name: %s is not a known type of devices" % name) 
 
 def get_device_type(index):
-  """return the name of the device referenced by index"""
-  dev_list = get_device_list()
-  return dev_list[index]["name"]
+    """return the name of the device referenced by index"""
+    dev_list = get_device_list()
+    return dev_list[index]["name"]
 
 def get_flag_tags():
-  """Returns a listing of the available Flags
-  
-  Args:
-    Nothing
-      
-  Returns:
-      Dictionary:
-          Keys: Flag Names
-          Values: Flag value
-
-  Raises:
-    Nothing
-
-  """
-
-  drt_tags = {}
-  flag_tags = {}
-
-  try: 
-    f = open(os.path.join(os.path.dirname(__file__), "drt.json"), "r")
-    drt_tags = json.load(f)
-  except TypeError as err:
-    print "JSON Error: %s" % str(err)
-    raise DRTError("DRT Error: %s", str(err)) 
-
-  flag_tags = drt_tags["flags"]
-  return flag_tags
+    """Returns a listing of the available Flags
+    
+    Args:
+      Nothing
+        
+    Returns:
+        Dictionary:
+            Keys: Flag Names
+            Values: Flag value
+ 
+    Raises:
+      Nothing
+ 
+    """
+ 
+    drt_tags = {}
+    flag_tags = {}
+ 
+    try: 
+        f = open(os.path.join(os.path.dirname(__file__), "drt.json"), "r")
+        drt_tags = json.load(f)
+    except TypeError as err:
+        print "JSON Error: %s" % str(err)
+        raise DRTError("DRT Error: %s", str(err)) 
+ 
+    flag_tags = drt_tags["flags"]
+    return flag_tags
 
 def get_device_flag_names(flags_string):
-  """Returns a human readible representation of the flags
-
-  Args:
-    flags (32-bit unsigned int): flags read from the DRT
-
-  Return:
-    Nothing
-
-  Raises:
-    Nothing
-  """
-
-  flag_tags = get_flag_tags()
-  flags = int(flags_string, 16)
-  flag_names = []
-
-  for key in flag_tags.keys():
-    test_value = 2 ** flag_tags[key]["bit"]
-    if (test_value & flags) > 0:
-      flag_names.append("0x%8X: %s" % (test_value, key))
-  return flag_names
+    """Returns a human readible representation of the flags
+ 
+    Args:
+      flags (32-bit unsigned int): flags read from the DRT
+ 
+    Return:
+      Nothing
+ 
+    Raises:
+      Nothing
+    """
+ 
+    flag_tags = get_flag_tags()
+    flags = int(flags_string, 16)
+    flag_names = []
+ 
+    for key in flag_tags.keys():
+        test_value = 2 ** flag_tags[key]["bit"]
+        if (test_value & flags) > 0:
+            flag_names.append("0x%8X: %s" % (test_value, key))
+    return flag_names
   
 
 def pretty_print_drt(drt):

@@ -567,8 +567,8 @@ def _find_module_filename (directory, module_name, debug = False):
             print "serching through %s" % f
 
         if is_module_in_file(f, module_name):
-            while len(f.partition("/")[2]):
-                f = f.partition("/")[2]
+            while len(f.partition(os.path.sep)[2]):
+                f = f.partition(os.path.sep)[2]
             if debug:
                 print "Found a file with the name: " + f
             filename = f
