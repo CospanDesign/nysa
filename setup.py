@@ -12,7 +12,12 @@ setup(
     packages=find_packages('.'),
     data_files=[("nysa/cbuilder/drt", ["nysa/cbuilder/drt/drt.json"])],
     long_description=open("README.md").read(),
-
+    scripts=[
+        "bin/nysa-device-list",
+        "bin/nysa-generate-slave",
+        "bin/nysa-image-builder",
+        "bin/nysa-update"
+    ],
     classifiers=[
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "License :: OSI Approved :: MIT License",
@@ -27,9 +32,7 @@ setup(
         "Intended Audience :: Developers",
         "Intended Audience :: Hobbiest",
         "Topic :: FPGA",
-
     ],
     keywords="FPGA",
     license="GPL",
-
 )
