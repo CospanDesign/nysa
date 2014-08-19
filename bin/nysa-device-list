@@ -25,7 +25,7 @@ import sys
 import os
 import argparse
 
-sys.path.append(os.path.abspath(".."))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
 from nysa.cbuilder.drt import drt
 
@@ -52,6 +52,7 @@ EPILOG = "\n" \
 #"\t%s -d\n" % (SCRIPT_NAME) + \
 
 def print_device_list():
+    print "Getting device list"
     dev_list = drt.get_device_list()
     print "Available Devices:"
     for dev in dev_list:

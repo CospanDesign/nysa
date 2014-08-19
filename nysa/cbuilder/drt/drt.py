@@ -595,7 +595,6 @@ def get_device_list():
     Raises:
       Nothing
     """
-    drt_tags = {}
     dev_tags = {}
     dev_list = []
     index = 0
@@ -609,20 +608,31 @@ def get_device_list():
  
     dev_tags = drt_tags["devices"]
  
-    length = len(dev_tags) 
+    length = len(dev_tags.keys()) 
+    #print "number of devices: %d" % length
  
-    for i in range(0, length):
-        for key in dev_tags.keys():
-            #change the hex number into a integer
-            index = None
-            if type(dev_tags[device]["ID"]) == str:
-                index = int(dev_tags[device]["ID"], 16)
-            else:
-                index = dev_tags[device]["ID"]
-       
-            if index == i:
-                dev_tags[key]["name"] = key
-                dev_list.insert(index, dev_tags[key])
+    #for i in range(0, length):
+    int_dict = {}
+    for key in dev_tags:
+        #change the hex number into a integer
+        index = None
+        #print "type: %s" % str(type(dev_ags[key]["ID"]))
+        id_val = dev_tags[key]["ID"]
+        if isinstance(id_val, str) or isinstance(id_val, unicode):
+            index = int(id_val[2:], 16)
+        else:
+            index = id_val
+    
+        dev_tags[key]["name"] = key
+        #print "index: %d" % index
+        int_dict[index] = dev_tags[key]
+
+    #print "Dev list: %s" % str(dev_list)
+    ordered_keys = int_dict.keys()
+    dev_list = []
+    for key in ordered_keys:
+        dev_list.append(int_dict[key])
+
     return dev_list
 
 
