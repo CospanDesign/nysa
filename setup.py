@@ -5,7 +5,7 @@ from distutils.command.install import install as DistutilsInstall
 
 setup( 
     name='nysa',
-    version='0.1.1',
+    version='0.8.0',
     description='FPGA core/image generator and FPGA communication',
     author='Cospan Design',
     author_email='dave.mccoy@cospandesign.com',
