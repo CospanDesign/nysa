@@ -238,8 +238,9 @@ class SiteManager(object):
         #board_path = os.path.join(get_board_package_path(), name.lower())
         #board_path = os.path.join(get_board_package_path(), name.lower())
 
-        if not os.exists(get_board_package_path()):
+        if not os.path.exists(get_board_package_path()):
             os.makedirs(get_board_package_path())
+
         #tempdir = tempfile.mkdtemp()
         tempdir = get_board_package_path()
         temparchive = os.path.join(tempdir, "archive.zip")
@@ -377,7 +378,7 @@ class SiteManager(object):
         resp = opener.open(archive_url)
         data = resp.read()
 
-        if not os.exists(get_verilog_package_path()):
+        if not os.path.exists(get_verilog_package_path()):
             os.makedirs(get_verilog_package_path())
         #tempdir = tempfile.mkdtemp()
         tempdir = get_verilog_package_path()
