@@ -9,9 +9,12 @@ sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir, 'drt'))
 
 CBUILDER_BASE = os.path.join(os.path.join(os.path.dirname(__file__), 
                                 os.pardir))
-TEMPLATE_BASE = os.path.abspath(
-                  os.path.join( os.path.join(os.path.dirname(__file__), 
-                                os.pardir, "template")))
+#TEMPLATE_BASE = get_data("template")
+TEMPLATE_BASE = os.path.abspath(os.path.join(   os.path.dirname(__file__),
+                                                os.pardir,
+                                                os.pardir,
+                                                "data",
+                                                "template"))
 
 class CBuilderError(Exception):
   """CBuilderError
