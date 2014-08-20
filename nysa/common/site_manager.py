@@ -244,7 +244,7 @@ class SiteManager(object):
         #tempdir = tempfile.mkdtemp()
         tempdir = get_board_package_path()
         temparchive = os.path.join(tempdir, "archive.zip")
-        f = open(temparchive, "w")
+        f = open(temparchive, "a")
         f.write(data)
         f.close()
 
@@ -383,7 +383,7 @@ class SiteManager(object):
         #tempdir = tempfile.mkdtemp()
         tempdir = get_verilog_package_path()
         temparchive = os.path.join(tempdir, "archive.zip")
-        f = open(temparchive, "w")
+        f = open(temparchive, "a")
         f.write(data)
         f.close()
 
