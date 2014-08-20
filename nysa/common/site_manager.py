@@ -237,7 +237,9 @@ class SiteManager(object):
 
         #board_path = os.path.join(get_board_package_path(), name.lower())
         #board_path = os.path.join(get_board_package_path(), name.lower())
-        tempdir = tempfile.mkdtemp()
+
+        #tempdir = tempfile.mkdtemp()
+        tempdir = get_board_package_path()
         temparchive = os.path.join(tempdir, "archive.zip")
         f = open(temparchive, "w")
         f.write(data)
@@ -246,7 +248,7 @@ class SiteManager(object):
         zf = zipfile.ZipFile(temparchive, "a")
         zf.extractall(get_board_package_path())
         zf.close()
-        shutil.rmtree(tempdir)
+        #shutil.rmtree(tempdir)
         dir_name = "%s-%s" % (url.rpartition("/")[2], branch)
         board_dir = os.path.join(get_board_package_path(), dir_name)
 
@@ -373,7 +375,8 @@ class SiteManager(object):
         resp = opener.open(archive_url)
         data = resp.read()
 
-        tempdir = tempfile.mkdtemp()
+        #tempdir = tempfile.mkdtemp()
+        tempdir = get_verilog_package_path()
         temparchive = os.path.join(tempdir, "archive.zip")
         f = open(temparchive, "w")
         f.write(data)
@@ -382,7 +385,7 @@ class SiteManager(object):
         zf = zipfile.ZipFile(temparchive, "a")
         zf.extractall(get_verilog_package_path())
         zf.close()
-        shutil.rmtree(tempdir)
+        #shutil.rmtree(tempdir)
         dir_name = "%s-%s" % (url.rpartition("/")[2], branch)
 
         verilog_dir = os.path.join(get_verilog_package_path(), dir_name)
