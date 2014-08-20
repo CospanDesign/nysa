@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import inspect
 
 def enum(*sequential, **named):
@@ -32,6 +33,20 @@ yellow = '\033[93m'
 blue = '\033[94m'
 purple = '\033[95m'
 cyan = '\033[96m'
+
+if os.name == "nt":
+    white  = ''
+    gray   = ''
+    red    = ''
+    green  = ''
+    yellow = ''
+    blue   = ''
+    purple = ''
+    cyan   = ''
+
+
+
+
 
 StatusLevel = enum ('FATAL', 'ERROR', 'WARNING', 'INFO', 'IMPORTANT', 'DEBUG', 'VERBOSE')
 
