@@ -1,4 +1,5 @@
 import os
+import urllib
 import urllib2
 import json
 import site
@@ -242,11 +243,13 @@ class SiteManager(object):
             os.makedirs(get_board_package_path())
 
         #tempdir = tempfile.mkdtemp()
+
         tempdir = get_board_package_path()
         temparchive = os.path.join(tempdir, "archive.zip")
-        f = open(temparchive, "a")
-        f.write(data)
-        f.close()
+        urllib.urlretrieve(archive_url, temparchive)
+        #f = open(temparchive, "a")
+        #f.write(data)
+        #f.close()
 
         zf = zipfile.ZipFile(temparchive, "a")
         zf.extractall(get_board_package_path())
@@ -374,18 +377,21 @@ class SiteManager(object):
             archive_url = url + "/archive/%s.zip" % branch
 
 
-        opener = build_opener(HTTPCookieProcessor(CookieJar()))
-        resp = opener.open(archive_url)
-        data = resp.read()
+        #opener = build_opener(HTTPCookieProcessor(CookieJar()))
+        #resp = opener.open(archive_url)
+        #data = resp.read()
 
         if not os.path.exists(get_verilog_package_path()):
             os.makedirs(get_verilog_package_path())
+
+
         #tempdir = tempfile.mkdtemp()
         tempdir = get_verilog_package_path()
         temparchive = os.path.join(tempdir, "archive.zip")
-        f = open(temparchive, "a")
-        f.write(data)
-        f.close()
+        urllib.urlretrieve(archive_url, temparchive)
+        #f = open(temparchive, "a")
+        #f.write(data)
+        #f.close()
 
         zf = zipfile.ZipFile(temparchive, "a")
         zf.extractall(get_verilog_package_path())
