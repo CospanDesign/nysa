@@ -239,7 +239,7 @@ class SiteManager(object):
         #board_path = os.path.join(get_board_package_path(), name.lower())
         tempdir = tempfile.mkdtemp()
         temparchive = os.path.join(tempdir, "archive.zip")
-        f = open(temparchive, "a")
+        f = open(temparchive, "w")
         f.write(data)
         f.close()
 
@@ -375,7 +375,7 @@ class SiteManager(object):
 
         tempdir = tempfile.mkdtemp()
         temparchive = os.path.join(tempdir, "archive.zip")
-        f = open(temparchive, "a")
+        f = open(temparchive, "w")
         f.write(data)
         f.close()
 
