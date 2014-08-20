@@ -40,7 +40,7 @@ from string import Template
 PATH_TO_TOP = os.path.abspath(os.path.join(os.path.dirname(__file__),
                               os.pardir,
                               os.pardir,
-                              "cbuilder",
+                              "data",
                               "template",
                               "top",
                               "top.v"))
