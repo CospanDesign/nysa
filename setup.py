@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+import os
+import glob
 from setuptools import setup, find_packages
 from distutils.command.install import install as DistutilsInstall
 
@@ -10,7 +12,8 @@ setup(
     author='Cospan Design',
     author_email='dave.mccoy@cospandesign.com',
     packages=find_packages('.'),
-    data_files=[("nysa/cbuilder/drt", ["nysa/cbuilder/drt/drt.json"])],
+    package_data={'' : ["*.json", "*.txt"]},
+    include_package_data = True,
     long_description=open("README.md").read(),
     scripts=[
         "bin/nysa-device-list",
@@ -22,14 +25,12 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "License :: OSI Approved :: MIT License",
         "Environment :: Console",
-        "Environment :: X11 Applications :: Qt",
         "Programming Language :: Python :: 2.7",
-        "Programming Language :: C",
         "Development Status :: 4 - Beta",
         "Intended Audience :: Science/Research",
         "Intended Audience :: Developers",
         "Intended Audience :: Education",
     ],
     keywords="FPGA",
-    license="GPL",
+    license="GPL"
 )

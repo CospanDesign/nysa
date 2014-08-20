@@ -1,6 +1,9 @@
 #gen_project_defines.py
+import sys
+import os
 
 from gen import Gen
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 import utils
 from string import Template
 

@@ -239,11 +239,11 @@ class SiteManager(object):
         #board_path = os.path.join(get_board_package_path(), name.lower())
         tempdir = tempfile.mkdtemp()
         temparchive = os.path.join(tempdir, "archive.zip")
-        f = open(temparchive, "w")
+        f = open(temparchive, "a")
         f.write(data)
         f.close()
 
-        zf = zipfile.ZipFile(temparchive, "r")
+        zf = zipfile.ZipFile(temparchive, "a")
         zf.extractall(get_board_package_path())
         zf.close()
         shutil.rmtree(tempdir)
@@ -375,11 +375,11 @@ class SiteManager(object):
 
         tempdir = tempfile.mkdtemp()
         temparchive = os.path.join(tempdir, "archive.zip")
-        f = open(temparchive, "w")
+        f = open(temparchive, "a")
         f.write(data)
         f.close()
 
-        zf = zipfile.ZipFile(temparchive, "r")
+        zf = zipfile.ZipFile(temparchive, "a")
         zf.extractall(get_verilog_package_path())
         zf.close()
         shutil.rmtree(tempdir)
