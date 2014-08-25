@@ -206,7 +206,7 @@ class Nysa(object):
           AssertionError: This function must be overriden by a board specific
           implementation
         """
-        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def read_memory(self, address, size):
         """read_memory
@@ -384,7 +384,7 @@ class Nysa(object):
           AssertionError: This function must be overriden by a board specific
           implementation
         """
-        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
         if len(data) == 0:
             raise NysaCommError("Data length cannot be 0")
 
@@ -644,7 +644,7 @@ class Nysa(object):
           AssertionError: This function must be overriden by a board specific
           NysaCommError: When a failure of communication is detected
         """
-        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def reset(self):
         """reset
@@ -663,7 +663,7 @@ class Nysa(object):
           implementation
           NysaCommError: A failure of communication is detected
         """
-        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def dump_core(self):
         """dump_core
@@ -683,7 +683,7 @@ class Nysa(object):
                           implementation
           NysaCommError: A failure of communication is detected
         """
-        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def wait_for_interrupts(self, wait_time = 1):
         """wait_for_interrupts
@@ -703,7 +703,7 @@ class Nysa(object):
           AssertionError: This function must be overriden by a board specifific
           implementation
         """
-        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def is_interrupt_for_slave(self, device_id):
         """is_interrupt_for_slave
@@ -760,7 +760,7 @@ class Nysa(object):
         Raises:
             Nothing (This function fails quietly if ther callback is not found)
         """
-        raise AssertionError("unregister_interrupt_callback function is not implemented")
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
 
     def find_device(self, dev_id, sub_id = None, unique_id = None):
@@ -842,7 +842,7 @@ class Nysa(object):
             AssertionError:
                 Not Implemented
         """
-        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def program (self):
         """
@@ -859,7 +859,7 @@ class Nysa(object):
             AssertionError:
                 Not Implemented
         """
-        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def ioctl(self, name, arg = None):
         """
@@ -883,7 +883,7 @@ class Nysa(object):
             AssertionError:
                 Not Implemented
         """
-        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def list_ioctl(self):
         """
@@ -903,5 +903,5 @@ class Nysa(object):
                 Not Implemented
 
         """
-        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 

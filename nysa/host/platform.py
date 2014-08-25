@@ -39,13 +39,13 @@ class Platform(object):
         self.dev_dict = {}
 
     def get_type(self):
-        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def get_unique_ids(self):
-        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def scan(self):
-        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def add_device_dict(self, unique_id, device):
         self.dev_dict[unique_id] = device
