@@ -1,5 +1,4 @@
 #Project: Nysa
-NOTE: Nysa is a remake of Olympus, Olympus is depreciated and will be removed soon
 
 ##Goal: Simplifiy both generation of HDL and interactions with FPGAs.
 
@@ -7,25 +6,36 @@ NOTE: Nysa is a remake of Olympus, Olympus is depreciated and will be removed so
 
 FPGA are extremely flexible.
 They can be used to:
+
 * Communicate with sensors that employ a variety of protocols including I2C, UART, SPI etc...
 * Read images from cameras and write to LCD screens
 * Interface with memory devices
 * Exchange data with a processor
 
 
-Unfortunately FPGA require a lot of resources and knowledge before one can
-get the coveted initial "blinky" analogy up and running. Not only does one
-need to know about the physical constraints of an FPGA but understand how it
-interacts with a hardware description language.
+Unfortunately FPGAs require a lot of resources and knowledge before users can
+get the initial ["blinky"](http://arduino.cc/en/Tutorial/Blink?from=Tutorial.BlinkingLED "Arduino blink an LED") 
+up and running. Not only does one need to know about the physical constraints 
+of an FPGA but understand how it interacts with a hardware description language.
 
 ##What Nysa is:
 
+A set of software tools designed to simplify each aspect of FPGA development.
+
+1. Communicating with an FPGA using a simple Python API (read to register, write to register, etc...)
+2. Create FPGA images from a configuration (no knowledge of HDL required) that can be downloaded to a user FPGA.
+3. Create and simulate HDL cores that can easily be integrated with the forementioned FPGA image generator
+
+Users can develop:
+
 * A flexible I/O peripheral expansion for a host.
   * This host can be a desktop computer a laptop an Android tablet or even a microcontroller
-* A platform to build interfaces to complex sensors and algorithms.
+* A platform to build interfaces to complex sensors including:
   * Cameras
   * LCD screens
-  * Process data
+* A core that can process data including:
+  * Software defined radio processing
+  * Image processing algorithm
 
 ##What Nysa is NOT:
 
