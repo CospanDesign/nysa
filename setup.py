@@ -2,8 +2,18 @@
 
 import os
 import glob
+
 from setuptools import setup, find_packages
 from distutils.command.install import install as DistutilsInstall
+
+long_desc=open("README.md").read(),
+
+try:
+    #Try and convert the readme from markdown to pandoc
+    from pypandoc import convert
+    long_desc = convert("README.md", 'rst')
+except:
+    pass
 
 setup( 
     name='nysa',
@@ -14,7 +24,7 @@ setup(
     packages=find_packages('.'),
     package_data={'' : ["*.json", "*.txt"]},
     include_package_data = True,
-    long_description=open("README.md").read(),
+    long_description=long_desc,
     scripts=[
         "bin/nysa-device-list",
         "bin/nysa-generate-slave",
