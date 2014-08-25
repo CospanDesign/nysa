@@ -39,13 +39,15 @@ class Platform(object):
         self.dev_dict = {}
 
     def get_type(self):
-        AssertionError("Failed to implement 'get_type' function")
+        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def get_unique_ids(self):
-        AssertionError("Failed to implement 'get_unique_id' function")
+        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def scan(self):
-        AssertionError("Failed to implement 'scan' function")
+        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def add_device_dict(self, unique_id, device):
         self.dev_dict[unique_id] = device
+
+

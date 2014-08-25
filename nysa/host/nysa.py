@@ -206,7 +206,7 @@ class Nysa(object):
           AssertionError: This function must be overriden by a board specific
           implementation
         """
-        raise AssertionError("read function is not implemented")
+        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def read_memory(self, address, size):
         """read_memory
@@ -384,10 +384,9 @@ class Nysa(object):
           AssertionError: This function must be overriden by a board specific
           implementation
         """
+        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
         if len(data) == 0:
             raise NysaCommError("Data length cannot be 0")
-        raise AssertionError("write function is not implemented")
-
 
     def read_drt(self):
         """read_drt
@@ -645,7 +644,7 @@ class Nysa(object):
           AssertionError: This function must be overriden by a board specific
           NysaCommError: When a failure of communication is detected
         """
-        raise AssertionError("Ping function is not implemented")
+        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def reset(self):
         """reset
@@ -664,7 +663,7 @@ class Nysa(object):
           implementation
           NysaCommError: A failure of communication is detected
         """
-        raise AssertionError("Reset function not implemented")
+        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def dump_core(self):
         """dump_core
@@ -684,7 +683,7 @@ class Nysa(object):
                           implementation
           NysaCommError: A failure of communication is detected
         """
-        raise AssertionError("Core Dump function not implemented")
+        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def wait_for_interrupts(self, wait_time = 1):
         """wait_for_interrupts
@@ -704,7 +703,7 @@ class Nysa(object):
           AssertionError: This function must be overriden by a board specifific
           implementation
         """
-        raise AssertionError("wait_for_interrupts function is not implemented")
+        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def is_interrupt_for_slave(self, device_id):
         """is_interrupt_for_slave
@@ -743,7 +742,7 @@ class Nysa(object):
         Raises:
             Nothing
         """
-        raise AssertionError("register_interrupt_callback function is not implemented")
+        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     def unregister_interrupt_callback(self, index, callback = None):
         """ unregister_interrupt_callback
@@ -826,4 +825,83 @@ class Nysa(object):
             DRTError if DRT is not defined
         """
         return self.drt_manager.get_image_id()
+
+    def upload(self, filepath):
+        """
+        Uploads an image to a board
+
+        Args:
+            filepath (String): path to the file to upload
+
+        Returns:
+            Nothing
+
+        Raises:
+            NysaError:
+                Failed to upload data
+            AssertionError:
+                Not Implemented
+        """
+        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
+    def program (self):
+        """
+        Initiate an FPGA program sequence, THIS DOES NOT UPLOAD AN IMAGE, use
+        upload to upload an FPGA image
+
+        Args:
+            Nothing
+
+        Returns:
+            Nothing
+
+        Raises:
+            AssertionError:
+                Not Implemented
+        """
+        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
+    def ioctl(self, name, arg = None):
+        """
+        Platform specific functions to execute on a Nysa device implementation.
+
+        For example a board may be capable of setting an external voltage or
+        reading configuration data from an EEPROM. All these extra functions
+        cannot be encompused in a generic driver
+
+        Args:
+            name (String): Name of the function to execute
+            args (object): A generic object that can be used to pass an
+                arbitrary or multiple arbitrary variables to the device
+
+        Returns:
+            (object) an object from the underlying function
+
+        Raises:
+            NysaError:
+                An implementation specific error
+            AssertionError:
+                Not Implemented
+        """
+        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
+    def list_ioctl(self):
+        """
+        Return a tuple of ioctl functions and argument types and descriptions
+        in the following format:
+            {
+                [name, description, args_type_object],
+                [name, description, args_type_object]
+                ...
+            }
+
+        Args:
+            Nothing
+
+        Raises:
+            AssertionError:
+                Not Implemented
+
+        """
+        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
