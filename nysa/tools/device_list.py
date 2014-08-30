@@ -4,21 +4,21 @@
 #Copyright (c) 2013 Dave McCoy (dave.mccoy@cospandesign.com)
 
 #Permission is hereby granted, free of charge, to any person obtaining a copy of
-#this software and associated documentation files (the "Software"), to deal in 
-#the Software without restriction, including without limitation the rights to 
-#use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies 
-#of the Software, and to permit persons to whom the Software is furnished to do 
+#this software and associated documentation files (the "Software"), to deal in
+#the Software without restriction, including without limitation the rights to
+#use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+#of the Software, and to permit persons to whom the Software is furnished to do
 #so, subject to the following conditions:
 #
-#The above copyright notice and this permission notice shall be included in all 
+#The above copyright notice and this permission notice shall be included in all
 #copies or substantial portions of the Software.
 #
-#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
 import sys
@@ -27,14 +27,13 @@ import argparse
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
-from nysa.cbuilder.drt import drt
+from cbuilder.drt import drt
 
 SCRIPT_NAME = os.path.basename(__file__)
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "\n" \
-"Manage/View Nysa Devices IDs and descriptions\n"
+DESCRIPTION = "Manage/View Nysa Devices IDs and descriptions"
 
 EPILOG = "\n" \
 "Examples:\n" + \
@@ -69,38 +68,25 @@ def get_num_from_name(name):
             return int(dev["ID"], 16)
 
     return None
- 
 
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-      description=DESCRIPTION,
-      epilog=EPILOG
-    )
- 
-    debug = False
-    #Add an argument to the parser
+def setup_parser(parser):
+    parser.description = DESCRIPTION
     parser.add_argument("-d", "--debug", action='store_true', help="Output test debug information")
-    #parser.add_argument("-l", "--device_list", action='store_true', help="List the devices")
     parser.add_argument("-n", "--name", type = str, nargs=1, default="", help = "Specify a device name to get the device number (Returns hex string)")
     parser.add_argument("-i", "--integer", type = str, nargs=1, default="", help = "Specify a device name to get the device number (Returns number)")
+    return parser
 
-    parser.parse_args()
-    args = parser.parse_args()
- 
-    if args.debug:
-        print "Debug Enable"
-        debug = True
-
+def device_list(args, status):
+    s = status
+     
     if args.name is not "":
-        if debug: print "Got Name (String): %s" % args.name[0]
+        if s: s.Info("Got Name (String): %s" % args.name[0])
         index = get_num_from_name(args.name[0])
-        print "0x%02X" % index
+        if s: s.Info("\t0x%02X" % index)
         sys.exit(0)
 
     elif args.integer is not "":
-        if debug: print "Got Name (Integer): %s" % args.integer[0]
+        if s: s.Info("Got Name (Integer): %s" % args.integer[0])
         index = get_num_from_name(args.integer[0])
         sys.exit(index)
 

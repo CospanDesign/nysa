@@ -27,22 +27,23 @@ import os
 import argparse
 import zipfile
 import shutil
+import urllib2
 
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
-from nysa.ibuilder.lib import ibuilder
-from nysa.common import status
-from nysa.common import site_manager
+from ibuilder.lib import ibuilder
+from common import status
+from common import site_manager
 
 EXAMPLE_DIR = os.path.join("home", "user", "Projects", "nysa", "ibuilder", "example_project", "dionyus_default.json")
 SCRIPT_NAME = os.path.basename(__file__)
 
+ALIAS = "ib"
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "\n" \
-"Create Nysa Image Projects\n"
+DESCRIPTION = "Create Nysa Image Projects"
 
 EPILOG = "\n" \
 "Examples:\n" + \
@@ -96,53 +97,44 @@ def remove_output_project(root = None, debug = False):
     pass
 
 
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-        description=DESCRIPTION,
-        epilog=EPILOG
-    )
- 
-    debug = False
-    s = status.Status()
-    s.set_level(status.StatusLevel.INFO)
- 
+def setup_parser(parser):
     #Add an argument to the parser
-    parser.add_argument("-v", "--verbose", action='store_true', help="Output verbose information")
-    parser.add_argument("-d", "--debug", action='store_true', help="Output test debug information")
+
+    parser.description = DESCRIPTION
+    parser.epilog = EPILOG
+    parser.alias = ALIAS
+
     parser.add_argument("-o", "--output", type = str, nargs=1, default="", help="Specify a location for the generated project")
     parser.add_argument("-c", "--compress", action='store_true', help="Compress output project in tar gzip format")
     parser.add_argument("-z", "--zip", action='store_true', help="Compress output project in zip format")
     parser.add_argument("config", type = str, nargs=1,  default="all", help="Configuration file to load")
-    parser.parse_args()
-    args = parser.parse_args()
- 
+    return parser
+    
+    
+def image_builder(args, status):
+
     output_dir = None
- 
-    if args.debug:
-        debug = True
-        s.set_level(status.StatusLevel.DEBUG)
-        s.Debug("Debug Output Enabled")
- 
-    if args.verbose:
-        s.set_level(status.StatusLevel.VERBOSE)
-        s.Verbose("Verbose Output Enabled")
- 
+    s = status
+
     s.Debug("Generating Project: %s" % args.config[0])
     if len(args.output) > 0:
         output_dir = args.output[0]
  
     #ibuilder.generate_project(args.config[0], dbg = debug)
     #ibuilder.generate_project(args.config[0], output_directory = output_dir, status = s)
-    ibuilder.generate_project(args.config[0], output_directory = output_dir, status = s)
+    try:
+        ibuilder.generate_project(args.config[0], output_directory = output_dir, status = s)
+    except urllib2.URLError as ex:
+        s.Fatal("URL Error: %s, Are you connected to the internet?" % str(ex))
+        sys.exit(1)
+
     if output_dir is None:
         output_dir = ibuilder.get_output_dir(args.config[0])
  
     s.Info("Generating Project %s @ %s" % (args.config[0], output_dir))
  
     if args.compress:
-        output_dir = ibuilder.get_output_dir(args.config[0], dbg=debug)
+        output_dir = ibuilder.get_output_dir(args.config[0], dbg=args.debug)
         name = os.path.split(output_dir)[1]
         out_loc = os.path.split(output_dir)[0]
        
@@ -159,10 +151,10 @@ if __name__ == "__main__":
                                     root_dir = out_loc,
                                     base_dir = name,
                                     )
-        remove_output_project(output_dir, debug=debug)
+        remove_output_project(output_dir, debug=args.debug)
  
     if args.zip:
-        output_dir = ibuilder.get_output_dir(args.config[0], dbg=debug)
+        output_dir = ibuilder.get_output_dir(args.config[0], dbg=args.debug)
         name = os.path.split(output_dir)[1]
         out_loc = os.path.split(output_dir)[0]
  
@@ -179,5 +171,5 @@ if __name__ == "__main__":
                                     root_dir = out_loc,
                                     base_dir = name,
                                     )
-        remove_output_project(output_dir, debug=debug)
+        remove_output_project(output_dir, debug=args.debug)
 

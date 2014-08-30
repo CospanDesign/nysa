@@ -29,8 +29,8 @@ import argparse
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
 
-from nysa.cbuilder.drt import drt
-from nysa.cbuilder.scripts.cbuilder_factory import CBuilderFactory
+from cbuilder.drt import drt
+from cbuilder.scripts.cbuilder_factory import CBuilderFactory
 
 EXAMPLE_DIR = os.path.join("home", "user", "Projects", "cbuilder_projects", "project1")
 SCRIPT_NAME = os.path.basename(__file__)
@@ -79,7 +79,49 @@ def print_device_list():
     for dev in dev_list:
         print "%s" % str(dev)
 
-if __name__ == "__main__":
+def setup_parser(parser):
+    parser.description = DESCRIPTION
+    #Add an argument to the parser
+    #Optional
+    parser.add_argument("--axi",
+                        action='store_true',
+                        default = False,
+                        help = "Set the bus type as AXI (Wishbone by default)")
+    parser.add_argument("--memory",
+                        action='store_true',
+                        default = False,
+                        help = "Generate a memory slave core")
+    parser.add_argument("--slaveid",
+                        type = str,
+                        nargs=1,
+                        default=None,
+                        help="Specify the slave identification number, use \"nysa-device-list\" to view a list of possible device IDs")
+    parser.add_argument("--subid",
+                        type=str,
+                        nargs=1,
+                        default="0",
+                        help = "Specify the sub ID number, used to identify a unique version of a device Example: a unique GPIO that uses internal PWMs would have a unique Sub ID to differentiate itself from other GPIO devices")
+    parser.add_argument("--flags",
+                        type=str,
+                        nargs=1,
+                        default="1",
+                        help = "Specify default flags that should be put into the module, these can be overriden in the module by overwritting the DRT_FLAGS metavariable")
+    parser.add_argument("-o",
+                        "--output",
+                        type = str,
+                        nargs=1,
+                        default=[LOCAL_DIR],
+                        help="Specify a location for the generated project, defaults to current directory")
+    #Required
+    parser.add_argument("name",
+                        type = str,
+                        nargs=1,
+                        default=None,
+                        help="Specify the name of the project file")
+
+    return parser
+
+def generate_slave(args, status):
 
     parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,

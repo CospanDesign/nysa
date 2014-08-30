@@ -28,11 +28,16 @@ import site
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
-from nysa.common import status
-from nysa.ibuilder.lib import utils
+from ibuilder.lib import utils
 
-if __name__ == "__main__":
-    s = status.Status()
+DESCRIPTION = "Check for available boards and verilog"
+
+def setup_parser(parser):
+    parser.description = DESCRIPTION
+    return parser
+
+def check(args, status):
+    s = status
     s.Important("Cleaning up verilog paths")
     utils.clean_verilog_package_paths()
     utils.update_verilog_package("nysa-verilog")
