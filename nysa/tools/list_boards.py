@@ -48,7 +48,16 @@ def list_boards(args, status):
     s = status
     pc = PlatformScanner(s)
     pc.get_board_path_dict()
-    pc.get_platforms()
+    platform_class_dict = pc.get_platforms()
+    for platform in platform_class_dict:
+        if s: s.Debug("%s, class: %s" % (platform, str(platform_class_dict[platform])))
+        print "Scanning %s..." % platform,
+        p = platform_class_dict[platform](s)
+        dev_dict = p.scan()
+        if len(dev_dict) > 0:
+            print "Found %d %s" % (len(dev_dict), platform)
+        else:
+            print "No boards found"
     #platforms = pc.get_platforms()
     #platforms = pc.get_platforms()
     #s.Important("Platforms: %s" % str(platforms))

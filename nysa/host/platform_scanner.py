@@ -82,7 +82,6 @@ class PlatformScanner(object):
 
         return plat_class_dict
 
-
 def drt_to_config(n):
 
     config_dict = {}

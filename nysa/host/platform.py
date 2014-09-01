@@ -36,8 +36,8 @@ class Platform(object):
 
     IS_PLATFORM = True
 
-    def __init__(self):
-        super (Platform, self).__init__()
+    def __init__(self, status):
+        self.status = status
         self.dev_dict = {}
 
     def get_type(self):
