@@ -55,7 +55,7 @@ def list_boards(args, status):
         p = platform_class_dict[platform](s)
         dev_dict = p.scan()
         if len(dev_dict) > 0:
-            print "Found %d %s" % (len(dev_dict), platform)
+            print "Found %d board(s)" % (len(dev_dict), platform)
         else:
             print "No boards found"
     #platforms = pc.get_platforms()
