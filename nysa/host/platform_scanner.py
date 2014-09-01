@@ -26,61 +26,61 @@ import os
 from inspect import isclass
 from inspect import ismodule
 
-from nplatform.nplatform import Platform
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
+
+from common.site_manager import SiteManager
+from platform import Platform
 
 class PlatformScanner(object):
     def __init__(self, status = None):
         super(PlatformScanner, self).__init__()
-        self.status = status
+        self.s = status
         self.n = None
         self.uid = None
         self.dev_type = None
 
+    def get_board_path_dict(self):
+        sm = SiteManager()
+        board_names = sm.get_local_board_names()
+        board_path_dict = {}
+        for bname in board_names:
+            board_path_dict[bname] = sm.get_board_directory(bname)
+        return board_path_dict
+
     def get_platforms(self):
-        plat_dir = os.path.join(os.path.dirname(__file__), "nplatform")
-        plat_files = os.listdir(plat_dir)
-        plat_classes = []
-        for f in plat_files:
-            #Removed compiled python modules from the list
-            if f.endswith("pyc"):
-                continue
+        board_path_dict = self.get_board_path_dict()
 
-            #Remove package modules
-            if f.startswith("__init__"):
-                continue
+        #platform_paths_list = []
+        module_dict = {}
 
-            f = f.split(".")[0]
-            m = __import__("nplatform.%s" % f)
-            for name in dir(m):
-                item = getattr(m, name)
-                if not ismodule(item):
+        plat_class_dict = {}
+        for board in board_path_dict:
+            platform_paths_list = os.path.join(board_path_dict[board], board)
+            sys.path.append(os.path.join(board_path_dict[board]))
+
+            m = __import__("%s.platform" % board)
+            board_platform = m.platform
+
+            for name in dir(board_platform):
+
+                item = getattr(board_platform, name)
+                if not isclass(item):
                     continue
-                
-                for mname in dir(item):
-                    #print "Name: %s" % mname
-                    #print "Type: %s" % str(type(mname))
-                    obj = getattr(item, mname)
 
-                    if not isclass(obj):
-                        continue
-                    if issubclass(obj, Platform) and obj is not Platform:
-                        unique = True
-                        for plat_class in plat_classes:
-                            if str(plat_class) == str(obj):
-                                unique = False
-                        if unique:
-                            #print "Adding Class: %s" % str(obj)
-                            plat_classes.append(obj)
+                #XXX: Kinda Jenkie
+                if "IS_PLATFORM" in dir(item) and item.__name__ is not "Platform":
+                    if self.s: self.s.Debug("Found: %s" % name)
+                    unique = True
+                    for plat_class in plat_class_dict:
+                        if str(plat_class) == str(item):
+                            unique = False
+                    if unique:
+                        #print "Adding Class: %s" % str(item)
+                        plat_class_dict[board] = item
 
-        plat_instances = []
-        for pc in plat_classes:
-            plat_instances.append(pc(self.status))
+            if self.s: self.s.Debug("Platform Classes: %s" % str(plat_class_dict))
 
-        plat_dict = {}
-        for pi in plat_instances:
-            plat_dict[pi.get_type()] = pi.scan()
-
-        return plat_dict
+        return plat_class_dict
 
 
 def drt_to_config(n):

@@ -27,31 +27,29 @@ import argparse
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
+from host.platform_scanner import PlatformScanner
 
 SCRIPT_NAME = os.path.basename(__file__)
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "Board level control (Program/Reset/Upload)"
+DESCRIPTION = "list available nysa boards (connected/not connected)"
 
-EPILOG = "\n" \
-"Examples:\n" + \
-"Reset the board\n" + \
-"\tnysa %s <board_name> [--serial Serial Number] -r\n" % SCRIPT_NAME + \
-"\n"
+EPILOG = "\n"
 
 def setup_parser(parser):
-    parser.add_argument("command", type=str, nargs=1, default="list", help="Command to be performed")
-    parser.add_argument("board", type=str, nargs='?', default="", help="Target board")
-    parser.add_argument("-s", "--serial", type = str, nargs=1, default="", help="Specify the serial number of a board")
-    subparsers = parser.add_subparsers(title = "Board Tools",
-                                       description = "Board Level Tools",
-                                       dest = "tool")
-
-    list_parser = subparsers.add_parser("list", description = "list possible Nysa boards")
-    list_parser.add_argument("-r", "--remote", action="store_true", help="Output remote board info")
-
+    parser.description = DESCRIPTION
+    parser.add_argument("-r", "--remote", action="store_true", help="Reads all possible Nysa boards available (local and remote)")
+    parser.add_argument("-l", "--local", action="store_true", help="Output local boards (connected and not connected)")
+    parser.add_argument("-s", "--scan", action="store_true", help="Scan this computer for Nysa boards (Default)")
     return parser
 
-def board_control(args, status):
+def list_boards(args, status):
     s = status
+    pc = PlatformScanner(s)
+    pc.get_board_path_dict()
+    pc.get_platforms()
+    #platforms = pc.get_platforms()
+    #platforms = pc.get_platforms()
+    #s.Important("Platforms: %s" % str(platforms))
+

@@ -34,6 +34,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 class Platform(object):
 
+    IS_PLATFORM = True
+
     def __init__(self):
         super (Platform, self).__init__()
         self.dev_dict = {}

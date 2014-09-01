@@ -34,7 +34,7 @@ import image_builder
 import update
 import device_list
 import generate_slave
-import board
+import list_boards
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "tools")))
 from completer_extractor import completer_extractor as ce
@@ -67,9 +67,9 @@ TOOL_DICT = {
         "module":generate_slave,
         "tool":generate_slave.generate_slave
     },
-    "board":{
-        "module":board,
-        "tool":board.board_control
+    "list":{
+        "module":list_boards,
+        "tool":list_boards.list_boards
     }
 }
 
@@ -92,14 +92,12 @@ def main():
     subparsers = parser.add_subparsers( title = "Tools",
                                         description = "Nysa Tools",
                                         metavar = None,
-                                        dest = "tool"
-                                        )
+                                        dest = "tool")
 
     for tool in TOOL_DICT:
         p = subparsers.add_parser(tool,
                                   description=TOOL_DICT[tool]["module"].DESCRIPTION)
         TOOL_DICT[tool]["module"].setup_parser(p)
-        TOOL_DICT[tool]["parser"] = None
         TOOL_DICT[tool]["parser"] = p
 
 
@@ -116,5 +114,7 @@ def main():
     if args.verbose:
         s.set_level(status.StatusLevel.VERBOSE)
 
+    #print "args: %s" % str(args)
+    #print "args dict: %s" % str(dir(args))
     TOOL_DICT[args.tool]["tool"](args, s)
 
