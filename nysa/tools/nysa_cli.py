@@ -34,6 +34,7 @@ import image_builder
 import update
 import device_list
 import generate_slave
+import board
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "tools")))
 from completer_extractor import completer_extractor as ce
@@ -65,6 +66,10 @@ TOOL_DICT = {
     "generate-slave":{
         "module":generate_slave,
         "tool":generate_slave.generate_slave
+    },
+    "board":{
+        "module":board,
+        "tool":board.board_control
     }
 }
 

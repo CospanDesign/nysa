@@ -9,6 +9,7 @@ _${NAME}()
     #COMP_CWORD: Index of the current word in the list
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
+    #echo "cur depth: ${COMP_CWORD}"
 
     opts="${GLOBAL_OPTS}"
 
