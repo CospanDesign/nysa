@@ -104,11 +104,11 @@ class Nysa(object):
     interrupts = 0
     interrupt_address = 0
 
-    def __init__(self, debug = False):
+    def __init__(self, status = None):
         self.name = "Nysa"
-        self.debug = debug
+        self.s = status
         self.drt_manager = DRTManager()
-        if debug:
+        if status:
             print "Debug Enabled"
 
     def __del__(self):
@@ -669,7 +669,7 @@ class Nysa(object):
         """dump_core
 
         reads the state of the wishbone master prior to a reset, useful for
-        debugging
+        statusging
 
         Args:
           Nothing
@@ -789,7 +789,7 @@ class Nysa(object):
         """
         dev = 0
         try:
-            dev = self.drt_manager.find_device(dev_id, sub_id, unique_id, debug = True)
+            dev = self.drt_manager.find_device(dev_id, sub_id, unique_id, debug = (self.s is not None))
         except DRTError, e:
             raise NysaCommError("Device not found in DRT")
 
@@ -826,7 +826,7 @@ class Nysa(object):
         """
         return self.drt_manager.get_image_id()
 
-    def upload(self, filepath):
+    def upload(self, filepath, status = None):
         """
         Uploads an image to a board
 
@@ -844,7 +844,7 @@ class Nysa(object):
         """
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
-    def program (self):
+    def program (self, status = None):
         """
         Initiate an FPGA program sequence, THIS DOES NOT UPLOAD AN IMAGE, use
         upload to upload an FPGA image
@@ -861,7 +861,7 @@ class Nysa(object):
         """
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
-    def ioctl(self, name, arg = None):
+    def ioctl(self, name, arg = None, status = None):
         """
         Platform specific functions to execute on a Nysa device implementation.
 
@@ -885,7 +885,7 @@ class Nysa(object):
         """
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
-    def list_ioctl(self):
+    def list_ioctl(self, status = None):
         """
         Return a tuple of ioctl functions and argument types and descriptions
         in the following format:

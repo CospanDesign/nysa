@@ -31,6 +31,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 from common.site_manager import SiteManager
 from platform import Platform
 
+class PlatformScannerException(Exception):
+    pass
+
 class PlatformScanner(object):
     def __init__(self, status = None):
         super(PlatformScanner, self).__init__()
@@ -81,6 +84,75 @@ class PlatformScanner(object):
             if self.s: self.s.Debug("Platform Classes: %s" % str(plat_class_dict))
 
         return plat_class_dict
+
+
+def find_board(name, serial = None, status = None):
+    s = status
+    pc = PlatformScanner(s)
+    pc.get_board_path_dict()
+    platform_class_dict = pc.get_platforms()
+    board = None
+
+    if name is None:
+        pc = PlatformScanner(s)
+        platforms = pc.get_platforms()
+        names = []
+        for platform_name in platforms:
+            boards = platforms[platform_name](s).scan()
+            #print "boards for %s: % s" % (platform_name, str(boards))
+            if len(boards) > 0:
+                #print "Found %d board for %s" % (len(boards), platform_name)
+                names.append(platforms[platform_name]().get_type())
+
+
+        if len(names) == 1:
+            #print "Found: %s " % str(names)
+            if s: s.Important("Found: %s" % names[0])    
+            name = names[0]
+
+        else:
+            
+            if "sim" in names:
+                names.remove("sim")
+
+            if len(names) == 1:
+                if s: s.Important("Found: %s" % names[0])    
+                name = names[0]
+            else:
+                raise ("more than one option for attached board: %s" % str(names))
+                sys.exit(1)
+
+    name = name.lower()
+    
+    if name not in platform_class_dict:
+        raise PlatformScannerException("%s is not currently installed, please install more platforms" % name)
+
+    p = platform_class_dict[name](s)
+    dev_dict = p.scan()
+
+    if len(dev_dict) == 1:
+        name = dev_dict.keys()[0]
+        board = dev_dict[name]
+
+    else:
+        if serial is None:
+            exception = ""
+            exception = "Serial number (ID) required because there are multiple platforms availble\n"
+            exception += "Available IDs:\n"
+            for dev in dev_dict:
+                exception += "\t%s\n" % dev
+            raise PlatformScannerException(exception)
+        #Serial Number Specified
+        if s: s.Info("Found board: %s, searching for %s" % (name, serial))
+
+        for dev in dev_dict:
+            if dev == serial:
+                name = dev
+                board = dev_dict[name]
+                break
+
+    return board
+
 
 def drt_to_config(n):
 

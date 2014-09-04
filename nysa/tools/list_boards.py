@@ -60,7 +60,4 @@ def list_boards(args, status):
                 print "\tBoard ID: %s" % str(plat)
         else:
             print "No boards found"
-    #platforms = pc.get_platforms()
-    #platforms = pc.get_platforms()
-    #s.Important("Platforms: %s" % str(platforms))
 

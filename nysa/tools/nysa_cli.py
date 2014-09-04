@@ -35,6 +35,9 @@ import update
 import device_list
 import generate_slave
 import list_boards
+import reset_board
+import program_board
+import upload_board
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "tools")))
 from completer_extractor import completer_extractor as ce
@@ -70,6 +73,18 @@ TOOL_DICT = {
     "list":{
         "module":list_boards,
         "tool":list_boards.list_boards
+    },
+    "reset-board":{
+        "module":reset_board,
+        "tool":reset_board.reset_board
+    },
+    "program-board":{
+        "module":program_board,
+        "tool":program_board.program_board
+    },
+    "upload-board":{
+        "module":upload_board,
+        "tool":upload_board.upload_board
     }
 }
 
