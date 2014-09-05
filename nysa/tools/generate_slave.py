@@ -123,6 +123,8 @@ def setup_parser(parser):
 
 def generate_slave(args, status):
 
+    debug = False
+    '''
     parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
       description=DESCRIPTION,
@@ -184,8 +186,20 @@ def generate_slave(args, status):
                         help="Specify the name of the project file")
     parser.parse_args()
     args = parser.parse_args()
+    '''
     value = 0
- 
+    cb = {}
+    cb["name"] = None
+    cb["drt_id"] = 0
+    cb["drt_sub_id"] = 0
+    cb["drt_size"] = 0
+    cb["drt_flags"] = 1
+    cb["bus_type"] = "slave"
+    cb["type"] = "wishbone"
+    cb["subtype"] = "peripheral"
+    cb["base"] = os.path.abspath(os.path.dirname(__file__))
+
+
 
     #Parse the command line arguments
     if args.debug:
@@ -194,12 +208,13 @@ def generate_slave(args, status):
     
     if args.slaveid is None and not args.memory:
         print "Error: No slave ID is given and a memory device was not specified, either a slave ID must be specified or the memory flag must be set"
-        parser.print_help()
+        args.print_help()
         sys.exit(-1)
 
     if args.slaveid is not None and args.memory:
         print "Error: Slave ID and Memory Cannot be specified at the same time"
-        parser.print_help()
+        #print "args: %s" % str(dir(args))
+        #args.print_help()
         sys.exit(-2)
 
     if args.memory:
