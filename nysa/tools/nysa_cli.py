@@ -38,6 +38,7 @@ import list_boards
 import reset_board
 import program_board
 import upload_board
+import list_platforms
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "tools")))
 from completer_extractor import completer_extractor as ce
@@ -85,6 +86,10 @@ TOOL_DICT = {
     "upload-board":{
         "module":upload_board,
         "tool":upload_board.upload_board
+    },
+    "platforms":{
+        "module":list_platforms,
+        "tool":list_platforms.list_platforms
     }
 }
 
