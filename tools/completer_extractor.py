@@ -20,6 +20,15 @@ def _parser2dict(parser):
                 cdict["subparser"][sarg] = _parser2dict(subparser)
             continue
 
+        '''
+        if a.required:
+            print str(a)
+            print "dir: %s" % dir(a)
+            if "opts" not in cdict:
+                cdict["opts"] = []
+            cdict["opts"].append("<%s: %s>" % (a.dest, a.help))
+        '''
+
         if "option_strings" in dir(a):
             if "opts" not in cdict:
                 cdict["opts"] = []

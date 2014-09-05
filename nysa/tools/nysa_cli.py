@@ -55,6 +55,10 @@ COMPLETER_EXTRACTOR = False
 
 
 TOOL_DICT = {
+    "generate-slave":{
+        "module":generate_slave,
+        "tool":generate_slave.generate_slave
+    },
     "image-builder":{
         "module":image_builder,
         "tool":image_builder.image_builder
@@ -62,18 +66,6 @@ TOOL_DICT = {
     "check-nysa":{
         "module":update,
         "tool":update.check
-    },
-    "list-device":{
-        "module":device_list,
-        "tool":device_list.device_list
-    },
-    "generate-slave":{
-        "module":generate_slave,
-        "tool":generate_slave.generate_slave
-    },
-    "list":{
-        "module":list_boards,
-        "tool":list_boards.list_boards
     },
     "reset-board":{
         "module":reset_board,
@@ -90,6 +82,14 @@ TOOL_DICT = {
     "platforms":{
         "module":list_platforms,
         "tool":list_platforms.list_platforms
+    },
+    "boards":{
+        "module":list_boards,
+        "tool":list_boards.list_boards
+    },
+    "devices":{
+        "module":device_list,
+        "tool":device_list.device_list
     }
 }
 
