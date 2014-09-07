@@ -86,7 +86,8 @@ def _generate_sub_commands(cmd_dict, cmd_depth):
         if "subparser" in cmd_dict[cmd]:
             print "subparser!"
             subcommands += _generate_sub_commands(cmd_dict[cmd]["subparser"], cmd_depth + 1)
-        subcommands += ddepth_str + "\t\tCOMPREPLY=($(compgen -W \"${%s_opts}\" -- ${cur}))\n" % (gcmd)
+        subcommands += ddepth_str + "\t\tCOMPREPLY=($(compgen -o default -W \"${%s_opts}\" -- ${cur}))\n" % (gcmd)
+        #subcommands += ddepth_str + "\t\tCOMPREPLY=($(compgen -o dirnames -o nospace -o filenames -W \"${%s_opts}\" -- ${cur}))\n" % (gcmd)
         subcommands += ddepth_str + "\t\treturn 0\n"
         subcommands += ddepth_str + "\t\t;;\n"
 

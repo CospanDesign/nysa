@@ -29,13 +29,35 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 
 from host.platform_scanner import PlatformScanner
 
-SCRIPT_NAME = os.path.basename(__file__)
+NAME = "boards"
+SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
 DESCRIPTION = "list available nysa boards (connected/not connected)"
 
 EPILOG = "\n"
+
+white = '\033[0m'
+gray = '\033[90m'
+red   = '\033[91m'
+green = '\033[92m'
+yellow = '\033[93m'
+blue = '\033[94m'
+purple = '\033[95m'
+cyan = '\033[96m'
+
+if os.name == "nt":
+    white  = ''
+    gray   = ''
+    red    = ''
+    green  = ''
+    yellow = ''
+    blue   = ''
+    purple = ''
+    cyan   = ''
+
+
 
 def setup_parser(parser):
     parser.description = DESCRIPTION
@@ -51,13 +73,13 @@ def list_boards(args, status):
     platform_class_dict = pc.get_platforms()
     for platform in platform_class_dict:
         if s: s.Debug("%s, class: %s" % (platform, str(platform_class_dict[platform])))
-        print "Scanning %s..." % platform,
+        print "Scanning %s%s%s..." % (blue, platform, white),
         p = platform_class_dict[platform](s)
         dev_dict = p.scan()
         if len(dev_dict) > 0:
             print "Found %d board(s)" % len(dev_dict)
             for plat in dev_dict:
-                print "\tBoard ID: %s" % str(plat)
+                print "\tBoard ID: %s%s%s" % (green, str(plat), white)
         else:
             print "No boards found"
 

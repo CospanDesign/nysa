@@ -30,6 +30,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 
 from ibuilder.lib import utils
 
+NAME = "status"
+SCRIPT_NAME = "nysa %s" % NAME
 DESCRIPTION = "Check for available boards and verilog"
 
 def setup_parser(parser):

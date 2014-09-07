@@ -33,7 +33,8 @@ from cbuilder.drt import drt
 from cbuilder.scripts.cbuilder_factory import CBuilderFactory
 
 EXAMPLE_DIR = os.path.join("home", "user", "Projects", "cbuilder_projects", "project1")
-SCRIPT_NAME = os.path.basename(__file__)
+NAME = "generate-slave"
+SCRIPT_NAME = "name %s" % NAME
 LOCAL_DIR = os.path.abspath(".")
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"

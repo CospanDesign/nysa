@@ -55,39 +55,39 @@ COMPLETER_EXTRACTOR = False
 
 
 TOOL_DICT = {
-    "generate-slave":{
+    generate_slave.NAME:{
         "module":generate_slave,
         "tool":generate_slave.generate_slave
     },
-    "image-builder":{
+    image_builder.NAME:{
         "module":image_builder,
         "tool":image_builder.image_builder
     },
-    "check-nysa":{
+    update.NAME:{
         "module":update,
         "tool":update.check
     },
-    "reset-board":{
+    reset_board.NAME:{
         "module":reset_board,
         "tool":reset_board.reset_board
     },
-    "program-board":{
+    program_board.NAME:{
         "module":program_board,
         "tool":program_board.program_board
     },
-    "upload-board":{
+    upload_board.NAME:{
         "module":upload_board,
         "tool":upload_board.upload_board
     },
-    "platforms":{
+    list_platforms.NAME:{
         "module":list_platforms,
         "tool":list_platforms.list_platforms
     },
-    "boards":{
+    list_boards.NAME:{
         "module":list_boards,
         "tool":list_boards.list_boards
     },
-    "devices":{
+    device_list.NAME:{
         "module":device_list,
         "tool":device_list.device_list
     }
@@ -116,7 +116,8 @@ def main():
 
     for tool in TOOL_DICT:
         p = subparsers.add_parser(tool,
-                                  description=TOOL_DICT[tool]["module"].DESCRIPTION)
+                                  description=TOOL_DICT[tool]["module"].DESCRIPTION,
+                                  formatter_class=argparse.RawDescriptionHelpFormatter)
         TOOL_DICT[tool]["module"].setup_parser(p)
         TOOL_DICT[tool]["parser"] = p
 

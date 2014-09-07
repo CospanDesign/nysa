@@ -20,4 +20,4 @@ ${CMDS}
     return 0
 }
 
-complete -F _${NAME} ${NAME}
+complete -o nospace -F _${NAME} ${NAME}

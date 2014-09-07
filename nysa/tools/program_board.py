@@ -29,7 +29,8 @@ from host.platform_scanner import find_board
 from host.platform_scanner import PlatformScanner
 from host.platform_scanner import PlatformScannerException
 
-SCRIPT_NAME = os.path.basename(__file__)
+NAME = "program"
+SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 

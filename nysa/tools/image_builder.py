@@ -37,9 +37,10 @@ from common import status
 from common import site_manager
 
 EXAMPLE_DIR = os.path.join("home", "user", "Projects", "nysa", "ibuilder", "example_project", "dionyus_default.json")
-SCRIPT_NAME = os.path.basename(__file__)
 
 ALIAS = "ib"
+NAME = "image-builder"
+SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 

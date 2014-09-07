@@ -29,7 +29,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 
 from cbuilder.drt import drt
 
-SCRIPT_NAME = os.path.basename(__file__)
+NAME = "devices"
+SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
