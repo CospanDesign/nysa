@@ -52,12 +52,16 @@ def setup_parser(parser):
 def nysa_utils(args, status):
     s = status
     if args.clean:
-        s.Important("Cleaning up verilog paths")
+        s.Info("Cleaning up verilog paths")
         utils.clean_verilog_package_paths()
 
     if args.update:
-        utils.update_verilog_package("nysa-verilog")
-        s.Important("Updated %s, located at: %s" % ("nysa-verilog", utils.get_local_verilog_path("nysa-verilog")))
+        s.Debug("Update verilog packages")
+        vpackages = utils.get_local_verilog_path_dict()
+        utils.clean_verilog_package_paths()
+        for vpackage in vpackages:
+            utils.update_verilog_package("nysa-verilog")
+            s.Important("Updated %s, located at: %s" % ("nysa-verilog", utils.get_local_verilog_path("nysa-verilog")))
 
     if args.verilog:
         s.Important("View the verilog packages installed")
