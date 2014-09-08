@@ -759,4 +759,13 @@ def get_local_verilog_path(name):
         raise IBuilderError("Verilog package %s not found!", name)
     return sm.get_local_verilog_package_path(name.lower())
 
+def get_local_verilog_path_dict():
+    sm = site_manager.SiteManager()
+    package_names = sm.get_local_verilog_package_names()
+    vpackage_dict = {}
+    for pname in package_names:
+        vpackage_dict[pname] = sm.get_local_verilog_package_path(pname)
+
+    return vpackage_dict
+
 
