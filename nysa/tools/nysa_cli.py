@@ -31,7 +31,7 @@ import shutil
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 from common import status
 import image_builder
-import update
+import nysa_utils
 import device_list
 import generate_slave
 import list_boards
@@ -64,9 +64,9 @@ TOOL_DICT = {
         "module":image_builder,
         "tool":image_builder.image_builder
     },
-    update.NAME:{
-        "module":update,
-        "tool":update.check
+    nysa_utils.NAME:{
+        "module":nysa_utils,
+        "tool":nysa_utils.nysa_utils
     },
     reset_board.NAME:{
         "module":reset_board,
