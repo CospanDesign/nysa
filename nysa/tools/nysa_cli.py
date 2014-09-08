@@ -39,6 +39,7 @@ import reset_board
 import program_board
 import upload_board
 import list_platforms
+import drt_viewer
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "tools")))
 from completer_extractor import completer_extractor as ce
@@ -90,6 +91,10 @@ TOOL_DICT = {
     device_list.NAME:{
         "module":device_list,
         "tool":device_list.device_list
+    },
+    drt_viewer.NAME:{
+        "module":drt_viewer,
+        "tool":drt_viewer.view_drt
     }
 }
 
