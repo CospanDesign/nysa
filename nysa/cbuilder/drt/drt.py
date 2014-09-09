@@ -485,7 +485,8 @@ class DRTManager():
       print red,
       print "Device %d" % i
       type_value = (int(self.drt_lines[(i + 1) * 8], 16) & 0xFFFF)
-      type_name = get_device_type(type_value)
+      #type_name = get_device_type(type_value)
+      type_name = get_device_name_from_id(type_value)
       print "%s%s:%sDevice Type: %s" % (blue, self.drt_lines[(i + 1) * 8], green, type_name) 
       print "%s%s:%sDevice Flags:" % (blue, self.drt_lines[((i + 1) * 8) + 1], green)
       flags = self.get_device_flags(i)
@@ -696,11 +697,11 @@ def get_device_name_from_id(device_id):
     for device in dev_tags:
         #print "Looking at: %s" % device
         did = None
-        if type(dev_tags[device]["ID"]) == str:
+        if (type(dev_tags[device]["ID"]) == str) or (type(dev_tags[device]["ID"]) == unicode):
             did = int(dev_tags[device]["ID"], 16)
         else:
             did = dev_tags[device]["ID"]
-        #print "ID: 0x%04X" % did
+
         if did == device_id:
             return device
     return "Unknown Device"
