@@ -33,7 +33,7 @@ SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "Display a list of the currently installed platforms"
+DESCRIPTION = "List platforms (installed and remotely available)"
 
 EPILOG = "\n"
 

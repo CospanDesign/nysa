@@ -26,6 +26,7 @@ import os
 import argparse
 import zipfile
 import shutil
+import collections
 
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
@@ -50,55 +51,97 @@ SCRIPT_NAME = os.path.basename(__file__)
 
 DESCRIPTION = "Nysa Tool"
 
-EPILOG = "Enter the toolname with a -h to find help about that specific tool\n"
 
 COMPLETER_EXTRACTOR = False
 
+EPILOG = "Enter the toolname with a -h to find help about that specific tool\n"
+
+TYPE_DICT = collections.OrderedDict()
+TYPE_DICT["cbuilder"] = "Functions to help create code to go into platforms"
+TYPE_DICT["ibuilder"] = "Functions to generate an entire image (or binary) to be downloaded into a platform"
+TYPE_DICT["host"] = "Functions to view and control boards"
+TYPE_DICT["utility"] = "Functions to update and/or upgrade the nysa tool including adding new platforms and verilog packages"
 
 TOOL_DICT = {
     generate_slave.NAME:{
+        "type":"cbuilder",
         "module":generate_slave,
         "tool":generate_slave.generate_slave
     },
     image_builder.NAME:{
+        "type":"ibuilder",
         "module":image_builder,
         "tool":image_builder.image_builder
     },
     nysa_utils.NAME:{
+        "type":"utility",
         "module":nysa_utils,
         "tool":nysa_utils.nysa_utils
     },
     reset_board.NAME:{
+        "type":"host",
         "module":reset_board,
         "tool":reset_board.reset_board
     },
     program_board.NAME:{
+        "type":"host",
         "module":program_board,
         "tool":program_board.program_board
     },
     upload_board.NAME:{
+        "type":"host",
         "module":upload_board,
         "tool":upload_board.upload_board
     },
     list_platforms.NAME:{
+        "type":"utility",
         "module":list_platforms,
         "tool":list_platforms.list_platforms
     },
     list_boards.NAME:{
+        "type":"host",
         "module":list_boards,
         "tool":list_boards.list_boards
     },
     device_list.NAME:{
+        "type":"cbuilder",
         "module":device_list,
         "tool":device_list.device_list
     },
     drt_viewer.NAME:{
+        "type":"host",
         "module":drt_viewer,
         "tool":drt_viewer.view_drt
     }
 }
 
+
+def update_epilog():
+    global EPILOG
+    tool_type_dict = collections.OrderedDict()
+    for type_d in TYPE_DICT:
+        tool_type_dict[type_d] = {}
+        tool_type_dict[type_d]["description"] = TYPE_DICT[type_d]
+        tool_type_dict[type_d]["tools"] = []
+
+    for tool in TOOL_DICT:
+        
+        tool_type_dict[TOOL_DICT[tool]["type"]]["tools"].append(tool)
+
+    EPILOG += "\n"
+    EPILOG += "Tools:\n\n"
+    for tool_type in tool_type_dict:
+        EPILOG += "{0:25}{1}\n\n".format(tool_type, tool_type_dict[tool_type]["description"])
+        for tool in tool_type_dict[tool_type]["tools"]:
+            EPILOG += "{0:5}{1:20}{2}\n".format("", tool, TOOL_DICT[tool]["module"].DESCRIPTION)
+        EPILOG += "\n"
+        
+
+    EPILOG += "\n"
+
+
 def main():
+    update_epilog()
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=DESCRIPTION,

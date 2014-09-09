@@ -34,7 +34,7 @@ SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "list available nysa boards (connected/not connected)"
+DESCRIPTION = "List connected boards"
 
 EPILOG = "\n"
 

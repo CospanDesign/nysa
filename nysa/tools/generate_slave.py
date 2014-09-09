@@ -39,8 +39,7 @@ LOCAL_DIR = os.path.abspath(".")
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "\n" \
-"Create Nysa Slave Projects\n"
+DESCRIPTION = "Create a project to generate a nysa compatible core"
 
 EPILOG = "\n" \
 "Examples:\n" + \

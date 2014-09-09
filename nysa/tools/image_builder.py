@@ -44,7 +44,7 @@ SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "Create Nysa Image Projects"
+DESCRIPTION = "Create a project to generate an image for a platform"
 
 EPILOG = "\n" \
 "Examples:\n" + \

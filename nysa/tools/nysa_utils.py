@@ -34,7 +34,7 @@ from host.platform_scanner import PlatformScanner
 
 NAME = "utils"
 SCRIPT_NAME = "nysa %s" % NAME
-DESCRIPTION = "Utility functions for Nysa"
+DESCRIPTION = "Utility functions"
 EPILOG = "\n" \
          "Read Nysa version number\n" \
          "%s -v\n" % (SCRIPT_NAME)

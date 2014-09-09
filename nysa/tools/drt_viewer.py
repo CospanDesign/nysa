@@ -34,7 +34,7 @@ SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "Display the contents of the DRT of the specified platform"
+DESCRIPTION = "Display the contents of the DRT of the specified board"
 
 EPILOG = "\n"
 
