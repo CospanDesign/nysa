@@ -26,10 +26,7 @@ setup(
     include_package_data = True,
     long_description=long_desc,
     scripts=[
-        "bin/nysa-device-list",
-        "bin/nysa-generate-slave",
-        "bin/nysa-image-builder",
-        "bin/nysa-update"
+        "bin/nysa",
     ],
     classifiers=[
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
