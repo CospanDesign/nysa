@@ -1,1 +1,3 @@
-V0.1.0, 07/08/2014  --  Initial Release
+V0.8.00, 07/08/2014   --  Initial Pypi upload
+V0.8.01, 09/12/2014   --  Adding in the unified nysa tool that can be used to perform the task that previously multiple tools performed
+v0.8.02, 09/12/2014   --  Implemented a bash completion script that simplifies the command line interface

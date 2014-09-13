@@ -17,16 +17,20 @@ except:
 
 setup( 
     name='nysa',
-    version='0.8.0',
+    version='0.8.02',
     description='FPGA core/image generator and FPGA communication',
     author='Cospan Design',
     author_email='dave.mccoy@cospandesign.com',
     packages=find_packages('.'),
-    package_data={'' : ["*.json", "*.txt"]},
+    url="http://nysa.cospandesign.com",
+    package_data={'' : ["/nysa/data/bash_complete/nysa", "*.json", "*.txt"]},
+    data_files=[
+     ('/etc/bash_completion.d/', ['nysa/data/bash_complete/nysa'])
+    ],
     include_package_data = True,
     long_description=long_desc,
     scripts=[
-        "bin/nysa",
+        "bin/nysa"
     ],
     classifiers=[
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",

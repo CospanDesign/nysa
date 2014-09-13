@@ -108,8 +108,7 @@ class Nysa(object):
         self.name = "Nysa"
         self.s = status
         self.drt_manager = DRTManager()
-        if status:
-            print "Debug Enabled"
+        if status: status.Debug("nysa started")
 
     def __del__(self):
         #print "Closing Nysa"
@@ -669,7 +668,7 @@ class Nysa(object):
         """dump_core
 
         reads the state of the wishbone master prior to a reset, useful for
-        statusging
+        debuging
 
         Args:
           Nothing
@@ -826,7 +825,7 @@ class Nysa(object):
         """
         return self.drt_manager.get_image_id()
 
-    def upload(self, filepath, status = None):
+    def upload(self, filepath):
         """
         Uploads an image to a board
 
@@ -844,7 +843,7 @@ class Nysa(object):
         """
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
-    def program (self, status = None):
+    def program (self):
         """
         Initiate an FPGA program sequence, THIS DOES NOT UPLOAD AN IMAGE, use
         upload to upload an FPGA image
@@ -861,7 +860,7 @@ class Nysa(object):
         """
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
-    def ioctl(self, name, arg = None, status = None):
+    def ioctl(self, name, arg = None):
         """
         Platform specific functions to execute on a Nysa device implementation.
 
@@ -885,7 +884,7 @@ class Nysa(object):
         """
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
-    def list_ioctl(self, status = None):
+    def list_ioctl(self):
         """
         Return a tuple of ioctl functions and argument types and descriptions
         in the following format:

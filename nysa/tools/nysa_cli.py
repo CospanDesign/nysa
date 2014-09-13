@@ -42,7 +42,6 @@ import upload_board
 import list_platforms
 import drt_viewer
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "tools")))
 from completer_extractor import completer_extractor as ce
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
@@ -53,6 +52,7 @@ DESCRIPTION = "Nysa Tool"
 
 
 COMPLETER_EXTRACTOR = False
+TEMP_BASH_COMPLETER_FILEPATH = "nsya"
 
 EPILOG = "Enter the toolname with a -h to find help about that specific tool\n"
 
@@ -172,8 +172,8 @@ def main():
 
     #Parse the arguments
     if COMPLETER_EXTRACTOR:
-        ce(parser, "nysa")
-        sys.exit(10)
+        ce(parser, TEMP_BASH_COMPLETER_FILEPATH)
+        return
         
     args = parser.parse_args()
 
