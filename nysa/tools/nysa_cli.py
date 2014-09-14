@@ -41,6 +41,7 @@ import program_board
 import upload_board
 import list_platforms
 import drt_viewer
+import init
 
 from completer_extractor import completer_extractor as ce
 
@@ -112,6 +113,11 @@ TOOL_DICT = {
         "type":"host",
         "module":drt_viewer,
         "tool":drt_viewer.view_drt
+    },
+    init.NAME:{
+        "type":"utility",
+        "module":init,
+        "tool":init.init
     }
 }
 

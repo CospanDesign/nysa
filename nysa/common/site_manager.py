@@ -23,7 +23,9 @@ BOARD_PACKAGE_PATH = os.path.join(SITE_PATH, "boards")
 VERILOG_PACKAGE_PATH = os.path.join(SITE_PATH, "verilog")
 DEFAULT_BOARD_BRANCH = "master"
 
-NYSA_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
+NYSA_MODULE_LOC = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
+USER_BASE = "nysa_base"
+DEFAULT_USER_BASE = os.path.join(os.path.expanduser("~"), "Projects", USER_BASE)
 
 paths_dict = None
 
@@ -56,7 +58,9 @@ class SiteManagerError(Exception):
 
 class SiteManager(object):
 
-    def __init__(self):
+    def __init__(self, status = None):
+
+        self.s = status
 
         if not os.path.exists(SITE_PATH):
             os.makedirs(os.path.join(SITE_PATH))
@@ -101,10 +105,11 @@ class SiteManager(object):
         if "verilog" not in paths_dict:
             paths_dict["verilog"] = {}
 
-        paths_dict["nysa"] = NYSA_BASE
+        paths_dict["nysa"] = NYSA_MODULE_LOC
+        paths_dict["nysa_user_base"] = DEFAULT_USER_BASE
 
         f = open(get_paths_path(), "w")
-        f.write(json.dumps(paths_dict))
+        f.write(json.dumps(paths_dict, sort_keys = True, indent = 2, separators=(",", ": ")))
         f.close()
 
     def _create_site_dir(self):
@@ -153,7 +158,7 @@ class SiteManager(object):
         paths_dict["boards"][name]["timestamp"] = timestamp
         paths_dict["boards"][name]["path"] = path
         f = open(get_paths_path(), "w")
-        f.write(json.dumps(paths_dict))
+        f.write(json.dumps(paths_dict, sort_keys = True, indent = 2, separators=(",", ": ")))
         f.close()
         self.get_paths_dict(force = True)
 
@@ -163,7 +168,7 @@ class SiteManager(object):
         paths_dict["verilog"][name]["timestamp"] = timestamp
         paths_dict["verilog"][name]["path"] = path
         f = open(get_paths_path(), "w")
-        f.write(json.dumps(paths_dict))
+        f.write(json.dumps(paths_dict, sort_keys = True, indent = 2, separators=(",", ": ")))
         f.close()
         self.get_paths_dict(force = True)
 
@@ -288,7 +293,7 @@ class SiteManager(object):
             board_id_dict[name] = index
 
         f = open(get_board_id_path(), "w")
-        f.write(json.dumps(board_id_dict))
+        f.write(json.dumps(board_id_dict, sort_keys = True, indent = 2, separators=(",", ": ")))
         f.close()
 
     def get_local_verilog_package_names(self):
@@ -328,7 +333,7 @@ class SiteManager(object):
 
         if del_found:
             f = open(get_paths_path(), "w")
-            f.write(json.dumps(paths_dict))
+            f.write(json.dumps(paths_dict, sort_keys = True, indent = 2, separators=(",", ": ")))
             f.close()
             self.get_paths_dict(force = True)
 

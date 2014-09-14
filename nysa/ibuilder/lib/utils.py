@@ -287,7 +287,7 @@ def get_board_config (board_name, user_paths = [], debug = False):
         pass
 
     if board_location is not None:
-        f = open(os.path.join(board_location, "board", "config.json"), "r")
+        f = open(os.path.join(board_location, board_name, "board", "config.json"), "r")
         config_dict = json.load(f)
         f.close()
         return config_dict
@@ -361,7 +361,7 @@ def get_constraint_file_path(board_name, constraint_filename, user_paths = [], d
         if "default_constraint_files" in config_dict:
             for cf in config_dict["default_constraint_files"]:
                 if constraint_filename == cf:
-                    return os.path.join(board_location, "board", cf)
+                    return os.path.join(board_location, board_name, "board", cf)
 
     except site_manager.SiteManagerError as ex:
         if debug: print "%s is not in the installed path, checking user paths..." % board_name
