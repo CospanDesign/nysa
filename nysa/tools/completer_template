@@ -1,0 +1,23 @@
+
+_${NAME}()
+{
+    local cur prev opts
+    #Get the current commands line string
+    COMPREPLY=()
+
+    #COMP_WORDS: List of items on the command line
+    #COMP_CWORD: Index of the current word in the list
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    #echo "cur depth: ${COMP_CWORD}"
+
+    opts="${GLOBAL_OPTS}"
+
+    #Check to see if the previous command is part of our list of sub commands
+${CMDS}
+
+    COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+    return 0
+}
+
+complete -o nospace -F _${NAME} ${NAME}

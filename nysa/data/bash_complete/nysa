@@ -1,0 +1,85 @@
+
+_nysa()
+{
+    local cur prev opts
+    #Get the current commands line string
+    COMPREPLY=()
+
+    #COMP_WORDS: List of items on the command line
+    #COMP_CWORD: Index of the current word in the list
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    #echo "cur depth: ${COMP_CWORD}"
+
+    opts="reset image-builder boards generate-slave utils upload devices platforms init program drt-viewer -h --help -v --verbose -d --debug"
+
+    #Check to see if the previous command is part of our list of sub commands
+		if [ $COMP_CWORD -gt 1 ]; then
+				#echo "subcommands!"
+				case "${COMP_WORDS[1]}" in
+					reset)
+						local reset_opts="-h --help -s --serial"
+						COMPREPLY=($(compgen -o default -W "${reset_opts}" -- ${cur}))
+						return 0
+						;;
+					image-builder)
+						local image_builder_opts="-h --help -o --output -c --compress -z --zip"
+						COMPREPLY=($(compgen -o default -W "${image_builder_opts}" -- ${cur}))
+						return 0
+						;;
+					boards)
+						local boards_opts="-h --help -r --remote -l --local -s --scan"
+						COMPREPLY=($(compgen -o default -W "${boards_opts}" -- ${cur}))
+						return 0
+						;;
+					generate-slave)
+						local generate_slave_opts="-h --help --axi --memory --slaveid --subid --flags -o --output"
+						COMPREPLY=($(compgen -o default -W "${generate_slave_opts}" -- ${cur}))
+						return 0
+						;;
+					utils)
+						local utils_opts="-h --help -v --verilog -u --update -c --clean -b --boards -p --platforms"
+						COMPREPLY=($(compgen -o default -W "${utils_opts}" -- ${cur}))
+						return 0
+						;;
+					upload)
+						local upload_opts="-h --help -s --serial"
+						COMPREPLY=($(compgen -o default -W "${upload_opts}" -- ${cur}))
+						return 0
+						;;
+					devices)
+						local devices_opts="-h --help -d --debug -n --name -i --integer"
+						COMPREPLY=($(compgen -o default -W "${devices_opts}" -- ${cur}))
+						return 0
+						;;
+					platforms)
+						local platforms_opts="-h --help"
+						COMPREPLY=($(compgen -o default -W "${platforms_opts}" -- ${cur}))
+						return 0
+						;;
+					init)
+						local init_opts="-h --help -o --output -F -R"
+						COMPREPLY=($(compgen -o default -W "${init_opts}" -- ${cur}))
+						return 0
+						;;
+					program)
+						local program_opts="-h --help -s --serial"
+						COMPREPLY=($(compgen -o default -W "${program_opts}" -- ${cur}))
+						return 0
+						;;
+					drt-viewer)
+						local drt_viewer_opts="-h --help -s --serial"
+						COMPREPLY=($(compgen -o default -W "${drt_viewer_opts}" -- ${cur}))
+						return 0
+						;;
+					*)
+					;;
+				esac
+		fi
+
+
+    COMPREPLY=($(compgen -W "${opts}" -- ${cur}))
+    return 0
+}
+
+complete -o nospace -F _nysa nysa
