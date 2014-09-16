@@ -17,7 +17,7 @@ except:
 
 setup( 
     name='nysa',
-    version='0.8.02',
+    version='0.8.03',
     description='FPGA core/image generator and FPGA communication',
     author='Cospan Design',
     author_email='dave.mccoy@cospandesign.com',

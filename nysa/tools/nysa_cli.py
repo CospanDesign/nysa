@@ -42,6 +42,8 @@ import upload_board
 import list_platforms
 import drt_viewer
 import init
+import install_platform
+import nysa_status
 
 from completer_extractor import completer_extractor as ce
 
@@ -118,6 +120,16 @@ TOOL_DICT = {
         "type":"utility",
         "module":init,
         "tool":init.init
+    },
+    install_platform.NAME:{
+        "type":"utility",
+        "module":install_platform,
+        "tool":install_platform.install
+    },
+    nysa_status.NAME:{
+        "type":"utility",
+        "module":nysa_status,
+        "tool":nysa_status.nysa_status
     }
 }
 

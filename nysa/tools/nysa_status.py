@@ -1,0 +1,104 @@
+#Distributed under the MIT licesnse.
+#Copyright (c) 2014 Dave McCoy (dave.mccoy@cospandesign.com)
+
+#Permission is hereby granted, free of charge, to any person obtaining a copy of
+#this software and associated documentation files (the "Software"), to deal in
+#the Software without restriction, including without limitation the rights to
+#use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+#of the Software, and to permit persons to whom the Software is furnished to do
+#so, subject to the following conditions:
+#
+#The above copyright notice and this permission notice shall be included in all
+#copies or substantial portions of the Software.
+#
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#SOFTWARE.
+
+import sys
+import os
+import argparse
+import subprocess
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
+
+from host.platform_scanner import PlatformScanner
+from host.platform_scanner import PlatformScannerException
+
+from common import site_manager
+from common import status as st
+
+NAME = "status"
+SCRIPT_NAME = "nysa %s" % NAME
+
+__author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
+
+DESCRIPTION = "Print the status of nysa tools"
+
+EPILOG = "\n"
+
+def setup_parser(parser):
+    parser.description = DESCRIPTION
+    return parser
+
+
+def cbuilder_status(status):
+    s = status
+    sm = site_manager.SiteManager(status)
+    verilog_packages = sm.get_local_verilog_package_names()
+    print "%scbuilder:%s" % (st.yellow, st.white)
+
+    print "\t%sVerilog Modules%s" % (st.purple, st.white)
+    for vp in verilog_packages:
+        print "\t\t%s%s%s" % (st.blue, vp, st.white)
+
+    print ""
+    print "\tchecking for iverilog...",
+    result = subprocess.call(["iverilog", "-V"], stdout = subprocess.PIPE)
+    #print "Result: %s" % str(type(result))
+    if result == 0:
+        print "%sFound!%s" % (st.green, st.white)
+    else:
+        print "%sNot Found!%s" % (st.red, st.white)
+
+    print "\tchecking for gtkwave...",
+    result = subprocess.call(["gtkwave", "-V"], stdout = subprocess.PIPE)
+    if result == 0:
+        print "%sFound!%s" % (st.green, st.white)
+    else:
+        print "%sNot Found!%s" % (st.red, st.white)
+
+    print ""
+
+def ibuilder_status(status):
+    s = status
+    print "%sibuilder:%s" % (st.yellow, st.white)
+
+    #print "args.name: %s" % args.name
+    ps = PlatformScanner(s)
+    platforms = ps.get_platforms()
+    if len(platforms) == 0:
+        print "\t%sNo Platforms installed!%s" % (st.red, st.white)
+        print "\t\tuse %s'nysa install-platforms'%s to view all available remote platforms" % (st.blue, st.white)
+        print "\t\tuse %s'nysa install-platforms <platform name>'%s to install a platform" % (st.green, st.white)
+    else:
+        print "\t%sPlatforms:%s" % (st.purple, st.white)
+        for platform in platforms:
+            print "\t\t%s%s%s" % (st.blue, platform, st.white)
+
+    print ""
+
+def host_status(status):
+    s = status
+    print "%shost controller:%s" % (st.yellow, st.white)
+    print ""
+
+def nysa_status(args, status):
+    cbuilder_status(status)
+    ibuilder_status(status)
+    host_status(status)
+

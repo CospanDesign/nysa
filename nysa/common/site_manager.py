@@ -172,6 +172,28 @@ class SiteManager(object):
         f.close()
         self.get_paths_dict(force = True)
 
+    def get_remote_board_dict(self, url = None):
+        opener = build_opener(HTTPCookieProcessor(CookieJar()))
+        resp = opener.open(BOARD_SPREADSHEET_URL)
+        data = resp.read()
+        row_data = data.split("\n")
+        grid_data = []
+        for i in range (len(row_data)):
+            grid_data.append([])
+            grid_data[i].extend(row_data[i].split(","))
+
+        grid_data.remove(grid_data[0])
+
+        board_dict = {}
+        for row in grid_data:
+            name = row[1].lower()
+            board_dict[name] = {}
+            board_dict[name]["timestamp"] = row[0].strip()
+            board_dict[name]["repository"] = row[2].strip()
+            board_dict[name]["pip"] = row[3].strip()
+
+        return board_dict
+
     def import_board_package(self, name, url):
         opener = build_opener(HTTPCookieProcessor(CookieJar()))
         resp = opener.open(BOARD_SPREADSHEET_URL)
