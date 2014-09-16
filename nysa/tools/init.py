@@ -35,8 +35,7 @@ SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "Creates the local nysa_projects directory, initializes the configuration files\n" + \
-"To see the status of the current nysa setup run 'nysa status'"
+DESCRIPTION = "Creates the local nysa_projects directory, initializes the configuration files To see the status of the current nysa setup run 'nysa status'"
 EPILOG = "\n" \
 "Examples:\n" + \
 "\n" + \
