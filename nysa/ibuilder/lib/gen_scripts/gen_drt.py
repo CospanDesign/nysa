@@ -55,7 +55,7 @@ class GenDRT(Gen):
         self.user_paths = user_paths
         board_name = tags["board"].lower()
 
-        if utils.is_board_id_in_dict(board_name):
+        if not utils.is_board_id_in_dict(board_name):
             utils.update_board_id_dict()
 
         board_id = utils.get_board_id(board_name)
