@@ -98,7 +98,6 @@ def ibuilder_status(status):
         print "\t%sRemote Platform Packages Available:%s" % (st.purple, st.white)
         for name in board_dict:
             print "\t\t%s%s%s" % (st.blue, name, st.white)
-        
 
     #print "args.name: %s" % args.name
     ps = PlatformScanner(s)
@@ -111,6 +110,12 @@ def ibuilder_status(status):
         print "\t%sPlatforms:%s" % (st.purple, st.white)
         for platform in platforms:
             print "\t\t%s%s%s" % (st.blue, platform, st.white)
+            p = ps.get_platforms()[platform](status)
+            print "\t\t\tChecking build tool...",
+            if not p.test_build_tools():
+                print "%s%s%s" % (st.red, "Failed!", st.white)
+            else:
+                print "%s%s%s" % (st.green, "Passed!", st.white)
 
     print ""
 
