@@ -2,11 +2,13 @@
 Name: nysa
 Version: 0.1.1
 Summary: FPGA development and interface tools
-Home-page: http://wiki.cospandesign.com/index.php?title=Nysa
+Home-page: http://nysa.cospandesign.com
 Author: Cospan Design
 Author-email: dave.mccoy@cospandesign.com
 License: LICENSE.txt
-Description: ===========
+Description:
+===========
+
   Nysa
   ===========
 
