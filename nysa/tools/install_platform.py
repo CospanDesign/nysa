@@ -23,6 +23,7 @@ import sys
 import os
 import argparse
 import json
+import subprocess
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
@@ -56,12 +57,14 @@ def setup_parser(parser):
 def install(args, status):
     s = status
     sm = site_manager.SiteManager(status)
+    names = []
 
     if s: s.Verbose("Args: %s" % str(args))
 
+    board_dict = sm.get_remote_board_dict()
+
     if args.name == "list":
         if s:s.Info("Get a list of the remote platforms")
-        board_dict = sm.get_remote_board_dict()
 
         print "%sPlatforms:%s" % (sts.purple, sts.white)
         for platform in board_dict:
@@ -70,7 +73,17 @@ def install(args, status):
             print "\t\t%sRepo: %s%s" % (sts.green, board_dict[platform]["repository"], sts.white)
             print "\t\t%sPIP: %s%s" % (sts.green, board_dict[platform]["pip"], sts.white)
 
+        sys.exit(0)
+
     if args.name == "all":
         if s:s.Info("Install all platforms")
+        names = board_dict.keys()
+    else:
+        names = [args.name]
 
-    
+
+    print "%sInstalling platforms:%s " % (sts.purple, sts.white),
+    for name in names:
+        print "\t%s%s%s" % (sts.blue, name, sts.white)
+        subprocess.call(["sudo", "pip", "install", "--upgrade", board_dict[name]["pip"]])
+
