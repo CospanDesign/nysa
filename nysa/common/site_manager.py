@@ -16,10 +16,12 @@ SITE_PATH = os.path.join(site.getuserbase(), "nysa")
 VERSION_PATH = os.path.join(SITE_PATH, "versions.json")
 PATHS_PATH = os.path.join(SITE_PATH, "paths.json")
 BOARD_ID_PATH = os.path.join(SITE_PATH, "board_id.json")
-BOARD_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1dif3JBFwjEiNVn5hNxr2ZQ58ypy1LqTsKIlVk3pWVtE/export?format=csv"
 #REMOTE_PACKAGE_URL = "http://www.cospandesign.com/nysa/packages"
+BOARD_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1dif3JBFwjEiNVn5hNxr2ZQ58ypy1LqTsKIlVk3pWVtE/export?format=csv"
 VERILOG_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1fyr9G2sVVa1bOi3Rtg9uGz0KELReo8buoTrP8DQfNTA/export?format=csv"
+EXAMPLE_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1GUzVnXB6StrfuYKXzCwm1_E4CBtUDDj5a-C-Fi5IQOc/export?format=csv"
 BOARD_PACKAGE_PATH = os.path.join(SITE_PATH, "boards")
+
 VERILOG_PACKAGE_PATH = os.path.join(SITE_PATH, "verilog")
 DEFAULT_BOARD_BRANCH = "master"
 
@@ -457,4 +459,89 @@ class SiteManager(object):
         if self.s: self.s.Debug("Refreshing paths dict")
         self.get_paths_dict(force = True)
 
+    def get_nysa_user_base_directory(self):
+        pd = self.get_paths_dict()
+        if "nysa_user_base" not in pd:
+            raise SiteManagerError("Nysa user base is not set up! run nysa init to initialize a user directory")
+        return pd["nysa_user_base"]
+        
+    def get_remote_example_dict(self):
+        opener = build_opener(HTTPCookieProcessor(CookieJar()))
+        resp = opener.open(EXAMPLE_SPREADSHEET_URL)
+        data = resp.read()
+        data = data.strip()
+        row_data = data.split("\n")
+        grid_data = []
+        for i in range (len(row_data)):
+            grid_data.append([])
+            grid_data[i].extend(row_data[i].split(","))
+
+        grid_data.remove(grid_data[0])
+
+        repo_dict = {}
+        for row in grid_data:
+            name = row[1].lower()
+            repo_dict[name] = {}
+            repo_dict[name]["timestamp"] = row[0].strip()
+            repo_dict[name]["repository"] = row[2].strip()
+
+        return repo_dict
+
+    def install_examples(self, name, dest, branch = None):
+        name = name.lower()
+        if branch is None:
+            branch = DEFAULT_BOARD_BRANCH
+
+        if self.s: self.s.Debug("Fetching example repo spreadsheet data")
+        ex_dict = self.get_remote_example_dict()
+
+        if name not in ex_dict:
+            raise SiteManagerError("Did not find remote example package: %s" % name)
+
+        if self.s: self.s.Debug("Found remote example package: %s" % name)
+        url = ex_dict[name]["repository"].strip()
+        archive_url = None
+        branch = "master"
+        if url.endswith('zip'):
+            print "Found zip file URL"
+            raise SiteManagerError("Current version of stie manager can only fetch Github URLs")
+        elif "github" not in url:
+            raise SiteManagerError("Current version of site manager can only fetch Github URLs")
+
+        if "github" in url:
+            archive_url = url + "/archive/%s.zip" % branch
+
+        if not os.path.exists(dest):
+            os.makedirs(dest)
+
+        tempdir = tempfile.mkdtemp()
+        temparchive = os.path.join(tempdir, "archive.zip")
+        urllib.urlretrieve(archive_url, temparchive)
+
+        zf = zipfile.ZipFile(temparchive, "a")
+        temp_examples = os.path.join(tempdir, "examples")
+        os.makedirs(temp_examples)
+        zf.extractall(temp_examples)
+        zf.close()
+
+        #Copy everything within that directory to the desired output
+        name = os.path.walk
+
+        dir_name = None
+
+        for dirname, dirnames, filenames in os.walk(temp_examples):
+            dir_name = dirnames[0]
+            break
+
+        source = os.path.join(temp_examples, dir_name)
+
+        #print "Removing: %s" % dest
+        #print "Copying over from: %s to %s" % (source, dest)
+        try:
+            shutil.rmtree(dest)
+        except:
+            pass
+        shutil.copytree(source, dest)
+        
+        shutil.rmtree(tempdir)
 

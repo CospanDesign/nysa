@@ -44,6 +44,7 @@ import drt_viewer
 import init
 import install_platform
 import install_verilog_modules
+import install_examples
 import nysa_status
 
 from completer_extractor import completer_extractor as ce
@@ -131,6 +132,11 @@ TOOL_DICT = {
         "type":"utility",
         "module":install_verilog_modules,
         "tool":install_verilog_modules.install
+    },
+    install_examples.NAME:{
+        "type":"utility",
+        "module":install_examples,
+        "tool":install_examples.install
     },
     nysa_status.NAME:{
         "type":"utility",
