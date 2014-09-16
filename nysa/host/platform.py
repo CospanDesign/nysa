@@ -40,6 +40,9 @@ class Platform(object):
         self.status = status
         self.dev_dict = {}
 
+    def add_device_dict(self, unique_id, device):
+        self.dev_dict[unique_id] = device
+
     def get_type(self):
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
@@ -49,7 +52,5 @@ class Platform(object):
     def scan(self):
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
-    def add_device_dict(self, unique_id, device):
-        self.dev_dict[unique_id] = device
-
-
+    def test_build_tools(self):
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
