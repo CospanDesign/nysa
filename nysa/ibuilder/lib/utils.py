@@ -55,6 +55,7 @@ import sys
 import string
 import glob
 import json
+import urllib2
 
 import preprocessor
 import arbitor
@@ -768,4 +769,11 @@ def get_local_verilog_path_dict():
 
     return vpackage_dict
 
+def try_internet():
+    try:
+        response = urllib2.urlopen("http://74.125.22.8.100", timeout = 1)
+        return True
+    except:
+        pass
+    return False
 
