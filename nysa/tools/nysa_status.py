@@ -26,6 +26,8 @@ import subprocess
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
+from ibuilder.lib import utils
+
 from host.platform_scanner import PlatformScanner
 from host.platform_scanner import PlatformScannerException
 
@@ -41,6 +43,8 @@ DESCRIPTION = "Print the status of nysa tools"
 
 EPILOG = "\n"
 
+INTERNET_AVAILABLE = False
+
 def setup_parser(parser):
     parser.description = DESCRIPTION
     return parser
@@ -52,7 +56,15 @@ def cbuilder_status(status):
     verilog_packages = sm.get_local_verilog_package_names()
     print "%scbuilder:%s" % (st.yellow, st.white)
 
-    print "\t%sVerilog Modules%s" % (st.purple, st.white)
+    if not INTERNET_AVAILABLE:
+        print "\tInternet not available, unable to check for remote verilog repositories"
+    else:
+        vdict = sm.get_remote_verilog_dict()
+        print "\t%sRemote Verilog Modules Available%s" % (st.purple, st.white)
+        for name in vdict:
+            print "\t\t%s%s%s" % (st.blue, name, st.white)
+
+    print "\t%sInstalled Verilog Modules%s" % (st.purple, st.white)
     for vp in verilog_packages:
         print "\t\t%s%s%s" % (st.blue, vp, st.white)
 
@@ -78,6 +90,16 @@ def ibuilder_status(status):
     s = status
     print "%sibuilder:%s" % (st.yellow, st.white)
 
+    if not INTERNET_AVAILABLE:
+        print "\tInternet not available, unable to check for remote platform packages"
+    else:
+        sm = site_manager.SiteManager(status)
+        board_dict = sm.get_remote_board_dict()
+        print "\t%sRemote Platform Packages Available:%s" % (st.purple, st.white)
+        for name in board_dict:
+            print "\t\t%s%s%s" % (st.blue, name, st.white)
+        
+
     #print "args.name: %s" % args.name
     ps = PlatformScanner(s)
     platforms = ps.get_platforms()
@@ -98,6 +120,9 @@ def host_status(status):
     print ""
 
 def nysa_status(args, status):
+    global INTERNET_AVAILABLE
+    INTERNET_AVAILABLE = utils.try_internet()
+
     cbuilder_status(status)
     ibuilder_status(status)
     host_status(status)

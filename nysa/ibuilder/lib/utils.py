@@ -771,7 +771,8 @@ def get_local_verilog_path_dict():
 
 def try_internet():
     try:
-        response = urllib2.urlopen("http://74.125.22.8.100", timeout = 1)
+        #Try and get a response from a google server
+        response = urllib2.urlopen("http://74.125.22.100", timeout = 1)
         return True
     except:
         pass

@@ -11,7 +11,7 @@ _nysa()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     #echo "cur depth: ${COMP_CWORD}"
 
-    opts="status reset install-platform boards generate-slave utils upload devices platforms init program image-builder drt-viewer -h --help -v --verbose -d --debug"
+    opts="status reset install-platform boards generate-slave utils upload devices platforms init program install-verilog-repo image-builder drt-viewer -h --help -v --verbose -d --debug"
 
     #Check to see if the previous command is part of our list of sub commands
 		if [ $COMP_CWORD -gt 1 ]; then
@@ -70,6 +70,11 @@ _nysa()
 					program)
 						local program_opts="-h --help -s --serial"
 						COMPREPLY=($(compgen -o default -W "${program_opts}" -- ${cur}))
+						return 0
+						;;
+					install-verilog-repo)
+						local install_verilog_repo_opts="-h --help"
+						COMPREPLY=($(compgen -o default -W "${install_verilog_repo_opts}" -- ${cur}))
 						return 0
 						;;
 					image-builder)
