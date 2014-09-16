@@ -172,6 +172,29 @@ class SiteManager(object):
         f.close()
         self.get_paths_dict(force = True)
 
+    def get_remote_verilog_dict(self, url = None):
+        opener = build_opener(HTTPCookieProcessor(CookieJar()))
+        resp = opener.open(VERILOG_SPREADSHEET_URL)
+        data = resp.read()
+        data = data.strip()
+        row_data = data.split("\n")
+        grid_data = []
+        for i in range (len(row_data)):
+            grid_data.append([])
+            grid_data[i].extend(row_data[i].split(","))
+
+        grid_data.remove(grid_data[0])
+
+        repo_dict = {}
+        for row in grid_data:
+            name = row[1].lower()
+            repo_dict[name] = {}
+            repo_dict[name]["timestamp"] = row[0].strip()
+            repo_dict[name]["repository"] = row[2].strip()
+
+        return repo_dict
+
+
     def get_remote_board_dict(self, url = None):
         opener = build_opener(HTTPCookieProcessor(CookieJar()))
         resp = opener.open(BOARD_SPREADSHEET_URL)
@@ -269,9 +292,9 @@ class SiteManager(object):
         if not os.path.exists(get_board_package_path()):
             os.makedirs(get_board_package_path())
 
-        #tempdir = tempfile.mkdtemp()
+        tempdir = tempfile.mkdtemp()
 
-        tempdir = get_board_package_path()
+        #tempdir = get_board_package_path()
         temparchive = os.path.join(tempdir, "archive.zip")
         urllib.urlretrieve(archive_url, temparchive)
         #f = open(temparchive, "a")
@@ -281,7 +304,7 @@ class SiteManager(object):
         zf = zipfile.ZipFile(temparchive, "a")
         zf.extractall(get_board_package_path())
         zf.close()
-        #shutil.rmtree(tempdir)
+        shutil.rmtree(tempdir)
         dir_name = "%s-%s" % (url.rpartition("/")[2], branch)
         board_dir = os.path.join(get_board_package_path(), dir_name)
 
@@ -367,6 +390,7 @@ class SiteManager(object):
 
         name = name.lower()
 
+        if self.s: self.s.Debug("Fetching verilog repo spreadsheet data")
         opener = build_opener(HTTPCookieProcessor(CookieJar()))
         resp = opener.open(VERILOG_SPREADSHEET_URL)
         data = resp.read()
@@ -391,6 +415,8 @@ class SiteManager(object):
         if result is None:
             raise SiteManagerError("Did not find remote verilog package: %s" % name)
 
+        if self.s: self.s.Debug("Found remote verilog package: %s" % name)
+
         url = result[2]
         timestamp = result[0]
         archive_url = None
@@ -411,9 +437,8 @@ class SiteManager(object):
         if not os.path.exists(get_verilog_package_path()):
             os.makedirs(get_verilog_package_path())
 
-
-        #tempdir = tempfile.mkdtemp()
-        tempdir = get_verilog_package_path()
+        tempdir = tempfile.mkdtemp()
+        #tempdir = get_verilog_package_path()
         temparchive = os.path.join(tempdir, "archive.zip")
         urllib.urlretrieve(archive_url, temparchive)
         #f = open(temparchive, "a")
@@ -423,11 +448,13 @@ class SiteManager(object):
         zf = zipfile.ZipFile(temparchive, "a")
         zf.extractall(get_verilog_package_path())
         zf.close()
-        #shutil.rmtree(tempdir)
+        shutil.rmtree(tempdir)
         dir_name = "%s-%s" % (url.rpartition("/")[2], branch)
 
         verilog_dir = os.path.join(get_verilog_package_path(), dir_name)
+        if self.s: self.s.Debug("Adding verilog package now")
         self.add_verilog_package(name, timestamp, verilog_dir)
+        if self.s: self.s.Debug("Refreshing paths dict")
         self.get_paths_dict(force = True)
 
 
