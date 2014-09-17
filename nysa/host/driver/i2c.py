@@ -39,8 +39,8 @@ import time
 from array import array as Array
 
 
-from nysa.host.userland.python.nysa import Nysa
-from nysa.host.userland.python.nysa import NysaCommError
+from nysa.host.nysa import Nysa
+from nysa.host.nysa import NysaCommError
 
 
 from driver import Driver
