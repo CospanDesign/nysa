@@ -414,6 +414,7 @@ class UART(Driver):
         if self.debug:
             print "read_string"
 
+        #print "count: %d" % count
         data = Array('B')
         if count == -1:
             data = self.read_all_data()
