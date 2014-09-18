@@ -29,7 +29,7 @@ from inspect import ismodule
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
 from common.site_manager import SiteManager
-from platform import Platform
+from nysa_platform import Platform
 
 class PlatformScannerException(Exception):
     pass
@@ -61,8 +61,8 @@ class PlatformScanner(object):
             platform_paths_list = os.path.join(board_path_dict[board], board)
             sys.path.append(os.path.join(board_path_dict[board]))
 
-            m = __import__("%s.platform" % board)
-            board_platform = m.platform
+            m = __import__("%s.nysa_platform" % board)
+            board_platform = m.nysa_platform
 
             for name in dir(board_platform):
 
