@@ -30,6 +30,7 @@ http://wiki.cospandesign.com/index.php?title=Wb_uart
 
 """
 
+__author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 import sys
 import os
