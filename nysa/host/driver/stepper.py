@@ -39,13 +39,8 @@ import time
 from array import array as Array
 
 
-sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir))
-
-import nysa
-from nysa import Nysa
-from nysa import NysaCommError
-
+from nysa.host.nysa import Nysa
+from nysa.host.nysa import NysaCommError
 
 from driver import Driver
 
@@ -107,6 +102,7 @@ class Stepper(Driver):
     """
     Stepper Motor Controller
     """
+
     @staticmethod
     def get_core_id():
         """
