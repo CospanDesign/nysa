@@ -361,7 +361,7 @@ class Driver(object):
         if self.interrupt_detected:
             self.interrupt_detected = False
             return True
-        retval = self.n.wait_for_interrupts(wait_time, self.dev_id)
+        retval = self.n.wait_for_interrupts(wait_time)
         self.n.interrupts &= ~(1 << self.dev_id)
         return retval
 
