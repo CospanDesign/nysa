@@ -5,6 +5,13 @@ import json
 import string
 from array import array as Array
 
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir,
+                             os.pardir,
+                             "common"))
+
+from site_manager import SiteManager
+
 
 """ @package docstring
 Python DRT (Device ROM Table) interpreter
@@ -655,17 +662,15 @@ def get_board_list():
     board_list = []
     index = 0
     length = 0
-    try: 
-        f = open(os.path.join(os.path.dirname(__file__), 
-                              os.pardir,
-                              os.pardir,
-                              "ibuilder",
-                              "boards",
-                              "boards.json"), "r")
-        board_tags = json.load(f)
-    except TypeError as err:
-        print "JSON Error: %s" % str(err)
-        raise DRTError("DRT Error: %s", str(err)) 
+    sm = SiteManager()
+    board_tags = sm.get_board_id_dict()
+    #f = open(os.path.join(os.path.dirname(__file__), 
+    #                      os.pardir,
+    #                      os.pardir,
+    #                      "ibuilder",
+    #                      "boards",
+    #                      "boards.json"), "r")
+    #board_tags = json.load(f)
  
     length = len(board_tags) 
  
