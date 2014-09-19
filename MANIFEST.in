@@ -1,5 +1,6 @@
-include *.md
 include *.txt
+recursive-include nysa *.md
 recursive-include nysa *.json
 recursive-include nysa *.v
 include nysa/data/bash_complete/nysa
+include nysa/ibuilder/bus/NYSA_README
