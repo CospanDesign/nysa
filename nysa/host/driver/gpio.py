@@ -216,79 +216,79 @@ class GPIO(Driver):
 
     def set_interrupt_enable(self, interrupt_enable):
         """set_interrupt_enable
-       
+
         Enables/Disables interrupts
-       
+
         Args:
             interrupt_enable: 32-bit enable (1), disable(0) mask
-       
+
         Return:
             Nothing
-       
+
         Raises:
             NysaComError
         """
         self.write_register(INTERRUPT_ENABLE, interrupt_enable)
- 
+
     def get_interrupt_enable(self):
         """get_interrupt_enable
-       
+
         Returns the interrupt mask
-       
+
         Args:
             Nothing
-       
+
         Returns:
             32-bit interrupt mask value
-       
+
         Raises:
             Nothing
         """
         return self.read_register(INTERRUPT_ENABLE)
- 
+
     def set_interrupt_edge(self, interrupt_edge):
         """set_interrupt_edge
-       
+
         Interrupt triggers on high (1) or low (0)
-       
+
         Args:
             Interrupt_level: 32-bit enable (1), disable (0) mask
-       
+
         Return:
             Nothing
-       
+
         Raises:
             NysaCommError
         """
         self.write_register(INTERRUPT_EDGE, interrupt_edge)
- 
+
     def get_interrupt_edge(self):
         """get_interrupt_edge
-       
+
         Returns the interrupt level
-       
+
         Args:
             Nothing
-       
+
         Returns:
             32-bit value contiaining the interrupt level
-       
+
         Raises:
             NysaCommError
         """
         return self.read_register(INTERRUPT_EDGE)
- 
+
     def get_interrupts(self):
         """get_interrupts
-       
+
         Returns a 32-bit value representing the interrupts on the specified pins
-       
+
         Args:
             Nothing
-       
+
         Returns:
             32-bit value containing the interrupts
-       
+
         Raises:
             NysaCommError
         """
@@ -296,7 +296,7 @@ class GPIO(Driver):
 
 def unit_test(n, dev_id = None, debug = False):
     """unit_test
- 
+
     Run the unit test of the GPIO
     """
     dev_index = n.find_device(GPIO.get_core_id())
@@ -304,31 +304,31 @@ def unit_test(n, dev_id = None, debug = False):
         print "Failed to find GPIO Device!\n"
         return
     gpio = GPIO(n, dev_index)
- 
+
     print "Testing output ports (like LEDs)"
- 
+
     print "Flashing all the outputs for one second"
- 
+
     print "Set all the ports to outputs"
     gpio.set_port_direction(0xFFFFFFFF)
- 
+
     print "Set all the values to 1s"
     gpio.set_port_raw(0xFFFFFFFF)
     time.sleep(1)
     print "Set all the values to 0s"
     gpio.set_port_raw(0x00000000)
- 
+
     print "Reading inputs (Like buttons) in 2 second"
     gpio.set_port_direction(0x00000000)
-    
+
     time.sleep(2)
     print "Read value: 0x%08X" % gpio.get_port_raw()
     print "Reading inputs (Like buttons) in 2 second"
     time.sleep(2)
     print "Read value: 0x%08X" % gpio.get_port_raw()
- 
+
     print "Interrupts: 0x%08X" % gpio.get_interrupts()
- 
+
     print "Testing Interrupts, setting interrupts up for positive edge detect"
     print "Interrupts: 0x%08X" % gpio.get_interrupts()
     gpio.set_interrupt_edge(0xFFFFFFFF)
@@ -344,4 +344,4 @@ def unit_test(n, dev_id = None, debug = False):
 
     print "Interrupts: 0x%08X" % gpio.get_interrupts()
 
- 
+
