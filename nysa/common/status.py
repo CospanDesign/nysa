@@ -45,9 +45,6 @@ if os.name == "nt":
     cyan   = ''
 
 
-
-
-
 StatusLevel = enum ('FATAL', 'ERROR', 'WARNING', 'INFO', 'IMPORTANT', 'DEBUG', 'VERBOSE')
 
 _status_instance = None
@@ -111,15 +108,7 @@ class _Status(object):
 
         class_name = None
 
-        #print "\t%s" % str(dir(inspect.stack()[2][0].f_code))
-        #print "\t%s" % str(inspect.stack()[2][0].f_code.co_name)
-        #print "\t%s" % str(inspect.stack()[2][0].f_trace)
-        #print "\t%s" % str(inspect.stack()[2][0].f_globals["__name__"])
-        #print "\t%s" % str(inspect.stack()[2][0].f_globals.viewitems())
-        #print "\t%s" % str(inspect.stack()[2][0].f_locals["__class__"])
         if "self" in inspect.stack()[2][0].f_locals.keys():
-            #print "\t%s" % str(inspect.stack()[2][0].f_locals["self"])
-            #print "\t%s" % str(dir(inspect.stack()[2][0].f_locals["self"]))
             
             class_name = str(inspect.stack()[2][0].f_locals["self"])
             while class_name.find(".") != -1:
@@ -183,8 +172,6 @@ class _Status(object):
         return False
 
     def cl_status(level = 2, text = ""):
-        #if not text.endswith("\n"):
-        #    text = text + "\n"
 
         if level == 0:
             print "%sVerbose: %s%s" % (cyan, text, white)
