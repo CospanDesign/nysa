@@ -5,7 +5,7 @@
 	"fpga_part_number":"xc6slx9-tqg144-3",
   "host_inteface":"ft_master_interface",
 	"default_constraint_files":[
-		"dionysus.ucf"
+		"test.ucf"
 	],
   "image":"dionysus.png",
   "default_project":"dionysus_default.json",

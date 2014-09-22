@@ -77,7 +77,7 @@ class Test (unittest.TestCase):
         loc = os.path.join(os.path.dirname(__file__),
                            os.pardir,
                            "fake")
-        search_location = os.path.expanduser(loc)
+        search_location = os.path.abspath(os.path.expanduser(loc))
 
         result = utils.find_rtl_file_location(  "test.v",
                                             [search_location],
@@ -105,14 +105,6 @@ class Test (unittest.TestCase):
         boards = utils.get_board_names([loc])
         self.assertIn("test_board", boards)
 
-    def test_get_constraint_filenames(self):
-        cfiles = utils.get_constraint_filenames("dionysus")
-        for cfile in cfiles:
-            if "dionysus.ucf" in cfile:
-                return
-
-        assert False
-
     def test_get_constraint_filenames_user_loc(self):
         """Set the current directory to a search location""" 
         loc = os.path.join(os.path.dirname(__file__),
@@ -135,7 +127,7 @@ class Test (unittest.TestCase):
                            os.path.pardir,
                            "fake")
 
-        board_dict = utils.get_board_config(boardname, [loc])
+        board_dict = utils.get_board_config(boardname, [loc], debug = True)
         self.assertEqual(board_dict["board_name"], "Test Board")
 
     def test_get_net_names(self):
@@ -143,7 +135,9 @@ class Test (unittest.TestCase):
                            os.path.pardir,
                            "fake",
                            "test_board",
+                           "board",
                            "test.ucf")
+        loc = os.path.abspath(loc)
         netnames = utils.get_net_names(loc, debug = self.dbg)
         if self.dbg:
             print "net names: "
@@ -152,11 +146,17 @@ class Test (unittest.TestCase):
         self.assertIn("clk", netnames)
 
     def test_get_constraint_file_path(self):
+        
+        mock_utils = utils
         loc = os.path.join(os.path.dirname(__file__),
                            os.path.pardir,
                            "fake")
+        loc = os.path.abspath(loc)
+
+        mock_utils.get_board_directory = lambda x: loc
         filename = "test.ucf"
-        fp = utils.get_constraint_file_path(filename, [loc])
+        #fp = utils.get_constraint_file_path(filename, [loc])
+        fp = utils.get_constraint_file_path("test_board", filename, debug = True)
         assert os.path.exists(fp)
 
     def test_read_clk_with_period(self):
@@ -164,6 +164,7 @@ class Test (unittest.TestCase):
                            os.path.pardir,
                            "fake",
                            "test_board",
+                           "board",
                            "test.ucf")
         clock_rate = utils.read_clock_rate(loc, debug = self.dbg)
         self.assertEqual(int(clock_rate), 50000000)
