@@ -288,6 +288,8 @@ def get_board_config (board_name, user_paths = [], debug = False):
         pass
 
     if board_location is not None:
+        if debug: print "board location: %s" % board_location
+        if debug: print "board_name: %s" % board_name
         f = open(os.path.join(board_location, board_name, "board", "config.json"), "r")
         config_dict = json.load(f)
         f.close()
@@ -307,7 +309,7 @@ def get_board_config (board_name, user_paths = [], debug = False):
             if debug: print "Dirs: " + str(dirs)
             if board_name in dirs:
                 if debug: print "Found the directory"
-                filename = os.path.join(root, board_name, "config.json")
+                filename = os.path.join(root, board_name, "board", "config.json")
                 if debug: print "filename: %s" % filename
                 break
 
@@ -349,6 +351,21 @@ def get_net_names(filepath, debug = False):
     return constraint_utils.get_net_names(filepath)
 
 def get_constraint_file_path(board_name, constraint_filename, user_paths = [], debug = False):
+    """Gets the path of the constraint filename
+
+    Args:
+        board_name (String): name of the board to get the constraint name
+        constraint_filename (String): name of a constraint file to find
+        user_paths (String): list of user paths to add to the search directory
+
+
+    Returns:
+        (String) path to the constraint filename
+
+    Raises:
+        IBuilder Error
+    """
+
     board_name = board_name.lower()
     """Returns a list of ucf files for the specified board name"""
     #board_dir = os.path.join(nysa_base, "ibuilder", "boards", board_name)
