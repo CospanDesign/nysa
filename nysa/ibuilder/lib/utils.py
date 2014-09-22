@@ -375,16 +375,17 @@ def get_constraint_file_path(board_name, constraint_filename, user_paths = [], d
 
     try:
         board_location = get_board_directory(board_name)
+        if debug: print "Default board location found: %s" % board_location
         config_dict = get_board_config(board_name, user_paths, debug = debug)
+        if debug: print "Config Dict: %s" % str(config_dict)
         if "default_constraint_files" in config_dict:
             for cf in config_dict["default_constraint_files"]:
+                if debug: print "Looking at constraint file: %s" % cf
                 if constraint_filename == cf:
                     return os.path.join(board_location, board_name, "board", cf)
 
     except site_manager.SiteManagerError as ex:
         if debug: print "%s is not in the installed path, checking user paths..." % board_name
-
-
 
     board_locations.extend(user_paths)
     filename = ""
@@ -492,7 +493,7 @@ def get_slave_list(bus = "wishbone", user_paths = [], debug = False):
 
     if debug:
         print "in get slave list"
-    directory = get_verilog_package_path("nysa-verilog")
+    directory = get_local_verilog_path("nysa-verilog")
     #directory = os.path.join(nysa_base, "cbuilder", "verilog", bus, "slave")
     file_list = _get_file_recursively(directory)
     slave_list = _get_slave_list(directory, debug=debug)
