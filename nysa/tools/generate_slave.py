@@ -208,7 +208,6 @@ def generate_slave(args, status):
     
     if args.slaveid is None and not args.memory:
         print "Error: No slave ID is given and a memory device was not specified, either a slave ID must be specified or the memory flag must be set"
-        args.print_help()
         sys.exit(-1)
 
     if args.slaveid is not None and args.memory:
