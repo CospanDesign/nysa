@@ -339,8 +339,11 @@ class UART(Driver):
             print "Writing a string"
 
         data = Array('B')
+        print "string to write: %s" % string
+        print "Length of string: %d" % len(string)
         data.fromstring(string)
-        self.write_raw(data)
+        print "string to write (as an array): %s" % data[:len(string)]
+        self.write_raw(data, len(string))
 
     def write_byte(self, data):
         """write_byte
@@ -357,9 +360,9 @@ class UART(Driver):
           NysaCommError
         """
         write_data = Array('B', [data])
-        self.write_raw(write_data)
+        self.write_raw(write_data, 1)
 
-    def write_raw(self, data = Array('B')):
+    def write_raw(self, data, length):
         """write_raw
 
         formats the data to write to the UART device
@@ -380,21 +383,21 @@ class UART(Driver):
         if self.debug:
             print "Writing to the UART device"
 
-
-        length = len(data)
+        print "Data to send down: %s" % str(data)
+        print "Length of data to send down: %d" % length
 
         data_array = Array('B')
         data_array.extend([((length >> 8) & 0xFF), (((length) & 0xFF))])
-        data_array.extend(data)
+        data_array.extend(data[:length])
 
-        if self.debug:
-            print "sending: %s" % str(data_array)
-            print "Length: %d" % length
+        print "sending: %s" % str(data_array)
+        print "Length: %d" % length
 
         pad = (len(data_array) % 4)
         for i in range (0, pad):
             data_array.extend([0])
 
+        print "Final data array: %s" % data_array
         self.write(WRITE_DATA, data_array)
 
     def read_string(self, count = -1):
@@ -422,13 +425,16 @@ class UART(Driver):
         else:
             data = self.read_raw(count)
 
-        byte_data = Array('B')
-        for i in range (len(data) / 4):
-            byte_data.append(data[i * 4])
+        print "read_string: returned data: %s" % data
+        #byte_data = Array('B')
+        #for i in range (len(data) / 4):
+        #    byte_data.append(data[i * 4])
 
-        print "\tread_string: data: %s" % byte_data
+        #print "\tread_string: data: %s" % byte_data
+        print "\tread_string: data: %s" % str(data)
 
-        string = byte_data.tostring()
+        #string = byte_data.tostring()
+        string = data.tostring()
         return string
 
     def read_raw(self, count = 1):
@@ -461,15 +467,11 @@ class UART(Driver):
         #Tell the core we are going to read the specified amount of bytes
         self.write_register(READ_COUNT, count)
         data = self.read(READ_DATA, word_count)[0:count]
+        #data = self.read(READ_DATA, word_count)
 
-        self.debug = True 
-        if self.debug:
-            print "Reading %d bytes" % count
-            print "Output byte count: " + str(count)
-            print "Byte Data: %s" %  str(data)
-        self.debug = False
-
-
+        print "Reading %d bytes" % count
+        print "Output byte count: " + str(len(data))
+        print "Byte Data: %s" %  str(data)
         return data
 
     def get_read_count(self):
@@ -510,11 +512,11 @@ class UART(Driver):
 
         count = self.get_read_count()
         print "read_all_data: count: %d" % count
-        data = Array('B')
-        while count > 0:
-            data.extend(self.read_raw(count))
-            count = self.get_read_count()
-            #time.sleep(0.05)
+        #while count > 0:
+        data = self.read_raw(count)
+        print "read_all_data: output data: %s" % str(data)
+        #count = self.get_read_count()
+        #time.sleep(0.05)
         return data
 
     def get_write_available(self):
