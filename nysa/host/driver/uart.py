@@ -397,7 +397,7 @@ class UART(Driver):
 
         self.write(WRITE_DATA, data_array)
 
-    def read_string(self, count = 1):
+    def read_string(self, count = -1):
         """read_string
 
         Read a string of characters
@@ -413,7 +413,7 @@ class UART(Driver):
           NysaCommError: Error in communication
         """
         if self.debug:
-            print "read_string"
+            print "read_string: Read count: %d" % count
 
         #print "count: %d" % count
         data = Array('B')
@@ -422,7 +422,13 @@ class UART(Driver):
         else:
             data = self.read_raw(count)
 
-        string = data.tostring()
+        byte_data = Array('B')
+        for i in range (len(data) / 4):
+            byte_data.append(data[i * 4])
+
+        print "\tread_string: data: %s" % byte_data
+
+        string = byte_data.tostring()
         return string
 
     def read_raw(self, count = 1):
@@ -503,6 +509,7 @@ class UART(Driver):
             print "read all the data in the UART input FIFO"
 
         count = self.get_read_count()
+        print "read_all_data: count: %d" % count
         data = Array('B')
         while count > 0:
             data.extend(self.read_raw(count))
