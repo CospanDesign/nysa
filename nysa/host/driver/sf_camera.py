@@ -149,6 +149,8 @@ class SFCamera(Driver):
         row_count = self.read_row_count()
         pixel_count = self.read_pixel_count()
         size = row_count * pixel_count
+        self.width = pixel_count / 2
+        self.height = row_count
 
 
         self.status = 0
@@ -169,12 +171,25 @@ class SFCamera(Driver):
                                                 empty1     = STATUS_MEMORY_1_EMPTY)
         except NysaDMAException as ex:
             raise SFCameraError("Error initializing the DMA Reader: %s" % str(ex))
+        
 
 
     def __del__(self):
         print "Shutdown"
         self.i2c.enable_i2c(False)
         #self.set_control(0)
+
+    def get_width(self):
+        return self.width
+
+    def get_height(self):
+        return self.height
+
+    def stop_async_reader(self):
+        self.dma_reader.disable_asynchronous_read()
+
+    def start_async_reader(self, callback):
+        self.dma_reader.enable_asynchronous_read(callback)
 
     def get_control(self):
         """get_control
@@ -239,8 +254,8 @@ class SFCamera(Driver):
         Raises:
             NysaCommError
         """
-        self.enable_register_bit(CONTROL, 0, enable)
-        self.enable_register_bit(CONTROL, 1, enable)
+        self.enable_register_bit(CONTROL, CONTROL_ENABLE, enable)
+        self.enable_register_bit(CONTROL, CONTROL_INTERRUPT_ENABLE, enable)
 
     def read_row_count(self):
         """

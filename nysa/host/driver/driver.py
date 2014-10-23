@@ -21,12 +21,16 @@
 
 import sys
 import os
+import time
 
 from array import array as Array
 
 from nysa.host.nysa import Nysa
 from nysa.host.nysa import NysaCommError
 from nysa.host.nysa import NysaError
+import Queue
+import threading
+from threading import Lock
 
 
 class Driver(object):
@@ -384,7 +388,6 @@ class Driver(object):
 
         print ""
 
-
 class NysaDMAException(Exception):
     '''
     DMA has incorrectly been setup
@@ -392,6 +395,162 @@ class NysaDMAException(Exception):
     DMA setup for read has ben written to
     '''
     pass
+
+
+class DMAReaderData(object):
+    data = None
+    ready = None
+    callback = None
+    next = 0
+
+class DMAReadWorker(threading.Thread):
+    """
+    Start an worker thread that will read data from the dma device when an
+    Interrupt occurs. The main thread will receive the interrupt that will
+    enqueue an event into the dma_write_queue.
+
+    A queue is used to notify the worker instead of an event so that
+    if an interrupt is detected while the data is being processed for the
+    first interrupt it can be executed immediately
+
+    Using the DMAReaderData object to pass the data so I don't need to pass
+    a large structure into the queue and it doesn't need to be copied more
+    than is required
+
+    Use the AttributeError to notify the thread when the main thread has
+    exited
+    """
+    def __init__(   self,
+                    dev,
+                    dmar,
+                    dma_write_queue,
+                    dma_rdata,
+                    data_locks):
+
+        super(DMAReadWorker, self).__init__()
+        self.dev = dev
+        self.dmar = dmar
+        self.dwq = dma_write_queue
+        self.drd = dma_rdata
+        self.locks = data_locks
+        print "setup worker thread"
+
+    def run(self):
+        print "Running worker thread"
+        rdata = None
+        dmar = self.dmar
+        dev = self.dev
+        fs = [False, False]
+        bs = [False, False]
+        read_channel = 0
+        next = 0
+        enable = False
+        size = dmar.size
+
+        while (1):
+            if not fs[0] and not fs[1]:
+                print "DMA Reader: No finished flag"
+                #There is no finished status from previous reads
+                status = dev.read_register(dmar.reg_status)
+                print "Status: 0x%08X" % status
+                fs[0] = ((status & dmar.finished[0]) > 0)
+                fs[1] = ((status & dmar.finished[1]) > 0)
+                bs[0] = ((status & dmar.empty[0]) == 0)
+                bs[1] = ((status & dmar.empty[1]) == 0)
+                print "DMA Reader: fs flags: %s %s, bs flags: %s %s" % (fs[1], fs[0], bs[1], bs[0])
+                if not fs[0] and not fs[1]:
+                    if enable:
+                        print "DMA Reader: Start reading!"
+                        #We are enabled
+                        #Nothing is ready, we need to wait for an interrupt
+
+                        #Check if there is anything working
+                        if not bs[0]:
+                            #side 0 is not busy, intiate a transaction
+                            print "DMA Reader 0 thread wakeup!: Size 0x%08X" % size
+                            dev.write_register(dmar.reg_size0, size)
+                        
+                        if not bs[1]:
+                            print "DMA Reader 1 thread wakeup!: Size 0x%08X" % size
+                            #side 1 is not busy, intiate a transaction
+                            dev.write_register(dmar.reg_size1, size)
+
+                    try:
+                        #wait for an interrupt condeciton
+                        #print "DMA Reader 0 Size: 0x%08X, 0x%08X" % (size, dev.read_register(dmar.reg_size0))
+                        #print "control: 0x%08X" % dev.get_control()
+                        #print "status:  0x%08X" % dev.read_register(dmar.reg_status)
+                        if self.dwq.empty():
+                            rdata = self.dwq.get(block = True)
+                        while not self.dwq.empty():
+                            rdata = self.dwq.get(block = True)
+                        print "Got a response!"
+
+                    except AttributeError:
+                        #This occurs when the queue is destroyed remotely
+                        print "exit"
+                        return
+
+                    if rdata is not None:
+                        print "DMA Reader Enable: %s" % str(rdata)
+                        enable = rdata
+                        print "control: 0x%08X" % dev.get_control()
+                        print "self.mem_base 0: 0x%08X, size: 0x%08X" % (dmar.mem_base[0], size)
+                        print "self.mem_base 1: 0x%08X, size: 0x%08X" % (dmar.mem_base[1], size)
+
+                        continue
+
+            if fs[0] and fs[1]:
+                #both finished channels are ready
+                if next == 0:
+                    fs[0] = False
+                    bs[0] = False
+                    read_channel = 0
+                    next = 1
+                else:
+                    fs[1] = False
+                    bs[1] = False
+                    read_channel = 1
+                    next = 0
+            else:
+                #if only one of the finished status is ready, reset the tie
+                #breaker
+                next = 0
+                if fs[0]:
+                    fs[0] = False
+                    bs[0] = False
+                    read_channel = 0
+                if fs[1]:
+                    fs[1] = False
+                    bs[1] = False
+                    read_channel = 1
+
+            #Now we know what channel we need to read
+            #'read_channel' is the channel to use
+            with self.locks[read_channel]:
+                #lock the channel so the reading device is not getting garbage data
+                print "read channel: %d" % read_channel
+                self.drd.data[read_channel] = dev.read_memory(dmar.mem_base[read_channel], size)
+                self.drd.ready[read_channel] = True
+                if self.drd.ready[0] and self.drd.ready[1]:
+                    #if both are ready point to the previous one
+                    if read_channel == 0:
+                        self.drd.next = 1
+                    else:
+                        self.drd.next = 0
+                else:
+                    self.drd.next = read_channel
+
+                if self.drd.callback is not None:
+                    self.drd.callback()
+
+                #initiate a new transfer before I leave so it will happen next
+                if enable:
+                    if read_channel == 0:
+                        dev.write_register(dmar.reg_size0, size)
+                    else: 
+                        dev.write_register(dmar.reg_size1, size)
+
 
 class DMAReadController(object):
     '''
@@ -526,6 +685,51 @@ class DMAReadController(object):
         self.busy_status = [False, False]
         self.next_finished = 0
 
+
+        self.dma_read_data = DMAReaderData()
+        self.dma_read_data.data = [None, None]
+        self.dma_read_data.ready = [False, False]
+        self.dma_read_data.callback = None
+        self.dma_write_queue = Queue.Queue(4)
+        self.locks = [Lock(), Lock()]
+
+        self.worker = DMAReadWorker(device,
+                                    self,
+                                    self.dma_write_queue,
+                                    self.dma_read_data,
+                                    self.locks)
+        self.worker.setDaemon(True)
+        self.worker.start()
+
+
+
+    def dma_read_callback(self):
+        print "Entered DMA read callback"
+        #send a message queue to the worker thread to start processing the
+        #incomming data
+        if not self.dma_write_queue.full():
+            self.dma_write_queue.put(None)
+
+    def enable_asynchronous_read(self, callback):
+        self.dma_read_data.callback = callback
+        self.device.register_interrupt_callback(self.dma_read_callback)
+        self.dma_write_queue.put(True)
+        #set up a callback with the dma device to call
+
+    def disable_asynchronous_read(self):
+        #Disable callback
+        self.dma_write_queue.put(False)
+        self.dma_read_data.callback = None
+        self.device.unregister_interrupt_callback(self.dma_read_callback)
+    
+    def async_read(self):
+        pos = self.dma_read_data.next
+        with self.locks[pos]:
+            self.dma_read_data.ready[pos] = False
+            return self.dma_read_data.data[pos]
+
+
+
     def _get_finished_block(self):
         """
         Uses either cached data or if not available reads the status from the
@@ -612,7 +816,7 @@ class DMAReadController(object):
 
         This is useful when the user knows they will be reading from the core
         consequtively
-    
+
 
         Args:
             anticipate (Boolean): if true will aggressively start consecutive
@@ -627,6 +831,7 @@ class DMAReadController(object):
                 Error in communication
         """
 
+        print "DMA READER READ FUNCTION ENTERED!"
         self.debug = False
         buf = Array('B')
         if self.debug: print "READ: Entered"
@@ -723,7 +928,7 @@ class DMAWriteController(object):
             to this register initiates a data transfer to the core from the
             memory
 
-        timeout: 
+        timeout:
             timeout = None  : blocking, wait until core is ready
             timeout = 0     : Return immediately
             timeout > 0.0   : Wait the specified amount of seconds
