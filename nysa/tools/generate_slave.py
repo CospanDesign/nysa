@@ -72,7 +72,6 @@ EPILOG = "\n" \
 "\t\t%s --axi --slaveid 4 <name>\n" % SCRIPT_NAME + \
 "\n"
 
-
 def print_device_list():
     dev_list = drt.get_device_list()
     print "Available Devices:"
@@ -81,6 +80,7 @@ def print_device_list():
 
 def setup_parser(parser):
     parser.description = DESCRIPTION
+    parser.epilog=EPILOG
     #Add an argument to the parser
     #Optional
     parser.add_argument("--axi",

@@ -28,8 +28,6 @@ class CBuilderError(Exception):
   def __str__(self):
     return repr(self.value)
 
-
-
 class GenericCBuilder(object):
   
   pdict = None

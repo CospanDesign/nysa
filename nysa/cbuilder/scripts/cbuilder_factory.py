@@ -13,8 +13,6 @@ CBuilder Factor Script
 
 """
 
-
-
 class CBuilderFactory(object):
     """
     Factory core generator
