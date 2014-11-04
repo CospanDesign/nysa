@@ -452,7 +452,6 @@ class DMAReadWorker(threading.Thread):
                 print "DMA Reader: No finished flag"
                 #There is no finished status from previous reads
                 status = dev.read_register(dmar.reg_status)
-                print "Status: 0x%08X" % status
                 fs[0] = ((status & dmar.finished[0]) > 0)
                 fs[1] = ((status & dmar.finished[1]) > 0)
                 bs[0] = ((status & dmar.empty[0]) == 0)
@@ -469,7 +468,7 @@ class DMAReadWorker(threading.Thread):
                             #side 0 is not busy, intiate a transaction
                             print "DMA Reader 0 thread wakeup!: Size 0x%08X" % size
                             dev.write_register(dmar.reg_size0, size)
-                        
+
                         if not bs[1]:
                             print "DMA Reader 1 thread wakeup!: Size 0x%08X" % size
                             #side 1 is not busy, intiate a transaction
@@ -548,7 +547,7 @@ class DMAReadWorker(threading.Thread):
                 if enable:
                     if read_channel == 0:
                         dev.write_register(dmar.reg_size0, size)
-                    else: 
+                    else:
                         dev.write_register(dmar.reg_size1, size)
 
 
@@ -701,8 +700,6 @@ class DMAReadController(object):
         self.worker.setDaemon(True)
         self.worker.start()
 
-
-
     def dma_read_callback(self):
         print "Entered DMA read callback"
         #send a message queue to the worker thread to start processing the
@@ -721,14 +718,12 @@ class DMAReadController(object):
         self.dma_write_queue.put(False)
         self.dma_read_data.callback = None
         self.device.unregister_interrupt_callback(self.dma_read_callback)
-    
+
     def async_read(self):
         pos = self.dma_read_data.next
         with self.locks[pos]:
             self.dma_read_data.ready[pos] = False
             return self.dma_read_data.data[pos]
-
-
 
     def _get_finished_block(self):
         """
@@ -950,8 +945,6 @@ class DMAWriteController(object):
                 -DMA has incorrectly been setup
 
     '''
-
-
     def __init__(self,
                 device,
                 mem_base0,
@@ -1010,7 +1003,7 @@ class DMAWriteController(object):
         status = self.device.read_register(self.reg_status)
         return status & (self.empty[0] | self.empty[1])
 
-    def write(buf):
+    def write(self, buf):
         """
         Write a buffer of data down to the core using DMA. The buffer sent to
         the device can be arbitrarily long. The function will packetize the
@@ -1033,29 +1026,34 @@ class DMAWriteController(object):
             timeout = self.timeout
         while (len(buf[position:]) > 0):
             size = self.size
-            if len(buf[position:] < size):
+            if len(buf[position:]) < size:
                 size = len(buf[position:])
             available_blocks = self.get_available_memory_blocks()
+            print "Status: 0x%08X" % available_blocks
 
             if (available_blocks == 1):
                 #Mem 0 is available
+                print "Block 1 is available"
                 self.device.write_memory(self.mem_base[0], buf[position: position + size + 1])
                 self.device.write_register(self.reg_size0, size / 4)
                 position += size
 
             elif (available_blocks == 2):
                 #Mem 1 is available
+                print "Block 2 is available"
                 self.device.write_memory(self.mem_base[1], buf[position: position + size + 1])
                 self.device.write_register(self.reg_size1, size / 4)
                 position += size
 
             elif (available_blocks == 3):
+                print "Both Blocks Are available"
                 self.device.write_memory(self.mem_base[0], buf[position: position + size + 1])
                 self.device.write_register(self.reg_size0, size / 4)
                 position += size
 
+                print "Size: 0x%08X" % size
                 size = self.size
-                if len(buf[position:] < size):
+                if len(buf[position:]) < size:
                     size = len(buf[position:])
 
                 if size == 0:
@@ -1064,6 +1062,7 @@ class DMAWriteController(object):
                 self.device.write_memory(self.mem_base[1], buf[position: position + size + 1])
                 self.device.write_register(self.reg_size1, size / 4)
                 position += size
+
 
             else:
                 if timeout == 0:
@@ -1076,5 +1075,6 @@ class DMAWriteController(object):
                 elif timeout is None:
                     self.device.wait_for_interrupts(10)
 
+            print "Wrote: 0x%08X" % position
 
 

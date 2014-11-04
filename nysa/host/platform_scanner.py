@@ -26,9 +26,9 @@ import os
 from inspect import isclass
 from inspect import ismodule
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "common")))
 
-from common.site_manager import SiteManager
+from site_manager import SiteManager
 from nysa_platform import Platform
 
 class PlatformScannerException(Exception):
