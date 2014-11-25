@@ -109,6 +109,10 @@ def init(args, status):
     dev_path = os.path.join(base_path, "dev")
     #Apps Path
     app_path = os.path.join(base_path, "apps")
+    #Ibuilder projects
+    user_ibuilder_path = os.path.join(base_path, "user ibuilder projects")
+    #Cbuilder projects
+    user_cbuilder_path = os.path.join(base_path, "user cbuilder projects")
 
     if not os.path.exists(base_path):
         if s: s.Important("Generating nysa base directory")
@@ -133,5 +137,14 @@ def init(args, status):
         if s: s.Important("Generating apps directory")
         app_path = os.path.join(base_path, "apps")
         os.makedirs(app_path)
+    if not os.path.exists(user_ibuilder_path):
+        #Make the user ibuilder project directory
+        if s: s.Important("Generating user ibuilder directory")
+        os.makedirs(user_ibuilder_path)
+
+    if not os.path.exists(user_cbuilder_path):
+        #Make the user cbuilder probject directory
+        if s: s.Important("Generating user cbuilder directory")
+        os.makedirs(user_cbuilder_path)
 
 

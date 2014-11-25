@@ -332,7 +332,6 @@ def expand_user_constraints(user_dict, debug = False):
     #if debug: print "ex_dict: %s" % str(ex_dict)
     return ex_dict
 
-'''
 def consolodate_constraints(edict, debug = False):
     edict = copy.deepcopy(edict)
     user_dict = {}
@@ -357,7 +356,7 @@ def consolodate_constraints(edict, debug = False):
                 loc = ""
                 if loc_start_index == -1:
                     loc = loc_name
-                elif loc_start_index == end_index:
+                elif loc_start_index == loc_end_index:
                     loc = "%s[%d]" % (loc_name, loc_start_index)
                 else:
                     loc = "%s[%d:%d]" % (loc_name, loc_end_index, loc_start_index)
@@ -406,6 +405,18 @@ def consolodate_constraints(edict, debug = False):
 
                 next_index = current_index + 1
                 signal_search = True
+                if next_index not in signal_indexes:
+                    if debug: print "There is only one signal in this range"
+                    done(user_dict,
+                         key,
+                         start_index,
+                         current_index,
+                         start_dir,
+                         start_loc_name,
+                         start_loc_index,
+                         start_loc_index)
+                    continue
+
                 while (next_index in signal_indexes) and signal_search:
                     #there is a consecutive signal in here
                     if debug: print "Looking for the next signal index: %d" % next_index
@@ -484,7 +495,6 @@ def consolodate_constraints(edict, debug = False):
     if debug: print "user_dict: %s" % str(user_dict)
 
     return user_dict
-'''
 
 def expand_ports(c_ports):
     """expand_ports

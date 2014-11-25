@@ -90,6 +90,21 @@ def get_nysa_base():
     base = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
     return nysa_base
 
+def get_nysa_user_base():
+    """Returns the path to Nysa user base. This is the directory where the user
+    generally puts all their files
+
+    Args:
+        Nothing
+
+    Returns (String):
+        absolute path to the user base directory
+
+    Raises:
+        SiteManagerError: Errors associated with site manager
+    """
+    sm = site_manager.SiteManager()
+    return sm.get_nysa_user_base_directory()
 
 def create_dir(dirname, debug=False):
     """Generate a directory with the specified location
@@ -239,7 +254,7 @@ def get_constraint_filenames (board_name, user_paths = [], debug = False):
         config_dict = get_board_config(board_name, user_paths, debug = debug)
         if "default_constraint_files" in config_dict:
             for cf in config_dict["default_constraint_files"]:
-                cfiles.append(os.path.join(board_location, "board", cf))
+                cfiles.append(os.path.join(board_location, board_name, "board", cf))
 
     except site_manager.SiteManagerError as ex:
         if debug: print "%s is not in the installed path, checking user paths..." % board_name

@@ -196,7 +196,6 @@ class SiteManager(object):
 
         return repo_dict
 
-
     def get_remote_board_dict(self, url = None):
         opener = build_opener(HTTPCookieProcessor(CookieJar()))
         resp = opener.open(BOARD_SPREADSHEET_URL)
