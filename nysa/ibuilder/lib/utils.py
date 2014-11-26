@@ -380,6 +380,8 @@ def get_constraint_file_path(board_name, constraint_filename, user_paths = [], d
     Raises:
         IBuilder Error
     """
+    if os.path.exists(constraint_filename):
+        return os.path.abspath(constraint_filename)
 
     board_name = board_name.lower()
     """Returns a list of ucf files for the specified board name"""
