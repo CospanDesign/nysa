@@ -41,7 +41,7 @@ import json
 import collections
 
 import utils
-import arbitor
+import arbiter
 from module_processor import ModuleProcessor
 from ibuilder_error import ModuleFactoryError
 from ibuilder_error import ProjectGeneratorError as PGE
@@ -260,10 +260,10 @@ class ProjectGenerator(object):
         if status: status.Verbose("generated project base direcotry: %s" %
             utils.resolve_path(self.project_tags["BASE_DIR"]))
 
-        #generate the arbitor tags, this is important because the top
-        #needs the arbitor tags
-        arb_tags = arbitor.generate_arbitor_tags(self.project_tags, False)
-        self.project_tags["ARBITORS"] = arb_tags
+        #generate the arbiter tags, this is important because the top
+        #needs the arbiter tags
+        arb_tags = arbiter.generate_arbiter_tags(self.project_tags, False)
+        self.project_tags["ARBITERS"] = arb_tags
 
         #print "Parent dir: " + self.project_tags["BASE_DIR"]
         for key in self.template_tags["PROJECT_TEMPLATE"]["files"]:
@@ -274,9 +274,9 @@ class ProjectGenerator(object):
 
         if status: status.Verbose("finished generating project directories")
 
-        if arbitor.is_arbitor_required(self.project_tags):
-            if status: status.Verbose("generate the arbitors")
-        self.generate_arbitors()
+        if arbiter.is_arbiter_required(self.project_tags):
+            if status: status.Verbose("generate the arbiters")
+        self.generate_arbiters()
 
         #Generate all the slaves
         for slave in self.project_tags["SLAVES"]:
@@ -405,53 +405,53 @@ class ProjectGenerator(object):
             except ModuleFactoryError as err:
                 print "ModuleFactoryError: %s" % str(err)
 
-    def generate_arbitors(self, debug=False):
-        """Generates all the arbitors modules from the configuration file
+    def generate_arbiters(self, debug=False):
+        """Generates all the arbiters modules from the configuration file
 
-        Searches for any required arbitors in the configuration file.
-        Then generates the required arbitors (2 to 1, 3 to 1, etc...)
+        Searches for any required arbiters in the configuration file.
+        Then generates the required arbiters (2 to 1, 3 to 1, etc...)
 
         Args:
           Nothing
 
         Return:
-          The largest size arbitor generated (used for testing purposes)
+          The largest size arbiter generated (used for testing purposes)
 
         Raises:
           TypeError
           IOError
         """
         #tags have already been set for this class
-        if (not arbitor.is_arbitor_required(self.project_tags, False)):
+        if (not arbiter.is_arbiter_required(self.project_tags, False)):
             return 0
-        if self.s: self.s.Debug("Arbitors are required for this project")
+        if self.s: self.s.Debug("Arbiters are required for this project")
 
         arb_size_list = []
-        arbitor_buffer = ""
+        arbiter_buffer = ""
 
 
-        #we have some arbitors, add the tag to the project
+        #we have some arbiters, add the tag to the project
         #  (this is needed for gen_top)
-#        arb_tags = arbitor.generate_arbitor_tags(self.project_tags, False)
-#        self.project_tags["ARBITORS"] = arb_tags
+#        arb_tags = arbiter.generate_arbiter_tags(self.project_tags, False)
+#        self.project_tags["ARBITERS"] = arb_tags
 
-        #for each of the items in the arbitor list create a file tags
+        #for each of the items in the arbiter list create a file tags
         #item that can be proecessed by module_processor.process file
-        arb_tags = self.project_tags["ARBITORS"]
+        arb_tags = self.project_tags["ARBITERS"]
         for i in range (0, len(arb_tags.keys())):
             key = arb_tags.keys()[i]
             arb_size = len(arb_tags[key]) + 1
             if (arb_size in arb_size_list):
                 continue
-            if self.s: self.s.Debug("Generating an Arbitor of size: %d" % arb_size)
+            if self.s: self.s.Debug("Generating an Arbiter of size: %d" % arb_size)
             #we don't already have this size, so add it into the list
             arb_size_list.append(arb_size)
-            fn = "arbitor_" + str(arb_size) + "_masters.v"
-            #d = self.project_tags["BASE_DIR"] + "/rtl/bus/arbitors"
-            d = os.path.join(self.project_tags["BASE_DIR"], "rtl", "bus", "arbitors")
+            fn = "arbiter_" + str(arb_size) + "_masters.v"
+            #d = self.project_tags["BASE_DIR"] + "/rtl/bus/arbiters"
+            d = os.path.join(self.project_tags["BASE_DIR"], "rtl", "bus", "arbiters")
 
-            self.filegen.buf = arbitor.generate_arbitor_buffer(arb_size)
-            if debug: print "arbitor buffer: " + self.filegen.buf
+            self.filegen.buf = arbiter.generate_arbiter_buffer(arb_size)
+            if debug: print "arbiter buffer: " + self.filegen.buf
             self.filegen.write_file(d, fn)
         return len(arb_size_list)
 

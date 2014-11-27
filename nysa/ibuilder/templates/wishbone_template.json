@@ -75,7 +75,7 @@
                   }
                 }
               },
-              "arbitors":{
+              "arbiters":{
                 "dir":true
               },
               "slave":{

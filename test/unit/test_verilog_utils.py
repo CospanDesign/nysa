@@ -52,7 +52,7 @@ class Test (unittest.TestCase):
         #print "tags: %s" % str(tags)
         assert "parameters" in tags
         assert "keywords" in tags
-        assert "arbitor_masters" in tags
+        assert "arbiter_masters" in tags
         assert "module" in tags
         assert tags["module"] == "wb_test"
         assert "ports" in tags
@@ -62,7 +62,7 @@ class Test (unittest.TestCase):
         #print "tags: %s" % str(tags)
         assert "parameters" in tags
         assert "keywords" in tags
-        assert "arbitor_masters" in tags
+        assert "arbiter_masters" in tags
         assert "module" in tags
         assert tags["module"] == "wb_test"
         assert "ports" in tags

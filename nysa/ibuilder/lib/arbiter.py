@@ -24,11 +24,11 @@ import string
 from string import Template
 import utils
 
-from ibuilder_error import ArbitorError
+from ibuilder_error import ArbiterError
 
-"""Arbitor Factory
+"""Arbiter Factory
 
-Analyzes the project tags and determine if one or many arbitors are required
+Analyzes the project tags and determine if one or many arbiters are required
 """
 
 __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
@@ -39,24 +39,24 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 """
 
 
-def get_number_of_arbitor_hosts(module_tags = {}, debug = False):
-    """get_number_of_arbitor_hosts
+def get_number_of_arbiter_hosts(module_tags = {}, debug = False):
+    """get_number_of_arbiter_hosts
 
-    returns the number of arbitor hosts found inside the module
+    returns the number of arbiter hosts found inside the module
 
     Args:
       module_tags: the tags for this module
         can be obtained with vutils.get_module_tags
 
     Return:
-      the number of arbitor hosts associated with this module
+      the number of arbiter hosts associated with this module
 
     Raises:
       Nothing
     """
 
     #go through all the ports and verify that after the first
-    #'_' there is a a wbm and hte wbm has all the arbitor
+    #'_' there is a a wbm and hte wbm has all the arbiter
     #host components
     #debug = False
 
@@ -101,7 +101,7 @@ def get_number_of_arbitor_hosts(module_tags = {}, debug = False):
                     if prefix not in possible_prefix.keys():
                         possible_prefix[prefix] = list(wb_bus)
                         if debug:
-                            print "found a possible arbitor: %s" % (prefix)
+                            print "found a possible arbiter: %s" % (prefix)
 
                     #wbm_post = name.partition("_")[2]
                     if wbm_post in possible_prefix[prefix]:
@@ -115,48 +115,48 @@ def get_number_of_arbitor_hosts(module_tags = {}, debug = False):
             print "\tlength of prefix list: %s" % (str(possible_prefix[prefix]))
         if len (possible_prefix[prefix]) == 0:
             if debug:
-                print "%s is an arbitor host" % (prefix)
+                print "%s is an arbiter host" % (prefix)
             prefixes.append(prefix)
 
     #debug = True
     return prefixes
 
 
-def is_arbitor_host(module_tags = {}, debug = False):
-    """is_arbitor_host
+def is_arbiter_host(module_tags = {}, debug = False):
+    """is_arbiter_host
 
-    Determins if a slave can be an arbitor host
+    Determins if a slave can be an arbiter host
 
     Args:
       module_tags: The tags that are associated with this modue
         can be obtained with vutils.get_module_tags
 
     Return:
-      True: Slave is an arbitor host
-      False: Slave is not an arbitor host
+      True: Slave is an arbiter host
+      False: Slave is not an arbiter host
 
     Raises:
       Nothing
     """
-    return (len(get_number_of_arbitor_hosts(module_tags, debug)) > 0)
+    return (len(get_number_of_arbiter_hosts(module_tags, debug)) > 0)
 
-def is_arbitor_required(tags = {}, debug = False):
-    """is_arbitor_required
+def is_arbiter_required(tags = {}, debug = False):
+    """is_arbiter_required
 
-    Analyzes the project tags and determines if an arbitor is requried
+    Analyzes the project tags and determines if an arbiter is requried
 
     Args:
       tags: Project tags
 
     Return:
-      True: An arbitor is required
-      False: An arbitor is not required
+      True: An arbiter is required
+      False: An arbiter is not required
 
     Raises:
       Nothing
     """
     if debug:
-      print "in is_arbitor_required()"
+      print "in is_arbiter_required()"
     #count the number of times a device is referenced
 
     #SLAVES
@@ -170,23 +170,23 @@ def is_arbitor_required(tags = {}, debug = False):
 
     return False
 
-def generate_arbitor_tags(tags = {}, debug = False):
-    """generate_arbitor_tags
+def generate_arbiter_tags(tags = {}, debug = False):
+    """generate_arbiter_tags
 
     generate a dictionary (tags) that is required to generate all the
-    arbitors and how and where to connect all the arbitors
+    arbiters and how and where to connect all the arbiters
 
     Args:
       tags: Project tags
 
     Return:
-      dictionary of arbitors to generating
+      dictionary of arbiters to generating
 
     Raises:
       Nothing
     """
     arb_tags = {}
-    if (not is_arbitor_required(tags)):
+    if (not is_arbiter_required(tags)):
         return {}
 
     if debug:
@@ -214,35 +214,35 @@ def generate_arbitor_tags(tags = {}, debug = False):
 
     return arb_tags
 
-def generate_arbitor_buffer(master_count, debug = False):
-    """generate_arbitor_buffer
+def generate_arbiter_buffer(master_count, debug = False):
+    """generate_arbiter_buffer
 
-    generate a buffer for an arbitor with the specified master_count
+    generate a buffer for an arbiter with the specified master_count
 
     Args:
-      master_count: The number of masters that this arbitor must control
+      master_count: The number of masters that this arbiter must control
 
     Return:
-      A buffer that contains a verilog based Arbitor with
+      A buffer that contains a verilog based Arbiter with
 
     Raises:
       IOError
-      ArbitorError
+      ArbiterError
     """
-    #need to open up the arbitor file and create a buffer
+    #need to open up the arbiter file and create a buffer
 
     if not isinstance(master_count, (int, long)):
-        raise ArbitorError("master_count is not a number")
+        raise ArbiterError("master_count is not a number")
 
     if master_count <= 1:
-        raise ArbitorError("master_count must be > 1")
+        raise ArbiterError("master_count must be > 1")
 
     directory = utils.get_local_verilog_path("nysa-verilog")
     filename = os.path.join(  directory,
                               "verilog",
                               "wishbone",
-                              "arbitor",
-                              "wishbone_arbitor.v")
+                              "arbiter",
+                              "wishbone_arbiter.v")
     filein = open(filename)
     buf = filein.read()
     filein.close()
@@ -445,9 +445,9 @@ def generate_arbitor_buffer(master_count, debug = False):
         assign_buf += "assign o_m%d_int = (master_select == MASTER_%d) ? i_s_int : 0;\n" % (i, i)
         assign_buf += "\n"
 
-    arbitor_name = "arbitor_%d_masters" % master_count
+    arbiter_name = "arbiter_%d_masters" % master_count
 
-    buf = template.substitute ( ARBITOR_NAME=arbitor_name,
+    buf = template.substitute ( ARBITER_NAME=arbiter_name,
                   PORTS=port_buf,
                   NUM_MASTERS=master_count_buf,
                   PRIORITY_SELECT=priority_sel_buf,
@@ -468,15 +468,15 @@ def generate_arbitor_buffer(master_count, debug = False):
 def already_existing_arb_bus(arb_tags = {}, arb_slave = "", debug = False):
     """already_existing_arb_bus
 
-    Check if the arbitrated slave already exists in the arbitor tags
+    Check if the arbitrated slave already exists in the arbiter tags
 
     Args:
-        arb_tags: arbitor tags
-        arb_slave: possible arbitor slave
+        arb_tags: arbiter tags
+        arb_slave: possible arbiter slave
 
     Return:
-        True: There is already an arbitor bus associated with this slave
-        False: There is not already an arbitor bus associated with this slave
+        True: There is already an arbiter bus associated with this slave
+        False: There is not already an arbiter bus associated with this slave
 
     Raises:
         Nothing

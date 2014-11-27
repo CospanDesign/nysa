@@ -22,7 +22,7 @@ TEST_NAME = "nysa"
 
 
 class Test (unittest.TestCase):
-    """Unit test for arbitor"""
+    """Unit test for arbiter"""
 
     def setUp(self):
         self.sm = site_manager.SiteManager()

@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
 from nysa.ibuilder.lib import utils
-from nysa.ibuilder.lib import arbitor
+from nysa.ibuilder.lib import arbiter
 
 GPIO_TAGS = json.load(open(os.path.join(os.path.dirname(__file__),
                            os.pardir,
@@ -22,7 +22,7 @@ SF_CAMERA_TAGS = json.load( open(os.path.join(os.path.dirname(__file__),
                             "sf_camera_module_tags.txt"), 'r'))
 
 class Test (unittest.TestCase):
-    """Unit test for arbitor"""
+    """Unit test for arbiter"""
 
     def setUp(self):
         base = os.path.join(os.path.dirname(__file__),
@@ -31,26 +31,26 @@ class Test (unittest.TestCase):
         self.nysa_base = os.path.abspath(base)
         self.dbg = False
 
-    def test_get_number_of_arbitor_hosts_0(self):
-        result = arbitor.get_number_of_arbitor_hosts(GPIO_TAGS, debug = self.dbg)
+    def test_get_number_of_arbiter_hosts_0(self):
+        result = arbiter.get_number_of_arbiter_hosts(GPIO_TAGS, debug = self.dbg)
         self.assertEqual(len(result), 0)
 
-    def test_get_number_of_arbitor_hosts_1(self):
-        result = arbitor.get_number_of_arbitor_hosts(SF_CAMERA_TAGS, debug = self.dbg)
+    def test_get_number_of_arbiter_hosts_1(self):
+        result = arbiter.get_number_of_arbiter_hosts(SF_CAMERA_TAGS, debug = self.dbg)
         self.assertEqual(len(result), 1)
 
-    def test_is_arbitor_host(self):
-        """test if the slave is an arbitor host"""
+    def test_is_arbiter_host(self):
+        """test if the slave is an arbiter host"""
         #the first test should fail
-        result = arbitor.is_arbitor_host(GPIO_TAGS, debug = self.dbg)
+        result = arbiter.is_arbiter_host(GPIO_TAGS, debug = self.dbg)
         self.assertEqual(result, False)
 
         #the second test should pass
-        result = arbitor.is_arbitor_host(SF_CAMERA_TAGS, debug = self.dbg)
+        result = arbiter.is_arbiter_host(SF_CAMERA_TAGS, debug = self.dbg)
         self.assertEqual(result, True)
 
-    def test_is_arbitor_not_requried(self):
-        """test if the project_tags have been modified to show arbitor"""
+    def test_is_arbiter_not_requried(self):
+        """test if the project_tags have been modified to show arbiter"""
         result = False
         tags = {}
         #get the example project data
@@ -69,11 +69,11 @@ class Test (unittest.TestCase):
             print "File Error: " + str(err)
             self.assertEqual(False, True)
 
-        result = arbitor.is_arbitor_required(tags, debug = self.dbg)
+        result = arbiter.is_arbiter_required(tags, debug = self.dbg)
         self.assertEqual(result, False)
 
-    def test_is_arbitor_requried(self):
-        """test if the project_tags have been modified to show arbitor"""
+    def test_is_arbiter_requried(self):
+        """test if the project_tags have been modified to show arbiter"""
         result = False
         tags = {}
         #get the example project data
@@ -92,12 +92,12 @@ class Test (unittest.TestCase):
             print "File Error: " + str(err)
             self.assertEqual(False, True)
 
-        result = arbitor.is_arbitor_required(tags, debug = self.dbg)
+        result = arbiter.is_arbiter_required(tags, debug = self.dbg)
         self.assertEqual(result, True)
 
 
-    def test_generate_arbitor_tags(self):
-        """test if arbitor correctly determins if an arbitor is requried"""
+    def test_generate_arbiter_tags(self):
+        """test if arbiter correctly determins if an arbiter is requried"""
         result = {}
         tags = {}
         #get the example project data
@@ -116,7 +116,7 @@ class Test (unittest.TestCase):
             print "File Error: " + str(err)
             self.assertEqual(False, True)
 
-        result = arbitor.generate_arbitor_tags(tags, debug = self.dbg)
+        result = arbiter.generate_arbiter_tags(tags, debug = self.dbg)
 
         if (self.dbg):
             for aslave in result.keys():
@@ -129,10 +129,10 @@ class Test (unittest.TestCase):
         self.assertEqual((len(result.keys()) > 0), True)
 
 
-    def test_generate_arbitor_buffer (self):
-        """generate an arbitor buffer"""
-        result = arbitor.generate_arbitor_buffer(2, debug = self.dbg)
-        if (self.dbg): print "generated arbitor buffer: \n" + result
+    def test_generate_arbiter_buffer (self):
+        """generate an arbiter buffer"""
+        result = arbiter.generate_arbiter_buffer(2, debug = self.dbg)
+        if (self.dbg): print "generated arbiter buffer: \n" + result
         self.assertEqual((len(result) > 0), True)
 
 if __name__ == "__main__":

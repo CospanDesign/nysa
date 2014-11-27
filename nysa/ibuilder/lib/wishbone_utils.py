@@ -48,7 +48,7 @@ PATH_TO_TOP = os.path.abspath(os.path.join(os.path.dirname(__file__),
 #Nysa imports
 import utils
 import verilog_utils as vutils
-import arbitor
+import arbiter
 
 
 IF_WIRES = [
@@ -528,7 +528,7 @@ class WishboneTopGenerator(object):
         self.add_ports_to_wires()
 
         #Setting up ports
-        arb_buf = self.generate_arbitor_buffer(debug = debug)
+        arb_buf = self.generate_arbiter_buffer(debug = debug)
         num_slaves = len(self.tags["SLAVES"]) + 1
         num_mem_slaves = 0
         if "MEMORY" in self.tags:
@@ -929,18 +929,18 @@ class WishboneTopGenerator(object):
         buf =  "// %s ( %s )\n\n" % (name, module_tags["module"])
         buf += "//Wires\n"
 
-        #Check for an arbitor buffer
+        #Check for an arbiter buffer
         arb_index = -1
-        if "ARBITORS" in self.tags:
-            if name in self.tags["ARBITORS"].keys():
-                arb_index = self.tags["ARBITORS"].keys().index(name)
+        if "ARBITERS" in self.tags:
+            if name in self.tags["ARBITERS"].keys():
+                arb_index = self.tags["ARBITERS"].keys().index(name)
 
         #Generate wires
         pre_name = ""
         if (arb_index != -1):
             pre_name = "arb%d_" % arb_index
         else:
-            if debug: print "no arbitor"
+            if debug: print "no arbiter"
 
             if mem_slave:
                 pre_name = "sm%d_" % index
@@ -1009,32 +1009,32 @@ class WishboneTopGenerator(object):
         buf += "\n\n"
         return string.expandtabs(buf, 2)
 
-    def generate_arbitor_buffer(self, debug = False):
+    def generate_arbiter_buffer(self, debug = False):
         buf = ""
         board_dict = utils.get_board_config(self.tags["board"])
-        arbitor_count = 0
-        if not arbitor.is_arbitor_required(self.tags):
+        arbiter_count = 0
+        if not arbiter.is_arbiter_required(self.tags):
             return ""
 
-        if debug: print "Arbitor is required"
-        buf += "//Project Arbitors\n\n"
+        if debug: print "Arbiter is required"
+        buf += "//Project Arbiters\n\n"
 
-        arb_tags = arbitor.generate_arbitor_tags(self.tags)
+        arb_tags = arbiter.generate_arbiter_tags(self.tags)
 
         for i in range (len(arb_tags.keys())):
             arb_slave = arb_tags.keys()[i]
             master_count = 1
 
-            if debug: print "Found arbitor slave: %s" % arb_slave
-            buf += "//%s arbitor\n\n" % arb_slave
+            if debug: print "Found arbiter slave: %s" % arb_slave
+            buf += "//%s arbiter\n\n" % arb_slave
             master_count += len(arb_tags[arb_slave].keys())
             arb_name = "arb%s" % str(i)
 
-            arb_module = "arbitor_%s_masters" % str(master_count)
+            arb_module = "arbiter_%s_masters" % str(master_count)
             if debug:
-                print "Number of masters for this arbitor: %d" % master_count
+                print "Number of masters for this arbiter: %d" % master_count
                 print "Using: %s" % arb_module
-                print "Arbitor name: %s" % arb_name
+                print "Arbiter name: %s" % arb_name
 
 
             #Generte the wires
@@ -1097,7 +1097,7 @@ class WishboneTopGenerator(object):
                     self.wires.append(wire)
 
             buf += "\n"
-            #generate arbitor signals
+            #generate arbiter signals
             #strobe
             wire = "w_%s_i_wbs_stb" % arb_name
             if not (wire in self.wires):

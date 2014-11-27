@@ -72,7 +72,7 @@ class Test (unittest.TestCase):
         self.dbg = False
 
     def test_get_net_names(self):
-        """gets the module tags and detects if there is any arbitor hosts"""
+        """gets the module tags and detects if there is any arbiter hosts"""
         constraints = cu.get_net_names_from_buffer(TEST_CONSTRAINT, self.dbg)
         test_result = ["clk", "rst", "gpio[0]", "uart_rx", "uart_tx"]
         assert len(test_result) == len(constraints)

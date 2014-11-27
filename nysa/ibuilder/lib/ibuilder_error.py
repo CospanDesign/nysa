@@ -48,10 +48,10 @@ class PreProcessorError(Exception):
     def __str__(self):
         return repr(self.value)
 
-class ArbitorError(Exception):
-    """ArbitorError
+class ArbiterError(Exception):
+    """ArbiterError
 
-    Errors associated with generatign arbitors
+    Errors associated with generatign arbiters
           User didn't specify the number of masters required
     """
     def __init__(self, value):

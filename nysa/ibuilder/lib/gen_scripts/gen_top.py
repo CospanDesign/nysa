@@ -9,7 +9,7 @@ from string import Template
 sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
 
 import utils
-import arbitor
+import arbiter
 from wishbone_utils import WishboneTopGenerator
 
 class GenTop(Gen):

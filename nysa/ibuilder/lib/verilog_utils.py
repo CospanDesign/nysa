@@ -24,7 +24,7 @@ import os
 import sys
 import string
 import json
-import arbitor
+import arbiter
 import re
 
 import utils
@@ -43,7 +43,7 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
     tags["ports"] = {}
     tags["module"] = ""
     tags["parameters"] = {}
-    tags["arbitor_masters"] = []
+    tags["arbiter_masters"] = []
 
     in_task = False
     end_module = False
@@ -233,7 +233,7 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
                 tags["parameters"][parameter_name] = parameter_value
 
 
-    tags["arbitor_masters"] = arbitor.get_number_of_arbitor_hosts(tags)
+    tags["arbiter_masters"] = arbiter.get_number_of_arbiter_hosts(tags)
 
 
     if debug:
@@ -271,7 +271,7 @@ def get_module_tags(filename="", bus="", keywords = [], user_paths = [], debug=F
       ports: Inputs/Outputs of this module
       module: Name of the module
       parameters: Configuration parameters within the module
-      arbitor_masters: Any arbitor masters within the module
+      arbiter_masters: Any arbiter masters within the module
 
     Args:
       filename: Name of the module to interrogate
