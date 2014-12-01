@@ -58,7 +58,6 @@ import json
 import urllib2
 
 import preprocessor
-import arbiter
 import constraint_utils
 
 from ibuilder_error import ModuleNotFound

@@ -56,7 +56,7 @@ def get_number_of_arbiter_hosts(module_tags = {}, debug = False):
     """
 
     #go through all the ports and verify that after the first
-    #'_' there is a a wbm and hte wbm has all the arbiter
+    #'_' there is a a wbm and the wbm has all the arbiter
     #host components
     #debug = False
 
@@ -106,8 +106,6 @@ def get_number_of_arbiter_hosts(module_tags = {}, debug = False):
                     #wbm_post = name.partition("_")[2]
                     if wbm_post in possible_prefix[prefix]:
                         possible_prefix[prefix].remove(wbm_post)
-
-
 
     for prefix in possible_prefix.keys():
         if debug:
@@ -461,9 +459,6 @@ def generate_arbiter_buffer(master_count, debug = False):
                   ASSIGN=assign_buf);
 
     return string.expandtabs(buf, 2)
-
-
-
 
 def already_existing_arb_bus(arb_tags = {}, arb_slave = "", debug = False):
     """already_existing_arb_bus

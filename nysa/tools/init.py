@@ -110,9 +110,9 @@ def init(args, status):
     #Apps Path
     app_path = os.path.join(base_path, "apps")
     #Ibuilder projects
-    user_ibuilder_path = os.path.join(base_path, "user ibuilder projects")
+    user_ibuilder_path = os.path.join(base_path, "user_ibuilder_projects")
     #Cbuilder projects
-    user_cbuilder_path = os.path.join(base_path, "user cbuilder projects")
+    user_cbuilder_path = os.path.join(base_path, "user_cbuilder_projects")
 
     if not os.path.exists(base_path):
         if s: s.Important("Generating nysa base directory")
