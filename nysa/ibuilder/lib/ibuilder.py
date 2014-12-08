@@ -78,8 +78,8 @@ def generate_project(filename, user_paths = [], output_directory = None, status 
 
     Returns:
       A result of success or fail
-        0 = Success
-        -1 = Fail
+        True = Success
+        False = Fail
 
     Raises:
       IOError: An error in project generation has occured
@@ -309,6 +309,8 @@ class ProjectGenerator(object):
             sap_abs_base = os.getenv("SAPLIB_BASE")
             abs_proj_base = utils.resolve_path(self.project_tags["BASE_DIR"])
             constraint_path = utils.get_constraint_file_path(self.project_tags["board"], constraint_fname)
+            if os.path.exists(constraint_fname):
+                constraint_fname = os.path.split(constraint_fname)[-1]
             #constraint_path = constraint_fname
             if len(constraint_path) == 0:
                 print ("Couldn't find constraint: %s, searched in the current directory and %s/hdl/%s" %

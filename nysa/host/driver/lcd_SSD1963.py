@@ -225,8 +225,9 @@ class LCDSSD1963(Driver):
         try:
             self.dma_writer = DMAWriteController(device     = self,
                                                 mem_base0  = 0x00000000,
-                                                mem_base1  = 0x00100000,
-                                                size       = BYTE_SIZE / 4,
+                                                #mem_base1  = 0x00100000,
+                                                mem_base1  = BYTE_SIZE,
+                                                size       = BYTE_SIZE,
                                                 reg_status = STATUS,
                                                 reg_base0  = MEM_0_BASE,
                                                 reg_size0  = MEM_0_SIZE,
@@ -335,6 +336,12 @@ class LCDSSD1963(Driver):
     def enable_lcd(self, enable):
         self.enable_register_bit(CONTROL, CONTROL_ENABLE, enable)
         self.enable_register_bit(CONTROL, CONTROL_ENABLE_INTERRUPT, enable)
+        mode = Array('B')
+        if enable:
+            mode.append(0x01)
+        else:
+            mode.append(0x00)
+        self.write_command(MEM_ADR_SET_GPIO_VAL, mode)
 
     def reset_lcd(self):
         self.set_register_bit(CONTROL, CONTROL_RESET_DISPLAY)
@@ -502,6 +509,14 @@ class LCDSSD1963(Driver):
         #self.write_command(MEM_ADR_EXIT_SLEEP_MODE)
 
         self.enable_chipselect(True)
+
+        mode = Array('B')
+        mode.append(0x00)
+        mode.append(0x01)
+        self.write_command(MEM_ADR_SET_GPIO_CONF, mode)
+        if self.debug: print_debug("MEM_ADR_SET_GPIO_CONF", True, mode)
+
+        '''
         if self.debug:
             value = self.read_command(MEM_ADR_PWR_MODE, 1)
             print_debug("Power Mode", False, value)
@@ -517,6 +532,7 @@ class LCDSSD1963(Driver):
         if self.debug:
             value = self.read_command(MEM_ADR_GET_LCD_MODE, 7)
             print_debug("LCD Mode", False, value)
+        '''
 
         #Start the PLL
         self.write_command(MEM_ADR_SET_PLL, Array('B', [0x01]))
@@ -528,7 +544,7 @@ class LCDSSD1963(Driver):
 
         #Setup the LCD Mode
         mode = Array('B')
-        mode.append(0x00)          # Set TFT Mode - 0x0C ??
+        mode.append(0x20)          # Set TFT Mode - 0x0C ??
         #mode.append(0x80)          # Set TFT Mode & hsync + vsync + DEN Mode
         mode.append(0x00)          # Set TFT Mode & hsync + vsync + DEN Mode
         mode.append(lcd_width_hb)  # Set Horizontal size high byte
@@ -539,34 +555,35 @@ class LCDSSD1963(Driver):
         self.write_command(MEM_ADR_SET_LCD_MODE, mode)
         if self.debug: print_debug("MEM_ADR_LCD_MODE", True, mode)
 
-        if self.debug:
-            value = self.read_command(MEM_ADR_GET_PIX_DAT_INT, 1)
-            print_debug("MEM_ADR_GET_PIX_DAT_IN", False, value)
-        if self.debug:
-            value = self.read_command(MEM_ADR_GET_PIX_DAT_INT, 1)
-            print_debug("MEM_ADR_GET_PIX_DAT_IN", False, value)
+        #if self.debug:
+        #    value = self.read_command(MEM_ADR_GET_PIX_DAT_INT, 1)
+        #    print_debug("MEM_ADR_GET_PIX_DAT_IN", False, value)
+        #if self.debug:
+        #    value = self.read_command(MEM_ADR_GET_PIX_DAT_INT, 1)
+        #    print_debug("MEM_ADR_GET_PIX_DAT_IN", False, value)
 
+
+        self.write_command(MEM_ADR_SET_PIXEL_FORMAT, Array('B', [0x70]))  # Set R G B Format: 6 6 6
+        if self.debug: print_debug("MEM_ADR_SET_PIXEL_FORMAT", True, [0x70])
+        #if self.debug:
+        #    value = self.read_command(0x3B, 1)
+        #    print_debug("MEM_ADR_GET_PIXEL_FORMAT", False, value)
 
 
         self.write_command(MEM_ADR_SET_PIX_DAT_INT, Array('B', [0x00]))  # Set pixel data I/F format = 8 bit
         if self.debug: print_debug("MEM_ADR_SET_PIX_DAT_IN", True, [0x00])
-        self.write_command(MEM_ADR_SET_PIXEL_FORMAT, Array('B', [0x60]))  # Set R G B Format: 6 6 6
-        if self.debug: print_debug("MEM_ADR_SET_PIXEL_FORMAT", True, [0x60])
-        if self.debug:
-            value = self.read_command(0x3B, 1)
-            print_debug("MEM_ADR_GET_PIXEL_FORMAT", False, value)
-
 
         #Setup PCLK frequency
         mode = pixel_frequency_to_array(pll_clock = 100, pixel_freq = 4.94)
         mode = Array('B')           #Setting pixel clock frequency to 4.94MHz
+        #mode.append(0x05)
         mode.append(0x01)
         mode.append(0x45)
         mode.append(0x47)
 
-        if self.debug:
-            value = self.read_command(MEM_ADR_GET_LSHIFT_FREQ, 3)
-            print_debug("MEM_ADR_GET_LSHIFT_FREQ", False, value)
+        #if self.debug:
+        #    value = self.read_command(MEM_ADR_GET_LSHIFT_FREQ, 3)
+        #    print_debug("MEM_ADR_GET_LSHIFT_FREQ", False, value)
 
 
         self.write_command(MEM_ADR_SET_LSHIFT_FREQ, mode)     # Set PCLK Frequency = 4.94MHz
@@ -574,8 +591,6 @@ class LCDSSD1963(Driver):
         if self.debug:
             value = self.read_command(MEM_ADR_GET_LSHIFT_FREQ, 3)
             print_debug("MEM_ADR_GET_LSHIFT_FREQ", False, value)
-
-
 
         #Setup horizontal behavior
         mode = Array('B')
@@ -645,6 +660,9 @@ class LCDSSD1963(Driver):
         mode = Array('B')
         mode.append(0x00)   #Only send on VBLANKs
         self.write_command(MEM_ADR_SET_TEAR_ON, mode)
+        self.enable_tearing(True)
+
+        '''
         if self.debug: print_debug("MEM_ADR_SET_TEAR_ON", True, mode)
         t = time.time() + .1
         self.enable_tearing(True)
@@ -653,6 +671,27 @@ class LCDSSD1963(Driver):
                 ef = self.read_command(MEM_ADR_GET_TEAR_EF, 1)
                 print "Tear Effect: 0x%01X" % ef[0]
                 print_debug("MEM_ADR_GET_TEAR_EF", False, ef)
+        '''
+        #Enable the backlight
+        mode = Array('B')
+        mode.append(0x0E)
+        mode.append(0xFF)
+        mode.append(0x01)
+        mode.append(0x00)
+        mode.append(0x00)
+        mode.append(0x00)
+
+        self.write_command(MEM_ADR_SET_PWM_CONF, mode)
+        if self.debug: print_debug ("MEM_ADR_SET_PWM_CONF", True, mode)
+        mode = self.read_command(MEM_ADR_GET_PWM_CONF, 6)
+        if self.debug: print_debug ("MEM_ADR_SET_PWM_CONF", False, mode)
+
+        #Define Threshold Values for things
+
+        #DBC
+        #mode = Array('B')
+        #mode.append(0xD0)
+        #self.write_command(MEM_ADR_SET_DBC_CONF, mode)
 
 def pixel_frequency_to_array(pll_clock = 100, pixel_freq = 5.3):
     """

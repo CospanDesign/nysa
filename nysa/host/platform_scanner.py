@@ -130,6 +130,10 @@ def find_board(name, serial = None, status = None):
     p = platform_class_dict[name](s)
     dev_dict = p.scan()
 
+    if len(dev_dict) == 0:
+        raise PlatformScannerException("No boards found for %s" % name)
+        
+
     if len(dev_dict) == 1:
         name = dev_dict.keys()[0]
         board = dev_dict[name]

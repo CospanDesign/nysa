@@ -1028,8 +1028,10 @@ class DMAWriteController(object):
             size = self.size
             if len(buf[position:]) < size:
                 size = len(buf[position:])
+                if size < 4:
+                    size = 4
             available_blocks = self.get_available_memory_blocks()
-            print "Status: 0x%08X" % available_blocks
+            #print "Status: 0x%08X" % available_blocks
 
             if (available_blocks == 1):
                 #Mem 0 is available
@@ -1051,18 +1053,16 @@ class DMAWriteController(object):
                 self.device.write_register(self.reg_size0, size / 4)
                 position += size
 
-                print "Size: 0x%08X" % size
-                size = self.size
-                if len(buf[position:]) < size:
-                    size = len(buf[position:])
-
-                if size == 0:
-                    return
-
-                self.device.write_memory(self.mem_base[1], buf[position: position + size + 1])
-                self.device.write_register(self.reg_size1, size / 4)
-                position += size
-
+                if len(buf[position:]) > 0:
+                    print "writing second block!"
+                    size = self.size
+                    if len(buf[position:]) < size:
+                        size = len(buf[position:])
+                        if size < 4:
+                            size = 4
+                    self.device.write_memory(self.mem_base[1], buf[position: position + size + 1])
+                    self.device.write_register(self.reg_size1, size / 4)
+                    position += size
 
             else:
                 if timeout == 0:
@@ -1075,6 +1075,16 @@ class DMAWriteController(object):
                 elif timeout is None:
                     self.device.wait_for_interrupts(10)
 
-            print "Wrote: 0x%08X" % position
+
+            #print "Size: 0x%08X" % size
+            if len(buf[position:]) == 0:
+                print "\tfinished"
+                return
+
+            if len(buf[position:]) < self.size:
+                size = len(buf[position:])
+                print "\t0x%08X more to write!" % size
+
+            #print "Wrote: 0x%08X" % position
 
 

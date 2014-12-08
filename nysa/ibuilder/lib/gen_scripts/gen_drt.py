@@ -186,7 +186,7 @@ class GenDRT(Gen):
                 mem_offset += atoi(slave_tags["keywords"]["DRT_SIZE"])
                 unique_id_buffer = "00000000"
                 if "unique_id" in tags["MEMORY"][key].keys():
-                    unique_id_buffer = "{0:0=8X}".format(tags["SLAVES"][key]["unique_id"])
+                    unique_id_buffer = "{0:0=8X}".format(tags["MEMORY"][key]["unique_id"])
 
 
 

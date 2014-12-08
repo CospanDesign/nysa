@@ -78,3 +78,9 @@ def upload_board(args, status):
 
     board.upload(args.bin[0])
     board.program()
+
+def upload(board_name, serial_number, file_path, status):
+    board = find_board(board_name, serial_number, status)
+    board.upload(file_path)
+    board.program()
+
