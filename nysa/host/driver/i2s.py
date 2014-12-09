@@ -40,9 +40,8 @@ from array import array as Array
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
-import nysa
-from nysa import Nysa
-from nysa import NysaCommError
+from nysa.host.nysa import Nysa
+from nysa.host.nysa import NysaCommError
 
 from driver import Driver
 from driver import DMAWriteController
@@ -140,6 +139,12 @@ class I2S(Driver):
                                        empty0 = STATUS_MEM_0_EMPTY,
                                        empty1 = STATUS_MEM_1_EMPTY)
 
+    def get_mem_block_size(self):
+        return self.wdma.get_size()
+
+    def get_available_memory_blocks(self):
+        return self.wdma.get_available_memory_blocks()
+        
 
     def set_dev_id(self, dev_id):
         self.dev_id = dev_id
@@ -287,7 +292,6 @@ class I2S(Driver):
         """
         self.write_register(CLOCK_DIVISOR, divisor)
 
-
     def set_custom_sample_rate(self, sample_rate, audio_bits = 24, channels = 2):
         """
         Sets the clock divisor to generate the requested sample rate
@@ -362,7 +366,6 @@ class I2S(Driver):
             NysaCommError: Error in communication
         """
         self.wdma.write(audio_data)
-
 
 def unit_test(n):
     """unit_test
