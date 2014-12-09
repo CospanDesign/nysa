@@ -433,10 +433,10 @@ class DMAReadWorker(threading.Thread):
         self.dwq = dma_write_queue
         self.drd = dma_rdata
         self.locks = data_locks
-        print "setup worker thread"
+        #print "setup worker thread"
 
     def run(self):
-        print "Running worker thread"
+        #print "Running worker thread"
         rdata = None
         dmar = self.dmar
         dev = self.dev
@@ -449,28 +449,28 @@ class DMAReadWorker(threading.Thread):
 
         while (1):
             if not fs[0] and not fs[1]:
-                print "DMA Reader: No finished flag"
+                #print "DMA Reader: No finished flag"
                 #There is no finished status from previous reads
                 status = dev.read_register(dmar.reg_status)
                 fs[0] = ((status & dmar.finished[0]) > 0)
                 fs[1] = ((status & dmar.finished[1]) > 0)
                 bs[0] = ((status & dmar.empty[0]) == 0)
                 bs[1] = ((status & dmar.empty[1]) == 0)
-                print "DMA Reader: fs flags: %s %s, bs flags: %s %s" % (fs[1], fs[0], bs[1], bs[0])
+                #print "DMA Reader: fs flags: %s %s, bs flags: %s %s" % (fs[1], fs[0], bs[1], bs[0])
                 if not fs[0] and not fs[1]:
                     if enable:
-                        print "DMA Reader: Start reading!"
+                        #print "DMA Reader: Start reading!"
                         #We are enabled
                         #Nothing is ready, we need to wait for an interrupt
 
                         #Check if there is anything working
                         if not bs[0]:
                             #side 0 is not busy, intiate a transaction
-                            print "DMA Reader 0 thread wakeup!: Size 0x%08X" % size
+                            #print "DMA Reader 0 thread wakeup!: Size 0x%08X" % size
                             dev.write_register(dmar.reg_size0, size)
 
                         if not bs[1]:
-                            print "DMA Reader 1 thread wakeup!: Size 0x%08X" % size
+                            #print "DMA Reader 1 thread wakeup!: Size 0x%08X" % size
                             #side 1 is not busy, intiate a transaction
                             dev.write_register(dmar.reg_size1, size)
 
@@ -483,19 +483,19 @@ class DMAReadWorker(threading.Thread):
                             rdata = self.dwq.get(block = True)
                         while not self.dwq.empty():
                             rdata = self.dwq.get(block = True)
-                        print "Got a response!"
+                        #print "Got a response!"
 
                     except AttributeError:
                         #This occurs when the queue is destroyed remotely
-                        print "exit"
+                        #print "exit"
                         return
 
                     if rdata is not None:
-                        print "DMA Reader Enable: %s" % str(rdata)
+                        #print "DMA Reader Enable: %s" % str(rdata)
                         enable = rdata
-                        print "control: 0x%08X" % dev.get_control()
-                        print "self.mem_base 0: 0x%08X, size: 0x%08X" % (dmar.mem_base[0], size)
-                        print "self.mem_base 1: 0x%08X, size: 0x%08X" % (dmar.mem_base[1], size)
+                        #print "control: 0x%08X" % dev.get_control()
+                        #print "self.mem_base 0: 0x%08X, size: 0x%08X" % (dmar.mem_base[0], size)
+                        #print "self.mem_base 1: 0x%08X, size: 0x%08X" % (dmar.mem_base[1], size)
 
                         continue
 
@@ -528,7 +528,7 @@ class DMAReadWorker(threading.Thread):
             #'read_channel' is the channel to use
             with self.locks[read_channel]:
                 #lock the channel so the reading device is not getting garbage data
-                print "read channel: %d" % read_channel
+                #print "read channel: %d" % read_channel
                 self.drd.data[read_channel] = dev.read_memory(dmar.mem_base[read_channel], size)
                 self.drd.ready[read_channel] = True
                 if self.drd.ready[0] and self.drd.ready[1]:
@@ -699,9 +699,10 @@ class DMAReadController(object):
                                     self.locks)
         self.worker.setDaemon(True)
         self.worker.start()
+        self.debug = False
 
     def dma_read_callback(self):
-        print "Entered DMA read callback"
+        if self.debug: print "Entered DMA read callback"
         #send a message queue to the worker thread to start processing the
         #incomming data
         if not self.dma_write_queue.full():
@@ -826,8 +827,7 @@ class DMAReadController(object):
                 Error in communication
         """
 
-        print "DMA READER READ FUNCTION ENTERED!"
-        self.debug = False
+        #print "DMA READER READ FUNCTION ENTERED!"
         buf = Array('B')
         if self.debug: print "READ: Entered"
         finished_status = self._get_finished_block()
@@ -983,6 +983,9 @@ class DMAWriteController(object):
         self.device.write_register(self.reg_base[0], self.mem_base[0])
         self.device.write_register(self.reg_base[1], self.mem_base[1])
 
+    def get_size(self):
+        return self.size
+
     def get_available_memory_blocks(self):
         """
         reads the status of the core and determine whether any memory
@@ -1035,26 +1038,26 @@ class DMAWriteController(object):
 
             if (available_blocks == 1):
                 #Mem 0 is available
-                print "Block 1 is available"
+                #print "Block 1 is available"
                 self.device.write_memory(self.mem_base[0], buf[position: position + size + 1])
                 self.device.write_register(self.reg_size0, size / 4)
                 position += size
 
             elif (available_blocks == 2):
                 #Mem 1 is available
-                print "Block 2 is available"
+                #print "Block 2 is available"
                 self.device.write_memory(self.mem_base[1], buf[position: position + size + 1])
                 self.device.write_register(self.reg_size1, size / 4)
                 position += size
 
             elif (available_blocks == 3):
-                print "Both Blocks Are available"
+                #print "Both Blocks Are available"
                 self.device.write_memory(self.mem_base[0], buf[position: position + size + 1])
                 self.device.write_register(self.reg_size0, size / 4)
                 position += size
 
                 if len(buf[position:]) > 0:
-                    print "writing second block!"
+                    #print "writing second block!"
                     size = self.size
                     if len(buf[position:]) < size:
                         size = len(buf[position:])
@@ -1078,13 +1081,14 @@ class DMAWriteController(object):
 
             #print "Size: 0x%08X" % size
             if len(buf[position:]) == 0:
-                print "\tfinished"
+                #print "\tfinished"
                 return
 
             if len(buf[position:]) < self.size:
                 size = len(buf[position:])
-                print "\t0x%08X more to write!" % size
+                #print "\t0x%08X more to write!" % size
 
             #print "Wrote: 0x%08X" % position
+
 
 
