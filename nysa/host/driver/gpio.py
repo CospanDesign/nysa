@@ -56,8 +56,12 @@ GPIO_OUTPUT_ENABLE  =   0x00000001
 INTERRUPTS          =   0x00000002
 INTERRUPT_ENABLE    =   0x00000003
 INTERRUPT_EDGE      =   0x00000004
+INTERRUPT_BOTH_EDGE =   0x00000005
+INTERRUPT_TIMEOUT   =   0x00000006
+READ_CLOCK_RATE     =   0x00000007
 
 class GPIO(Driver):
+
     """ GPIO
 
         Communication with a GPIO Core
@@ -277,6 +281,25 @@ class GPIO(Driver):
             NysaCommError
         """
         return self.read_register(INTERRUPT_EDGE)
+
+    def set_interrupt_both_edge(self, interrupt_both_edge):
+        self.write_register(INTERRUPT_BOTH_EDGE, interrupt_both_edge)
+
+    def get_interrupt_both_edge(self):
+        return self.read_register(INTERRUPT_BOTH_EDGE)
+
+    def set_interrupt_timeout(self, interrupt_timeout):
+        self.write_register(INTERRUPT_BOTH_EDGE, interrupt_timeout)
+
+    def get_interrupt_timeout(self):
+        return self.read_register(INTERRUPT_TIMEOUT)
+
+    def get_clock_rate(self):
+        return self.read_register(READ_CLOCK_RATE)
+
+
+
+
 
     def get_interrupts(self):
         """get_interrupts
