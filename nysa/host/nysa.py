@@ -95,8 +95,6 @@ class Nysa(object):
         except DRTError, e:
             raise NysaError(e)
 
-
-
     #XXX: This might be better specified as a float
     timeout  = 3
     interrupts = 0
@@ -111,7 +109,6 @@ class Nysa(object):
     def __del__(self):
         #print "Closing Nysa"
         pass
-
 
     """initialize
 
@@ -176,8 +173,7 @@ class Nysa(object):
                register_array[2] << 8  | \
                register_array[3]
 
-
-    def read(self, device_id, address, length = 1, memory_device = False):
+    def read(self, device_id, address, length = 1, memory_device = False, disable_auto_inc = False):
         """read
 
         Generic read command used to read data from a Nysa image, this will be
@@ -194,6 +190,7 @@ class Nysa(object):
           address (int):  Address of the register/memory to read
           memory_device (int): Whether the device is on the memory bus or the
                             peripheral bus
+          disable_auto_inc (bool): if true, auto increment feature will be disabled
 
         Returns:
           (Array of unsigned bytes): A byte array containtin the raw data
@@ -273,7 +270,6 @@ class Nysa(object):
         else:
             self.clear_register_bit(device_id, address, bit)
 
-
     def set_register_bit(self, device_id, address, bit):
         """set_register_bit
 
@@ -318,7 +314,6 @@ class Nysa(object):
         register &= ~bit_mask
         self.write_register(device_id, address, register)
 
-
     def is_register_bit_set(self, device_id, address, bit):
         """is_register_bit_set
 
@@ -342,7 +337,6 @@ class Nysa(object):
         bit_mask =  1 << bit
         return ((register & bit_mask) > 0)
 
-
     def write_memory(self, address, data):
         """write_memory
 
@@ -361,7 +355,7 @@ class Nysa(object):
         """
         self.write(0, address, data, memory_device = True)
 
-    def write(self, device_id, address, data, memory_device = False):
+    def write(self, device_id, address, data, memory_device = False, disable_auto_inc = False):
         """write
 
         Generic write command usd to write data to a Nysa image, this will be
@@ -374,6 +368,8 @@ class Nysa(object):
           data (array of unsigned bytes): Array of raw bytes to send to the
                                           device
 
+
+          disable_auto_inc (bool): if true, auto increment feature will be disabled
         Returns:
           Nothing
 
