@@ -221,7 +221,6 @@ class I2C(Driver):
         #The core will clear disable the reset the control bit on it's own
         self.set_register_bit(CONTROL, CONTROL_RESET)
 
-
     def get_clock_rate(self):
         """get_clock_rate
 
@@ -601,8 +600,6 @@ class I2C(Driver):
 
         #self.debug = True
 
-
-
     def read_from_i2c(self, i2c_id, i2c_write_data, read_length):
         """read_from_i2c_register
 
@@ -717,8 +714,6 @@ class I2C(Driver):
 
         #self.debug = False
         return read_data
-
-
 
 def unit_test(nysa, dev_id, debug = False):
     print "Unit test!"
