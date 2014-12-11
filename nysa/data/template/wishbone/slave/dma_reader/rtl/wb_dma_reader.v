@@ -309,65 +309,67 @@ always @ (posedge clk) begin
       o_wbs_ack <= 0;
     end
     if (i_wbs_stb & i_wbs_cyc) begin
-      //master is requesting something
-      if (i_wbs_we) begin
-        //write request
-        case (i_wbs_adr)
-          REG_CONTROL: begin
-            r_control             <=  i_wbs_dat;
-          end
-          REG_STATUS: begin
-            //Do nothing for a write to status
-          end
-          REG_MEM_0_BASE: begin
-            r_memory_0_base       <=  i_wbs_dat;
-          end
-          REG_MEM_0_SIZE: begin
-            r_memory_0_size       <=  i_wbs_dat;
-            if (i_wbs_dat > 0) begin
-              r_memory_0_ready    <=  1;
+      if (!o_wbs_ack) begin //Fixes double reads/writes
+        //master is requesting something
+        if (i_wbs_we) begin
+          //write request
+          case (i_wbs_adr)
+            REG_CONTROL: begin
+              r_control             <=  i_wbs_dat;
             end
-          end
-          REG_MEM_1_BASE: begin
-            r_memory_1_base       <=  i_wbs_dat;
-          end
-          REG_MEM_1_SIZE: begin
-            r_memory_1_size       <=  i_wbs_dat;
-            if (i_wbs_dat > 0) begin
-              r_memory_1_ready    <=  1;
+            REG_STATUS: begin
+              //Do nothing for a write to status
             end
-          end
-          default: begin
-          end
-        endcase
-      end
-      else begin
-        //Reading
-        case (i_wbs_adr)
-          REG_CONTROL: begin
-            o_wbs_dat <=  r_control;
-          end
-          REG_STATUS: begin
-            o_wbs_dat <=  w_status;
-          end
-          REG_MEM_0_BASE: begin
-            o_wbs_dat <=  r_memory_0_base;
-          end
-          REG_MEM_0_SIZE: begin
-            o_wbs_dat <=  w_memory_0_count;
-          end
-          REG_MEM_1_BASE: begin
-            o_wbs_dat <=  r_memory_1_base;
-          end
-          REG_MEM_1_SIZE: begin
-            o_wbs_dat <=  w_memory_1_count;
-          end
-          default: begin
-            o_wbs_dat <=  32'h00;
-          end
-        endcase
-      end
-      o_wbs_ack <= 1;
+            REG_MEM_0_BASE: begin
+              r_memory_0_base       <=  i_wbs_dat;
+            end
+            REG_MEM_0_SIZE: begin
+              r_memory_0_size       <=  i_wbs_dat;
+              if (i_wbs_dat > 0) begin
+                r_memory_0_ready    <=  1;
+              end
+            end
+            REG_MEM_1_BASE: begin
+              r_memory_1_base       <=  i_wbs_dat;
+            end
+            REG_MEM_1_SIZE: begin
+              r_memory_1_size       <=  i_wbs_dat;
+              if (i_wbs_dat > 0) begin
+                r_memory_1_ready    <=  1;
+              end
+            end
+            default: begin
+            end
+          endcase
+        end
+        else begin
+          //Reading
+          case (i_wbs_adr)
+            REG_CONTROL: begin
+              o_wbs_dat <=  r_control;
+            end
+            REG_STATUS: begin
+              o_wbs_dat <=  w_status;
+            end
+            REG_MEM_0_BASE: begin
+              o_wbs_dat <=  r_memory_0_base;
+            end
+            REG_MEM_0_SIZE: begin
+              o_wbs_dat <=  w_memory_0_count;
+            end
+            REG_MEM_1_BASE: begin
+              o_wbs_dat <=  r_memory_1_base;
+            end
+            REG_MEM_1_SIZE: begin
+              o_wbs_dat <=  w_memory_1_count;
+            end
+            default: begin
+              o_wbs_dat <=  32'h00;
+            end
+          endcase
+        end
+        o_wbs_ack <= 1;
+      end //!o_wbs_ack
     end
   end
 end

@@ -283,40 +283,40 @@ always @ (posedge clk) begin
 
     if (i_wbs_stb && i_wbs_cyc) begin
       //master is requesting somethign
-      if (i_wbs_we) begin
-        //write request
-        case (i_wbs_adr)
-          REG_CONTROL: begin
-            r_control             <=  i_wbs_dat;
-          end
-          REG_MEM_0_BASE: begin
-            r_memory_0_base       <=  i_wbs_dat;
-          end
-          REG_MEM_0_SIZE: begin
-            r_memory_0_size       <=  i_wbs_dat;
-            r_ppfifo_size_request <=  i_wbs_dat;
-            if (i_wbs_dat > 0) begin
-              r_memory_0_new_data <=  1;
+      if (!o_wbs_ack) begin
+        if (i_wbs_we) begin
+          //write request
+          case (i_wbs_adr)
+            REG_CONTROL: begin
+              r_control             <=  i_wbs_dat;
             end
-          end
-          REG_MEM_1_BASE: begin
-            r_memory_1_base       <=  i_wbs_dat;
-          end
-          REG_MEM_1_SIZE: begin
-            r_memory_1_size       <=  i_wbs_dat;
-            r_ppfifo_size_request <=  i_wbs_dat;
-            if (i_wbs_dat > 0) begin
-              r_memory_1_new_data <=  1;
+            REG_MEM_0_BASE: begin
+              r_memory_0_base       <=  i_wbs_dat;
             end
-          end
-          REG_TOTAL_WRITE_SIZE: begin
-          end
-          default: begin
-          end
-        endcase
-      end
-      else begin
-        if (!o_wbs_ack) begin //Fix double reads
+            REG_MEM_0_SIZE: begin
+              r_memory_0_size       <=  i_wbs_dat;
+              r_ppfifo_size_request <=  i_wbs_dat;
+              if (i_wbs_dat > 0) begin
+                r_memory_0_new_data <=  1;
+              end
+            end
+            REG_MEM_1_BASE: begin
+              r_memory_1_base       <=  i_wbs_dat;
+            end
+            REG_MEM_1_SIZE: begin
+              r_memory_1_size       <=  i_wbs_dat;
+              r_ppfifo_size_request <=  i_wbs_dat;
+              if (i_wbs_dat > 0) begin
+                r_memory_1_new_data <=  1;
+              end
+            end
+            REG_TOTAL_WRITE_SIZE: begin
+            end
+            default: begin
+            end
+          endcase
+        end
+        else begin
           //read request
           case (i_wbs_adr)
             REG_CONTROL: begin
@@ -345,8 +345,8 @@ always @ (posedge clk) begin
             end
           endcase
         end
-      end
-      o_wbs_ack                   <= 1;
+        o_wbs_ack                 <= 1;
+      end //!o_wbs_ack
     end
   end
 end
