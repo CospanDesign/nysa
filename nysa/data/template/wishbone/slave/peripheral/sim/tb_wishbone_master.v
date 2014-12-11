@@ -56,6 +56,7 @@ SOFTWARE.
 
 //Sleep a number of clock cycles
 `define SLEEP_CLK(x)  #(x * `CLK_PERIOD)
+//`define VERBOSE
 
 module wishbone_master_tb (
 );
@@ -289,10 +290,10 @@ initial begin
             while (ch != "\n") begin
               ch = $fgetc(fd_in);
             end
-            $display ("");
+            `ifdef VERBOSE $display (""); `endif
           end
           else begin
-            $display ("Error unrecognized line: %h" % ch);
+            `ifdef VERBOSE $display ("Error unrecognized line: %h" % ch); `endif
             //Eat the line
             while (ch != "\n") begin
               ch = $fgetc(fd_in);
@@ -300,23 +301,25 @@ initial begin
           end
         end
         else if (read_count == 1) begin
-          $display ("Sleep for %h Clock cycles", r_in_data_count);
+          `ifdef VERBOSE $display ("Sleep for %h Clock cycles", r_in_data_count); `endif
           `SLEEP_CLK(r_in_data_count);
-          $display ("Sleep Finished");
+          `ifdef VERBOSE $display ("Sleep Finished"); `endif
         end
         else begin
-          $display ("Error: read_count = %h != 4", read_count);
-          $display ("Character: %h", ch);
+          `ifdef VERBOSE $display ("Error: read_count = %h != 4", read_count); `endif
+          `ifdef VERBOSE $display ("Character: %h", ch); `endif
         end
       end
       else begin
+        `ifdef VERBOSE
         case (r_in_command)
           0: $display ("TB: Executing PING commad");
           1: $display ("TB: Executing WRITE command");
           2: $display ("TB: Executing READ command");
           3: $display ("TB: Executing RESET command");
         endcase
-        $display ("Execute Command");
+        `endif
+        `ifdef VERBOSE $display ("Execute Command"); `endif
         execute_command                 <= 1;
         `SLEEP_CLK(1);
         while (~command_finished) begin
@@ -325,7 +328,7 @@ initial begin
           if ((r_in_command & 32'h0000FFFF) == 1) begin
             if (request_more_data && ~request_more_data_ack) begin
               read_count      = $fscanf(fd_in, "%h\n", r_in_data);
-              $display ("TB: reading a new double word: %h", r_in_data);
+              `ifdef VERBOSE $display ("TB: reading a new double word: %h", r_in_data); `endif
               request_more_data_ack     <= 1;
             end
           end
@@ -339,12 +342,12 @@ initial begin
         execute_command <= 0;
 
         while (command_finished) begin
-          $display ("Command Finished");
+          `ifdef VERBOSE $display ("Command Finished"); `endif
           `SLEEP_CLK(1);
           execute_command <= 0;
         end
         `SLEEP_CLK(50);
-        $display ("TB: finished command");
+        `ifdef VERBOSE $display ("TB: finished command"); `endif
       end //end read_count == 4
     end //end while ! eof
   end //end not reset
@@ -391,12 +394,14 @@ always @ (posedge clk) begin
     end
 
     if (execute_command && timeout_count >= `TIMEOUT_COUNT) begin
+      `ifdef VERBOSE
       case (r_in_command)
         0: $display ("TB: Master timed out while executing PING commad");
         1: $display ("TB: Master timed out while executing WRITE command");
         2: $display ("TB: Master timed out while executing READ command");
         3: $display ("TB: Master timed out while executing RESET command");
       endcase
+      `endif
 
       command_finished        <= 1;
       state                   <= IDLE;
@@ -410,7 +415,7 @@ always @ (posedge clk) begin
         //Uncomment 'start' conditional to wait for SDRAM  to finish starting
         //up
         if (start) begin
-          $display            ("TB: sdram is ready");
+          `ifdef VERBOSE $display            ("TB: sdram is ready"); `endif
           state                 <=  IDLE;
         end
       end
@@ -440,20 +445,20 @@ always @ (posedge clk) begin
             end
             1: begin
               if (r_in_data_count > 1) begin
-                $display ("TB:\tWrote Double Word %d: %h", data_write_count, r_in_data);
+                `ifdef VERBOSE $display ("TB:\tWrote Double Word %d: %h", data_write_count, r_in_data); `endif
                 if (data_write_count < r_in_data_count) begin
                   state           <=  WRITE_DATA;
                   timeout_count   <=  0;
                   data_write_count<=  data_write_count + 1;
                 end
                 else begin
-                  $display ("TB: Finished Writing: %d 32bit words of %d size", r_in_data_count, data_write_count);
+                  `ifdef VERBOSE $display ("TB: Finished Writing: %d 32bit words of %d size", r_in_data_count, data_write_count); `endif
                   state           <=  WRITE_RESPONSE;
                 end
               end
               else begin
-                $display ("TB:\tWrote Double Word %d: %h", data_write_count, r_in_data);
-                $display ("TB: Finished Writing: %d 32bit words of %d size", r_in_data_count, data_write_count);
+                `ifdef VERBOSE $display ("TB:\tWrote Double Word %d: %h", data_write_count, r_in_data); `endif
+                `ifdef VERBOSE $display ("TB: Finished Writing: %d 32bit words of %d size", r_in_data_count, data_write_count); `endif
                 state           <=  WRITE_RESPONSE;
               end
             end
@@ -473,12 +478,12 @@ always @ (posedge clk) begin
       PING_RESPONSE: begin
         if (w_out_en) begin
           if (w_out_status[7:0] == 8'hFF) begin
-            $display ("TB: Ping Response Good");
+            `ifdef VERBOSE $display ("TB: Ping Response Good"); `endif
           end
           else begin
-            $display ("TB: Ping Response Bad (Malformed response: %h)", w_out_status);
+            `ifdef VERBOSE $display ("TB: Ping Response Bad (Malformed response: %h)", w_out_status); `endif
           end
-          $display ("TB: \tS:A:D = %h:%h:%h\n", w_out_status, w_out_address, w_out_data);
+          `ifdef VERBOSE $display ("TB: \tS:A:D = %h:%h:%h\n", w_out_status, w_out_address, w_out_data); `endif
           state               <=  FINISHED;
         end
       end
@@ -489,15 +494,15 @@ always @ (posedge clk) begin
         end
       end
       WRITE_RESPONSE: begin
-        $display ("In Write Response");
+        `ifdef VERBOSE $display ("In Write Response"); `endif
         if (w_out_en) begin
           if (w_out_status[7:0] == (~(8'h01))) begin
-            $display ("TB: Write Response Good");
+            `ifdef VERBOSE $display ("TB: Write Response Good"); `endif
           end
           else begin
-            $display ("TB: Write Response Bad (Malformed response: %h)", w_out_status);
+            `ifdef VERBOSE $display ("TB: Write Response Bad (Malformed response: %h)", w_out_status); `endif
           end
-          $display ("TB: \tS:A:D = %h:%h:%h\n", w_out_status, w_out_address, w_out_data);
+          `ifdef VERBOSE $display ("TB: \tS:A:D = %h:%h:%h\n", w_out_status, w_out_address, w_out_data); `endif
           state               <=  FINISHED;
         end
       end
@@ -511,7 +516,7 @@ always @ (posedge clk) begin
       READ_RESPONSE: begin
         if (w_out_en) begin
           if (w_out_status[7:0] == (~(8'h02))) begin
-            $display ("TB: Read Response Good");
+            `ifdef VERBOSE $display ("TB: Read Response Good"); `endif
             if (w_out_data_count > 0) begin
               if (data_read_count < w_out_data_count) begin
                 state           <=  READ_MORE_DATA;
@@ -524,18 +529,18 @@ always @ (posedge clk) begin
             end
           end
           else begin
-            $display ("TB: Read Response Bad (Malformed response: %h)", w_out_status);
+            `ifdef VERBOSE $display ("TB: Read Response Bad (Malformed response: %h)", w_out_status); `endif
             state               <=  FINISHED;
           end
-          $display ("TB: \tS:A:D = %h:%h:%h\n", w_out_status, w_out_address, w_out_data);
+          `ifdef VERBOSE $display ("TB: \tS:A:D = %h:%h:%h\n", w_out_status, w_out_address, w_out_data); `endif
         end
       end
       READ_MORE_DATA: begin
         if (w_out_en) begin
           timeout_count         <=  0;
           r_out_ready           <=  0;
-          $display ("TB: Read a 32bit data packet");
-          $display ("TB: \tRead Data: %h", w_out_data);
+          `ifdef VERBOSE $display ("TB: Read a 32bit data packet"); `endif
+          `ifdef VERBOSE $display ("TB: \tRead Data: %h", w_out_data); `endif
           data_read_count       <=  data_read_count + 1;
         end
         if (data_read_count >= r_in_data_count) begin
@@ -545,17 +550,17 @@ always @ (posedge clk) begin
       FINISHED: begin
         command_finished        <=  1;
         if (!execute_command) begin
-          $display ("Execute Command is low");
+          `ifdef VERBOSE $display ("Execute Command is low"); `endif
           command_finished      <=  0;
           state                 <=  IDLE;
         end
       end
     endcase
     if (w_out_en && w_out_status == `PERIPH_INTERRUPT) begin
-      $display("TB: Output Handler Recieved interrupt");
-      $display("TB:\tcommand: %h", w_out_status);
-      $display("TB:\taddress: %h", w_out_address);
-      $display("TB:\tdata: %h", w_out_data);
+      `ifdef VERBOSE $display("TB: Output Handler Recieved interrupt"); `endif
+      `ifdef VERBOSE $display("TB:\tcommand: %h", w_out_status); `endif
+      `ifdef VERBOSE $display("TB:\taddress: %h", w_out_address); `endif
+      `ifdef VERBOSE $display("TB:\tdata: %h", w_out_data); `endif
     end
   end//not reset
 end

@@ -112,36 +112,38 @@ always @ (posedge clk) begin
     if (i_wbs_stb && i_wbs_cyc) begin
       //master is requesting somethign
       if (i_wbs_we) begin
-        //write request
-        case (i_wbs_adr)
-          ADDR_0: begin
-            //writing something to address 0
-            //do something
+        if (!o_wbs_ack) begin
+          //write request
+          case (i_wbs_adr)
+            ADDR_0: begin
+              //writing something to address 0
+              //do something
 
-            //NOTE THE FOLLOWING LINE IS AN EXAMPLE
-            //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-            $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
-          end
-          ADDR_1: begin
-            //writing something to address 1
-            //do something
+              //NOTE THE FOLLOWING LINE IS AN EXAMPLE
+              //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
+              $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
+            end
+            ADDR_1: begin
+              //writing something to address 1
+              //do something
 
-            //NOTE THE FOLLOWING LINE IS AN EXAMPLE
-            //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-            $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
-          end
-          ADDR_2: begin
-            //writing something to address 3
-            //do something
+              //NOTE THE FOLLOWING LINE IS AN EXAMPLE
+              //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
+              $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
+            end
+            ADDR_2: begin
+              //writing something to address 3
+              //do something
 
-            //NOTE THE FOLLOWING LINE IS AN EXAMPLE
-            //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
-            $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
-          end
-          //add as many ADDR_X you need here
-          default: begin
-          end
-        endcase
+              //NOTE THE FOLLOWING LINE IS AN EXAMPLE
+              //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
+              $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
+            end
+            //add as many ADDR_X you need here
+            default: begin
+            end
+          endcase
+        end
       end
 
       else begin
