@@ -31,6 +31,13 @@ DEFAULT_USER_BASE = os.path.join(os.path.expanduser("~"), "Projects", USER_BASE)
 
 paths_dict = None
 
+USER_BASE_VERILOG_DIR = "verilog"
+USER_BASE_EXAMPLES_DIR = "examples"
+USER_BASE_DEV_DIR = "dev"
+USER_BASE_APP_DIR = "apps"
+USER_BASE_IBUILDER_DIR = "user_ibuilder_projects"
+USER_BASE_CBUILDER_DIR = "user_cbuilder_projects"
+
 def get_paths_path():
     return PATHS_PATH
 
@@ -543,4 +550,25 @@ class SiteManager(object):
         shutil.copytree(source, dest)
         
         shutil.rmtree(tempdir)
+
+    def get_user_project_dir(self):
+        return self.get_paths_dict()["nysa_user_base"]
+
+    def get_user_examples_dir(self):
+        return os.path.join(self.get_user_project_dir(), USER_BASE_EXAMPLES_DIR)
+
+    def get_user_verilog_dir(self):
+        return os.path.join(self.get_user_project_dir(), USER_BASE_VERILOG_DIR)
+
+    def get_user_app_dir(self):
+        return os.path.join(self.get_user_project_dir(), USER_BASE_APP_DIR)
+
+    def get_user_dev_dir(self):
+        return os.path.join(self.get_user_project_dir(), USER_BASE_DEV_DIR)
+
+    def get_user_cbuilder_project_dir(self):
+        return os.path.join(self.get_user_project_dir(), USER_BASE_CBUILDER_DIR)
+
+    def get_user_ibuilder_project_dir(self):
+        return os.path.join(self.get_user_project_dir(), USER_BASE_IBUILDER_DIR)
 

@@ -77,15 +77,17 @@ def setup_parser(parser):
 
 def init(args, status):
     s = status
-    base_path = site_manager.DEFAULT_USER_BASE
+    #base_path = site_manager.DEFAULT_USER_BASE
+    base_path = utils.get_user_project_dir()
     sm = site_manager.SiteManager(status)
     paths_dict = sm.get_paths_dict()
 
     #Check if the base that is in the paths dictionary exists or the user is forcing a new dictionary
     if (not os.path.exists(paths_dict["nysa_user_base"])) or args.force or args.reset:
         if s: s.Important("User base directory doesn't exists or a force or reset is detected")
-        base_path = paths_dict["nysa_user_base"]
-        base_path = site_manager.DEFAULT_USER_BASE
+        #base_path = paths_dict["nysa_user_base"]
+        #base_path = site_manager.DEFAULT_USER_BASE
+        base_path = utils.get_user_project_dir()
         #This is uniitializes nysa base
         if args.output is not None:
             base_path = os.path.expanduser(args.output[0])
@@ -102,17 +104,23 @@ def init(args, status):
 
     #Check to see if the final directory has been generated
     #Verilog Path
-    vpath = os.path.join(base_path, "verilog")
+    #vpath = os.path.join(base_path, utils.USER_BASE_VERILOG_DIR)
+    vpath = utils.get_user_verilog_dir()
     #Examples Path
-    epath = os.path.join(base_path, "examples")
+    #epath = os.path.join(base_path, utils.USER_BASE_EXAMPLES_DIR)
+    epath = utils.get_user_examples_dir()
     #Dev Path
-    dev_path = os.path.join(base_path, "dev")
+    #dev_path = os.path.join(base_path, utils.USER_BASE_DEV_DIR)
+    dev_path = utils.get_user_dev_dir()
     #Apps Path
-    app_path = os.path.join(base_path, "apps")
+    #app_path = os.path.join(base_path, utils.USER_BASE_APPS_DIR)
+    app_path = utils.get_user_app_dir()
     #Ibuilder projects
-    user_ibuilder_path = os.path.join(base_path, "user_ibuilder_projects")
+    #user_ibuilder_path = os.path.join(base_path, utils.USER_BASE_IBUILDER_DIR)
+    user_ibuilder_path = utils.get_user_ibuilder_project_dir()
     #Cbuilder projects
-    user_cbuilder_path = os.path.join(base_path, "user_cbuilder_projects")
+    #user_cbuilder_path = os.path.join(base_path, utils.USER_BASE_CBUILDER_DIR)
+    user_cbuilder_path = utils.get_user_cbuilder_project_dir()
 
     if not os.path.exists(base_path):
         if s: s.Important("Generating nysa base directory")

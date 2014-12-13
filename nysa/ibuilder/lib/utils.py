@@ -812,3 +812,31 @@ def try_internet():
         pass
     return False
 
+def get_user_project_dir():
+    sm = site_manager.SiteManager()
+    return sm.get_user_project_dir()
+
+def get_user_examples_dir():
+    sm = site_manager.SiteManager()
+    return sm.get_user_examples_dir()
+
+def get_user_verilog_dir():
+    sm = site_manager.SiteManager()
+    return sm.get_user_verilog_dir()
+
+def get_user_app_dir():
+    sm = site_manager.SiteManager()
+    return sm.get_user_app_dir()
+
+def get_user_dev_dir():
+    sm = site_manager.SiteManager()
+    return sm.get_user_dev_dir()
+
+def get_user_cbuilder_project_dir():
+    sm = site_manager.SiteManager()
+    return sm.get_user_cbuilder_project_dir()
+
+def get_user_ibuilder_project_dir():
+    sm = site_manager.SiteManager()
+    return sm.get_user_ibuilder_project_dir()
+
