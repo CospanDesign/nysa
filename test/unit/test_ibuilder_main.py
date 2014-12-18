@@ -27,11 +27,6 @@ class Test (unittest.TestCase):
     self.out_dir = os.path.join(os.path.expanduser("~"), "sandbox", "temp")
     self.dbg = False
 
-  def test_get_interface_list(self):
-    """test the query handler function"""
-    result = ibuilder.get_interface_list(bus = "wishbone")
-    self.assertEqual(len(result) > 0, False)
-
   def test_create_project_config_file(self):
     """Test the create JSON string function"""
     result = ibuilder.create_project_config_file(
@@ -44,8 +39,6 @@ class Test (unittest.TestCase):
   def test_generate_project(self):
     result = ibuilder.generate_project(TEST_CONFIG_FILENAME)
     self.assertEqual(result, True)
-
-
 
 if __name__ == "__main__":
   unittest.main()

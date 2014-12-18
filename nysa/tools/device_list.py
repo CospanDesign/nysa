@@ -79,7 +79,7 @@ def setup_parser(parser):
 
 def device_list(args, status):
     s = status
-     
+
     if args.name is not "":
         if s: s.Info("Got Name (String): %s" % args.name[0])
         index = get_num_from_name(args.name[0])

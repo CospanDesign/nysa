@@ -1073,6 +1073,7 @@ class DMAWriteController(object):
 
                 if timeout > 0:
                     #XXX: I should be reducing this timeout each time
+                    #print "Wait for interrupts"
                     self.device.wait_for_interrupts(timeout)
 
                 elif timeout is None:

@@ -56,9 +56,8 @@ class Test (unittest.TestCase):
         #get the example project data
         try:
             filename = os.path.join(  self.nysa_base,
-                                      "nysa",
-                                      "ibuilder",
-                                      "example_projects",
+                                      "test",
+                                      "mock",
                                       "dionysus_default.json")
 
             filein = open(filename)
@@ -79,9 +78,8 @@ class Test (unittest.TestCase):
         #get the example project data
         try:
             filename = os.path.join(  self.nysa_base,
-                                      "nysa",
-                                      "ibuilder",
-                                      "example_projects",
+                                      "test",
+                                      "mock",
                                       "dionysus_sf_camera.json")
 
             filein = open(filename)
@@ -95,7 +93,6 @@ class Test (unittest.TestCase):
         result = arbiter.is_arbiter_required(tags, debug = self.dbg)
         self.assertEqual(result, True)
 
-
     def test_generate_arbiter_tags(self):
         """test if arbiter correctly determins if an arbiter is requried"""
         result = {}
@@ -103,9 +100,8 @@ class Test (unittest.TestCase):
         #get the example project data
         try:
             filename = os.path.join(  self.nysa_base,
-                                      "nysa",
-                                      "ibuilder",
-                                      "example_projects",
+                                      "test",
+                                      "mock",
                                       "dionysus_sf_camera.json")
 
             filein = open(filename)
@@ -128,12 +124,17 @@ class Test (unittest.TestCase):
 
         self.assertEqual((len(result.keys()) > 0), True)
 
-
     def test_generate_arbiter_buffer (self):
         """generate an arbiter buffer"""
         result = arbiter.generate_arbiter_buffer(2, debug = self.dbg)
         if (self.dbg): print "generated arbiter buffer: \n" + result
         self.assertEqual((len(result) > 0), True)
+
+    def test_already_existing_arb_buf(self):
+        arb_tags = {}
+        arb_tags["slave"] = {}
+        self.assertEqual(arbiter.already_existing_arb_bus(arb_tags, "bob"), False)
+        self.assertEqual(arbiter.already_existing_arb_bus(arb_tags, "slave"), True)
 
 if __name__ == "__main__":
   unittest.main()

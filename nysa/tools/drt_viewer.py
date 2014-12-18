@@ -72,3 +72,4 @@ def view_drt(args, status):
 
     board.read_drt()
     board.pretty_print_drt()
+

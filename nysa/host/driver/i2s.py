@@ -68,7 +68,8 @@ STATUS_MEM_1_EMPTY        = 1
 
 #Default Memory Base
 MEM_OFFSET0 = 0x00000000
-MEM_OFFSET1 = 0x00080000
+#AUDIO_BUF_SIZE = 0x00080000
+AUDIO_BUF_SIZE = 1000000
 
 
 #Sub ID
@@ -126,25 +127,24 @@ class I2S(Driver):
 
     def __init__(self, nysa, dev_id, debug = False):
         super(I2S, self).__init__(nysa, dev_id, debug)
-        self.wdma = DMAWriteController(device = self,
-                                       mem_base0 = MEM_OFFSET0,
-                                       mem_base1 = MEM_OFFSET1,
-                                       size = None,
-                                       reg_status = STATUS,
-                                       reg_base0 = MEM_0_BASE,
-                                       reg_size0 = MEM_0_SIZE,
-                                       reg_base1 = MEM_1_BASE,
-                                       reg_size1 = MEM_1_SIZE,
-                                       timeout = 3,
-                                       empty0 = STATUS_MEM_0_EMPTY,
-                                       empty1 = STATUS_MEM_1_EMPTY)
+        self.wdma = DMAWriteController(device       = self,
+                                       mem_base0    = MEM_OFFSET0,
+                                       mem_base1    = AUDIO_BUF_SIZE,
+                                       size         = AUDIO_BUF_SIZE,
+                                       reg_status   = STATUS,
+                                       reg_base0    = MEM_0_BASE,
+                                       reg_size0    = MEM_0_SIZE,
+                                       reg_base1    = MEM_1_BASE,
+                                       reg_size1    = MEM_1_SIZE,
+                                       timeout      = 3,
+                                       empty0       = STATUS_MEM_0_EMPTY,
+                                       empty1       = STATUS_MEM_1_EMPTY)
 
     def get_mem_block_size(self):
         return self.wdma.get_size()
 
     def get_available_memory_blocks(self):
         return self.wdma.get_available_memory_blocks()
-        
 
     def set_dev_id(self, dev_id):
         self.dev_id = dev_id

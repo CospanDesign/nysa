@@ -178,7 +178,6 @@ class ProjectGenerator(object):
         #print "Replace NYSA name with real paths"
         utils.recursive_dict_name_fix(self.template_tags)
 
-
     def generate_project(self, config_filename, output_directory = None):
         """Generate the folders and files for the project
 
