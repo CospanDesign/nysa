@@ -1,10 +1,8 @@
-include *.txt
-
+recursive-include nysa *.txt
 recursive-include nysa/data/template *
 recursive-include nysa *.md
 recursive-include nysa *.json
 recursive-include nysa *.v
 recursive-include nysa/ibuilder/xilinx_builder *
 
-include nysa/data/bash_complete/nysa
-include nysa/ibuilder/bus/NYSA_README
+#include nysa/data/bash_complete/nysa

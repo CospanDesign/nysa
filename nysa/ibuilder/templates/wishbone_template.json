@@ -24,7 +24,7 @@
       "README.md":{
         "location":"${NYSA}/ibuilder/xilinx_builder"
       },
-      "NYSA_README":{
+      "NYSA_README.txt":{
         "location":"${NYSA}/ibuilder/bus",
         "tags":true
       },

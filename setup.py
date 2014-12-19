@@ -23,9 +23,8 @@ setup(
     author_email='dave.mccoy@cospandesign.com',
     packages=find_packages('.'),
     url="http://nysa.cospandesign.com",
-    package_data={'' : ["/nysa/data/bash_complete/nysa", "*.json", "*.txt"]},
+    package_data={'' : ["*.json", "*.txt"]},
     data_files=[
-     ('/etc/bash_completion.d/', ['nysa/data/bash_complete/nysa'])
     ],
     include_package_data = True,
     long_description=long_desc,

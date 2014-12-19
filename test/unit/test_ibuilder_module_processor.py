@@ -56,7 +56,7 @@ class Test (unittest.TestCase):
                             "nysa",
                             "ibuilder", 
                             "bus", 
-                            "NYSA_README")
+                            "NYSA_README.txt")
     filein = open(filename)
     self.mp.buf = filein.read()
     filein.close()
@@ -126,7 +126,7 @@ class Test (unittest.TestCase):
 
     self.mp.set_tags(json_tags)
     file_tags = {"location":"${NYSA}/ibuilder/bus"}
-    self.mp.process_file( filename = "NYSA_README",
+    self.mp.process_file( filename = "NYSA_README.txt",
                           directory=self.out_dir,
                           file_dict = file_tags,
                           debug = self.dbg)
