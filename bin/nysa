@@ -28,7 +28,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 import nysa.tools.nysa_cli
 
 #Basically an empty script because python couldn't import a file that didn't
-#   have a .py ending, so most of the work is in nysa.toos.nysa_cli
+#   have a .py ending, so most of the work is in nysa.tools.nysa_cli
 
 if __name__ == "__main__":
     nysa.tools.nysa_cli.main()

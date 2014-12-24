@@ -1,7 +1,5 @@
 import os
 import argparse
-import tempfile
-import shutil
 from string import Template
 
 FILENAME = os.path.join(os.path.dirname(__file__), "completer_template")
