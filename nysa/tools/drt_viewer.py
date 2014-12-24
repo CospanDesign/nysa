@@ -20,8 +20,6 @@
 # SOFTWARE.
 
 import sys
-import os
-
 
 from nysa.host.platform_scanner import find_board
 from nysa.host.platform_scanner import PlatformScannerException

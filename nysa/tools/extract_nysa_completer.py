@@ -3,9 +3,6 @@
 import sys
 import os
 import subprocess
-import tempfile
-import shutil
-
 import nysa_cli
 
 FILENAME = "nysa"
@@ -15,7 +12,7 @@ if __name__ == "__main__":
     if os.name != "posix":
         sys.exit()
 
-    #tempdir = tempfile.mkdtemp("nysa_completer")
+    # tempdir = tempfile.mkdtemp("nysa_completer")
     tempdir = os.path.join(os.path.dirname(__file__), os.pardir, "data", "bash_complete")
     fpath = os.path.join(tempdir, FILENAME)
 
@@ -24,6 +21,6 @@ if __name__ == "__main__":
 
     nysa_cli.main()
     output_path = "/etc/bash_completion.d"
-    subprocess.call(["/usr/bin/sudo", "/bin/cp", fpath , output_path])
+    subprocess.call(["/usr/bin/sudo", "/bin/cp", fpath, output_path])
 
-    #shutil.rmtree(tempdir)
+    # shutil.rmtree(tempdir)
