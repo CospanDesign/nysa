@@ -471,7 +471,7 @@ class Nysa(object):
     def get_device_unique_id(self, device_index):
         """get_device_unique_id
 
-        From the idex within the DRT return the unique ID of the device
+        From the index within the DRT return the unique ID of the device
 
         Args:
             device (unsienged int): index of the device
@@ -754,7 +754,6 @@ class Nysa(object):
             Nothing (This function fails quietly if ther callback is not found)
         """
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
-
 
     def find_device(self, dev_id, sub_id = None, unique_id = None):
         """

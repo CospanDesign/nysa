@@ -171,8 +171,6 @@ class SFCamera(Driver):
                                                 empty1     = STATUS_MEMORY_1_EMPTY)
         except NysaDMAException as ex:
             raise SFCameraError("Error initializing the DMA Reader: %s" % str(ex))
-        
-
 
     def __del__(self):
         print "Shutdown"
@@ -238,7 +236,6 @@ class SFCamera(Driver):
             NysaCommError: Error in communication
         """
         return self.read_register(STATUS)
-
 
     def enable_camera(self, enable):
         """
@@ -423,7 +420,6 @@ class SFCamera(Driver):
         #self.i2c.write_to_i2c(CAMERA_I2C, Array('B', [0x02, 0x40]))
         time.sleep(.5)
         #self.i2c.write_to_i2c(CAMERA_I2C, Array('B', [0x02, 0x00]))
-
 
     def set_debug_mode(self):
         #print "Setting idle mode"

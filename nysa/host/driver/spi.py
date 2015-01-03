@@ -39,13 +39,8 @@ import time
 from array import array as Array
 
 
-sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir))
-
-import nysa
-from nysa import Nysa
-from nysa import NysaCommError
-
+from nysa.host.nysa import Nysa
+from nysa.host.nysa import NysaCommError
 
 from driver import Driver
 
@@ -136,12 +131,12 @@ class SPI(Driver):
 
     def _calculate_data_size(self):
         self.max_bit_length = self.get_max_character_length()
-        print "SPI max bit length: %d" % self.max_bit_length
+        #print "SPI max bit length: %d" % self.max_bit_length
         self.data_register_size = (self.max_bit_length + 31) / 32
         self.read_data_reg = 6
         self.write_data_reg = self.read_data_reg + self.data_register_size
-        print "SPI Read Register: %d" % self.read_data_reg
-        print "SPI Write Register: %d" % self.write_data_reg
+        #print "SPI Read Register: %d" % self.read_data_reg
+        #print "SPI Write Register: %d" % self.write_data_reg
 
     def get_control(self):
         """get_control
@@ -465,7 +460,7 @@ class SPI(Driver):
         """set_lsb_enable
 
         set the lsb bit
-            (eanble least significant bit first
+            (eanble least significant bit first)
 
         Args:
             Nothing
@@ -543,8 +538,8 @@ class SPI(Driver):
             NysaCommError: Error in communication
         """
         clock_rate = self.get_clock_rate()
-        spi_clock_rate = spi_clock_rate * 2
-        divider = clock_rate/spi_clock_rate
+        spi_clock_rate = spi_clock_rate / 2
+        divider = int(clock_rate / spi_clock_rate)
 
         if divider == 0:
             divider = 1
@@ -565,10 +560,10 @@ class SPI(Driver):
         Raises:
             NysaCommError: Error in communication
         """
-        clock_rate = self.get_clock_rate()
-        divider = self.get_clock_divider()
+        clock_rate = self.get_clock_rate() * 1
+        divider = self.get_clock_divider() * 1
         if self.debug: print "SPI Divider: %d" % divider
-        value = (clock_rate / (divider + 1)) * 2
+        value = int((clock_rate / (divider + 1)) * 2)
         return value
 
     def auto_ss_control_enable(self, enable):
