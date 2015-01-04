@@ -20,16 +20,10 @@
 #SOFTWARE.
 
 import sys
-import os
-import argparse
-import json
 import subprocess
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-
-from ibuilder.lib import utils
-from common import site_manager
-from common import status as sts
+from nysa.common import site_manager
+from nysa.common import status as sts
 
 NAME = "install-platform"
 SCRIPT_NAME = "nysa %s" % NAME

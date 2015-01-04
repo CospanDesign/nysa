@@ -21,13 +21,10 @@
 
 import sys
 import os
-import argparse
 import json
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-
-from ibuilder.lib import utils
-from common import site_manager
+from nysa.ibuilder.lib import utils
+from nysa.common import site_manager
 
 NAME = "init"
 SCRIPT_NAME = "nysa %s" % NAME

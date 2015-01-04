@@ -19,14 +19,11 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
-import sys
-import os
-import argparse
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-
-from host.platform_scanner import PlatformScanner
-from host.platform_scanner import PlatformScannerException
+from nysa.host.platform_scanner import PlatformScanner
+from nysa.common.status import purple
+from nysa.common.status import white
+from nysa.common.status import blue
 
 NAME = "platforms"
 SCRIPT_NAME = "nysa %s" % NAME

@@ -21,13 +21,9 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
-import sys
 import os
-import argparse
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-
-from host.platform_scanner import PlatformScanner
+from nysa.host.platform_scanner import PlatformScanner
 
 NAME = "boards"
 SCRIPT_NAME = "nysa %s" % NAME

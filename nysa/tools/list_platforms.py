@@ -19,14 +19,9 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
-import sys
 import os
-import argparse
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-
-from host.platform_scanner import PlatformScanner
-from host.platform_scanner import PlatformScannerException
+from nysa.host.platform_scanner import PlatformScanner
 
 NAME = "platforms"
 SCRIPT_NAME = "nysa %s" % NAME
@@ -39,7 +34,7 @@ EPILOG = "\n"
 
 white = '\033[0m'
 gray = '\033[90m'
-red   = '\033[91m'
+red = '\033[91m'
 green = '\033[92m'
 yellow = '\033[93m'
 blue = '\033[94m'
@@ -47,14 +42,14 @@ purple = '\033[95m'
 cyan = '\033[96m'
 
 if os.name == "nt":
-    white  = ''
-    gray   = ''
-    red    = ''
-    green  = ''
+    white = ''
+    gray = ''
+    red = ''
+    green = ''
     yellow = ''
-    blue   = ''
+    blue = ''
     purple = ''
-    cyan   = ''
+    cyan = ''
 
 def setup_parser(parser):
     parser.description = DESCRIPTION

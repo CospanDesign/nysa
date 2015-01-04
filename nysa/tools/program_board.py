@@ -20,14 +20,9 @@
 #SOFTWARE.
 
 import sys
-import os
-import argparse
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-
-from host.platform_scanner import find_board
-from host.platform_scanner import PlatformScanner
-from host.platform_scanner import PlatformScannerException
+from nysa.host.platform_scanner import find_board
+from nysa.host.platform_scanner import PlatformScannerException
 
 NAME = "program"
 SCRIPT_NAME = "nysa %s" % NAME
@@ -42,15 +37,15 @@ def setup_parser(parser):
     parser.description = DESCRIPTION
     parser.epilog = EPILOG
     parser.add_argument("name",
-                        type = str,
-                        nargs = '?',
-                        default = "any",
-                        help = "Specify a board to initiate a program, if there is only one board attached leave blank (ignoring SIM)")
+                        type=str,
+                        nargs='?',
+                        default="any",
+                        help="Specify a board to initiate a program, if there is only one board attached leave blank (ignoring SIM)")
 
     parser.add_argument("-s", "--serial",
-                        type = str,
-                        nargs = 1,
-                        help = "Specify the serial number or unique ID of the board")
+                        type=str,
+                        nargs=1,
+                        help="Specify the serial number or unique ID of the board")
 
     return parser
 

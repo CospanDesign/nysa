@@ -22,12 +22,8 @@
 #SOFTWARE.
 
 import sys
-import os
 
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-
-from cbuilder.drt import drt
+from nysa.cbuilder.drt import drt
 
 NAME = "devices"
 SCRIPT_NAME = "nysa %s" % NAME

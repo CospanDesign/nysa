@@ -21,16 +21,10 @@
 
 import sys
 import os
-import argparse
-import json
-import subprocess
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-
-from ibuilder.lib import utils
-from common import site_manager
-from common.site_manager import SiteManagerError
-from common import status as sts
+from nysa.common import site_manager
+from nysa.common.site_manager import SiteManagerError
+from nysa.common import status as sts
 
 NAME = "install-examples"
 SCRIPT_NAME = "nysa %s" % NAME
@@ -64,7 +58,7 @@ def install(args, status):
     try:
         user_path = sm.get_nysa_user_base_directory()
     except SiteManagerError as ex:
-        print "%Error: %s%" % (sts.red, str(ex), sts.white)
+        print "%sError: %s%s" % (sts.red, str(ex), sts.white)
         sys.exit(-1)
 
     ex_dict = sm.get_remote_example_dict()

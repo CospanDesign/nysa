@@ -1,4 +1,4 @@
-#Distributed under the MIT licesnse.
+# Distributed under the MIT licesnse.
 #Copyright (c) 2014 Dave McCoy (dave.mccoy@cospandesign.com)
 
 #Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -20,14 +20,9 @@
 #SOFTWARE.
 
 import sys
-import os
-import argparse
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-
-from host.platform_scanner import find_board
-from host.platform_scanner import PlatformScanner
-from host.platform_scanner import PlatformScannerException
+from nysa.host.platform_scanner import find_board
+from nysa.host.platform_scanner import PlatformScannerException
 
 NAME = "reset"
 SCRIPT_NAME = "nysa %s" % NAME
@@ -38,24 +33,25 @@ DESCRIPTION = "performs a soft reset the specified board"
 
 EPILOG = "\n"
 
+
 def setup_parser(parser):
     parser.description = DESCRIPTION
     parser.add_argument("name",
-                        type = str,
-                        nargs = '?',
-                        default = "any",
-                        help = "Specify a board to reset, if there is only one board attached leave blank (ignoring SIM)")
+                        type=str,
+                        nargs='?',
+                        default="any",
+                        help="Specify a board to reset, if there is only one board attached leave blank (ignoring SIM)")
 
     parser.add_argument("-s", "--serial",
-                        type = str,
-                        nargs = 1,
-                        help = "Specify the serial number or unique ID of the board")
+                        type=str,
+                        nargs=1,
+                        help="Specify the serial number or unique ID of the board")
 
     return parser
 
+
 def reset_board(args, status):
     s = status
-    #print "args.name: %s" % args.name
     name = args.name
     if name == "any":
         name = None
@@ -64,7 +60,7 @@ def reset_board(args, status):
     if args.serial is not None:
         serial = args.serial[0]
 
-    try:    
+    try:
         board = find_board(name, serial, status)
     except PlatformScannerException as ex:
         if s: s.Error("%s" % str(ex))

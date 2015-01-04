@@ -21,16 +21,8 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
 #SOFTWARE.
 
-import sys
-import os
-import json
-import site
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-
-from ibuilder.lib import utils
-from common import status as st
-from host.platform_scanner import PlatformScanner
+from nysa.ibuilder.lib import utils
+from nysa.common import status as st
 
 NAME = "utils"
 SCRIPT_NAME = "nysa %s" % NAME

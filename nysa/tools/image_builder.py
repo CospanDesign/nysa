@@ -118,9 +118,9 @@ def image_builder(args, status):
         output_dir = args.output[0]
 
     # ibuilder.generate_project(args.config[0], dbg = debug)
-    #ibuilder.generate_project(args.config[0], output_directory = output_dir, status = s)
+    # ibuilder.generate_project(args.config[0], output_directory = output_dir, status = s)
     try:
-        ibuilder.generate_project(args.config[0], output_directory = output_dir, status = s)
+        ibuilder.generate_project(args.config[0], output_directory=output_dir, status=s)
     except urllib2.URLError as ex:
         s.Fatal("URL Error: %s, Are you connected to the internet?" % str(ex))
         sys.exit(1)
@@ -131,7 +131,7 @@ def image_builder(args, status):
     s.Info("Generating Project %s @ %s" % (args.config[0], output_dir))
 
     if args.compress:
-        output_dir = ibuilder.get_output_dir(args.config[0], dbg = args.debug)
+        output_dir = ibuilder.get_output_dir(args.config[0], dbg=args.debug)
         name = os.path.split(output_dir)[1]
         out_loc = os.path.split(output_dir)[0]
 
@@ -142,14 +142,14 @@ def image_builder(args, status):
         archive_loc = os.path.join(out_loc, name)
 
         s.Debug("Compress using gztar format")
-        name = shutil.make_archive(base_name = archive_loc,
-                                   format = 'gztar',
-                                   root_dir = out_loc,
-                                   base_dir = name)
-        remove_output_project(output_dir, debug = args.debug)
+        name = shutil.make_archive(base_name=archive_loc,
+                                   format='gztar',
+                                   root_dir=out_loc,
+                                   base_dir=name)
+        remove_output_project(output_dir, debug=args.debug)
 
     if args.zip:
-        output_dir = ibuilder.get_output_dir(args.config[0], dbg = args.debug)
+        output_dir = ibuilder.get_output_dir(args.config[0], dbg=args.debug)
         name = os.path.split(output_dir)[1]
         out_loc = os.path.split(output_dir)[0]
 
@@ -160,9 +160,9 @@ def image_builder(args, status):
         archive_loc = os.path.join(out_loc, name)
 
         s.Debug("Compress using zip format")
-        name = shutil.make_archive(base_name = archive_loc,
-                                   format = 'zip',
-                                   root_dir = out_loc,
-                                   base_dir = name)
-        remove_output_project(output_dir, debug = args.debug)
+        name = shutil.make_archive(base_name=archive_loc,
+                                   format='zip',
+                                   root_dir=out_loc,
+                                   base_dir=name)
+        remove_output_project(output_dir, debug=args.debug)
 

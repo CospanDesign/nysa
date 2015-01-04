@@ -21,15 +21,9 @@
 
 import sys
 import os
-import argparse
-import json
-import subprocess
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-
-from ibuilder.lib import utils
-from common import site_manager
-from common import status as sts
+from nysa.common import site_manager
+from nysa.common import status as sts
 
 NAME = "install-verilog-repo"
 SCRIPT_NAME = "nysa %s" % NAME
@@ -82,7 +76,7 @@ def install(args, status):
 
     print "%sInstalling repositories:%s " % (sts.purple, sts.white),
     for name in names:
-        verilog_dir = os.path.join(site_manager.get_verilog_package_path(), name)
+        #verilog_dir = os.path.join(site_manager.get_verilog_package_path(), name)
         #print "Dir: %s" % verilog_dir
         print "\t%s%s%s" % (sts.blue, name, sts.white)
         #sm.add_verilog_package(name, repo_dict[name]["timestamp"], verilog_dir)

@@ -21,16 +21,11 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 #SOFTWARE.
 
-import sys
 import os
 import argparse
-import zipfile
-import shutil
 import collections
 
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
-from common import status
+from nysa.common import status
 import image_builder
 import nysa_utils
 import device_list
@@ -69,79 +64,79 @@ TYPE_DICT["utility"] = "Functions to update and/or upgrade the nysa tool includi
 
 TOOL_DICT = {
     generate_slave.NAME:{
-        "type":"cbuilder",
-        "module":generate_slave,
-        "tool":generate_slave.generate_slave
+        "type": "cbuilder",
+        "module": generate_slave,
+        "tool": generate_slave.generate_slave
     },
     image_builder.NAME:{
-        "type":"ibuilder",
-        "module":image_builder,
-        "tool":image_builder.image_builder
+        "type": "ibuilder",
+        "module": image_builder,
+        "tool": image_builder.image_builder
     },
     nysa_utils.NAME:{
-        "type":"utility",
-        "module":nysa_utils,
-        "tool":nysa_utils.nysa_utils
+        "type": "utility",
+        "module": nysa_utils,
+        "tool": nysa_utils.nysa_utils
     },
     reset_board.NAME:{
-        "type":"host",
-        "module":reset_board,
-        "tool":reset_board.reset_board
+        "type": "host",
+        "module": reset_board,
+        "tool": reset_board.reset_board
     },
     program_board.NAME:{
-        "type":"host",
-        "module":program_board,
-        "tool":program_board.program_board
+        "type": "host",
+        "module": program_board,
+        "tool": program_board.program_board
     },
     upload_board.NAME:{
-        "type":"host",
-        "module":upload_board,
-        "tool":upload_board.upload_board
+        "type": "host",
+        "module": upload_board,
+        "tool": upload_board.upload_board
     },
     list_platforms.NAME:{
-        "type":"utility",
-        "module":list_platforms,
-        "tool":list_platforms.list_platforms
+        "type": "utility",
+        "module": list_platforms,
+        "tool": list_platforms.list_platforms
     },
     list_boards.NAME:{
-        "type":"host",
-        "module":list_boards,
-        "tool":list_boards.list_boards
+        "type": "host",
+        "module": list_boards,
+        "tool": list_boards.list_boards
     },
     device_list.NAME:{
-        "type":"cbuilder",
-        "module":device_list,
-        "tool":device_list.device_list
+        "type": "cbuilder",
+        "module": device_list,
+        "tool": device_list.device_list
     },
     drt_viewer.NAME:{
-        "type":"host",
-        "module":drt_viewer,
-        "tool":drt_viewer.view_drt
+        "type": "host",
+        "module": drt_viewer,
+        "tool": drt_viewer.view_drt
     },
     init.NAME:{
-        "type":"utility",
-        "module":init,
-        "tool":init.init
+        "type": "utility",
+        "module": init,
+        "tool": init.init
     },
     install_platform.NAME:{
-        "type":"utility",
-        "module":install_platform,
-        "tool":install_platform.install
+        "type": "utility",
+        "module": install_platform,
+        "tool": install_platform.install
     },
     install_verilog_modules.NAME:{
-        "type":"utility",
-        "module":install_verilog_modules,
-        "tool":install_verilog_modules.install
+        "type": "utility",
+        "module": install_verilog_modules,
+        "tool": install_verilog_modules.install
     },
     install_examples.NAME:{
-        "type":"utility",
-        "module":install_examples,
-        "tool":install_examples.install
+        "type": "utility",
+        "module": install_examples,
+        "tool": install_examples.install
     },
     nysa_status.NAME:{
-        "type":"utility",
-        "module":nysa_status,
-        "tool":nysa_status.nysa_status
+        "type": "utility",
+        "module": nysa_status,
+        "tool": nysa_status.nysa_status
     }
 }
 
