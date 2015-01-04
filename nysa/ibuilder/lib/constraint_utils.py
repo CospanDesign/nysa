@@ -233,6 +233,8 @@ def has_range(signal):
     if "[" in signal:
         rng = signal.partition("[")[2]
         if ":" not in rng:
+            #print "signal: %s" % signal
+
             minimum = rng.strip("]")
             maximum = minimum
         else:
@@ -289,7 +291,7 @@ def expand_user_constraints(user_dict, debug = False):
                 loc_name = user_dict[key]["loc"]
                 if signal not in ex_dict:
                     ex_dict[signal] = {}
-                    ex_dict[signal]["range"] = False
+                    ex_dict[signal]["range"] = True
                 else:
                     ex_dict[signal]["range"] = True
                 ex_dict[signal][minimum] = {}
@@ -339,6 +341,22 @@ def consolodate_constraints(edict, debug = False):
     for key in edict.keys():
         if debug: print "Working on: %s" % key
         if not edict[key]["range"]:
+            '''
+            print "key: %s, %s" % (key, str(edict[key]))
+            if "direction" not in edict[key]:
+                #This is one location in a range
+                print "Key: %s" % str(edict[key].keys())
+                keys = edict[key].keys()
+                keys.remove('range')
+                pos = keys[0]
+                print "Pos: %s" % pos
+                sig = "%s[%d]" % (key, pos)
+                user_dict[sig] = {}
+                user_dict[sig]["direction"] = edict[key][pos]["direction"]
+                user_dict[sig]["loc"] = edict[key][pos]["loc"]
+                user_dict[sig]["range"] = True
+            else:
+            '''
             user_dict[key] = {}
             user_dict[key]["direction"] = edict[key]["direction"]
             user_dict[key]["loc"] = edict[key]["loc"]
