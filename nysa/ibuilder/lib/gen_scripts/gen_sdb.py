@@ -39,7 +39,6 @@ from gen import Gen
 from nysa.ibuilder.lib import utils
 import nysa.ibuilder.lib.verilog_utils as vutils
 from string import Template
-from string import atoi
 
 
 class GenSDB(Gen):
@@ -112,9 +111,9 @@ class GenSDB(Gen):
             name = tags["SLAVES"][key]["filename"]
             absfilename = utils.find_rtl_file_location(name, self.user_paths)
             slave_keywords = [
-                "SDB_CORE_ID",
-                "SDB_SIZE",
-                "SDB_SUB_ID"
+                "SDB_ABI_VERSION_MAJOR",
+                "SDB_ABI_VERSION_MINOR",
+                "SDB_SIZE"
             ]
             slave_tags = vutils.get_module_tags(filename = absfilename, bus = "wishbone", keywords = slave_keywords)
 
@@ -123,13 +122,13 @@ class GenSDB(Gen):
             sdb_size_buffer = "{0:0=8X}"
 
             offset = 0x01000000 * (i + 1)
-            sdb_id_buffer = sdb_id_buffer.format(atoi(slave_tags["keywords"]["SDB_ID"].strip()))
+            sdb_id_buffer = sdb_id_buffer.format(int(slave_tags["keywords"]["SDB_ABI_VERSION_MAJOR"].strip(), 0))
             sdb_sub_id_buffer = "0000"
-            if "SDB_SUB_ID" in slave_tags["keywords"]:
-                sdb_sub_id_buffer = "{0:0=4X}".format(atoi(slave_tags["keywords"]["SDB_SUB_ID"].strip()))
+            if "SDB_ABI_VERSION_MINOR" in slave_tags["keywords"]:
+                sdb_sub_id_buffer = "{0:0=4X}".format(int(slave_tags["keywords"]["SDB_ABI_VERSION_MINOR"].strip(), 0))
             #print "SDB_SUB_ID: %s" % sdb_sub_id_buffer
             sdb_offset_buffer = sdb_offset_buffer.format(offset)
-            sdb_size_buffer = sdb_size_buffer.format(atoi(slave_tags["keywords"]["SDB_SIZE"]))
+            sdb_size_buffer = sdb_size_buffer.format(int(slave_tags["keywords"]["SDB_SIZE"], 0))
             unique_id_buffer = "00000000"
             if "unique_id" in tags["SLAVES"][key].keys():
                 unique_id_buffer = "{0:0=8X}".format(tags["SLAVES"][key]["unique_id"])
@@ -152,7 +151,7 @@ class GenSDB(Gen):
                 name = tags["MEMORY"][key]["filename"]
                 absfilename = utils.find_rtl_file_location(name, self.user_paths)
                 slave_keywords = [
-                    "SDB_ID",
+                    "SDB_ABI_VERSION_MAJOR",
                     "SDB_SIZE"
                 ]
                 slave_tags = vutils.get_module_tags(filename = absfilename, bus = "wishbone", keywords = slave_keywords)
@@ -162,10 +161,10 @@ class GenSDB(Gen):
                 sdb_offset_buffer = "{0:0=8X}"
                 sdb_size_buffer = "{0:0=8X}"
 #add the offset from the memory
-                sdb_id_buffer = sdb_id_buffer.format(atoi(slave_tags["keywords"]["SDB_ID"]))
+                sdb_id_buffer = sdb_id_buffer.format(int(slave_tags["keywords"]["SDB_ABI_VERSION_MAJOR"], 0))
                 sdb_offset_buffer = sdb_offset_buffer.format(mem_offset)
-                sdb_size_buffer = sdb_size_buffer.format(atoi(slave_tags["keywords"]["SDB_SIZE"]))
-                mem_offset += atoi(slave_tags["keywords"]["SDB_SIZE"])
+                sdb_size_buffer = sdb_size_buffer.format(int(slave_tags["keywords"]["SDB_SIZE"], 0))
+                mem_offset += int(slave_tags["keywords"]["SDB_SIZE"], 0)
                 unique_id_buffer = "00000000"
                 if "unique_id" in tags["MEMORY"][key].keys():
                     unique_id_buffer = "{0:0=8X}".format(tags["MEMORY"][key]["unique_id"])
