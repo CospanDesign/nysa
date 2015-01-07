@@ -49,12 +49,12 @@ from ibuilder_error import ModuleNotFound
 from ibuilder_error import ModuleFactoryError
 import utils
 
-sys.path.append(os.path.join( os.path.dirname(__file__), 
+sys.path.append(os.path.join( os.path.dirname(__file__),
                               "gen_scripts"))
 
-sys.path.append(os.path.join( os.path.dirname(__file__), 
-                              os.pardir, 
-                              os.pardir, 
+sys.path.append(os.path.join( os.path.dirname(__file__),
+                              os.pardir,
+                              os.pardir,
                               "cbuilder",
                               "scripts"))
 
@@ -101,7 +101,7 @@ class ModuleProcessor:
     home = False
     location = utils.resolve_path(location)
     if not os.path.exists(location):
-       utils.create_dir(location) 
+       utils.create_dir(location)
     fname = os.path.join(location, filename)
     fileout = open(fname, "w")
     fileout.write(self.buf)
@@ -234,7 +234,7 @@ class ModuleProcessor:
           raise ModuleFactoryError("File %s not found searched %s and in the HDL dir (%s)" %  (filename, \
                                       file_location, \
                                       utils.nysa_base + os.path.sep + "cbuilder" + os.path.sep + "verilog"))
-                                      
+
 
       if debug:
         print "found file!"
@@ -259,9 +259,9 @@ class ModuleProcessor:
       for m in ms:
           if m.endswith("gen_scripts"):
               gs = m
-      #print "gs: %s" % gs 
+      #print "gs: %s" % gs
 
-      
+
       cl = __import__("%s.gen" % gs, fromlist=[gs])
       #cl = importlib.import_module("gen_scripts", "gen")
       #if debug:
