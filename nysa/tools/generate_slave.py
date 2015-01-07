@@ -57,27 +57,11 @@ EPILOG = "\n" \
 "\n" + \
 "\t\t%s --major 2 --minor 2 --output %s <name>\n" % (SCRIPT_NAME, EXAMPLE_DIR)+ \
 "\n" + \
-"Generate a Wishbone slave project with a specified DRT flags\n" + \
-"\tID of 0x02 (UART)\n" + \
-"\tFlags of 0x01 = 'Standard Device'\n" + \
-"\n" + \
-"\t\t%s --major 2 --flags 1 <name>\n" % SCRIPT_NAME+ \
-"\n" + \
-"Generate a Wishbone memory slave project\n" + \
-"\n" + \
-"\t\t%s --memory <name>\n" % SCRIPT_NAME + \
-"\n" + \
-"Generate an Axi slave project\n" + \
+"Generate an Axi slave project (NOT IMPLEMENTED YET!)\n" + \
 "\tID of 0x04 (SPI)\n" + \
 "\n" + \
 "\t\t%s --axi --major 4 <name>\n" % SCRIPT_NAME + \
 "\n"
-
-def print_device_list():
-    dev_list = sdb.get_device_list()
-    print "Available Devices:"
-    for dev in dev_list:
-        print "%s" % str(dev)
 
 def setup_parser(parser):
     parser.description = DESCRIPTION
@@ -128,6 +112,8 @@ def generate_slave(args, status):
 
     #XXX: Not really useful now but in the future when we use AXI this will come in handy
     wishbone_bus = True
+    output_path = os.path.expanduser(args.output[0])
+    name = args.name[0]
 
     #Get a reference to the template directory
     template_path = os.path.join(os.path.dirname(__file__),
@@ -138,7 +124,7 @@ def generate_slave(args, status):
     template_path = os.path.abspath(template_path)
 
     #Create the output directory
-    output_dir = os.path.join(args.output, args.name)
+    output_dir = os.path.join(output_path, name)
 
     generate_directory_structure(template_path, output_dir)
 
@@ -152,10 +138,10 @@ def generate_slave(args, status):
         SDB_VENDOR_ID           = "0x800000000000C594",
         SDB_DEVICE_ID           = "0x00000000",
         SDB_CORE_VERSION        = "00.000.001",
-        SDB_NAME                = args.name,
+        SDB_NAME                = name,
         SDB_ABI_CLASS           = "0",
-        SDB_ABI_VERSION_MAJOR   = args.major,
-        SDB_ABI_VERSION_MINOR   = args.minor,
+        SDB_ABI_VERSION_MAJOR   = args.major[0],
+        SDB_ABI_VERSION_MINOR   = args.minor[0],
         SDB_MODULE_URL          = "http://www.example.com",
         SDB_DATE                = time.strftime("%Y/%m/%d"),
         SDB_EXECUTABLE          = "True",
@@ -167,7 +153,7 @@ def generate_slave(args, status):
     #print slave_buffer
 
     #Get a reference to the output slave
-    f = open(os.path.join(output_dir, "rtl", args.name + ".v"), 'w')
+    f = open(os.path.join(output_dir, "rtl", name + ".v"), 'w')
     f.write(slave_buffer)
     f.close()
 
@@ -178,7 +164,7 @@ def generate_slave(args, status):
 
     #Substitute name
     tb_buffer = template.safe_substitute(
-        SDB_NAME                = args.name
+        SDB_NAME                = name
     )
     f = open(os.path.join(output_dir, "sim", "tb_wishbone_master.v"), 'w')
     f.write(tb_buffer)
@@ -190,7 +176,7 @@ def generate_slave(args, status):
     f.close()
 
     c_buffer = template.safe_substitute(
-        SDB_NAME                = args.name
+        SDB_NAME                = name
     )
 
     f = open(os.path.join(output_dir, "command_file.txt"), 'w')
@@ -199,11 +185,11 @@ def generate_slave(args, status):
 
     #Copy the rest of the slave files to the new directory
     file_list = generate_file_list(template_path)
-    print "files: %s" % str(file_list)
+    #print "files: %s" % str(file_list)
 
     #The rest of the files are just boilerplate copy the files
     for filename in file_list:
-        print "filename: %s" % str(filename)
+        #print "filename: %s" % str(filename)
         if os.path.split(filename)[-1] == "USER_SLAVE.v":
             continue
         if os.path.split(filename)[-1] == "command_file.txt":
@@ -241,7 +227,7 @@ def generate_directory_structure(template_path, output_path):
                 continue
             else:
                 try:
-                    print "Generating: %s" % generated_dir
+                    #print "Generating: %s" % generated_dir
                     os.makedirs(generated_dir)
                 except OSError as err:
                     pass

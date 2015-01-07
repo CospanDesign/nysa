@@ -18,10 +18,10 @@ from nysa.common.status import Status
 class MOCK_ARGS(object):
     
     def __init__(self):
-        self.name = "test_name"
-        self.major = "0"
-        self.minor = "0"
-        self.output = ""
+        self.name = ["test_name"]
+        self.major = ["0"]
+        self.minor = ["0"]
+        self.output = [""]
         self.debug = False
         self.axi = False
 
@@ -33,17 +33,17 @@ class Test (unittest.TestCase):
 
     def test_generate_peripheral_slave(self):
         args = MOCK_ARGS()
-        args.name = "test_core"
-        args.major = "1"
-        args.minor = "0"
-        args.output = os.path.join(os.path.expanduser("~"),
-                                   "sandbox")
-        args.debug = True
-        
-        #args.output = tempfile.mkdtemp()
+        args.name = ["test_core"]
+        args.major = ["1"]
+        args.minor = ["0"]
+        #args.debug = True
+        args.output = [os.path.join(os.path.expanduser("~"),
+                                   "sandbox")]
+
+        args.output = [tempfile.mkdtemp()]
         generate_slave.generate_slave(args, self.status)
 
         #Clean up the generated files
-        #shutil.rmtree(tempdir)
+        shutil.rmtree(args.output[0])
 
 
