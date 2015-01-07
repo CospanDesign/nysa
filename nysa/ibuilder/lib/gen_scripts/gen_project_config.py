@@ -71,6 +71,5 @@ class GenProjectConfig(Gen):
 
         return json.dumps(config, sort_keys = True, indent = 4, separators = [',', ':'])
 
-
     def gen_name(self):
         print "Generate Project Configuration"
