@@ -51,7 +51,7 @@ SOFTWARE.
   SDB_DATE:${SDB_DATE}
 
   Device is executable (True/False)
-  SDB_EXECUTABLE${SDB_EXECUTABLE}
+  SDB_EXECUTABLE:${SDB_EXECUTABLE}
 
   Device is readable (True/False)
   SDB_READABLE:${SDB_READABLE}
