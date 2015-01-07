@@ -25,12 +25,12 @@ Changes:
 12/13/2011
     -Changed the response from 25 characters to 32
 12/02/2011
-    -Changed the DRT size from 4 to 8
+    -Changed the D R T size from 4 to 8
 07/17/2013
     -Added license
 """
 
-#gen_drt.py
+#gen_sdb.py
 import sys
 import os
 import json
@@ -42,11 +42,11 @@ from string import Template
 from string import atoi
 
 
-class GenDRT(Gen):
-    """Generate the DRT ROM"""
+class GenSDB(Gen):
+    """Generate the SDB ROM"""
 
     def __init__(self):
-        #print "in GenDRT"
+        #print "in GenSDB"
         return
 
 
@@ -67,7 +67,7 @@ class GenDRT(Gen):
 
         #image_id = board_dict[tags["image_id"]]
 
-        #Get the DRT version from the DRT info
+        #Get the SDB version from the SDB info
         version = 0x0005
         version_string = "{0:0=4X}".format(version)
         id_string = "{0:0=4X}".format(0xC594)
@@ -89,17 +89,6 @@ class GenDRT(Gen):
         board_string = "{0:0=8X}".format(board_id)
         image_string = "{0:0=8X}".format(image_id)
 
-        drt_flags = 0 
-        if tags["TEMPLATE"] == "axie_template.json":
-            if debug:
-                print "Axie bus"
-            drt_flags |= 0x01
-        else:
-            if debug:
-                print "Wishbone Bus"
-
-        drt_flags_string = "{0:0=4X}".format(drt_flags)
-
         if "IMAGE_ID" in tags:
             image_string = "{0:0=8X}".format(tags["IMAGE_ID"])
 
@@ -111,7 +100,6 @@ class GenDRT(Gen):
         out_buf += board_string     + "\n"
         out_buf += image_string     + "\n"
         out_buf += "0000"              
-        out_buf += drt_flags_string + "\n"
         out_buf += "00000000"       + "\n"
         out_buf += "00000000"       + "\n"
 
@@ -124,35 +112,31 @@ class GenDRT(Gen):
             name = tags["SLAVES"][key]["filename"]
             absfilename = utils.find_rtl_file_location(name, self.user_paths)
             slave_keywords = [
-                "DRT_ID",
-                "DRT_FLAGS",
-                "DRT_SIZE",
-                "DRT_SUB_ID"
+                "SDB_CORE_ID",
+                "SDB_SIZE",
+                "SDB_SUB_ID"
             ]
             slave_tags = vutils.get_module_tags(filename = absfilename, bus = "wishbone", keywords = slave_keywords)
 
-            drt_id_buffer = "{0:0=4X}"
-            drt_flags_buffer = "{0:0=8X}"
-            drt_offset_buffer = "{0:0=8X}"
-            drt_size_buffer = "{0:0=8X}"
+            sdb_id_buffer = "{0:0=4X}"
+            sdb_offset_buffer = "{0:0=8X}"
+            sdb_size_buffer = "{0:0=8X}"
 
             offset = 0x01000000 * (i + 1)
-            drt_id_buffer = drt_id_buffer.format(atoi(slave_tags["keywords"]["DRT_ID"].strip()))
-            drt_sub_id_buffer = "0000"
-            if "DRT_SUB_ID" in slave_tags["keywords"]:
-                drt_sub_id_buffer = "{0:0=4X}".format(atoi(slave_tags["keywords"]["DRT_SUB_ID"].strip()))
-            #print "DRT_SUB_ID: %s" % drt_sub_id_buffer
-            drt_flags_buffer = drt_flags_buffer.format(0x00000000 + atoi(slave_tags["keywords"]["DRT_FLAGS"]))
-            drt_offset_buffer = drt_offset_buffer.format(offset)
-            drt_size_buffer = drt_size_buffer.format(atoi(slave_tags["keywords"]["DRT_SIZE"]))
+            sdb_id_buffer = sdb_id_buffer.format(atoi(slave_tags["keywords"]["SDB_ID"].strip()))
+            sdb_sub_id_buffer = "0000"
+            if "SDB_SUB_ID" in slave_tags["keywords"]:
+                sdb_sub_id_buffer = "{0:0=4X}".format(atoi(slave_tags["keywords"]["SDB_SUB_ID"].strip()))
+            #print "SDB_SUB_ID: %s" % sdb_sub_id_buffer
+            sdb_offset_buffer = sdb_offset_buffer.format(offset)
+            sdb_size_buffer = sdb_size_buffer.format(atoi(slave_tags["keywords"]["SDB_SIZE"]))
             unique_id_buffer = "00000000"
             if "unique_id" in tags["SLAVES"][key].keys():
                 unique_id_buffer = "{0:0=8X}".format(tags["SLAVES"][key]["unique_id"])
 
-            out_buf += drt_sub_id_buffer + drt_id_buffer + "\n"
-            out_buf += drt_flags_buffer + "\n"
-            out_buf += drt_offset_buffer + "\n"
-            out_buf += drt_size_buffer + "\n"
+            out_buf += sdb_sub_id_buffer + sdb_id_buffer + "\n"
+            out_buf += sdb_offset_buffer + "\n"
+            out_buf += sdb_size_buffer + "\n"
             out_buf += unique_id_buffer + "\n"
             out_buf += "00000000\n"
             out_buf += "00000000\n"
@@ -168,39 +152,37 @@ class GenDRT(Gen):
                 name = tags["MEMORY"][key]["filename"]
                 absfilename = utils.find_rtl_file_location(name, self.user_paths)
                 slave_keywords = [
-                    "DRT_ID",
-                    "DRT_FLAGS",
-                    "DRT_SIZE"
+                    "SDB_ID",
+                    "SDB_SIZE"
                 ]
                 slave_tags = vutils.get_module_tags(filename = absfilename, bus = "wishbone", keywords = slave_keywords)
 
-                drt_id_buffer = "{0:0=8X}"
-                drt_flags_buffer = "{0:0=8X}"
-                drt_offset_buffer = "{0:0=8X}"
-                drt_size_buffer = "{0:0=8X}"
+                sdb_id_buffer = "{0:0=8X}"
+                sdb_flags_buffer = "{0:0=8X}"
+                sdb_offset_buffer = "{0:0=8X}"
+                sdb_size_buffer = "{0:0=8X}"
 #add the offset from the memory
-                drt_id_buffer = drt_id_buffer.format(atoi(slave_tags["keywords"]["DRT_ID"]))
-                drt_flags_buffer = drt_flags_buffer.format(0x00010000 +  atoi(slave_tags["keywords"]["DRT_FLAGS"]))
-                drt_offset_buffer = drt_offset_buffer.format(mem_offset)
-                drt_size_buffer = drt_size_buffer.format(atoi(slave_tags["keywords"]["DRT_SIZE"]))
-                mem_offset += atoi(slave_tags["keywords"]["DRT_SIZE"])
+                sdb_id_buffer = sdb_id_buffer.format(atoi(slave_tags["keywords"]["SDB_ID"]))
+                sdb_offset_buffer = sdb_offset_buffer.format(mem_offset)
+                sdb_size_buffer = sdb_size_buffer.format(atoi(slave_tags["keywords"]["SDB_SIZE"]))
+                mem_offset += atoi(slave_tags["keywords"]["SDB_SIZE"])
                 unique_id_buffer = "00000000"
                 if "unique_id" in tags["MEMORY"][key].keys():
                     unique_id_buffer = "{0:0=8X}".format(tags["MEMORY"][key]["unique_id"])
 
 
 
-                out_buf += drt_id_buffer + "\n"
-                out_buf += drt_flags_buffer + "\n"
-                out_buf += drt_offset_buffer + "\n"
-                out_buf += drt_size_buffer + "\n"
+                out_buf += sdb_id_buffer + "\n"
+                out_buf += sdb_flags_buffer + "\n"
+                out_buf += sdb_offset_buffer + "\n"
+                out_buf += sdb_size_buffer + "\n"
                 out_buf += unique_id_buffer + "\n"
                 out_buf += "00000000\n"
                 out_buf += "00000000\n"
                 out_buf += "00000000\n"
 
 
-        if debug: print "DRT:\n%s" % out_buf
+        if debug: print "SDB:\n%s" % out_buf
         return out_buf
 
     def gen_name(self):

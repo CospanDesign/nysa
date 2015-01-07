@@ -103,10 +103,10 @@ class SFCamera(Driver):
             Nothing
 
         Returns (Integer):
-            Number corresponding to the device in the drt.json file
+            Number corresponding to the device in the online sdb repositor file
 
         Raises:
-            DRTError: Device ID Not found in drt.json
+            SDBError: Device ID Not found in online sdb repositor
         """
         return Nysa.get_id_from_name("Camera")
 

@@ -158,11 +158,11 @@ def find_board(name, serial = None, status = None):
     return board
 
 
-def drt_to_config(n):
+def sdb_to_config(n):
 
     config_dict = {}
     print "Pretty print:"
-    n.pretty_print_drt()
+    n.pretty_print_sdb()
 
     #Read the board id and find out what type of board this is
     config_dict["board"] = n.get_board_name()

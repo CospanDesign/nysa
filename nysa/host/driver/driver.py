@@ -59,10 +59,10 @@ class Driver(object):
             Nothing
 
         Returns (Integer):
-            Number corresponding to the device in the drt.json file
+            Number corresponding to the device in the online sdb repositor file
 
         Raises:
-            DRTError: Device ID Not found in drt.json
+            SDBError: Device ID Not found in online sdb repositor
         """
         raise AssertionError("get_core_id() function is not implemented")
 
@@ -378,7 +378,7 @@ class Driver(object):
         """
         Display All the Register Values
 
-        Reads the size number of registers from the DRT and
+        Reads the size number of registers from the SDB and
         prints them all out
         """
         count = self.n.get_device_size(self.dev_id - 1)

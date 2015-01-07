@@ -545,13 +545,13 @@ class WishboneTopGenerator(object):
         hi_buf = self.generate_host_interface_buffer(debug = debug)
         slave_buffer_list = []
 
-        #Add DRT
+        #Add SDB
         slave_index = 0
-        absfilename = utils.find_rtl_file_location("device_rom_table.v", self.user_paths)
+        absfilename = utils.find_rtl_file_location("sdb_core.v", self.user_paths)
         slave_tags = vutils.get_module_tags(filename = absfilename,
                                            bus = "wishbone",
                                            user_paths = self.user_paths)
-        slave_buf = self.generate_wishbone_buffer(name = "drt",
+        slave_buf = self.generate_wishbone_buffer(name = "sdb",
                                                   index = 0,
                                                   slave_tags = {},
                                                   module_tags = slave_tags)
@@ -1175,13 +1175,13 @@ class WishboneTopGenerator(object):
                     for i in range (len(self.tags["SLAVES"].keys())):
                         name = self.tags["SLAVES"].keys()[i]
                         if name == arb_slave:
-                            interconnect_index = i + 1 # +1 to account for the DRT
+                            interconnect_index = i + 1 # +1 to account for the SDB
                             on_periph_bus = True
                             wbm_name = "s" + str(interconnect_index)
                             if debug:
                                 print "arb slave on peripheral bus"
                                 print "slave index: %d" % interconnect_index - 1
-                                print "account for the drt, actual bus index: %d" % interconnect_index
+                                print "account for the sdb, actual bus index: %d" % interconnect_index
                             break
                     if not on_periph_bus:
                         if "MEMORY" in self.tags:

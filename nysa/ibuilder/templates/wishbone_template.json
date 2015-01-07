@@ -81,11 +81,11 @@
               "slave":{
                 "dir":true,
                 "files":{
-                  "device_rom_table.v":{
-                    "location":"${NYSA}/cbuilder/verilog/wishbone/rtl/wishbone/slave/device_rom_table"
+                  "sdb_core.v":{
+                    "location":"${NYSA}/cbuilder/verilog/wishbone/rtl/wishbone/slave/sdb_core"
                   },
-                  "device_rom_table.txt":{
-                    "gen_script":"gen_drt"
+                  "sdb_buffer.txt":{
+                    "gen_script":"gen_sdb"
                   }
                 }
               }

@@ -1,10 +1,8 @@
 Auto generated slave data
 
 Files:
-1. drt_rom_file.txt: example drt data file (using the DRT in the simulation is
-  not implemented yet)
-2. project_defines.v: a dependency file that is used primarily for DRT (not
-  used right now)
+2. project_defines.v: a dependency file that cores can use to determine the
+  clock rate of the entire image as well as other characteristics
 
 3. tb_wishbone_master.v: main entry point for the code, this is the testbench
   used to exercise the code, it behaves as both a stimulus and and

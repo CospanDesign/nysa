@@ -91,7 +91,7 @@ wire              w_wbm_int;
 
 
 
-//Wishbone Slave 0 (DRT) signals
+//Wishbone Slave 0 (SDB) signals
 wire              w_wbs0_we;
 wire              w_wbs0_cyc;
 wire  [31:0]      w_wbs0_dat_o;
@@ -180,7 +180,7 @@ wishbone_master wm (
 );
 
 //slave 1
-${NAME} s1 (
+${SDB_NAME} s1 (
 
   .clk        (clk                  ),
   .rst        (rst                  ),

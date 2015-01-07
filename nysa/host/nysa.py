@@ -41,10 +41,9 @@ from array import array as Array
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              "cbuilder",
-                             "drt"))
-import drt as drt_controller
-from drt import DRTError
-from drt import DRTManager
+                             "sdb"))
+import sdb as sdb_controller
+from sdb import SDBError
 
 
 class NysaCommError(Exception):
@@ -60,7 +59,7 @@ class NysaError(Exception):
     """NysaError
 
     Errors associated with Nysa
-        Device not found in DRT
+        Device not found in SDB
     """
     pass
 
@@ -77,7 +76,7 @@ class Nysa(object):
     def get_id_from_name(name):
         """Gets the device ID number from it's name,
 
-        Example: GPIO return 0x01 (this is defined within drt.json
+        Example: GPIO return 0x01 (this is defined within sdb database
 
         Args:
             name (String): Name of the device to identify 
@@ -88,11 +87,11 @@ class Nysa(object):
 
         Raises:
             NysaError:
-                Name not found in DRT.json file
+                Name not found in sdb database
         """
         try:
-            return drt_controller.get_device_index(name)
-        except DRTError, e:
+            return sdb_controller.get_device_index(name)
+        except SDBError, e:
             raise NysaError(e)
 
     #XXX: This might be better specified as a float
@@ -103,7 +102,7 @@ class Nysa(object):
     def __init__(self, status = None):
         self.name = "Nysa"
         self.s = status
-        self.drt_manager = DRTManager()
+        self.sdb_manager = SDBManager()
         if status: status.Debug("nysa started")
 
     def __del__(self):
@@ -158,7 +157,7 @@ class Nysa(object):
 
         Args:
           device_id (int):  Device identification number, this number is found
-                            in the DRT
+                            in the SDB
           address (int):  Address of the register/memory to read
 
         Returns:
@@ -186,7 +185,7 @@ class Nysa(object):
         Args:
           length (int): Number of 32 bit words to read from the FPGA
           device_id (int):  Device identification number, this number is found
-                            in the DRT
+                            in the SDB
           address (int):  Address of the register/memory to read
           memory_device (int): Whether the device is on the memory bus or the
                             peripheral bus
@@ -230,7 +229,7 @@ class Nysa(object):
 
         Args:
           device_id (int): Device identification number, this number is found
-                           in the DRT
+                           in the SDB
           address (int):  Address of the register/memory to read
           value (int)  32-bit unsigned integer to be written into the register
 
@@ -254,7 +253,7 @@ class Nysa(object):
 
         Args:
           device_id (int): Device identification number, this number is found
-                           in the DRT
+                           in the SDB
           address (int): Address of the register/memory to modify
           bit (int): Address of bit to set (31 - 0)
           enable (bool): set or clear a bit
@@ -277,7 +276,7 @@ class Nysa(object):
 
         Args:
           device_id (int): Device identification number, this number is found
-                           in the DRT
+                           in the SDB
           address (int): Address of the register/memory to modify
           bit (int): Address of bit to set (31 - 0)
 
@@ -299,7 +298,7 @@ class Nysa(object):
 
         Args:
           device_id (int): Device identification number, this number is found
-                           in the DRT
+                           in the SDB
           address (int): Address of the register/memory to modify
           bit (int): Address of bit to set (31 - 0)
 
@@ -321,7 +320,7 @@ class Nysa(object):
 
         Args:
           device_id (int): Device identification number ,this number is found
-                           in the DRT
+                           in the SDB
           address (int): Address of the register/memory to read
           bit (int): Address of bit to check (31 - 0)
 
@@ -362,7 +361,7 @@ class Nysa(object):
         overriden based on the communication method with the specific FPGA board
 
         Args:
-          device_id (int): Device identification number, found in the DRT
+          device_id (int): Device identification number, found in the SDB
           address (int): Address of the register/memory to read
           memory_device (int): True if the device is on the memory bus
           data (array of unsigned bytes): Array of raw bytes to send to the
@@ -381,33 +380,33 @@ class Nysa(object):
         if len(data) == 0:
             raise NysaCommError("Data length cannot be 0")
 
-    def read_drt(self):
-        """read_drt
+    def read_sdb(self):
+        """read_sdb
 
-        Read the contents of the DRT
+        Read the contents of the SDB
 
         Args:
           Nothing
 
         Returns (Array of bytes):
-          the raw DRT data, this can be ignored for normal operation 
+          the raw SDB data, this can be ignored for normal operation 
 
         Raises:
           NysaCommError: When a failure of communication is detected
         """
         data = Array('B')
         data = self.read(0, 0, 8)
-        num_of_devices  = drt_controller.get_number_of_devices(data)
+        num_of_devices  = sdb_controller.get_number_of_devices(data)
         len_to_read = num_of_devices * 8
 
         data = self.read(0, 0, len_to_read + 8)
-        self.drt_manager.set_drt(data)
+        self.sdb_manager.set_sdb(data)
         return data
 
-    def pretty_print_drt(self):
-        """pretty_print_drt
+    def pretty_print_sdb(self):
+        """pretty_print_sdb
 
-        Prints out the DRT with colors and beauty
+        Prints out the SDB with colors and beauty
 
         Args:
           Nothing
@@ -418,28 +417,28 @@ class Nysa(object):
         Raises:
           Nothing
         """
-        self.drt_manager.pretty_print_drt()
+        self.sdb_manager.pretty_print_sdb()
 
     def get_number_of_devices(self):
         """get_number_of_devices
 
-        Returns the number of devices found on the DRT
+        Returns the number of devices found on the SDB
 
         Args:
           Nothing
 
         Returns:
-          (int): The number of devices on the DRT
+          (int): The number of devices on the SDB
 
         Raises:
           Nothing
         """
-        return self.drt_manager.get_number_of_devices()
+        return self.sdb_manager.get_number_of_devices()
 
     def get_device_id(self, device_index):
         """get_device
 
-        From the index within the DRT return the ID of this device
+        From the index within the SDB return the ID of this device
 
         Args:
           device (int): index of the device
@@ -450,12 +449,12 @@ class Nysa(object):
         Raises:
           Nothing
         """
-        return self.drt_manager.get_id_from_index(device_index)
+        return self.sdb_manager.get_id_from_index(device_index)
 
     def get_device_sub_id(self, device_index):
         """get_device_sub_id
 
-        From the index within the DRT return the sub ID of this device
+        From the index within the SDB return the sub ID of this device
 
         Args:
             device (unsigned int): index of the device
@@ -466,12 +465,12 @@ class Nysa(object):
         Raises:
             Nothing
         """
-        return self.drt_manager.get_sub_id_from_index(device_index)
+        return self.sdb_manager.get_sub_id_from_index(device_index)
 
     def get_device_unique_id(self, device_index):
         """get_device_unique_id
 
-        From the index within the DRT return the unique ID of the device
+        From the index within the SDB return the unique ID of the device
 
         Args:
             device (unsienged int): index of the device
@@ -482,7 +481,7 @@ class Nysa(object):
         Raises:
             Nothing
         """
-        return self.drt_manager.get_unique_id_from_index(device_index)
+        return self.sdb_manager.get_unique_id_from_index(device_index)
 
     def get_device_name_from_id(self, device_id):
         """get_device_name_from_id
@@ -500,12 +499,12 @@ class Nysa(object):
         Raises:
             Nothing
         """
-        return drt_controller.get_device_name_from_id(device_id)
+        return sdb_controller.get_device_name_from_id(device_id)
 
     def get_device_address(self, device_index):
         """get_device_address
 
-        From the index within the DRT return the address of where to find this
+        From the index within the SDB return the address of where to find this
         device
 
         Args:
@@ -517,7 +516,7 @@ class Nysa(object):
         Raises:
           Nothing
         """
-        return self.drt_manager.get_address_from_index(device_index)
+        return self.sdb_manager.get_address_from_index(device_index)
 
     def get_device_size(self, device_index):
         """get_device_size
@@ -536,12 +535,12 @@ class Nysa(object):
         Raises:
           Nothing
         """
-        return self.drt_manager.get_size_from_index(device_index)
+        return self.sdb_manager.get_size_from_index(device_index)
 
     def is_memory_device(self, device_index):
         """is_memory_device
 
-        Queries the DRT to see if the device is on the memory bus or the
+        Queries the SDB to see if the device is on the memory bus or the
         peripheral bus
 
         Args:
@@ -555,7 +554,7 @@ class Nysa(object):
         Raises:
           Nothing
         """
-        return self.drt_manager.is_memory_device(device_index)
+        return self.sdb_manager.is_memory_device(device_index)
 
     def get_total_memory_size(self):
         """get_total_memory_size
@@ -572,25 +571,9 @@ class Nysa(object):
           (int): Size of the total memory
 
         Raises:
-          DRTError: DRT Not defined
+          SDBError: SDB Not defined
         """
-        return self.drt_manager.get_total_memory_size()
-
-    def get_drt_flags(self):
-        """get_drt_flags
-
-        Returns the configuration flags for the DRT image
-
-        Args:
-            Nothing
-
-        Returns (unsigned int): DRT image flags
-
-        Raises:
-            DRTError: DRT not defined
-
-        """
-        return self.drt_manager.get_image_flags()
+        return self.sdb_manager.get_total_memory_size()
 
     def is_wishbone_bus(self):
         """is_wishbone_bus
@@ -603,9 +586,9 @@ class Nysa(object):
                 False: Image doesn't use wishbone bus
 
         Raises:
-            DRTError: DRT not defines
+            SDBError: SDB not defines
         """
-        return self.drt_manager.is_wishbone_bus()
+        return self.sdb_manager.is_wishbone_bus()
 
     def is_axie_bus(self):
         """is_axie_bus
@@ -617,10 +600,10 @@ class Nysa(object):
                 False: Image doesn't use axie bus
 
         Raises:
-            DRTError: DRT not defines
+            SDBError: SDB not defines
 
         """
-        return self.drt_manager.is_axie_bus()
+        return self.sdb_manager.is_axie_bus()
 
     def ping(self):
         """ping
@@ -757,7 +740,7 @@ class Nysa(object):
 
     def find_device(self, dev_id, sub_id = None, unique_id = None):
         """
-        Find a device in the DRT that has the dev_id.
+        Find a device in the SDB that has the dev_id.
 
         If the sub_id and or the unique_id is not specified the device returns
         the first device that is found.
@@ -781,9 +764,9 @@ class Nysa(object):
         """
         dev = 0
         try:
-            dev = self.drt_manager.find_device(dev_id, sub_id, unique_id, debug = (self.s is not None))
-        except DRTError, e:
-            raise NysaCommError("Device not found in DRT")
+            dev = self.sdb_manager.find_device(dev_id, sub_id, unique_id, debug = (self.s is not None))
+        except SDBError, e:
+            raise NysaCommError("Device not found in SDB")
 
         return dev
 
@@ -798,10 +781,10 @@ class Nysa(object):
             (String): Name of the board
 
         Raises:
-            DRTError if DRT is not defined
+            SDBError if SDB is not defined
         """
-        #return self.drt_manager.get_board_name(int(self.drt_lines[3]))
-        return self.drt_manager.get_board_name()
+        #return self.sdb_manager.get_board_name(int(self.sdb_lines[3]))
+        return self.sdb_manager.get_board_name()
 
     def get_image_id(self):
         """
@@ -814,9 +797,9 @@ class Nysa(object):
             (int): Image ID of the FPGA image
 
         Raises:
-            DRTError if DRT is not defined
+            SDBError if SDB is not defined
         """
-        return self.drt_manager.get_image_id()
+        return self.sdb_manager.get_image_id()
 
     def upload(self, filepath):
         """

@@ -266,8 +266,7 @@ def get_module_tags(filename="", bus="", keywords = [], user_paths = [], debug=F
     Given a module within a filename search through the module and
     find:
       metadata
-        \"DRT_ID\"
-        \"DRT_FLAGS\"
+        \"SDB_CORE_ID\"
       ports: Inputs/Outputs of this module
       module: Name of the module
       parameters: Configuration parameters within the module

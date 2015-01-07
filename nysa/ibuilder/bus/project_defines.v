@@ -5,8 +5,8 @@
 //project_defines.v
 //project defines for ${PROJECT_NAME}
 
-`define DRT_NUM_OF_DEVICES $NUMBER_OF_DEVICES
-`define DRT_INPUT_FILE "device_rom_table.txt"
+`define SDB_NRECS $NUMBER_OF_DEVICES
+`define SDB_INPUT_FILE "sdb_buffer.txt"
 
 `define $VENDOR_FPGA
 

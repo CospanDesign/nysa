@@ -471,11 +471,9 @@ def _get_slave_list(directory, debug = False):
                 print "failed to open: " + str(err)
                 return None
 
-        if "DRT_ID" not in data:
+        if "SDB_CORE_ID" not in data:
             continue
-        if "DRT_FLAGS" not in data:
-            continue
-        if "DRT_SIZE" not in data:
+        if "SDB_SIZE" not in data:
             continue
 
         name = f.split("/")[-1]

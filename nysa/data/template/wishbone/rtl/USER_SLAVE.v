@@ -1,7 +1,7 @@
-//${NAME}.v
+//${SDB_NAME}.v
 /*
 Distributed under the MIT license.
-Copyright (c) 2011 Dave McCoy (dave.mccoy@cospandesign.com)
+Copyright (c) 2015 Dave McCoy (dave.mccoy@cospandesign.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -22,47 +22,49 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/* Log
-  5/08/2013:
-    -Added a test for ack on the read section so that there is no double reads
-  4/16/2011:
-    -implemented style i_: input, o_: output, r_: register, w_: wire
-    -moved the entire port declaration within the module declaration
-    -changed Parameters to localparams so the address cannot be inadvertently
-      changed with a parameter statement outside the module
-    -refactored the logs so they don't take up as much space
-  10/29/2011:
-    -added 'else' statement for reset
-  10/23/2011:
-    -fixed the wbs_ack_i to wbs_ack
-    -added the default entires for read and write to illustrate different
-      communication
-    -added license
-  9/10/2011:
-    -removed duplicate wbs_dat_i
-    -added the wbs_sel_i port
-*/
 /*
-  Use this to tell Nysa how to populate the Device ROM table
-  so that users can interact with your slave
+  Set the Vendor ID (Hexidecimal 64-bit Number)
+  SDB_VENDOR_ID:${SDB_VENDOR_ID}
 
-  META DATA
+  Set the Device ID (Hexcidecimal 32-bit Number)
+  SDB_DEVICE_ID:${SDB_DEVICE_ID}
 
-  identification of your device 0 - 65536
-  DRT_ID:${DRT_ID}
+  Set the version of the Core XX.XXX.XXX Example: 01.000.000
+  SDB_CORE_VERSION:${SDB_CORE_VERSION}
 
-  flags (read drt.txt in the slave/device_rom_table directory 1 means
-  a standard device
-  DRT_FLAGS:${DRT_FLAGS}
+  Set the Device Name: 19 UNICODE characters
+  SDB_NAME:${SDB_NAME}
 
-  number of registers this should be equal to the nubmer of ADDR_???
-  parameters
-  DRT_SIZE:${DRT_SIZE}
+  Set the class of the device (16 bits) Set as 0
+  SDB_ABI_CLASS:${SDB_ABI_CLASS}
 
+  Set the ABI Major Version: (8-bits)
+  SDB_ABI_VERSION_MAJOR:${SDB_ABI_VERSION_MAJOR}
+
+  Set the ABI Minor Version (8-bits)
+  SDB_ABI_VERSION_MINOR:${SDB_ABI_VERSION_MINOR}
+
+  Set the Module URL (63 Unicode Characters)
+  SDB_MODULE_URL:${SDB_MODULE_URL}
+
+  Set the date of module YYYY/MM/DD
+  SDB_DATE:${SDB_DATE}
+
+  Device is executable (True/False)
+  SDB_EXECUTABLE${SDB_EXECUTABLE}
+
+  Device is readable (True/False)
+  SDB_READABLE:${SDB_READABLE}
+
+  Device is writeable (True/False)
+  SDB_WRITEABLE:${SDB_WRITEABLE}
+
+  Device Size: Number of Registers
+  SDB_SIZE:${SDB_SIZE}
 */
 
 
-module ${NAME} (
+module ${SDB_NAME} (
   input               clk,
   input               rst,
 
@@ -83,16 +85,13 @@ module ${NAME} (
   //output              o_wbs_int
 );
 
-
 //Local Parameters
 localparam     ADDR_0  = 32'h00000000;
 localparam     ADDR_1  = 32'h00000001;
 localparam     ADDR_2  = 32'h00000002;
 
 //Local Registers/Wires
-
 //Submodules
-
 //Asynchronous Logic
 //Synchronous Logic
 
@@ -111,8 +110,8 @@ always @ (posedge clk) begin
 
     if (i_wbs_stb && i_wbs_cyc) begin
       //master is requesting somethign
-      if (i_wbs_we) begin
-        if (!o_wbs_ack) begin
+      if (!o_wbs_ack) begin
+        if (i_wbs_we) begin
           //write request
           case (i_wbs_adr)
             ADDR_0: begin
@@ -144,10 +143,7 @@ always @ (posedge clk) begin
             end
           endcase
         end
-      end
-
-      else begin
-        if (!o_wbs_ack) begin //Fix double reads
+        else begin
           //read request
           case (i_wbs_adr)
             ADDR_0: begin
@@ -176,8 +172,8 @@ always @ (posedge clk) begin
             end
           endcase
         end
-      end
       o_wbs_ack <= 1;
+    end
     end
   end
 end
