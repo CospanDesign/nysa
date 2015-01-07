@@ -75,11 +75,11 @@
     },
     "DMA Reader":{
       "description":"A test core for DMA Reader",
-      "ID":"0x0064"
+      "ID":"0x0020"
     },
     "DMA Writer":{
       "description":"A test core for DMA Writer",
-      "ID":"0x0065"
+      "ID":"0x0021"
     }
   }
 }
