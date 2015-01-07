@@ -547,7 +547,7 @@ class WishboneTopGenerator(object):
 
         #Add SDB
         slave_index = 0
-        absfilename = utils.find_rtl_file_location("sdb_core.v", self.user_paths)
+        absfilename = utils.find_rtl_file_location("sdb.v", self.user_paths)
         slave_tags = vutils.get_module_tags(filename = absfilename,
                                            bus = "wishbone",
                                            user_paths = self.user_paths)

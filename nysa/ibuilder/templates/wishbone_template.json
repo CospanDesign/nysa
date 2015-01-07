@@ -81,8 +81,8 @@
               "slave":{
                 "dir":true,
                 "files":{
-                  "sdb_core.v":{
-                    "location":"${NYSA}/cbuilder/verilog/wishbone/rtl/wishbone/slave/sdb_core"
+                  "sdb.v":{
+                    "location":"${NYSA}/cbuilder/verilog/wishbone/rtl/wishbone/slave/sdb"
                   },
                   "sdb_buffer.txt":{
                     "gen_script":"gen_sdb"
