@@ -53,8 +53,6 @@ if os.name == "nt":
     purple = ''
     cyan   = ''
 
-
-
 def setup_parser(parser):
     parser.description = DESCRIPTION
     parser.add_argument("-r", "--remote", action="store_true", help="Reads all possible Nysa boards available (local and remote)")
