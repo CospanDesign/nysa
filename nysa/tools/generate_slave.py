@@ -30,8 +30,8 @@ import glob
 
 from string import Template
 
-from nysa.cbuilder.sdb.sdb import SDB
-from nysa.cbuilder.sdb.sdb import SDBError
+from nysa.cbuilder.sdb import SDB
+from nysa.cbuilder.sdb import SDBError
 
 EXAMPLE_DIR = os.path.join("home", "user", "Projects", "cbuilder_projects", "project1")
 NAME = "generate-slave"
@@ -245,4 +245,3 @@ def generate_directory_structure(template_path, output_path):
                     os.makedirs(generated_dir)
                 except OSError as err:
                     pass
-

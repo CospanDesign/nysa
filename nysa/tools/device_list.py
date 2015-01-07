@@ -23,7 +23,7 @@
 
 import sys
 
-from nysa.cbuilder.drt import drt
+from nysa.cbuilder import sdb
 
 NAME = "devices"
 SCRIPT_NAME = "nysa %s" % NAME
@@ -49,7 +49,7 @@ EPILOG = "\n" \
 
 def print_device_list():
     print "Getting device list"
-    dev_list = drt.get_device_list()
+    dev_list = sdb.get_device_list()
     print "Available Devices:"
     for dev in dev_list:
         if int(dev["ID"], 16) == 0:
@@ -59,7 +59,7 @@ def print_device_list():
         print "{0:20} 0x{1:0=2X} : {2}".format(dev["name"], int(dev["ID"], 16), dev["description"])
 
 def get_num_from_name(name):
-    dev_list = drt.get_device_list()
+    dev_list = sdb.get_device_list()
     for dev in dev_list:
         if dev["name"].lower() == name.lower():
             return int(dev["ID"], 16)

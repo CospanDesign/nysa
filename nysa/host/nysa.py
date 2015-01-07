@@ -40,8 +40,7 @@ from array import array as Array
 #put nysa in the system path
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
-                             "cbuilder",
-                             "sdb"))
+                             "cbuilder"))
 import sdb as sdb_controller
 from sdb import SDBError
 

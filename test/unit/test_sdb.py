@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
 
-from nysa.cbuilder.sdb import sdb
+from nysa.cbuilder import sdb
 
 SDB_DATA =  \
     "  Set the Vendor ID (Hexidecimal 64-bit Number)\n" \
