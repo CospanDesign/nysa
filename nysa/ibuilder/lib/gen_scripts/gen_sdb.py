@@ -22,6 +22,8 @@
 """
 Changes:
 
+01/07/2015
+    -Changed from DRT to SDB
 12/13/2011
     -Changed the response from 25 characters to 32
 12/02/2011
@@ -34,12 +36,78 @@ Changes:
 import sys
 import os
 import json
+from string import Template
+import copy
 
 from gen import Gen
+from nysa.cbuilder.sdb import SDB
+from nysa.cbuilder.sdb import convert_rom_to_32bit_buffer
+from nysa.cbuilder.sdb import SDBError
+
 from nysa.ibuilder.lib import utils
 import nysa.ibuilder.lib.verilog_utils as vutils
-from string import Template
 
+MAIN_INTERCONNECT = \
+    "  Set the Vendor ID (Hexidecimal 64-bit Number)\n" \
+    "  SDB_VENDOR_ID:800000000000C594\n" \
+    "\n" \
+    "  Set the Product ID\n" \
+    "  SDB_DEVICE_ID:0000\n" \
+    "\n" \
+    "  Set the Version of the core\n" \
+    "  SDB_CORE_VERSION:00.000.001\n" \
+    "\n" \
+    "  Set the name of the core\n" \
+    "  SDB_NAME:nysa\n" \
+    "\n" \
+    "  Set ABI Class\n" \
+    "  SDB_ABI_CLASS:0000\n" \
+    "    Undocumented Device\n" \
+    "\n" \
+    "  Set API Version Major\n" \
+    "  SDB_ABI_VERSION_MAJOR:00\n" \
+    "\n" \
+    "  Set ABI Version Minor\n" \
+    "  SDB_ABI_VERSION_MINOR:00\n" \
+    "\n" \
+    "  Set Endian BIG, LITTLE\n" \
+    "  SDB_ABI_ENDIAN:BIG\n" \
+    "\n" \
+    "  Set Device Width (8, 16, 32, 64)\n" \
+    "  SDB_ABI_DEVICE_WIDTH:32\n" \
+    "\n" \
+    "  Set the Modules URL\n" \
+    "  SDB_MODULE_URL:http://www.wiki.cospandesign.com\n" \
+    "\n" \
+    "  Date\n" \
+    "  SDB_DATE:2015/01/05\n" \
+    "\n" \
+    "  Device is executable\n" \
+    "  SDB_EXECUTABLE:True\n" \
+    "\n" \
+    "  Device is writeable\n" \
+    "  SDB_WRITEABLE:True\n" \
+    "\n" \
+    "  Device is readable\n" \
+    "  SDB_READABLE:True\n" \
+    "\n"
+
+def calculate_sdb_size(tags):
+    #Add 3 initially for the main interconnect
+    #peripheral interconnect
+    #memory interconnect
+    count = 3
+    #Two more for the bridges that tell the top where the peripheral and memory
+    #interconnects are located
+    count += 2
+    #Add one more for the SDB
+    count += 1
+    count += len(tags["SLAVES"])
+    count += len(tags["MEMORY"])
+    #Empty Buffer at the end
+    count += 1 
+    count = (512 / 32) * count
+    return count
 
 class GenSDB(Gen):
     """Generate the SDB ROM"""
@@ -48,12 +116,14 @@ class GenSDB(Gen):
         #print "in GenSDB"
         return
 
-
     def gen_script(self, tags = {}, buf = "", user_paths = [], debug = False):
-        out_buf = ""
+        buf = ""
+        tags = copy.deepcopy(tags)
+        if "MEMORY" not in tags:
+            tags["MEMORY"] = {}
+
         self.user_paths = user_paths
         board_name = tags["board"].lower()
-
         if not utils.is_board_id_in_dict(board_name):
             utils.update_board_id_dict()
 
@@ -64,125 +134,105 @@ class GenSDB(Gen):
             if key.lower() == "image_id":
                 image_id = tags[key]
 
-        #image_id = board_dict[tags["image_id"]]
+        self.sdb = SDB()
 
-        #Get the SDB version from the SDB info
-        version = 0x0005
-        version_string = "{0:0=4X}".format(version)
-        id_string = "{0:0=4X}".format(0xC594)
-        number_of_devices = 0
-        #print "tags: %s" % str(tags)
-        number_of_devices += len(tags["SLAVES"])
+        #Generate the main interconnect ROM
+        self.sdb.parse_buffer(MAIN_INTERCONNECT)
+        #self.sdb.d["SDB_DEVICE_ID"] = hex(board_id)
+        self.sdb.d["SDB_DEVICE_ID"] = hex(image_id << 16 | board_id)
+        self.sdb.set_start_address(0x00000000)
+        self.sdb.set_size(0x200000000)
+        #Indicate there are two sub interconnects
+        self.sdb.set_number_of_records(2)
+        rom = self.sdb.generate_interconnect_rom()
+        buf = convert_rom_to_32bit_buffer(rom)
+        buf += "\n"
 
-        if debug:
-            print "number of slaves: " + str(number_of_devices)
+        #Generate the Bridge for Peripherals
+        self.sdb.set_start_address(0x00000000)
+        self.sdb.set_size(0x100000000)
+        self.sdb.d["SDB_NAME"] = "Peripherals Bridge"
+        self.sdb.set_bridge_address(0x00000000)
+        rom = self.sdb.generate_bridge_rom()
+        buf += convert_rom_to_32bit_buffer(rom)
+        buf += "\n"
 
-        if ("MEMORY" in tags):
-            if debug:
-                print "num of mem devices: " + str(len(tags["MEMORY"]))
-            number_of_devices += len(tags["MEMORY"])
+        #Generate the peripheral Interconnect
+        self.sdb.set_start_address(0x00000000)
+        self.sdb.set_size(0x100000000)
+        self.sdb.set_number_of_records(len(tags["SLAVES"]) + 1)
+        self.sdb.d["SDB_NAME"] = "Peripherals Bus"
+        rom = self.sdb.generate_interconnect_rom()
+        buf += convert_rom_to_32bit_buffer(rom)
+        buf += "\n"
 
-        if debug:
-            print "number of entities: " + str(number_of_devices)
-        num_dev_string = "{0:0=8X}".format(number_of_devices)
-        board_string = "{0:0=8X}".format(board_id)
-        image_string = "{0:0=8X}".format(image_id)
+        #Generate SDB Device
+        self.sdb.d["SDB_NAME"] = "SDB"
+        self.sdb.set_start_address(0x00)
+        self.sdb.set_size(calculate_sdb_size(tags))
+        self.sdb.d["SDB_ABI_VERSION_MAJOR"] = "0x0000"
+        self.sdb.d["SDB_ABI_VERSION_MAJOR"] = "0x0000"
+        rom = self.sdb.generate_device_rom()
+        buf += convert_rom_to_32bit_buffer(rom)
+        buf += "\n"
 
-        if "IMAGE_ID" in tags:
-            image_string = "{0:0=8X}".format(tags["IMAGE_ID"])
-
-
-        #header
-        out_buf = version_string + id_string + "\n"
-        out_buf += num_dev_string   + "\n"
-        out_buf += "00000000"       + "\n"
-        out_buf += board_string     + "\n"
-        out_buf += image_string     + "\n"
-        out_buf += "0000"              
-        out_buf += "00000000"       + "\n"
-        out_buf += "00000000"       + "\n"
-
-
-
-        #peripheral slaves
+        offset = 0x01000000
+        #Process the slave elements
         for i in range (0, len(tags["SLAVES"])):
-            if debug: print "Working on slave: %d" % i
             key = tags["SLAVES"].keys()[i]
             name = tags["SLAVES"][key]["filename"]
             absfilename = utils.find_rtl_file_location(name, self.user_paths)
-            slave_keywords = [
-                "SDB_ABI_VERSION_MAJOR",
-                "SDB_ABI_VERSION_MINOR",
-                "SDB_SIZE"
-            ]
-            slave_tags = vutils.get_module_tags(filename = absfilename, bus = "wishbone", keywords = slave_keywords)
-
-            sdb_id_buffer = "{0:0=4X}"
-            sdb_offset_buffer = "{0:0=8X}"
-            sdb_size_buffer = "{0:0=8X}"
-
+            f = open(absfilename, 'r')
+            slave_buffer = f.read()
+            f.close()
+            self.sdb.parse_buffer(slave_buffer)
             offset = 0x01000000 * (i + 1)
-            sdb_id_buffer = sdb_id_buffer.format(int(slave_tags["keywords"]["SDB_ABI_VERSION_MAJOR"].strip(), 0))
-            sdb_sub_id_buffer = "0000"
-            if "SDB_ABI_VERSION_MINOR" in slave_tags["keywords"]:
-                sdb_sub_id_buffer = "{0:0=4X}".format(int(slave_tags["keywords"]["SDB_ABI_VERSION_MINOR"].strip(), 0))
-            #print "SDB_SUB_ID: %s" % sdb_sub_id_buffer
-            sdb_offset_buffer = sdb_offset_buffer.format(offset)
-            sdb_size_buffer = sdb_size_buffer.format(int(slave_tags["keywords"]["SDB_SIZE"], 0))
-            unique_id_buffer = "00000000"
-            if "unique_id" in tags["SLAVES"][key].keys():
-                unique_id_buffer = "{0:0=8X}".format(tags["SLAVES"][key]["unique_id"])
+            self.sdb.set_start_address(offset)
 
-            out_buf += sdb_sub_id_buffer + sdb_id_buffer + "\n"
-            out_buf += sdb_offset_buffer + "\n"
-            out_buf += sdb_size_buffer + "\n"
-            out_buf += unique_id_buffer + "\n"
-            out_buf += "00000000\n"
-            out_buf += "00000000\n"
-            out_buf += "00000000\n"
+            rom = self.sdb.generate_device_rom()
+            buf += convert_rom_to_32bit_buffer(rom)
+            buf += "\n"
+
+        #Generate the Bridge for Memory
+        self.sdb.set_start_address(0x10000000)
+        self.sdb.set_size(0x200000000)
+        self.sdb.d["SDB_NAME"] = "Memory Bridge"
+        self.sdb.set_bridge_address(0x10000000)
+        rom = self.sdb.generate_bridge_rom()
+        buf += convert_rom_to_32bit_buffer(rom)
+        buf += "\n"
 
 
-        #memory slaves
-        if ("MEMORY" in tags):
-            if debug: print "Working on memory: %d" % i
-            mem_offset = 0
-            for i in range (0, len(tags["MEMORY"])):
-                key = tags["MEMORY"].keys()[i]
-                name = tags["MEMORY"][key]["filename"]
-                absfilename = utils.find_rtl_file_location(name, self.user_paths)
-                slave_keywords = [
-                    "SDB_ABI_VERSION_MAJOR",
-                    "SDB_SIZE"
-                ]
-                slave_tags = vutils.get_module_tags(filename = absfilename, bus = "wishbone", keywords = slave_keywords)
+        #Generate the memory Interconnect
+        self.sdb.set_start_address(0x000000000)
+        self.sdb.set_size(0x100000000)
+        self.sdb.set_number_of_records(len(tags["MEMORY"]))
+        self.sdb.d["SDB_NAME"] = "Memory Bus"
+        rom = self.sdb.generate_interconnect_rom()
+        buf += convert_rom_to_32bit_buffer(rom)
+        buf += "\n"
 
-                sdb_id_buffer = "{0:0=8X}"
-                sdb_flags_buffer = "{0:0=8X}"
-                sdb_offset_buffer = "{0:0=8X}"
-                sdb_size_buffer = "{0:0=8X}"
-#add the offset from the memory
-                sdb_id_buffer = sdb_id_buffer.format(int(slave_tags["keywords"]["SDB_ABI_VERSION_MAJOR"], 0))
-                sdb_offset_buffer = sdb_offset_buffer.format(mem_offset)
-                sdb_size_buffer = sdb_size_buffer.format(int(slave_tags["keywords"]["SDB_SIZE"], 0))
-                mem_offset += int(slave_tags["keywords"]["SDB_SIZE"], 0)
-                unique_id_buffer = "00000000"
-                if "unique_id" in tags["MEMORY"][key].keys():
-                    unique_id_buffer = "{0:0=8X}".format(tags["MEMORY"][key]["unique_id"])
+        #Process the memory elements
+        mem_offset = 0
+        for i in range (0, len(tags["MEMORY"])):
+            key = tags["MEMORY"].keys()[i]
+            name = tags["MEMORY"][key]["filename"]
+            absfilename = utils.find_rtl_file_location(name, self.user_paths)
+            f = open(absfilename, 'r')
+            memory_buffer = f.read()
+            f.close()
+            self.sdb.parse_buffer(memory_buffer)
+            self.sdb.set_start_address(mem_offset)
+            mem_offset += self.sdb.get_size_as_int()
 
+            rom = self.sdb.generate_device_rom()
+            buf += convert_rom_to_32bit_buffer(rom)
+            buf += "\n"
 
+        rom = self.sdb.generate_empty_rom()
+        buf += convert_rom_to_32bit_buffer(rom)
 
-                out_buf += sdb_id_buffer + "\n"
-                out_buf += sdb_flags_buffer + "\n"
-                out_buf += sdb_offset_buffer + "\n"
-                out_buf += sdb_size_buffer + "\n"
-                out_buf += unique_id_buffer + "\n"
-                out_buf += "00000000\n"
-                out_buf += "00000000\n"
-                out_buf += "00000000\n"
-
-
-        if debug: print "SDB:\n%s" % out_buf
-        return out_buf
+        return buf
 
     def gen_name(self):
         print "generate a ROM"

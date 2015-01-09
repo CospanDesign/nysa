@@ -46,16 +46,33 @@ DESCRIPTION_DICT["SDB_READABLE"]            = "Device is readable"
 DESCRIPTION_DICT["SDB_NRECS"]               = "Number of Records"
 DESCRIPTION_DICT["SDB_VERSION"]             = "Version of SDB"
 DESCRIPTION_DICT["SDB_BUS_TYPE"]            = "Bus Type: Wishbone, Storage"
-DESCRIPTION_DICT["SDB_BRIDGE_CHILD_ADDR"]   = "Bridge Child Address Location Relative to SDB (Hex)"
+DESCRIPTION_DICT["SDB_BRIDGE_CHILD_ADDR"]   = "Bridge Child SDB Address Location Relative to SDB (Hex)"
 DESCRIPTION_DICT["SDB_START_ADDRESS"]       = "Start Address (Hex)"
 DESCRIPTION_DICT["SDB_LAST_ADDRESS"]        = "Last Address (Hex)"
 DESCRIPTION_DICT["SDB_SIZE"]                = "Number of Registers"
+DESCRIPTION_DICT["SDB_SYNTH_NAME"]          = "Name of Synthesis Vendor (16 chars)"
+DESCRIPTION_DICT["SDB_SYNTH_COMMIT_ID"]     = "Commit ID of build Hex" 
+DESCRIPTION_DICT["SDB_SYNTH_TOOL_NAME"]     = "Name of Synthesis Tool (16 chars)"
+DESCRIPTION_DICT["SDB_SYNTH_TOOL_VER"]      = "Version of Synthesis Tool"
+DESCRIPTION_DICT["SDB_SYNTH_DATE"]          = "Date of image build"
+DESCRIPTION_DICT["SDB_SYNTH_USER_NAME"]     = "User name of the person who built image"
 
 SDB_INTERCONNECT_MAGIC  = 0x5344422D
 SDB_BUS_TYPE_WISHBONE   = 0x00
 SDB_BUS_TYPE_STORAGE    = 0x01
 
+SDB_RECORD_TYPE_INTERCONNECT = 0x00
+SDB_RECORD_TYPE_DEVICE       = 0x01
+SDB_RECORD_TYPE_BRIDGE       = 0x02
+SDB_RECORD_TYPE_INTEGRATION  = 0x80
+SDB_RECORD_TYPE_REPO_URL     = 0x81
+SDB_RECORD_TYPE_SYNTHESIS    = 0x82
+SDB_RECORD_TYPE_EMPTY        = 0xFF
+
 class SDBError(Exception):
+    pass
+
+class SDBInfo(Exception):
     pass
 
 class SDB (object):
@@ -83,7 +100,13 @@ class SDB (object):
         "SDB_BRIDGE_CHILD_ADDR",
         "SDB_SIZE",
         "SDB_START_ADDRESS",
-        "SDB_LAST_ADDRESS"
+        "SDB_LAST_ADDRESS",
+        "SDB_SYNTH_NAME",
+        "SDB_SYNTH_COMMIT_ID",
+        "SDB_SYNTH_TOOL_NAME",
+        "SDB_SYNTH_TOOL_VER",
+        "SDB_SYNTH_DATE",
+        "SDB_SYNTH_USER_NAME"
     ]
 
     def __init__(self):
@@ -91,14 +114,115 @@ class SDB (object):
         for e in self.ELEMENTS:
             self.d[e] = ""
 
-        self.d["SDB_SIZE"] = 0
+        self.d["SDB_SIZE"] = hex(0)
         self.d["SDB_START_ADDRESS"] = "0x00"
         self.d["SDB_LAST_ADDRESS"] = "0x00"
         self.d["SDB_NRECS"] = "0"
         self.d["SDB_BUS_TYPE"] = "Wishbone"
         self.d["SDB_VERSION"] = str(self.SDB_VERSION)
         self.d["SDB_BRIDGE_CHILD_ADDR"] = "0"
+        self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_INTERCONNECT
 
+#ROM -> SDB
+    def parse_rom_element(self, rom, debug):
+        possible_magic = rom[0] << 24 | \
+                         rom[1] << 16 | \
+                         rom[2] <<  8 | \
+                         rom[3] <<  0
+
+        if (possible_magic == SDB_INTERCONNECT_MAGIC):
+            #if debug: print "Found Interconnect!"
+            self._parse_rom_interconnect_element(rom, debug)
+            self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_INTERCONNECT
+
+        elif rom[63] == SDB_RECORD_TYPE_DEVICE:
+            self._parse_rom_device_element(rom, debug)
+            self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_DEVICE
+        elif rom[63] == SDB_RECORD_TYPE_BRIDGE:
+            self._parse_rom_bridge_element(rom, debug)
+            self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_BRIDGE
+        elif rom[63] == SDB_RECORD_TYPE_INTEGRATION:
+            self.d["SDB_RECORD_TYPE"] = SDB_RECORD_INTEGRATION
+        elif rom[63] == SDB_RECORD_TYPE_REPO_URL:
+            self.d["SDB_RECORD_TYPE"] = SDB_RECORD_REPO_URL
+        elif rom[63] == SDB_RECORD_TYPE_SYNTHESIS:
+           self.d["SDB_RECORD_TYPE"] = SDB_RECORD_SYNTHESIS
+        elif rom[63] == SDB_RECORD_TYPE_EMPTY:
+           self.d["SDB_RECORD_TYPE"] = SDB_RECORD_EMPTY
+        else:
+            raise SDBInfo("Info: Unrecognized Record: 0x%02X" % rom[63])
+
+    def _parse_rom_device_element(self, rom, debug = False):
+        self.d["SDB_ABI_CLASS"] = hex(  rom[0] <<  8 | \
+                                        rom[1] <<  0)
+        self.d["SDB_ABI_VERSION_MAJOR"] = hex(rom[2])
+        self.d["SDB_ABI_VERSION_MINOR"] = hex(rom[3])
+        bus_width = rom[6]
+        endian = (rom[7] >> 4) & 0x01
+        executable = (rom[7] >> 2) & 0x01
+        writeable = (rom[7] >> 1) & 0x01
+        readable = (rom[7] >> 0) & 0x01
+
+        self.d["SDB_EXECUTABLE"] = (executable == 1)
+        self.d["SDB_WRITEABLE"] = (writeable == 1)
+        self.d["SDB_READABLE"] = (readable == 1)
+        self.d["SDB_ABI_ENDIAN"] = (endian == 0)
+        if (bus_width == 0):
+            self.d["SDB_ABI_DEVICE_WIDTH"] = "8"
+        elif (bus_width == 1):
+            self.d["SDB_ABI_DEVICE_WIDTH"] = "16"
+        elif (bus_width == 2):
+            self.d["SDB_ABI_DEVICE_WIDTH"] = "32"
+        elif (bus_width == 3):
+            self.d["SDB_ABI_DEVICE_WIDTH"] = "64"
+
+        if endian:
+            self.d["SDB_ABI_ENDIAN"] = "Little"
+        else:
+            self.d["SDB_ABI_ENDIAN"] = "Big"
+
+        self._parse_rom_component_element(rom, debug)
+
+    def _parse_rom_bridge_element(self, rom, debug = False):
+        self.d["SDB_BRIDGE_CHILD_ADDR"] = hex(self._convert_rom_to_int(rom[ 0: 8]))
+        self._parse_rom_component_element(rom, debug)
+
+    def _parse_rom_interconnect_element(self, rom, debug = False):
+        self.d["SDB_NRECS"] = hex(rom[4] << 8 | \
+                                  rom[5] << 0)
+        #if debug: print "Number of Records: %d" % self.d["SDB_NRECS"]
+        self.d["SDB_VERSION"] = rom[6]
+        self.d["SDB_BUS_TYPE"] = rom[7]
+        self._parse_rom_component_element(rom, debug)
+        if rom[63] != 0x00:
+            raise SDBError("Interconnect element record does not match type: 0x%02X" % rom[63])
+
+    def _parse_rom_component_element(self, rom, debug = False):
+        self.d["SDB_START_ADDRESS"] =   hex(self._convert_rom_to_int(rom[ 8:16]))
+        self.d["SDB_LAST_ADDRESS"] =    hex(self._convert_rom_to_int(rom[16:24]))
+        start_address = int(self.d["SDB_START_ADDRESS"], 16)
+        end_address = int(self.d["SDB_LAST_ADDRESS"], 16)
+        self.set_size(end_address - start_address)
+        self._parse_rom_product_element(rom, debug)
+
+    def _parse_rom_product_element(self, rom, debug = False):
+        self.d["SDB_VENDOR_ID"] =       hex(self._convert_rom_to_int(rom[24:32]))
+        self.d["SDB_DEVICE_ID"] =       hex(self._convert_rom_to_int(rom[32:36]))
+        self.d["SDB_CORE_VERSION"] =    hex(self._convert_rom_to_int(rom[36:40]))
+        self.d["SDB_DATE"] =            rom[40:44].tostring()
+        self.d["SDB_NAME"] =            rom[44:63].tostring()
+
+    def _parse_rom_url_element(self, rom, debug = False):
+        self.d["SDB_MODULE_URL"] =      rom[0:63].tostring()
+
+    def _parse_synthesis_element(self, rom, debug = False):
+        self.d["SDB_SYNTH_NAME"] =      rom[ 0:16].tostring()
+        self.d["SDB_SYNTH_COMMIT_ID"] = rom[16:32].tostring()
+        self.d["SDB_SYNTH_TOOL_NAME"] = rom[32:36].tostring()
+        self.d["SDB_SYNTH_TOOL_VER"] =  rom[36:40].tostring()
+        self.d["SDB_SYNTH_DATE"] =      rom[40:48].tostring()
+        self.d["SDB_SYNTH_USER_NAME"] = rom[48:63].tostring()
+#Verilog Module -> SDB Device
     def parse_buffer(self, in_buffer):
         #Seperate the buffer into a list of lines
         buffers = in_buffer.splitlines()
@@ -110,12 +234,107 @@ class SDB (object):
                     value = value.strip()
                     self.d[e] = value
 
+#Verilog Module Template
     def generate_slave_template_buffer(self):
         buf = ""
         for e in self.ELEMENTS:
             buf += "%s\n" % DESCRIPTION_DICT[e]
             buf += "%s:%s\n\n" % (e, self.d[e])
         return buf
+
+#SDB -> ROM
+    def generate_bridge_rom(self):
+        rom = Array('B')
+        self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_BRIDGE
+        for i in range(64):
+            rom.append(0x00)
+        rom = self._generate_product_rom(rom)
+        rom = self._generate_component_rom(rom)
+        addr = self.get_bridge_child_addr_as_int()
+        #print "Address: 0x%016X" % addr
+        rom[0x00] = (addr >> 56) & 0xFF
+        rom[0x01] = (addr >> 48) & 0xFF
+        rom[0x02] = (addr >> 40) & 0xFF
+        rom[0x03] = (addr >> 32) & 0xFF
+        rom[0x04] = (addr >> 24) & 0xFF
+        rom[0x05] = (addr >> 16) & 0xFF
+        rom[0x06] = (addr >>  8) & 0xFF
+        rom[0x07] = (addr >>  0) & 0xFF
+        rom[0x3F] = SDB_RECORD_TYPE_BRIDGE
+        return rom
+
+    def generate_interconnect_rom(self):
+        self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_INTERCONNECT
+        rom = Array('B')
+        for i in range(64):
+            rom.append(0x00)
+
+        rom = self._generate_product_rom(rom)
+        rom = self._generate_component_rom(rom)
+        rom[0x00] = (SDB_INTERCONNECT_MAGIC >> 24) & 0xFF
+        rom[0x01] = (SDB_INTERCONNECT_MAGIC >> 16) & 0xFF
+        rom[0x02] = (SDB_INTERCONNECT_MAGIC >> 8 ) & 0xFF
+        rom[0x03] = (SDB_INTERCONNECT_MAGIC >> 0 ) & 0xFF
+
+        nrecs = self.get_number_of_records_as_int()
+        rom[0x04] = (nrecs >> 8) & 0xFF
+        rom[0x05] = (nrecs >> 0) & 0xFF
+
+        version = self.get_version_as_int()
+        rom[0x06] = version & 0xFF
+
+        bus_type = self.get_bus_type_as_int()
+        rom[0x07] = bus_type & 0xFF
+        rom[0x3F] = SDB_RECORD_TYPE_INTERCONNECT
+        return rom
+
+    def generate_device_rom(self):
+        self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_DEVICE
+        rom = Array('B')
+        for i in range(64):
+            rom.append(0x00)
+
+        rom = self._generate_product_rom(rom)
+        rom = self._generate_component_rom(rom)
+
+        #ABI Class
+        abi_class = self.get_abi_class_as_int()
+        rom[0x00] = (abi_class >> 8) & 0xFF
+        rom[0x01] = (abi_class) & 0xFF
+
+        #abi version major
+        abi_major = self.get_abi_version_major_as_int()
+        rom[0x02] = (abi_major & 0xFF)
+
+        #ABI version minor
+        abi_minor = self.get_abi_version_minor_as_int()
+        rom[0x03] = (abi_minor & 0xFF)
+
+        #Bus Specific Stuff
+        endian = self.get_endian_as_int()
+        bus_width = self._translate_buf_width_to_rom_version()
+        executable = 0
+        writeable = 0
+        readable = 0
+
+        if self.is_executable():
+            executable = 1
+        if self.is_writeable():
+            writeable = 1
+        if self.is_readable():
+            readable = 1
+
+        #print "executable: %s" % str(executable)
+        #print "writeable: %s" % str(writeable)
+        #print "readable: %s" % str(readable)
+
+        rom[0x04] = 0
+        rom[0x05] = 0
+        rom[0x06] = bus_width
+        rom[0x07] = (endian << 4 | executable << 2 | writeable << 1 | readable)
+
+        rom[0x3F] = SDB_RECORD_TYPE_DEVICE
+        return rom
 
     def _generate_product_rom(self, rom):
 
@@ -156,11 +375,10 @@ class SDB (object):
         if len(name) > 19:
             name = name[:19]
 
-        na = Array('B', name) 
+        na = Array('B', name)
         for i in range(len(na)):
             rom[0x2C + i] = na[i]
 
-        rom[0x3F] = 0x01
         return rom
 
     def _generate_component_rom(self, rom):
@@ -192,111 +410,56 @@ class SDB (object):
 
         return rom
 
-    def generate_bridge_rom(self):
+    def generate_empty_rom(self):
         rom = Array('B')
         for i in range(64):
             rom.append(0x00)
-        rom = self._generate_product_rom(rom)
-        rom = self._generate_component_rom(rom)
-        addr = self.get_bridge_child_addr_as_int()
-        #print "Address: 0x%016X" % addr
-        rom[0x00] = (addr >> 56) & 0xFF
-        rom[0x01] = (addr >> 48) & 0xFF
-        rom[0x02] = (addr >> 40) & 0xFF
-        rom[0x03] = (addr >> 32) & 0xFF
-        rom[0x04] = (addr >> 24) & 0xFF
-        rom[0x05] = (addr >> 16) & 0xFF
-        rom[0x06] = (addr >>  8) & 0xFF
-        rom[0x07] = (addr >>  0) & 0xFF
         return rom
 
-    def generate_interconnect_rom(self):
-        rom = Array('B')
-        for i in range(64):
-            rom.append(0x00)
-
-        rom = self._generate_product_rom(rom)
-        rom = self._generate_component_rom(rom)
-        rom[0x00] = (SDB_INTERCONNECT_MAGIC >> 24) & 0xFF
-        rom[0x01] = (SDB_INTERCONNECT_MAGIC >> 16) & 0xFF
-        rom[0x02] = (SDB_INTERCONNECT_MAGIC >> 8 ) & 0xFF
-        rom[0x03] = (SDB_INTERCONNECT_MAGIC >> 0 ) & 0xFF
-
-        nrecs = self.get_number_of_records_as_int()
-        rom[0x04] = (nrecs >> 8) & 0xFF
-        rom[0x05] = (nrecs >> 0) & 0xFF
-
-        version = self.get_version_as_int()
-        rom[0x06] = version & 0xFF
-
-        bus_type = self.get_bus_type_as_int()
-        rom[0x07] = bus_type & 0xFF
-
-        return rom
-
-    def generate_device_rom(self):
-        rom = Array('B')
-        for i in range(64):
-            rom.append(0x00)
-
-        rom = self._generate_product_rom(rom)
-        rom = self._generate_component_rom(rom)
-
-        #ABI Class
-        abi_class = self.get_abi_class_as_int()
-        rom[0x00] = (abi_class >> 8) & 0xFF
-        rom[0x01] = (abi_class) & 0xFF
-
-        #abi version major
-        abi_major = self.get_abi_version_major_as_int()
-        rom[0x02] = (abi_major & 0xFF)
-
-        #ABI version minor
-        abi_minor = self.get_abi_version_minor_as_int()
-        rom[0x03] = (abi_minor & 0xFF)
-
-        #Bus Specific Stuff
-        endian = self.get_endian_as_int()
-        bus_width = self._translate_buf_width_to_rom_version()
-        executable = 0
-        writeable = 0
-        readable = 0
-
-        if self.is_executable():
-            executable = 1
-        if self.is_writeable():
-            writeable = 1 
-        if self.is_readable():
-            readable = 1
-
-        #print "executable: %s" % str(executable)
-        #print "writeable: %s" % str(writeable)
-        #print "readable: %s" % str(readable)
-
-        rom[0x04] = 0
-        rom[0x05] = 0
-        rom[0x06] = bus_width
-        rom[0x07] = (endian << 4 | executable << 2 | writeable << 1 | readable)
-        
-        return rom
-
+#SDB -> Ordered Dict
     def generated_ordered_dict(self):
         od = collections.OrderedDict()
         for e in self.ELEMENTS:
             od[e] = self.d[e]
         return od
 
+#Utility Functions
+    def set_bridge_address(self, addr):
+        self.d["SDB_BRIDGE_CHILD_ADDR"] = hex(addr)
+
+    def get_bridge_address_as_int(self):
+        return int(self.d["SDB_BRIDGE_CHILD_ADDR"], 16)
+
     def set_start_address(self, addr):
         self.d["SDB_START_ADDRESS"] = hex(addr)
-        self.d["SDB_LAST_ADDRESS"] = hex(addr + self.d["SDB_SIZE"])
+        self.d["SDB_LAST_ADDRESS"] = hex(addr + int(self.d["SDB_SIZE"], 0))
 
     def get_start_address_as_int(self):
         return int(self.d["SDB_START_ADDRESS"], 16)
 
     def set_size(self, size):
-        self.d["SDB_SIZE"] = size
+        self.d["SDB_SIZE"] = hex(size)
         start_addr = int(self.d["SDB_START_ADDRESS"], 16)
-        self.d["SDB_LAST_ADDRESS"] = hex(start_addr + self.d["SDB_SIZE"])
+        self.d["SDB_LAST_ADDRESS"] = hex(start_addr + int(self.d["SDB_SIZE"], 0))
+
+    def set_number_of_records(self, nrecs):
+        self.d["SDB_NRECS"] = str(nrecs)
+
+    def get_number_of_records_as_int(self):
+        return int(self.d["SDB_NRECS"], 16)
+
+    def is_writeable(self):
+        return (self.d["SDB_WRITEABLE"].lower() == "true")
+
+    def enable_read(self, enable):
+        self.d["SDB_READABLE"] = str(enable)
+
+    def is_readable(self):
+        return (self.d["SDB_READABLE"].lower() == "true")
+
+#Integer Rerpresentation of values
+    def get_size_as_int(self):
+        return int(self.d["SDB_SIZE"], 0)
 
     def get_end_address_as_int(self):
         return int(self.d["SDB_LAST_ADDRESS"], 16)
@@ -305,6 +468,7 @@ class SDB (object):
         return int(self.d["SDB_VENDOR_ID"], 16)
 
     def get_device_id_as_int(self):
+        print "device id: %s" % self.d["SDB_DEVICE_ID"]
         return int(self.d["SDB_DEVICE_ID"], 16)
 
     def get_abi_class_as_int(self):
@@ -321,7 +485,7 @@ class SDB (object):
             return 1
         else:
             return 0
-        
+
     def get_bus_width_as_int(self):
         return int(self.d["SDB_ABI_DEVICE_WIDTH"])
 
@@ -362,15 +526,6 @@ class SDB (object):
     def enable_write(self, enable):
         self.d["SDB_WRITEABLE"] = str(enable)
 
-    def is_writeable(self):
-        return (self.d["SDB_WRITEABLE"].lower() == "true")
-
-    def enable_read(self, enable):
-        self.d["SDB_READABLE"] = str(enable)
-
-    def is_readable(self):
-        return (self.d["SDB_READABLE"].lower() == "true")
-
     def get_bus_type_as_int(self):
         if self.d["SDB_BUS_TYPE"].lower() == "wishbone":
             return 0
@@ -382,22 +537,45 @@ class SDB (object):
     def get_version_as_int(self):
         return int (self.d["SDB_VERSION"])
 
-    def set_number_of_records(self, nrecs):
-        self.d["SDB_NRECS"] = str(nrecs)
-
-    def get_number_of_records_as_int(self):
-        return int(self.d["SDB_NRECS"], 16)
-
     def set_bridge_child_addr(self, addr):
         self.d["SDB_BRIDGE_CHILD_ADDR"] = hex(addr)
 
     def get_bridge_child_addr_as_int(self):
         return int(self.d["SDB_BRIDGE_CHILD_ADDR"], 16)
-            
+
+    def _convert_rom_to_int(self, rom):
+        s = ""
+        val = 0
+        for i in range(len(rom)):
+            val = val << 8 | rom[i]
+            #print "val: 0x%016X" % val
+
+        return val
+
+    def is_device(self):
+        if self.d["SDB_RECORD_TYPE"] == SDB_RECORD_TYPE_DEVICE:
+            return True
+        return False
+
+    def is_interconnect(self):
+        if self.d["SDB_RECORD_TYPE"] == SDB_RECORD_TYPE_INTERCONNECT:
+            return True
+        return False
+
+    def is_bridge(self):
+        if self.d["SDB_RECORD_TYPE"] == SDB_RECORD_TYPE_BRIDGE:
+            return True
+        return False
+
 def convert_rom_to_32bit_buffer(rom):
     buf = ""
+    last = False
     for i in range(0, len(rom), 4):
-        buf += "%02X%02X%02X%02X\n" % (rom[i], rom[i + 1], rom[i + 2], rom[i + 3])
+        if i + 4 >= len(rom):
+            last = True
+        buf += "%02X%02X%02X%02X" % (rom[i], rom[i + 1], rom[i + 2], rom[i + 3])
+        if not last:
+            buf += "\n"
 
     return buf
 

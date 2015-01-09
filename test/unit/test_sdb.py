@@ -115,7 +115,7 @@ class Test (unittest.TestCase):
                               "6D6F6475\n" \
                               "6C650000\n" \
                               "00000000\n" \
-                              "00000001\n")
+                              "00000001")
 
     def test_generate_bridge_rom_buffer(self):
         rom = self.sdb.generate_bridge_rom()
@@ -138,7 +138,7 @@ class Test (unittest.TestCase):
                               "6D6F6475\n" \
                               "6C650000\n" \
                               "00000000\n" \
-                              "00000001\n")
+                              "00000001")
 
     def test_generate_device_rom_buffer(self):
         rom = self.sdb.generate_device_rom()
@@ -160,5 +160,5 @@ class Test (unittest.TestCase):
                              "6D6F6475\n" \
                              "6C650000\n" \
                              "00000000\n" \
-                             "00000001\n")
+                             "00000001")
 

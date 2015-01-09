@@ -1,25 +1,11 @@
-import gen
 import os
 import sys
 import string
 from string import Template
-from gen import Gen
+from string import atoi
 
-from nysa.ibuilder.lib import utils
-from nysa.ibuilder.lib import verilog_utils as vutils
-
-class GenMemInterconnect(Gen):
-
-  def __init__(self):
-    return
-
-  def gen_script (self, tags = {}, buf = "", user_paths = [], debug=False):
-    buf = generate_wb_mem_interconnect(tags = tags, user_paths = user_paths, debug = debug)
-    return buf
-
-  def get_name (self):
-    print "wishbone_mem_interconnect.py"
-
+import utils
+import verilog_utils as vutils
 
 
 def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
@@ -37,6 +23,16 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
                             "wishbone",
                             "interconnect",
                             "wishbone_mem_interconnect.v")
+
+  '''
+  directory = os.path.dirname(__file__)
+  wb_i_loc = os.path.join(  directory,
+                            "..",
+                            "verilog",
+                            "wishbone",
+                            "interconnect",
+                            "wishbone_mem_interconnect.v")
+  '''
 
   f = open(wb_i_loc, "r")
   buf = f.read()
@@ -85,12 +81,15 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
     if debug:
         print "slave tags: " + str(slave_tags)
 
-    mem_size = int(slave_tags["keywords"]["SDB_SIZE"].strip(), 0)
+    mem_size = slave_tags["keywords"]["SDB_SIZE"].strip()
 
     param_buf = param_buf + "parameter MEM_SEL_%d\t=\t%d;\n" % (i, i)
     param_buf = param_buf + "parameter MEM_OFFSET_%d\t=\t %d;\n" % (i, mem_offset)
-    param_buf = param_buf + "parameter MEM_SIZE_%d\t=\t 32'h%02X;\n" % (i, mem_size)
-    mem_offset += mem_size
+    param_buf = param_buf + "parameter MEM_SIZE_%d\t=\t %s;\n" % (i, mem_size)
+    mem_offset += int(mem_size, 0)
+
+
+
 
   #generate the memory select logic
   mem_select_buf =  "reg [31:0] mem_select;\n"
@@ -117,6 +116,12 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
   mem_select_buf += "\t\tend\n"
   mem_select_buf += "\tend\n"
   mem_select_buf += "end\n"
+
+
+
+
+  #for i in range ( 0, num_mems):
+  # print "count: " + str(i)
 
   #Ports
   for i in range (0, num_slaves):
@@ -167,6 +172,7 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
   for i in range (0, num_mems):
     ack_block_buf += "\t\tMEM_SEL_%d: begin\n\t\t\to_m_ack <= i_s%d_ack;\n\t\tend\n" % (i, i)
   ack_block_buf += "\t\tdefault: begin\n\t\t\to_m_ack <= 1\'h0;\n\t\tend\n\tendcase\nend\n\n"
+
 
   #int in block
   int_block_buf = "//int in from slave\n"
