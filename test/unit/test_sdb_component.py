@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
 
-from nysa.cbuilder import sdb
+from nysa.cbuilder import sdb_component
 
 SDB_DATA =  \
     "  Set the Vendor ID (Hexidecimal 64-bit Number)\n" \
@@ -57,22 +57,76 @@ SDB_DATA =  \
     "  SDB_READABLE:True\n" \
     "\n"
 
+TEST_INTERCONNECT_ROM = ""\
+    "5344422D\n" \
+    "00100100\n" \
+    "00000000\n" \
+    "01000000\n" \
+    "00000000\n" \
+    "01000005\n" \
+    "80000000\n" \
+    "0000C594\n" \
+    "00000001\n" \
+    "00000001\n" \
+    "140F0105\n" \
+    "7364625F\n" \
+    "6D6F6475\n" \
+    "6C650000\n" \
+    "00000000\n" \
+    "00000000"
+
+TEST_BRIDGE_ROM = ""\
+    "10000000\n" \
+    "00000000\n" \
+    "00000000\n" \
+    "01000000\n" \
+    "00000000\n" \
+    "01000005\n" \
+    "80000000\n" \
+    "0000C594\n" \
+    "00000001\n" \
+    "00000001\n" \
+    "140F0105\n" \
+    "7364625F\n" \
+    "6D6F6475\n" \
+    "6C650000\n" \
+    "00000000\n" \
+    "00000002"
+
+TEST_DEVICE_ROM = ""\
+    "00000100\n" \
+    "00000207\n" \
+    "00000000\n" \
+    "01000000\n" \
+    "00000000\n" \
+    "01000005\n" \
+    "80000000\n" \
+    "0000C594\n" \
+    "00000001\n" \
+    "00000001\n" \
+    "140F0105\n" \
+    "7364625F\n" \
+    "6D6F6475\n" \
+    "6C650000\n" \
+    "00000000\n" \
+    "00000001"
+
 
 class Test (unittest.TestCase):
     """Unit test for arbiter"""
 
     def setUp(self):
         self.dbg = False
-        self.sdb = sdb.SDB()
-        self.sdb.parse_buffer(SDB_DATA)
-        self.sdb.set_start_address(0x01000000)
-        self.sdb.set_size(5)
-        self.sdb.set_number_of_records(10)
-        self.sdb.set_bridge_child_addr(0x1000000000000000)
+        self.sdbc = sdb_component.SDBComponent()
+        self.sdbc.parse_buffer(SDB_DATA)
+        self.sdbc.set_start_address(0x01000000)
+        self.sdbc.set_size(5)
+        self.sdbc.set_number_of_records(10)
+        self.sdbc.set_bridge_child_addr(0x1000000000000000)
 
     def test_parse_buffer(self):
 
-        od = self.sdb.generated_ordered_dict()
+        od = self.sdbc.generated_ordered_dict()
         self.assertEqual(od["SDB_VENDOR_ID"]         , "800000000000C594")
         self.assertEqual(od["SDB_DEVICE_ID"]         , "0001")
         self.assertEqual(od["SDB_CORE_VERSION"]      , "00.000.001")
@@ -93,72 +147,43 @@ class Test (unittest.TestCase):
         self.assertEqual(od["SDB_BRIDGE_CHILD_ADDR"] , "0x1000000000000000")
 
         for e in od:
-            print "%s:%s" % (e, od[e])
+            #print "%s:%s" % (e, od[e])
+            pass
 
     def test_generate_interconnect_rom_buffer(self):
-        rom = self.sdb.generate_interconnect_rom()
-        buf = sdb.convert_rom_to_32bit_buffer(rom)
+        rom = self.sdbc.generate_interconnect_rom()
+        buf = sdb_component.convert_rom_to_32bit_buffer(rom)
+        buf_lines = buf.splitlines()
+        test_lines = TEST_INTERCONNECT_ROM.splitlines()
         print "Interconnect ROM Buffer"
-        print buf
-        self.assertEqual(buf, "5344422D\n" \
-                              "00100100\n" \
-                              "00000000\n" \
-                              "01000000\n" \
-                              "00000000\n" \
-                              "01000005\n" \
-                              "80000000\n" \
-                              "0000C594\n" \
-                              "00000001\n" \
-                              "00000001\n" \
-                              "140F0105\n" \
-                              "7364625F\n" \
-                              "6D6F6475\n" \
-                              "6C650000\n" \
-                              "00000000\n" \
-                              "00000001")
+        print "Generated\tTest"
+        for i in range (len(buf_lines)):
+            print "%s\t%s" % (buf_lines[i], test_lines[i])
+
+        self.assertEqual(buf, TEST_INTERCONNECT_ROM)
 
     def test_generate_bridge_rom_buffer(self):
-        rom = self.sdb.generate_bridge_rom()
-        buf = sdb.convert_rom_to_32bit_buffer(rom)
+        rom = self.sdbc.generate_bridge_rom()
+        buf = sdb_component.convert_rom_to_32bit_buffer(rom)
+        buf_lines = buf.splitlines()
+        test_lines = TEST_BRIDGE_ROM.splitlines()
         print "Bridge ROM Buffer"
-        print buf
+        print "Generated\tTest"
+        for i in range (len(buf_lines)):
+            print "%s\t%s" % (buf_lines[i], test_lines[i])
 
-        self.assertEqual(buf, "10000000\n" \
-                              "00000000\n" \
-                              "00000000\n" \
-                              "01000000\n" \
-                              "00000000\n" \
-                              "01000005\n" \
-                              "80000000\n" \
-                              "0000C594\n" \
-                              "00000001\n" \
-                              "00000001\n" \
-                              "140F0105\n" \
-                              "7364625F\n" \
-                              "6D6F6475\n" \
-                              "6C650000\n" \
-                              "00000000\n" \
-                              "00000001")
+        self.assertEqual(buf, TEST_BRIDGE_ROM)
 
     def test_generate_device_rom_buffer(self):
-        rom = self.sdb.generate_device_rom()
-        buf = sdb.convert_rom_to_32bit_buffer(rom)
+        rom = self.sdbc.generate_device_rom()
+        buf = sdb_component.convert_rom_to_32bit_buffer(rom)
+        buf_lines = buf.splitlines()
+        test_lines = TEST_DEVICE_ROM.splitlines()
+
         print "Device ROM Buffer"
-        print buf
-        self.assertEqual(buf,"00000100\n" \
-                             "00000207\n" \
-                             "00000000\n" \
-                             "01000000\n" \
-                             "00000000\n" \
-                             "01000005\n" \
-                             "80000000\n" \
-                             "0000C594\n" \
-                             "00000001\n" \
-                             "00000001\n" \
-                             "140F0105\n" \
-                             "7364625F\n" \
-                             "6D6F6475\n" \
-                             "6C650000\n" \
-                             "00000000\n" \
-                             "00000001")
+        print "Generated\tTest"
+        for i in range (len(buf_lines)):
+            print "%s\t%s" % (buf_lines[i], test_lines[i])
+
+        self.assertEqual(buf, TEST_DEVICE_ROM)
 
