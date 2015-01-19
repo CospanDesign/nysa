@@ -51,7 +51,7 @@ DESCRIPTION_DICT["SDB_START_ADDRESS"]       = "Start Address (Hex)"
 DESCRIPTION_DICT["SDB_LAST_ADDRESS"]        = "Last Address (Hex)"
 DESCRIPTION_DICT["SDB_SIZE"]                = "Number of Registers"
 DESCRIPTION_DICT["SDB_SYNTH_NAME"]          = "Name of Synthesis Vendor (16 chars)"
-DESCRIPTION_DICT["SDB_SYNTH_COMMIT_ID"]     = "Commit ID of build Hex" 
+DESCRIPTION_DICT["SDB_SYNTH_COMMIT_ID"]     = "Commit ID of build Hex"
 DESCRIPTION_DICT["SDB_SYNTH_TOOL_NAME"]     = "Name of Synthesis Tool (16 chars)"
 DESCRIPTION_DICT["SDB_SYNTH_TOOL_VER"]      = "Version of Synthesis Tool"
 DESCRIPTION_DICT["SDB_SYNTH_DATE"]          = "Date of image build"
@@ -124,7 +124,7 @@ class SDB (object):
         self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_INTERCONNECT
 
 #ROM -> SDB
-    def parse_rom_element(self, rom, debug):
+    def parse_rom_element(self, rom, debug = False):
         possible_magic = rom[0] << 24 | \
                          rom[1] << 16 | \
                          rom[2] <<  8 | \
@@ -248,6 +248,7 @@ class SDB (object):
         self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_BRIDGE
         for i in range(64):
             rom.append(0x00)
+
         rom = self._generate_product_rom(rom)
         rom = self._generate_component_rom(rom)
         addr = self.get_bridge_child_addr_as_int()
@@ -258,8 +259,9 @@ class SDB (object):
         rom[0x03] = (addr >> 32) & 0xFF
         rom[0x04] = (addr >> 24) & 0xFF
         rom[0x05] = (addr >> 16) & 0xFF
-        rom[0x06] = (addr >>  8) & 0xFF
-        rom[0x07] = (addr >>  0) & 0xFF
+        rom[0x06] = (addr >> 8 ) & 0xFF
+        rom[0x07] = (addr >> 0 ) & 0xFF
+
         rom[0x3F] = SDB_RECORD_TYPE_BRIDGE
         return rom
 

@@ -42,6 +42,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              "cbuilder"))
 import sdb as sdb_controller
+from sdb_manager import SDBManager
 from sdb import SDBError
 
 

@@ -60,7 +60,6 @@ class SDBROM(object):
     ]
 
     def __init__(self):
-        self.elements = collections.OrderedDict()
         self.rom = {}
 
     def __len__(self):
@@ -69,18 +68,12 @@ class SDBROM(object):
 
     def parse_rom(self, buf, debug = False):
         self.rom = Array('B')
-        self.elements = collections.OrderedDict()
-        self.current_dict = self.elements
-
-        if debug: print "Rom Length:      %d" %  len(self.rom)
-        if debug: print "Rom Length / 64: %d" % (len(self.rom) / 64)
-
         for i in range(0, len(buf), 2):
             self.rom.append(int(buf[i:i+2], 16))
 
         try:
             for i in range(0, (len(self.rom) / 64)):
-                if debug: print "i: %d" % i
+                #if debug: print "i: %d" % i
                 self._parse_rom_element(self.rom[i * 64: (i + 1) * 64], debug)
         except SDBError as err:
             print "SDB Error: %s" % str(err)
@@ -91,57 +84,19 @@ class SDBROM(object):
         sdb = SDB()
         sdb.parse_rom_element(element_buffer, debug)
         if sdb.is_interconnect():
-            
             if debug: print "Interconnect: %s" % sdb.d["SDB_NAME"]
             if debug: print "\tNumber of Elements: %d" % sdb.get_number_of_records_as_int()
-            '''
-            if len(self.elements) == 0:
-                self.current_dict = self.elements
-                self.current_dict[sdb.d["SDB_NAME"]] = [sdb, []]
-            else:
-                #Is this within the interconnect?
-
-                #After the interconnect?
-
-                d = collections.OrderedDict()
-                d[sdb.d["SDB_NAME"]] = [sdb, []]
-                self.current_dict[sdb.d["SDB_NAME"]][1].append(d)
-            '''
 
         elif sdb.is_device():
             if debug: print "Device: %s" % sdb.d["SDB_NAME"]
-            '''
-            for element in self.elements:
-                isdb = self.elements[isdb][0]
-                if element.is_interconnect():
-                    if ((isdb.get_start_address_int() <= sdb.get_start_address_as_int()) and
-                        (sdb.get_end_address_as_int() <= isdb.get_end_address_as_int())):
-                        self.elements[isdb][1].append(sdb)
-                        break
-            '''
 
         elif sdb.is_bridge():
             if debug: print "Bridge: %s" % sdb.d["SDB_NAME"]
-            '''
-            self.elements[self.element][1].append(sdb)
-            for element in self.elements:
-                isdb = self.elements[isdb][0]
-                if element.is_interconnect():
-                    if ((isdb.get_start_address_int() <= sdb.get_start_address_as_int()) and
-                        (sdb.get_end_address_as_int() <= isdb.get_end_address_as_int())):
-                        self.elements[isdb][1].append(sdb)
-                        break
-            '''
-
-
 
         if debug: print "\t0x%016X - 0x%016X: Size: 0x%016X" % (sdb.get_start_address_as_int(), \
                                                                 sdb.get_end_address_as_int(), \
                                                                 sdb.get_size_as_int())
 
-    def pretty_print_sdb(self):
-        for e in self.elements:
-            isdb = self.elements[e][0]
-            devices = self.elements[e][1]
-            print "Interconnect: %s" % isdb.d["SDB_NAME"]
-            
+
+
+

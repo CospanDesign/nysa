@@ -93,20 +93,24 @@ MAIN_INTERCONNECT = \
     "\n"
 
 def calculate_sdb_size(tags):
-    #Add 3 initially for the main interconnect
-    #peripheral interconnect
-    #memory interconnect
-    count = 3
-    #Two more for the bridges that tell the top where the peripheral and memory
-    #interconnects are located
-    count += 2
-    #Add one more for the SDB
+    #Start out with one for the interconnect
+    count = 1
+    #Add a count for the SDB
     count += 1
+    #Add all the peripehrals
     count += len(tags["SLAVES"])
+    #Add all the memory slaves
     count += len(tags["MEMORY"])
     #Empty Buffer at the end
-    count += 1 
+    count += 1
     count = (512 / 32) * count
+    return count
+
+def calculate_number_of_devices(tags):
+    #Add one for the SDB
+    count = 1
+    count += len(tags["SLAVES"])
+    count += len(tags["MEMORY"])
     return count
 
 class GenSDB(Gen):
@@ -140,38 +144,51 @@ class GenSDB(Gen):
         self.sdb.parse_buffer(MAIN_INTERCONNECT)
         #self.sdb.d["SDB_DEVICE_ID"] = hex(board_id)
         self.sdb.d["SDB_DEVICE_ID"] = hex(image_id << 16 | board_id)
-        self.sdb.set_start_address(0x00000000)
+        self.sdb.set_start_address(0x000000000)
         self.sdb.set_size(0x200000000)
         #Indicate there are two sub interconnects
-        self.sdb.set_number_of_records(2)
+        self.sdb.set_number_of_records(calculate_number_of_devices(tags))
         rom = self.sdb.generate_interconnect_rom()
         buf = convert_rom_to_32bit_buffer(rom)
         buf += "\n"
 
         #Generate the Bridge for Peripherals
-        self.sdb.set_start_address(0x00000000)
+        self.sdb.set_start_address(0x000000000)
         self.sdb.set_size(0x100000000)
         self.sdb.d["SDB_NAME"] = "Peripherals Bridge"
-        self.sdb.set_bridge_address(0x00000000)
+        self.sdb.set_bridge_address(0x000000000)
         rom = self.sdb.generate_bridge_rom()
         buf += convert_rom_to_32bit_buffer(rom)
         buf += "\n"
 
+        #Generate the Bridge for Memory
+        self.sdb.set_start_address(0x100000000)
+        self.sdb.set_size(0x100000000)
+        self.sdb.d["SDB_NAME"] = "Memory Bridge"
+        self.sdb.set_bridge_address(0x100000000)
+        rom = self.sdb.generate_bridge_rom()
+        buf += convert_rom_to_32bit_buffer(rom)
+        buf += "\n"
+
+
+        '''
+
         #Generate the peripheral Interconnect
-        self.sdb.set_start_address(0x00000000)
+        self.sdb.set_start_address(0x000000000)
         self.sdb.set_size(0x100000000)
         self.sdb.set_number_of_records(len(tags["SLAVES"]) + 1)
         self.sdb.d["SDB_NAME"] = "Peripherals Bus"
         rom = self.sdb.generate_interconnect_rom()
         buf += convert_rom_to_32bit_buffer(rom)
         buf += "\n"
+        '''
 
         #Generate SDB Device
         self.sdb.d["SDB_NAME"] = "SDB"
         self.sdb.set_start_address(0x00)
         self.sdb.set_size(calculate_sdb_size(tags))
-        self.sdb.d["SDB_ABI_VERSION_MAJOR"] = "0x0000"
-        self.sdb.d["SDB_ABI_VERSION_MAJOR"] = "0x0000"
+        self.sdb.d["SDB_ABI_VERSION_MAJOR"] = "0x000000000"
+        self.sdb.d["SDB_ABI_VERSION_MAJOR"] = "0x000000000"
         rom = self.sdb.generate_device_rom()
         buf += convert_rom_to_32bit_buffer(rom)
         buf += "\n"
@@ -193,16 +210,7 @@ class GenSDB(Gen):
             buf += convert_rom_to_32bit_buffer(rom)
             buf += "\n"
 
-        #Generate the Bridge for Memory
-        self.sdb.set_start_address(0x10000000)
-        self.sdb.set_size(0x200000000)
-        self.sdb.d["SDB_NAME"] = "Memory Bridge"
-        self.sdb.set_bridge_address(0x10000000)
-        rom = self.sdb.generate_bridge_rom()
-        buf += convert_rom_to_32bit_buffer(rom)
-        buf += "\n"
-
-
+        '''
         #Generate the memory Interconnect
         self.sdb.set_start_address(0x000000000)
         self.sdb.set_size(0x100000000)
@@ -211,9 +219,10 @@ class GenSDB(Gen):
         rom = self.sdb.generate_interconnect_rom()
         buf += convert_rom_to_32bit_buffer(rom)
         buf += "\n"
+        '''
 
         #Process the memory elements
-        mem_offset = 0
+        mem_offset = 0x0100000000
         for i in range (0, len(tags["MEMORY"])):
             key = tags["MEMORY"].keys()[i]
             name = tags["MEMORY"][key]["filename"]
@@ -236,3 +245,4 @@ class GenSDB(Gen):
 
     def gen_name(self):
         print "generate a ROM"
+

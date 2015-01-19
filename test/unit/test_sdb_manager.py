@@ -11,7 +11,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
 
-from nysa.cbuilder import sdb_rom
+from nysa.cbuilder.sdb_manager import SDBManager
+from nysa.common.status import StatusLevel
+from nysa.common.status import Status
 
 
 class Test (unittest.TestCase):
@@ -19,14 +21,25 @@ class Test (unittest.TestCase):
 
     def setUp(self):
         self.dbg = False
-        self.sdbrom = sdb_rom.SDBROM()
+        self.status = Status()
+        self.status.set_level(StatusLevel.VERBOSE)
+        self.sdb_manager = SDBManager(self.status)
+        lines = rom_buffer.splitlines()
+        buf = ""
+        for n in lines:
+            buf += n
+        self.buf = Array('B')
+        for i in range(0, len(buf), 2):
+            self.buf.append(int(buf[i:i + 2], 16))
 
-    def test_rom_buffer_length(self):
-        self.sdbrom.parse_rom(rom_buffer, True)
-        self.assertEqual(len(self.sdbrom), 5)
+    def test_parse_top_interconnect(self):
+        self.sdb_manager.parse_top_interconnect_buffer(self.buf[0:64])
 
-    def test_parse_rom(self):
-        self.sdbrom.parse_rom(rom_buffer)
+    def get_number_of_devices_from_top_interconnect(self):
+        self.sdb_manager.parse_top_interconnect_buffer(self.buf[0:64])
+        num_devices = self.sdb_manager.get_number_of_devices()
+        self.assertEqual(num_devices, 3)
+        
 
 rom_buffer =   \
         "5344422D" \
