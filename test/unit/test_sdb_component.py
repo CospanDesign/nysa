@@ -113,7 +113,7 @@ TEST_DEVICE_ROM = ""\
 
 
 class Test (unittest.TestCase):
-    """Unit test for arbiter"""
+    """Unit test for SDB Component"""
 
     def setUp(self):
         self.dbg = False
@@ -149,6 +149,56 @@ class Test (unittest.TestCase):
         for e in od:
             #print "%s:%s" % (e, od[e])
             pass
+
+    def test_create_device_record(self):
+        device = sdb_component.create_device_record(name            = "test device",
+                                                    vendor_id       = 0x1000000000000000,
+                                                    device_id       = 0x00000000,
+                                                    core_version    = "1.0",
+                                                    abi_class       = 0,
+                                                    version_major   = 1,
+                                                    version_minor   = 0)
+        self.assertTrue(device.is_device())
+
+    def test_create_interconnect_record(self):
+        interconnect = sdb_component.create_interconnect_record(
+                                                    name            = "peripherals",
+                                                    vendor_id       = 0x1000000000000000,
+                                                    device_id       = 0x00000000,
+                                                    start_address   = 0x01,
+                                                    size            = 10)
+        self.assertTrue(interconnect.is_interconnect())
+
+    def test_create_bridge_record(self):
+        bridge = sdb_component.create_bridge_record(name            = "bridge",
+                                                    vendor_id       = 0x1000000000000000,
+                                                    device_id       = 0x00000000,
+                                                    start_address   = 0x01,
+                                                    size            = 10)
+
+        self.assertTrue(bridge.is_bridge())
+
+    def test_create_integration_record(self):
+        integration = sdb_component.create_integration_record(
+                                                    information     = "test integration",
+                                                    vendor_id       = 0x1000000000000000,
+                                                    device_id       = 0x00000000)
+
+        self.assertTrue(integration.is_integration_record())
+
+    def test_create_synthesis_record(self):
+        synth_record = sdb_component.create_synthesis_record(
+                                                    synthesis_name  = "name of names",
+                                                    commit_id       = 0000,
+                                                    tool_name       = "xilinx",
+                                                    tool_version    = 14.1,
+                                                    user_name       = "Dave McCoy")
+        self.assertTrue(synth_record.is_synthesis_record())
+
+    def test_create_repo_url_record(self):
+        url = sdb_component.create_repo_url_record("wwww.cospandesign.com")
+        self.assertTrue(url.is_url_record())
+
 
     def test_generate_interconnect_rom_buffer(self):
         rom = self.sdbc.generate_interconnect_rom()

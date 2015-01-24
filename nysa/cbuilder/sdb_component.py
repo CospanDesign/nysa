@@ -19,8 +19,11 @@
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
 from array import array as Array
-import argparse
 import collections
+
+from sdb import SDBInfo
+from sdb import SDBWarning
+from sdb import SDBError
 
 DESCRIPTION = "SDB Component Parser and Generator"
 
@@ -37,7 +40,7 @@ DESCRIPTION_DICT["SDB_ABI_VERSION_MINOR"]   = "Set ABI Minor Version"
 DESCRIPTION_DICT["SDB_ABI_ENDIAN"]          = "Set Endian (Big, Little)"
 DESCRIPTION_DICT["SDB_ABI_DEVICE_WIDTH"]    = "Set Device Width (8 16 32 64)"
 DESCRIPTION_DICT["SDB_MODULE_URL"]          = "Set the Module URL"
-DESCRIPTION_DICT["SDB_DATE"]                = "Set the date of module YYYY/MM/DD"
+DESCRIPTION_DICT["SDB_DATE"]                = "Set the date of module YYYY/MM/DD or date of image build for synth"
 DESCRIPTION_DICT["SDB_EXECUTABLE"]          = "Device is executable"
 DESCRIPTION_DICT["SDB_WRITEABLE"]           = "Device is writeable"
 DESCRIPTION_DICT["SDB_READABLE"]            = "Device is readable"
@@ -52,8 +55,8 @@ DESCRIPTION_DICT["SDB_SYNTH_NAME"]          = "Name of Synthesis Vendor (16 char
 DESCRIPTION_DICT["SDB_SYNTH_COMMIT_ID"]     = "Commit ID of build Hex"
 DESCRIPTION_DICT["SDB_SYNTH_TOOL_NAME"]     = "Name of Synthesis Tool (16 chars)"
 DESCRIPTION_DICT["SDB_SYNTH_TOOL_VER"]      = "Version of Synthesis Tool"
-DESCRIPTION_DICT["SDB_SYNTH_DATE"]          = "Date of image build"
 DESCRIPTION_DICT["SDB_SYNTH_USER_NAME"]     = "User name of the person who built image"
+DESCRIPTION_DICT["SDB_RECORD_TYPE"]         = "Type of device"
 
 SDB_INTERCONNECT_MAGIC  = 0x5344422D
 SDB_BUS_TYPE_WISHBONE   = 0x00
@@ -67,11 +70,107 @@ SDB_RECORD_TYPE_REPO_URL     = 0x81
 SDB_RECORD_TYPE_SYNTHESIS    = 0x82
 SDB_RECORD_TYPE_EMPTY        = 0xFF
 
-class SDBComponentError(Exception):
-    pass
+def create_device_record(   name = None,
+                            vendor_id = None,
+                            device_id = None,
+                            core_version = None,
+                            abi_class = None,
+                            version_major = None,
+                            version_minor = None,
+                            size = None):
+    sdb = SDBComponent()
+    sdb.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_DEVICE
+    if name is not None:
+        sdb.d["SDB_NAME"] = name
+    if vendor_id is not None:
+        sdb.d["SDB_VENDOR_ID"] = hex(vendor_id)
+    if device_id is not None:
+        sdb.d["SDB_DEVICE_ID"] = hex(device_id)
+    if core_version is not None:
+        sdb.d["SDB_VERSION"] = core_version
+    if abi_class is not None:
+        sdb.d["SDB_ABI_CLASS"] = hex(abi_class)
+    if version_major is not None:
+        sdb.d["SDB_ABI_VERSION_MAJOR"] = hex(version_major)
+    if version_minor is not None:
+        sdb.d["SDB_ABI_VERSION_MINOR"] = hex(version_minor)
+    if size is not None:
+        sdb.set_size(size)
+    return sdb
 
-class SDBComponentInfo(Exception):
-    pass
+def create_interconnect_record( name = None,
+                                vendor_id = None,
+                                device_id = None,
+                                start_address = None,
+                                size = None):
+    sdb = SDBComponent()
+    sdb.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_INTERCONNECT
+    if name is not None:
+        sdb.d["SDB_NAME"] = name
+    if vendor_id is not None:
+        sdb.d["SDB_VENDOR_ID"] = hex(vendor_id)
+    if device_id is not None:
+        sdb.d["SDB_DEVICE_ID"] = hex(device_id)
+    if start_address is not None:
+        sdb.set_start_address(start_address)
+    if size is not None:
+        sdb.set_size(size)
+    return sdb
+
+def create_bridge_record(       name = None,
+                                vendor_id = None,
+                                device_id = None,
+                                start_address = None,
+                                size = None):
+    sdb = SDBComponent()
+    sdb.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_BRIDGE
+    if name is not None:
+        sdb.d["SDB_NAME"] = name
+    if vendor_id is not None:
+        sdb.d["SDB_VENDOR_ID"] = hex(vendor_id)
+    if device_id is not None:
+        sdb.d["SDB_DEVICE_ID"] = hex(device_id)
+    if start_address is not None:
+        sdb.set_start_address(start_address)
+    if size is not None:
+        sdb.set_size(size)
+    return sdb
+
+def create_integration_record(  information,
+                                vendor_id = None,
+                                device_id = None):
+    sdb = SDBComponent()
+    sdb.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_INTEGRATION
+    sdb.d["SDB_NAME"] = information
+    if vendor_id is not None:
+        sdb.d["SDB_VENDOR_ID"] = hex(vendor_id)
+    if device_id is not None:
+        sdb.d["SDB_DEVICE_ID"] = hex(device_id)
+    return sdb
+
+def create_synthesis_record(synthesis_name,
+                      commit_id,
+                      tool_name,
+                      tool_version,
+                      user_name):
+    sdb = SDBComponent()
+    sdb.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_SYNTHESIS
+    sdb.d["SDB_SYNTH_NAME"] = synthesis_name
+    if isinstance(commit_id, int):
+        commit_id = hex(commit_id)
+    sdb.d["SDB_SYNTH_COMMIT_ID"] = commit_id
+    sdb.d["SDB_SYNTH_TOOL_NAME"] = tool_name
+    if not isinstance(tool_version, str):
+        tool_version = str(tool_version)
+    sdb.d["SDB_SYNTH_TOOL_VER"] = tool_version
+    sdb.d["SDB_SYNTH_USER_NAME"] = user_name
+    return sdb
+
+def create_repo_url_record(url):
+    sdb = SDBComponent()
+    sdb.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_REPO_URL
+    sdb.d["SDB_RECORD_REPO_URL"] = url
+    return sdb
 
 class SDBComponent (object):
 
@@ -103,8 +202,8 @@ class SDBComponent (object):
         "SDB_SYNTH_COMMIT_ID",
         "SDB_SYNTH_TOOL_NAME",
         "SDB_SYNTH_TOOL_VER",
-        "SDB_SYNTH_DATE",
-        "SDB_SYNTH_USER_NAME"
+        "SDB_SYNTH_USER_NAME",
+        "SDB_RECORD_TYPE"
     ]
 
     def __init__(self):
@@ -218,7 +317,7 @@ class SDBComponent (object):
         self.d["SDB_SYNTH_COMMIT_ID"] = rom[16:32].tostring()
         self.d["SDB_SYNTH_TOOL_NAME"] = rom[32:36].tostring()
         self.d["SDB_SYNTH_TOOL_VER"] =  rom[36:40].tostring()
-        self.d["SDB_SYNTH_DATE"] =      rom[40:48].tostring()
+        self.d["SDB_DATE"]       =      rom[40:48].tostring()
         self.d["SDB_SYNTH_USER_NAME"] = rom[48:63].tostring()
 #Verilog Module -> SDB Device
     def parse_buffer(self, in_buffer):
@@ -336,6 +435,17 @@ class SDBComponent (object):
         rom[0x3F] = SDB_RECORD_TYPE_DEVICE
         return rom
 
+    def generate_informative_rom(self):
+        self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_INTEGRATION
+        rom = Array('B')
+        for i in range(64):
+            rom.append(0x00)
+        for i in range(0x1F):
+            rom[i] = 0x00
+        rom = self._generate_product_rom(rom)
+        return rom
+
+
     def _generate_product_rom(self, rom):
 
         #Vendor ID
@@ -350,11 +460,11 @@ class SDBComponent (object):
         rom[0x1F] = (vendor_id >> 0 ) & 0xFF
 
         #Device ID
-        product_id = self.get_device_id_as_int()
-        rom[0x20] = (product_id >> 24) & 0xFF
-        rom[0x21] = (product_id >> 16) & 0xFF
-        rom[0x22] = (product_id >>  8) & 0xFF
-        rom[0x23] = (product_id >>  0) & 0xFF
+        device_id = self.get_device_id_as_int()
+        rom[0x20] = (device_id >> 24) & 0xFF
+        rom[0x21] = (device_id >> 16) & 0xFF
+        rom[0x22] = (device_id >>  8) & 0xFF
+        rom[0x23] = (device_id >>  0) & 0xFF
 
         #Version
         version = self.get_core_version_as_int()
@@ -431,6 +541,18 @@ class SDBComponent (object):
         return int(self.d["SDB_BRIDGE_CHILD_ADDR"], 16)
 
     def set_start_address(self, addr):
+        """
+        Sets the start address of the entity
+
+        Args:
+            addr (integer) start address
+
+        Return:
+            Nothing
+
+        Raises:
+            Nothing
+        """
         self.d["SDB_START_ADDRESS"] = hex(addr)
         self.d["SDB_LAST_ADDRESS"] = hex(addr + int(self.d["SDB_SIZE"], 0))
 
@@ -456,6 +578,12 @@ class SDBComponent (object):
 
     def is_readable(self):
         return (self.d["SDB_READABLE"].lower() == "true")
+
+    def set_name(self, name):
+        self.d["SDB_NAME"] = name
+
+    def get_name(self):
+        return self.d["SDB_NAME"]
 
 #Integer Rerpresentation of values
     def get_size_as_int(self):
@@ -566,6 +694,40 @@ class SDBComponent (object):
         if self.d["SDB_RECORD_TYPE"] == SDB_RECORD_TYPE_BRIDGE:
             return True
         return False
+
+    def is_integration_record(self):
+        if self.d["SDB_RECORD_TYPE"] == SDB_RECORD_TYPE_INTEGRATION:
+            return True
+        return False
+
+    def is_url_record(self):
+        if self.d["SDB_RECORD_TYPE"] == SDB_RECORD_TYPE_REPO_URL:
+            return True
+        return False
+
+    def is_synthesis_record(self):
+        if self.d["SDB_RECORD_TYPE"] == SDB_RECORD_TYPE_SYNTHESIS:
+            return True
+        return False
+
+    def __str__(self):
+        buf = ""
+        buf += "SDB Component\n"
+        buf += "\tName: %s\n" % self.d["SDB_NAME"]
+        buf += "\tType: %s\n" % self.d["SDB_RECORD_TYPE"]
+        buf += "\tSize: 0x%08X\n" % self.get_size_as_int()
+        if is_interconnect():
+            buf += "\tNum Devices: %d\n" % self.get_number_of_records_as_int()
+            buf += "\tStart Address: 0x%010X\n" % self.get_start_address_as_int()
+            buf += "\tEnd Address:   0x%010X\n" % self.get_end_address_as_int()
+        return buf
+
+def is_valid_bus_type(bus_type):
+    if bus_type == "wishbone":
+        return True
+    if bus_type == "storage":
+        return True
+    return False
 
 def convert_rom_to_32bit_buffer(rom):
     buf = ""
