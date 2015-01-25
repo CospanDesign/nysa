@@ -30,72 +30,64 @@ from sdb import SDBError
 from sdb_component import SDB_INTERCONNECT_MAGIC
 from sdb_component import SDB_ROM_RECORD_LENGTH as RECORD_LENGTH
 
-class SOMROM (object):
+#Public facing functions
+def generate_rom_image(som):
+    """
+    Given a populated SOM generate a ROM image
 
-    def __init__(self):
-        super (SOMROM, self).__init__()
+    Args:
+        som (SDBObjectModel): A populated SOM
 
-    #Public facing functions
-    def generate_rom_image(self, som):
-        """
-        Given a populated SOM generate a ROM image
+    Return:
+        Nothing
 
-        Args:
-            som (SDBObjectModel): A populated SOM
+    Raises:
+        SDBError, error while parsing the SOM
+    """
+    rom = Array('B')
+    #Go through each of the elements.
+    root = som.get_root()
+    return _bus_to_rom(root, rom)
 
-        Return:
-            Nothing
+#Private functions (SDB -> ROM)
+def _bus_to_rom(bus, rom, addr = None):
+    """
+    Parse a bus, starting with the actual interconnect and then all the
+    way through the final device, this stores the busses to be processed
+    later and putting a birdge in the spot where the new bus will be
+    """
+    buses = []
+    bridge_address_offset = 0x00
+    if addr is None:
+        addr = 0x00
 
-        Raises:
-            SDBError, error while parsing the SOM
-        """
-        rom = Array('B')
-        #Go through each of the elements.
-        root = som.get_root()
-        return self._bus_to_rom(root, rom)
+    #Generate a slice of the ROM that will contain the entire bus
+    #Add 1 for the initial interconnect
+    #Add 1 for the empty block afterwards
+    #print "Total length: %d" % (len(bus) + 2)
+    #print "Total byte length: %d" % (RECORD_LENGTH * (len(bus) + 2) / 8)
 
-    def parse_rom_image(self):
-        pass
+    for i in range((len(bus) + 2) * RECORD_LENGTH):
+        rom.append(0x00)
 
-    #Private functions (SDB -> ROM)
-    def _bus_to_rom(self, bus, rom, addr = None):
-        """
-        Parse a bus, starting with the actual interconnect and then all the
-        way through the final device, this stores the busses to be processed
-        later and putting a birdge in the spot where the new bus will be
-        """
-        buses = []
-        bridge_address_offset = 0x00
-        if addr is None:
-            addr = 0x00
+    #Put in a marker for an empty buffer
+    rom[len(rom) - 1] = 0xFF
 
-        #Generate a slice of the ROM that will contain the entire bus
-        #Add 1 for the initial interconnect
-        #Add 1 for the empty block afterwards
-        #print "Total length: %d" % (len(bus) + 2)
-        #print "Total byte length: %d" % (RECORD_LENGTH * (len(bus) + 2) / 8)
+    _generate_interconnect_rom(bus.get_component(), rom, addr)
+    addr += RECORD_LENGTH
 
-        for i in range((len(bus) + 2) * RECORD_LENGTH):
-            rom.append(0x00)
+    pos = 0
+    for entity in bus:
+        #print "At position: %d" % pos
+        pos += 1
+        if isinstance(entity, SOMBus):
+            _generate_bridge_rom(entity.get_component(), rom, addr)
+            _bus_to_rom(entity, rom, len(rom))
+        else:
+            _generate_entity_rom(entity.get_component(), rom, addr)
 
-        #Put in a marker for an empty buffer
-        rom[len(rom) - 1] = 0xFF
-
-        _generate_interconnect_rom(bus.get_component(), rom, addr)
         addr += RECORD_LENGTH
-
-        pos = 0
-        for entity in bus:
-            #print "At position: %d" % pos
-            pos += 1
-            if isinstance(entity, SOMBus):
-                _generate_bridge_rom(entity.get_component(), rom, addr)
-                self._bus_to_rom(entity, rom, len(rom))
-            else:
-                _generate_entity_rom(entity.get_component(), rom, addr)
-
-            addr += RECORD_LENGTH
-        return rom
+    return rom
 
 def _generate_entity_rom(entity, rom, addr):
     """
