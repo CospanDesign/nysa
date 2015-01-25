@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
+from datetime import datetime
 from array import array as Array
 import collections
 
@@ -87,7 +88,7 @@ def create_device_record(   name = None,
     if device_id is not None:
         sdb.d["SDB_DEVICE_ID"] = hex(device_id)
     if core_version is not None:
-        sdb.d["SDB_VERSION"] = core_version
+        sdb.d["SDB_CORE_VERSION"] = core_version
     if abi_class is not None:
         sdb.d["SDB_ABI_CLASS"] = hex(abi_class)
     if version_major is not None:
@@ -217,8 +218,23 @@ class SDBComponent (object):
         self.d["SDB_NRECS"] = "0"
         self.d["SDB_BUS_TYPE"] = "Wishbone"
         self.d["SDB_VERSION"] = str(self.SDB_VERSION)
+        self.d["SDB_CORE_VERSION"] = "0.0.01"
         self.d["SDB_BRIDGE_CHILD_ADDR"] = "0"
         self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_INTERCONNECT
+        self.d["SDB_ABI_CLASS"] = hex(0x00)
+        self.d["SDB_ABI_VERSION_MAJOR"] = hex(0x00)
+        self.d["SDB_ABI_VERSION_MINOR"] = hex(0x00)
+        self.d["SDB_VENDOR_ID"] = hex(0x8000000000000000)
+        self.d["SDB_DEVICE_ID"] = hex(0x00000000)
+        self.d["SDB_ABI_ENDIAN"] = "BIG"
+        self.d["SDB_ABI_DEVICE_WIDTH"] = "32"
+        self.d["SDB_EXECUTABLE"] = "True"
+        self.d["SDB_WRITEABLE"] = "True"
+        self.d["SDB_READABLE"] = "True"
+        d = datetime.now()
+        
+        sd = "%04d/%02d/%02d" % (d.year, d.month, d.day)
+        self.d["SDB_DATE"] = sd
 
 #ROM -> SDB
     def parse_rom_element(self, rom, debug = False):
@@ -339,193 +355,6 @@ class SDBComponent (object):
             buf += "%s:%s\n\n" % (e, self.d[e])
         return buf
 
-#SDB -> ROM
-    def generate_bridge_rom(self):
-        rom = Array('B')
-        self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_BRIDGE
-        for i in range(64):
-            rom.append(0x00)
-
-        rom = self._generate_product_rom(rom)
-        rom = self._generate_component_rom(rom)
-        addr = self.get_bridge_child_addr_as_int()
-        #print "Address: 0x%016X" % addr
-        rom[0x00] = (addr >> 56) & 0xFF
-        rom[0x01] = (addr >> 48) & 0xFF
-        rom[0x02] = (addr >> 40) & 0xFF
-        rom[0x03] = (addr >> 32) & 0xFF
-        rom[0x04] = (addr >> 24) & 0xFF
-        rom[0x05] = (addr >> 16) & 0xFF
-        rom[0x06] = (addr >> 8 ) & 0xFF
-        rom[0x07] = (addr >> 0 ) & 0xFF
-
-        rom[0x3F] = SDB_RECORD_TYPE_BRIDGE
-        return rom
-
-    def generate_interconnect_rom(self):
-        self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_INTERCONNECT
-        rom = Array('B')
-        for i in range(64):
-            rom.append(0x00)
-
-        rom = self._generate_product_rom(rom)
-        rom = self._generate_component_rom(rom)
-        rom[0x00] = (SDB_INTERCONNECT_MAGIC >> 24) & 0xFF
-        rom[0x01] = (SDB_INTERCONNECT_MAGIC >> 16) & 0xFF
-        rom[0x02] = (SDB_INTERCONNECT_MAGIC >> 8 ) & 0xFF
-        rom[0x03] = (SDB_INTERCONNECT_MAGIC >> 0 ) & 0xFF
-
-        nrecs = self.get_number_of_records_as_int()
-        rom[0x04] = (nrecs >> 8) & 0xFF
-        rom[0x05] = (nrecs >> 0) & 0xFF
-
-        version = self.get_version_as_int()
-        rom[0x06] = version & 0xFF
-
-        bus_type = self.get_bus_type_as_int()
-        rom[0x07] = bus_type & 0xFF
-        rom[0x3F] = SDB_RECORD_TYPE_INTERCONNECT
-        return rom
-
-    def generate_device_rom(self):
-        self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_DEVICE
-        rom = Array('B')
-        for i in range(64):
-            rom.append(0x00)
-
-        rom = self._generate_product_rom(rom)
-        rom = self._generate_component_rom(rom)
-
-        #ABI Class
-        abi_class = self.get_abi_class_as_int()
-        rom[0x00] = (abi_class >> 8) & 0xFF
-        rom[0x01] = (abi_class) & 0xFF
-
-        #abi version major
-        abi_major = self.get_abi_version_major_as_int()
-        rom[0x02] = (abi_major & 0xFF)
-
-        #ABI version minor
-        abi_minor = self.get_abi_version_minor_as_int()
-        rom[0x03] = (abi_minor & 0xFF)
-
-        #Bus Specific Stuff
-        endian = self.get_endian_as_int()
-        bus_width = self._translate_buf_width_to_rom_version()
-        executable = 0
-        writeable = 0
-        readable = 0
-
-        if self.is_executable():
-            executable = 1
-        if self.is_writeable():
-            writeable = 1
-        if self.is_readable():
-            readable = 1
-
-        #print "executable: %s" % str(executable)
-        #print "writeable: %s" % str(writeable)
-        #print "readable: %s" % str(readable)
-
-        rom[0x04] = 0
-        rom[0x05] = 0
-        rom[0x06] = bus_width
-        rom[0x07] = (endian << 4 | executable << 2 | writeable << 1 | readable)
-
-        rom[0x3F] = SDB_RECORD_TYPE_DEVICE
-        return rom
-
-    def generate_informative_rom(self):
-        self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_INTEGRATION
-        rom = Array('B')
-        for i in range(64):
-            rom.append(0x00)
-        for i in range(0x1F):
-            rom[i] = 0x00
-        rom = self._generate_product_rom(rom)
-        return rom
-
-
-    def _generate_product_rom(self, rom):
-
-        #Vendor ID
-        vendor_id = self.get_vendor_id_as_int()
-        rom[0x18] = (vendor_id >> 56) & 0xFF
-        rom[0x19] = (vendor_id >> 48) & 0xFF
-        rom[0x1A] = (vendor_id >> 40) & 0xFF
-        rom[0x1B] = (vendor_id >> 32) & 0xFF
-        rom[0x1C] = (vendor_id >> 24) & 0xFF
-        rom[0x1D] = (vendor_id >> 16) & 0xFF
-        rom[0x1E] = (vendor_id >> 8 ) & 0xFF
-        rom[0x1F] = (vendor_id >> 0 ) & 0xFF
-
-        #Device ID
-        device_id = self.get_device_id_as_int()
-        rom[0x20] = (device_id >> 24) & 0xFF
-        rom[0x21] = (device_id >> 16) & 0xFF
-        rom[0x22] = (device_id >>  8) & 0xFF
-        rom[0x23] = (device_id >>  0) & 0xFF
-
-        #Version
-        version = self.get_core_version_as_int()
-        rom[0x24] = (version >> 24) & 0xFF
-        rom[0x25] = (version >> 16) & 0xFF
-        rom[0x26] = (version >>  8) & 0xFF
-        rom[0x27] = (version >>  0) & 0xFF
-
-        #Date
-        year, month, day = self.get_date_as_int()
-        rom[0x28] = int(year   / 100)
-        rom[0x29] = int(year   % 100)
-        rom[0x2A] = (month       )
-        rom[0x2B] = (day         )
-
-        #Name
-        name = self.d["SDB_NAME"]
-        if len(name) > 19:
-            name = name[:19]
-
-        na = Array('B', name)
-        for i in range(len(na)):
-            rom[0x2C + i] = na[i]
-
-        return rom
-
-    def _generate_component_rom(self, rom):
-        address_first = Array('B')
-        address_last = Array('B')
-        start_address = self.get_start_address_as_int()
-        end_address = self.get_end_address_as_int()
-        for i in range (0, 64, 8):
-            address_first.append((start_address >> (56 - i) & 0xFF))
-            address_last.append((end_address >> (56 - i) & 0xFF))
-
-        rom[0x08] = address_first[0]
-        rom[0x09] = address_first[1]
-        rom[0x0A] = address_first[2]
-        rom[0x0B] = address_first[3]
-        rom[0x0C] = address_first[4]
-        rom[0x0D] = address_first[5]
-        rom[0x0E] = address_first[6]
-        rom[0x0F] = address_first[7]
-
-        rom[0x10] = address_last[0]
-        rom[0x11] = address_last[1]
-        rom[0x12] = address_last[2]
-        rom[0x13] = address_last[3]
-        rom[0x14] = address_last[4]
-        rom[0x15] = address_last[5]
-        rom[0x16] = address_last[6]
-        rom[0x17] = address_last[7]
-
-        return rom
-
-    def generate_empty_rom(self):
-        rom = Array('B')
-        for i in range(64):
-            rom.append(0x00)
-        return rom
-
 #SDB -> Ordered Dict
     def generated_ordered_dict(self):
         od = collections.OrderedDict()
@@ -554,15 +383,16 @@ class SDBComponent (object):
             Nothing
         """
         self.d["SDB_START_ADDRESS"] = hex(addr)
-        self.d["SDB_LAST_ADDRESS"] = hex(addr + int(self.d["SDB_SIZE"], 0))
+        addr = long(addr)
+        self.d["SDB_LAST_ADDRESS"] = hex(addr + self.get_end_address_as_int())
 
     def get_start_address_as_int(self):
-        return int(self.d["SDB_START_ADDRESS"], 16)
+        return long(self.d["SDB_START_ADDRESS"], 16)
 
     def set_size(self, size):
         self.d["SDB_SIZE"] = hex(size)
-        start_addr = int(self.d["SDB_START_ADDRESS"], 16)
-        self.d["SDB_LAST_ADDRESS"] = hex(start_addr + int(self.d["SDB_SIZE"], 0))
+        start_addr = self.get_start_address_as_int()
+        self.d["SDB_LAST_ADDRESS"] = hex(start_addr + self.get_size_as_int())
 
     def set_number_of_records(self, nrecs):
         self.d["SDB_NRECS"] = str(nrecs)
@@ -587,13 +417,13 @@ class SDBComponent (object):
 
 #Integer Rerpresentation of values
     def get_size_as_int(self):
-        return int(self.d["SDB_SIZE"], 0)
+        return long(self.d["SDB_SIZE"], 0)
 
     def get_end_address_as_int(self):
-        return int(self.d["SDB_LAST_ADDRESS"], 16)
+        return long(self.d["SDB_LAST_ADDRESS"], 16)
 
     def get_vendor_id_as_int(self):
-        return int(self.d["SDB_VENDOR_ID"], 16)
+        return long(self.d["SDB_VENDOR_ID"], 16)
 
     def get_device_id_as_int(self):
         #print "device id: %s" % self.d["SDB_DEVICE_ID"]
@@ -603,10 +433,10 @@ class SDBComponent (object):
         return int(self.d["SDB_ABI_CLASS"], 16)
 
     def get_abi_version_major_as_int(self):
-        return int(self.d["SDB_ABI_VERSION_MAJOR"], 16)
+        return long(self.d["SDB_ABI_VERSION_MAJOR"], 16)
 
     def get_abi_version_minor_as_int(self):
-        return int(self.d["SDB_ABI_VERSION_MINOR"], 16)
+        return long(self.d["SDB_ABI_VERSION_MINOR"], 16)
 
     def get_endian_as_int(self):
         if self.d["SDB_ABI_ENDIAN"] == "LITTLE":
@@ -631,11 +461,14 @@ class SDBComponent (object):
 
     def get_core_version_as_int(self):
         version_strings = self.d["SDB_CORE_VERSION"].split(".")
-        version = ""
-        for vs in version_strings:
-            version += vs
+        #print "version string: %s" % self.d["SDB_CORE_VERSION"]
+        version = 0
+        version |= (0x0F & int(version_strings[0])) << 24
+        version |= (0x0F & int(version_strings[1])) << 16
+        version |= (0xFF & int(version_strings[2]))
+        #print "Version output: %04d" % version
         #Base 10
-        return int(version)
+        return version
 
     def get_date_as_int(self):
         date = self.d["SDB_DATE"]
@@ -662,6 +495,24 @@ class SDBComponent (object):
         else:
             raise SDBError("Unknown Bus Type: %s" % self.d["SDB_BUS_TYPE"])
 
+    def get_url(self):
+        return self.d["SDB_RECORD_REPO_URL"]
+
+    def get_synthesis_name(self):
+        return self.d["SDB_SYNTH_NAME"]
+
+    def get_synthesis_commit_id(self):
+        return self.d["SDB_SYNTH_COMMIT_ID"]
+
+    def get_synthesis_tool_name(self):
+        return self.d["SDB_SYNTH_TOOL_NAME"]
+
+    def get_synthesis_tool_version(self):
+        return self.d["SDB_SYNTH_TOOL_VER"]
+
+    def get_synthesis_user_name(self):
+        return self.d["SDB_SYNTH_USERNAME"]
+        
     def get_version_as_int(self):
         return int (self.d["SDB_VERSION"])
 
@@ -709,6 +560,9 @@ class SDBComponent (object):
         if self.d["SDB_RECORD_TYPE"] == SDB_RECORD_TYPE_SYNTHESIS:
             return True
         return False
+
+    def get_module_record_type(self):
+        return self.d["SDB_RECORD_TYPE"]
 
     def __str__(self):
         buf = ""

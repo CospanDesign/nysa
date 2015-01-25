@@ -18,12 +18,29 @@
 # You should have received a copy of the GNU General Public License
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
+__author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
+
 from array import array as Array
-import argparse
 import collections
 
+from nysa.common.status import Status
+
+from nysa.common.status import white
+from nysa.common.status import gray
+from nysa.common.status import red
+from nysa.common.status import green
+from nysa.common.status import yellow
+from nysa.common.status import blue
+from nysa.common.status import purple
+from nysa.common.status import cyan
+
+
+import sdb_component as sdbc
 
 class SDBError(Exception):
+    pass
+
+class SDBWarning(Exception):
     pass
 
 class SDBInfo(Exception):
@@ -31,8 +48,12 @@ class SDBInfo(Exception):
 
 class SDB (object):
 
-    def __init__(self):
+    def __init__(self, status = None):
         self.d = {}
+        self.s = status
+        if status is None:
+            self.s = Status()
+
         for e in self.ELEMENTS:
             self.d[e] = ""
 

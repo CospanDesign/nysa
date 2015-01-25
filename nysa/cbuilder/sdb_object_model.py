@@ -18,12 +18,15 @@
 # You should have received a copy of the GNU General Public License
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
+import sdb_component
 from sdb_component import SDBComponent as sdbc
 from sdb_component import is_valid_bus_type
 
 from sdb import SDBInfo
 from sdb import SDBWarning
 from sdb import SDBError
+
+
 
 class SOMComponent(object):
 
@@ -49,12 +52,11 @@ class SOMBus(SOMComponent):
         self.spacing = 0
         self.children = []
         super(SOMBus, self).__init__(parent, sdbc())
-        self.c.d["SDB_NAME"] = "bus"
-        self.c.set_start_address(0x00)
-        self.c.set_size(0x00)
-        self.c.d["SDB_VENDOR_ID"] = 0x800000000000C594
-        self.c.d["SDB_DEVICE_ID"] = 0x00000001
-        self.bus_size = 0x00
+        self.c = sdb_component.create_interconnect_record( name = "bus",
+                                                  vendor_id = 0x800000000000C594,
+                                                  device_id = 0x00000001,
+                                                  start_address = 0x00,
+                                                  size = 0x00)
         self.curr_pos = 0
 
     def insert_child(self, child, pos = -1):
@@ -130,6 +132,9 @@ class SOMBus(SOMComponent):
             Nothing
         """
         return self.spacing
+
+    def __len__(self):
+        return len(self.children)
 
     def __iter__(self):
         self.curr_pos = 0
@@ -486,99 +491,6 @@ class SOM(object):
         self._update()
         return som_component
 
-    '''
-    #Informative Entity Functions
-    def insert_integration_record(self, root = None, integration = None):
-        """
-        Insert an integration record
-
-        Args:
-            root (SOMBus): bus for the entitys
-                leave blank for the top of the tree
-            integration(SDBComponent): Integration Component to add
-
-        Return:
-            Nothing
-
-        Raises:
-            SDBError:
-                Component is None
-                Component is not an integration record
-        """
-        if integration is None:
-            raise SDBError("Integration record cannot be None")
-
-        if not integration.is_integration_record():
-            raise SDBError("Component is not integration record: %s" %
-                integration)
-
-        if root is None:
-            root = self.root
-
-        self.root.insert_child(integration)
-        self._update()
-
-    def insert_url(self, root = None, url = None):
-        """
-        Insert an url record
-
-        Args:
-            root (SOMBus): bus for the entitys
-                leave blank for the top of the tree
-            url(SDBComponent): URL Component to add
-
-        Return:
-            Nothing
-
-        Raises:
-            SDBError:
-                Component is None
-                Component is not an url record
-        """
-        if url is None:
-            raise SDBError("URL record cannot be None")
-
-        if not url.is_url_record():
-            raise SDBError("Component is not url record: %s" %
-                url)
-
-        if root is None:
-            root = self.root
-
-        self.root.insert_child(url)
-        self._update()
-
-    def insert_sythesis_record(self, synthesis_record):
-        """
-        Insert an synthesis record
-
-        Args:
-            root (SOMBus): bus for the entitys
-                leave blank for the top of the tree
-            synthesis(SDBComponent): Synthesis Component to add
-
-        Return:
-            Nothing
-
-        Raises:
-            SDBError:
-                Component is None
-                Component is not an synthesis record
-        """
-        if synthesis is None:
-            raise SDBError("Synthesis record cannot be None")
-
-        if not synthesis.is_synthesis_record():
-            raise SDBError("Component is not synthesis record: %s" %
-                synthesis)
-
-        if root is None:
-            root = self.root
-
-        self.root.insert_child(synthesis)
-        self._update()
-    '''
-
     #Utility Functions
     def reset_som(self):
         self.root = SDBRoot()
@@ -683,6 +595,13 @@ class SOM(object):
                 if isinstance(child, SOMBus):
                     #print "Found bus, initate recursive update"
                     self._update(child)
+
+                #Bus Size
+                bus_size = c.get_start_address_as_int() + c.get_size_as_int()
+                #print "bus size: 0x%08X" % bus_size
+                if spacing > 0:
+                    if (bus_size % spacing) > 0:
+                        bus_size += (bus_size * spacing)
                 continue
 
             pc = prev_child.get_component()
@@ -703,11 +622,20 @@ class SOM(object):
                 increment = (prev_child_size + spacing) / spacing
                 spacing_size = increment * spacing
 
-
             new_child_start_address = prev_start_address + spacing_size
             #if current_start_address < new_child_start_address:
             c.set_start_address(new_child_start_address)
             prev_child = child
+
+            bus_size = c.get_start_address_as_int() + c.get_size_as_int()
+            if spacing_size > 0:
+                if (bus_size % spacing_size) > 0:
+                    bus_size = (bus_size * spacing_size)
+
+        c = root.get_component()
+        c.set_size(bus_size)
+        #print "bus size: %d" % bus_size
+        c.set_number_of_records(root.get_child_count())
 
 
         #Debug
