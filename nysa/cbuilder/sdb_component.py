@@ -59,6 +59,7 @@ DESCRIPTION_DICT["SDB_SYNTH_TOOL_VER"]      = "Version of Synthesis Tool"
 DESCRIPTION_DICT["SDB_SYNTH_USER_NAME"]     = "User name of the person who built image"
 DESCRIPTION_DICT["SDB_RECORD_TYPE"]         = "Type of device"
 
+SDB_ROM_RECORD_LENGTH   = 64
 SDB_INTERCONNECT_MAGIC  = 0x5344422D
 SDB_BUS_TYPE_WISHBONE   = 0x00
 SDB_BUS_TYPE_STORAGE    = 0x01
@@ -232,7 +233,7 @@ class SDBComponent (object):
         self.d["SDB_WRITEABLE"] = "True"
         self.d["SDB_READABLE"] = "True"
         d = datetime.now()
-        
+
         sd = "%04d/%02d/%02d" % (d.year, d.month, d.day)
         self.d["SDB_DATE"] = sd
 
@@ -512,7 +513,7 @@ class SDBComponent (object):
 
     def get_synthesis_user_name(self):
         return self.d["SDB_SYNTH_USERNAME"]
-        
+
     def get_version_as_int(self):
         return int (self.d["SDB_VERSION"])
 

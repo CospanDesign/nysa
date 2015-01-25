@@ -27,9 +27,8 @@ from sdb_object_model import SOMBus
 from sdb import SDBInfo
 from sdb import SDBWarning
 from sdb import SDBError
-
-RECORD_LENGTH = 64
-SDB_INTERCONNECT_MAGIC  = 0x5344422D
+from sdb_component import SDB_INTERCONNECT_MAGIC
+from sdb_component import SDB_ROM_RECORD_LENGTH as RECORD_LENGTH
 
 class SOMROM (object):
 
