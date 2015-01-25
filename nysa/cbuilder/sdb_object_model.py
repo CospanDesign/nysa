@@ -160,8 +160,7 @@ class SDBRoot(SOMBus):
 #User Facing Object
 class SOM(object):
 
-    def __init__(self, status):
-        self.s = status
+    def __init__(self):
         self.root = None
         self.reset_som()
         self.current_rot = self.root

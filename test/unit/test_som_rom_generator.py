@@ -27,9 +27,7 @@ class Test (unittest.TestCase):
     """Unit test SDB Tree"""
 
     def setUp(self):
-        self.status = Status()
-        self.status.set_level(StatusLevel.VERBOSE)
-        self.som = som.SOM(self.status)
+        self.som = som.SOM()
 
     def test_generate_simple_rom(self):
         self.som.initialize_root()
