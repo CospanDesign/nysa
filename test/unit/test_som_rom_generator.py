@@ -12,7 +12,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 
 from nysa.cbuilder import sdb_component as sdbc
 from nysa.cbuilder import sdb_object_model as som
-from nysa.cbuilder import som_rom_interface as sri
+from nysa.cbuilder import som_rom_generator as srg
 
 from nysa.cbuilder.sdb import SDBInfo
 from nysa.cbuilder.sdb import SDBWarning
@@ -30,14 +30,14 @@ class Test (unittest.TestCase):
         self.status = Status()
         self.status.set_level(StatusLevel.VERBOSE)
         self.som = som.SOM(self.status)
-        self.sri = sri.SOMROM()
+        self.srg = srg.SOMROM()
 
     def test_generate_simple_rom(self):
         self.som.initialize_root()
         root = self.som.get_root()
         d = sdbc.create_device_record(name = "device 1", size = 0x100)
         self.som.insert_component(root, d)
-        rom = self.sri.generate_rom_image(self.som)
+        rom = self.srg.generate_rom_image(self.som)
         #print_sdb(rom)
 
     def test_generate_one_sub_bus_rom(self):
@@ -46,7 +46,7 @@ class Test (unittest.TestCase):
         bus = self.som.insert_bus()
         d = sdbc.create_device_record(name = "device 1", size = 0x100)
         self.som.insert_component(bus, d)
-        rom = self.sri.generate_rom_image(self.som)
+        rom = self.srg.generate_rom_image(self.som)
         #print_sdb(rom)
         #Need a mechanism to verify this
 
@@ -66,7 +66,7 @@ class Test (unittest.TestCase):
         self.som.insert_component(peripheral, d2)
         self.som.insert_component(memory, m1)
         self.som.insert_component(memory, m2)
-        rom = self.sri.generate_rom_image(self.som)
+        rom = self.srg.generate_rom_image(self.som)
         #print_sdb(rom)
 
     def test_generate_one_sub_bus_integration_record(self):
@@ -79,7 +79,7 @@ class Test (unittest.TestCase):
         d = sdbc.create_device_record(name = "device 1", size = 0x100)
         self.som.insert_component(bus, d)
         self.som.insert_component(bus, intr)
-        rom = self.sri.generate_rom_image(self.som)
+        rom = self.srg.generate_rom_image(self.som)
         #print_sdb(rom)
 
     def test_generate_one_sub_bus_with_url(self):
@@ -90,7 +90,7 @@ class Test (unittest.TestCase):
         d = sdbc.create_device_record(name = "device 1", size = 0x100)
         self.som.insert_component(bus, d)
         self.som.insert_component(root, url)
-        rom = self.sri.generate_rom_image(self.som)
+        rom = self.srg.generate_rom_image(self.som)
         #print_sdb(rom)
 
     def test_generate_one_sub_bus_with_synthesis(self):
@@ -102,9 +102,8 @@ class Test (unittest.TestCase):
         d = sdbc.create_device_record(name = "device 1", size = 0x100)
         self.som.insert_component(bus, d)
         self.som.insert_component(root, synthesis)
-        rom = self.sri.generate_rom_image(self.som)
+        rom = self.srg.generate_rom_image(self.som)
         #print_sdb(rom)
-
 
     def test_parse_large_rom(self):
         self.som.initialize_root()
@@ -131,7 +130,7 @@ class Test (unittest.TestCase):
         self.som.insert_component(peripheral, intr)
         self.som.insert_component(memory, m1)
         self.som.insert_component(memory, m2)
-        rom = self.sri.generate_rom_image(self.som)
+        rom = self.srg.generate_rom_image(self.som)
         #print_sdb(rom)
 
 def print_sdb(rom):
