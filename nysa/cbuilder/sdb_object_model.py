@@ -68,7 +68,7 @@ class SOMBus(SOMComponent):
         for child in self.children:
             size += child.c.get_size_as_int()
 
-        self.c.set_size(size)
+        #self.c.set_size(size)
 
     def get_child_from_index(self, i):
         return self.children[i]
@@ -83,7 +83,7 @@ class SOMBus(SOMComponent):
         for child in self.children:
             size += child.c.get_size_as_int()
 
-        self.c.set_size(size)
+        #self.c.set_size(size)
 
     def get_child_count(self):
         return len(self.children)
@@ -512,6 +512,39 @@ class SOM(object):
 
         return root.get_child_count()
 
+    def set_bus_component(self, bus, component):
+        """
+        Replace the internal SDB Component for a BUS
+
+        This is usefull when parsing a ROM
+
+        Args:
+            bus (SOMBus): Bus in which to replace the component
+            component (SDBComponent): Replacement Component
+
+        Returns:
+            Noting
+
+        Raises:
+            Nothing
+        """
+        bus.c = component
+        self._update()
+
+    def set_child_spacing(self, bus, spacing):
+        """
+        Set the spacing for the given bus
+
+        This is used to logically sperate devices on a bus
+
+        Args:
+            bus (SOMBus): Bus in which to change spacing
+            spacing (Long): Difference between to devices
+        """
+        bus.set_child_spacing(spacing)
+        self._update()
+        
+
     #Private Functions
     def _update(self, root = None):
         """
@@ -580,8 +613,6 @@ class SOM(object):
 
                 prev_child = child
 
-
-
         #Adjust all the sizes for the busses
         prev_child = None
         for i in range(root.get_child_count()):
@@ -596,11 +627,14 @@ class SOM(object):
                     self._update(child)
 
                 #Bus Size
-                bus_size = c.get_start_address_as_int() + c.get_size_as_int()
+                #bus_size = c.get_start_address_as_int() + c.get_size_as_int()
                 #print "bus size: 0x%08X" % bus_size
-                if spacing > 0:
-                    if (bus_size % spacing) > 0:
-                        bus_size += (bus_size * spacing)
+                if spacing == 0:
+                    bus_size += c.get_size_as_int()
+                else:
+                    mul = (c.get_size_as_int() / spacing) + 1
+                    #print "mul for %s: %d" % (c.get_name(), mul)
+                    bus_size += mul * spacing
                 continue
 
             pc = prev_child.get_component()
@@ -616,25 +650,26 @@ class SOM(object):
 
             #Add an extra spacing size so that all divided values will at least
             #be one
-            spacing_size = prev_child_size + spacing
+            spacing_size = prev_child_size
             if spacing > 0:
-                increment = (prev_child_size + spacing) / spacing
-                spacing_size = increment * spacing
+                mul = (prev_child_size / spacing) + 1
+                spacing_size = mul * spacing
 
             new_child_start_address = prev_start_address + spacing_size
             #if current_start_address < new_child_start_address:
             c.set_start_address(new_child_start_address)
             prev_child = child
 
-            bus_size = c.get_start_address_as_int() + c.get_size_as_int()
-            if spacing_size > 0:
-                if (bus_size % spacing_size) > 0:
-                    bus_size = (bus_size * spacing_size)
+            if spacing == 0:
+                bus_size += c.get_size_as_int()
+            else:
+                mul = (c.get_size_as_int() / spacing) + 1
+                #print "mul for %s: %d" % (c.get_name(), mul)
+                bus_size += mul * spacing
 
-        c = root.get_component()
-        c.set_size(bus_size)
-        #print "bus size: %d" % bus_size
-        c.set_number_of_records(root.get_child_count())
+        #print "\tbus size: 0x%08X" % bus_size
+        rc.set_size(bus_size)
+        rc.set_number_of_records(root.get_child_count())
 
 
         #Debug

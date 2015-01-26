@@ -36,6 +36,8 @@ class Test (unittest.TestCase):
         self.som.insert_component(root, d)
         rom = generate_rom_image(self.som)
         #rom = generate_rom_image(self.som)
+        write_to_file(rom, "/home/cospan/sandbox/simple_rom.txt")
+
         #print_sdb(rom)
 
     def test_generate_one_sub_bus_rom(self):
@@ -65,6 +67,7 @@ class Test (unittest.TestCase):
         self.som.insert_component(memory, m1)
         self.som.insert_component(memory, m2)
         rom = generate_rom_image(self.som)
+        write_to_file(rom, "/home/cospan/sandbox/two_bus_rom.txt")
         #print_sdb(rom)
 
     def test_generate_one_sub_bus_integration_record(self):
@@ -130,6 +133,12 @@ class Test (unittest.TestCase):
         self.som.insert_component(memory, m2)
         rom = generate_rom_image(self.som)
         #print_sdb(rom)
+
+def write_to_file(rom, filename):
+    rom = sdbc.convert_rom_to_32bit_buffer(rom)
+    f = open(filename, 'w')
+    f.write(rom)
+    f.close()
 
 def print_sdb(rom):
     rom = sdbc.convert_rom_to_32bit_buffer(rom)

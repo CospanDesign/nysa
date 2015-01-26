@@ -26,6 +26,8 @@ from sdb import SDBInfo
 from sdb import SDBWarning
 from sdb import SDBError
 
+import string
+
 DESCRIPTION = "SDB Component Parser and Generator"
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
@@ -237,105 +239,6 @@ class SDBComponent (object):
         sd = "%04d/%02d/%02d" % (d.year, d.month, d.day)
         self.d["SDB_DATE"] = sd
 
-#ROM -> SDB
-    def parse_rom_element(self, rom, debug = False):
-        possible_magic = rom[0] << 24 | \
-                         rom[1] << 16 | \
-                         rom[2] <<  8 | \
-                         rom[3] <<  0
-
-        if (possible_magic == SDB_INTERCONNECT_MAGIC):
-            #if debug: print "Found Interconnect!"
-            self._parse_rom_interconnect_element(rom, debug)
-            self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_INTERCONNECT
-
-        elif rom[63] == SDB_RECORD_TYPE_DEVICE:
-            self._parse_rom_device_element(rom, debug)
-            self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_DEVICE
-        elif rom[63] == SDB_RECORD_TYPE_BRIDGE:
-            self._parse_rom_bridge_element(rom, debug)
-            self.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_BRIDGE
-        elif rom[63] == SDB_RECORD_TYPE_INTEGRATION:
-            self.d["SDB_RECORD_TYPE"] = SDB_RECORD_INTEGRATION
-        elif rom[63] == SDB_RECORD_TYPE_REPO_URL:
-            self.d["SDB_RECORD_TYPE"] = SDB_RECORD_REPO_URL
-        elif rom[63] == SDB_RECORD_TYPE_SYNTHESIS:
-           self.d["SDB_RECORD_TYPE"] = SDB_RECORD_SYNTHESIS
-        elif rom[63] == SDB_RECORD_TYPE_EMPTY:
-           self.d["SDB_RECORD_TYPE"] = SDB_RECORD_EMPTY
-        else:
-            raise SDBInfo("Info: Unrecognized Record: 0x%02X" % rom[63])
-
-    def _parse_rom_device_element(self, rom, debug = False):
-        self.d["SDB_ABI_CLASS"] = hex(  rom[0] <<  8 | \
-                                        rom[1] <<  0)
-        self.d["SDB_ABI_VERSION_MAJOR"] = hex(rom[2])
-        self.d["SDB_ABI_VERSION_MINOR"] = hex(rom[3])
-        bus_width = rom[6]
-        endian = (rom[7] >> 4) & 0x01
-        executable = (rom[7] >> 2) & 0x01
-        writeable = (rom[7] >> 1) & 0x01
-        readable = (rom[7] >> 0) & 0x01
-
-        self.d["SDB_EXECUTABLE"] = (executable == 1)
-        self.d["SDB_WRITEABLE"] = (writeable == 1)
-        self.d["SDB_READABLE"] = (readable == 1)
-        self.d["SDB_ABI_ENDIAN"] = (endian == 0)
-        if (bus_width == 0):
-            self.d["SDB_ABI_DEVICE_WIDTH"] = "8"
-        elif (bus_width == 1):
-            self.d["SDB_ABI_DEVICE_WIDTH"] = "16"
-        elif (bus_width == 2):
-            self.d["SDB_ABI_DEVICE_WIDTH"] = "32"
-        elif (bus_width == 3):
-            self.d["SDB_ABI_DEVICE_WIDTH"] = "64"
-
-        if endian:
-            self.d["SDB_ABI_ENDIAN"] = "Little"
-        else:
-            self.d["SDB_ABI_ENDIAN"] = "Big"
-
-        self._parse_rom_component_element(rom, debug)
-
-    def _parse_rom_bridge_element(self, rom, debug = False):
-        self.d["SDB_BRIDGE_CHILD_ADDR"] = hex(self._convert_rom_to_int(rom[ 0: 8]))
-        self._parse_rom_component_element(rom, debug)
-
-    def _parse_rom_interconnect_element(self, rom, debug = False):
-        self.d["SDB_NRECS"] = hex(rom[4] << 8 | \
-                                  rom[5] << 0)
-        #if debug: print "Number of Records: %d" % self.d["SDB_NRECS"]
-        self.d["SDB_VERSION"] = rom[6]
-        self.d["SDB_BUS_TYPE"] = rom[7]
-        self._parse_rom_component_element(rom, debug)
-        if rom[63] != 0x00:
-            raise SDBError("Interconnect element record does not match type: 0x%02X" % rom[63])
-
-    def _parse_rom_component_element(self, rom, debug = False):
-        self.d["SDB_START_ADDRESS"] =   hex(self._convert_rom_to_int(rom[ 8:16]))
-        self.d["SDB_LAST_ADDRESS"] =    hex(self._convert_rom_to_int(rom[16:24]))
-        start_address = int(self.d["SDB_START_ADDRESS"], 16)
-        end_address = int(self.d["SDB_LAST_ADDRESS"], 16)
-        self.set_size(end_address - start_address)
-        self._parse_rom_product_element(rom, debug)
-
-    def _parse_rom_product_element(self, rom, debug = False):
-        self.d["SDB_VENDOR_ID"] =       hex(self._convert_rom_to_int(rom[24:32]))
-        self.d["SDB_DEVICE_ID"] =       hex(self._convert_rom_to_int(rom[32:36]))
-        self.d["SDB_CORE_VERSION"] =    hex(self._convert_rom_to_int(rom[36:40]))
-        self.d["SDB_DATE"] =            rom[40:44].tostring()
-        self.d["SDB_NAME"] =            rom[44:63].tostring()
-
-    def _parse_rom_url_element(self, rom, debug = False):
-        self.d["SDB_MODULE_URL"] =      rom[0:63].tostring()
-
-    def _parse_synthesis_element(self, rom, debug = False):
-        self.d["SDB_SYNTH_NAME"] =      rom[ 0:16].tostring()
-        self.d["SDB_SYNTH_COMMIT_ID"] = rom[16:32].tostring()
-        self.d["SDB_SYNTH_TOOL_NAME"] = rom[32:36].tostring()
-        self.d["SDB_SYNTH_TOOL_VER"] =  rom[36:40].tostring()
-        self.d["SDB_DATE"]       =      rom[40:48].tostring()
-        self.d["SDB_SYNTH_USER_NAME"] = rom[48:63].tostring()
 #Verilog Module -> SDB Device
     def parse_buffer(self, in_buffer):
         #Seperate the buffer into a list of lines
@@ -385,7 +288,7 @@ class SDBComponent (object):
         """
         self.d["SDB_START_ADDRESS"] = hex(addr)
         addr = long(addr)
-        self.d["SDB_LAST_ADDRESS"] = hex(addr + self.get_end_address_as_int())
+        self.d["SDB_LAST_ADDRESS"] = hex(addr + self.get_size_as_int())
 
     def get_start_address_as_int(self):
         return long(self.d["SDB_START_ADDRESS"], 16)
@@ -440,7 +343,7 @@ class SDBComponent (object):
         return long(self.d["SDB_ABI_VERSION_MINOR"], 16)
 
     def get_endian_as_int(self):
-        if self.d["SDB_ABI_ENDIAN"] == "LITTLE":
+        if string.upper(self.d["SDB_ABI_ENDIAN"]) == "LITTLE":
             return 1
         else:
             return 0
@@ -464,9 +367,9 @@ class SDBComponent (object):
         version_strings = self.d["SDB_CORE_VERSION"].split(".")
         #print "version string: %s" % self.d["SDB_CORE_VERSION"]
         version = 0
-        version |= (0x0F & int(version_strings[0])) << 24
-        version |= (0x0F & int(version_strings[1])) << 16
-        version |= (0xFF & int(version_strings[2]))
+        version |= (0x0F & int(version_strings[0], 0)) << 24
+        version |= (0x0F & int(version_strings[1], 0)) << 16
+        version |= (0xFF & int(version_strings[2], 0))
         #print "Version output: %04d" % version
         #Base 10
         return version
@@ -497,7 +400,7 @@ class SDBComponent (object):
             raise SDBError("Unknown Bus Type: %s" % self.d["SDB_BUS_TYPE"])
 
     def get_url(self):
-        return self.d["SDB_RECORD_REPO_URL"]
+        return self.d["SDB_MODULE_URL"]
 
     def get_synthesis_name(self):
         return self.d["SDB_SYNTH_NAME"]
@@ -522,15 +425,6 @@ class SDBComponent (object):
 
     def get_bridge_child_addr_as_int(self):
         return int(self.d["SDB_BRIDGE_CHILD_ADDR"], 16)
-
-    def _convert_rom_to_int(self, rom):
-        s = ""
-        val = 0
-        for i in range(len(rom)):
-            val = val << 8 | rom[i]
-            #print "val: 0x%016X" % val
-
-        return val
 
     def is_device(self):
         if self.d["SDB_RECORD_TYPE"] == SDB_RECORD_TYPE_DEVICE:
@@ -571,7 +465,7 @@ class SDBComponent (object):
         buf += "\tName: %s\n" % self.d["SDB_NAME"]
         buf += "\tType: %s\n" % self.d["SDB_RECORD_TYPE"]
         buf += "\tSize: 0x%08X\n" % self.get_size_as_int()
-        if is_interconnect():
+        if self.is_interconnect():
             buf += "\tNum Devices: %d\n" % self.get_number_of_records_as_int()
             buf += "\tStart Address: 0x%010X\n" % self.get_start_address_as_int()
             buf += "\tEnd Address:   0x%010X\n" % self.get_end_address_as_int()

@@ -193,17 +193,17 @@ def _generate_url_rom(entity, rom, addr):
 
 def _generate_synthesis_rom(entity, rom, addr):
 
-    _string_to_rom(entity.get_synthesis_name(), 0x10, rom, addr)
-    _string_to_rom(entity.get_synthesis_commit_id(),      0x10, rom, addr + 0x10)
-    _string_to_rom(entity.get_synthesis_tool_name(),      0x08, rom, addr + 0x20)
-    _string_to_rom(entity.get_synthesis_tool_version(),   0x08, rom, addr + 0x28)
+    _string_to_rom(entity.get_synthesis_name(),           16, rom, addr)
+    _string_to_rom(entity.get_synthesis_commit_id(),      16, rom, addr + 0x10)
+    _string_to_rom(entity.get_synthesis_tool_name(),       8, rom, addr + 0x20)
+    _string_to_rom(entity.get_synthesis_tool_version(),    8, rom, addr + 0x28)
     #Date
     year, month, day = entity.get_date_as_int()
     rom[addr + 0x2C] = int(year   / 100)
     rom[addr + 0x2D] = int(year   % 100)
     rom[addr + 0x2E] = (month       )
     rom[addr + 0x2F] = (day         )
-    _string_to_rom(entity.get_name(),           0x0F, rom, addr + 0x34)
+    _string_to_rom(entity.get_name(),                    15, rom, addr + 0x30)
     rom[addr + RECORD_LENGTH - 1] = entity.get_module_record_type()
 
 def _generate_product_rom(entity, rom, addr):
