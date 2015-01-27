@@ -35,8 +35,6 @@ from nysa.common.status import purple
 from nysa.common.status import cyan
 
 
-import sdb_component as sdbc
-
 class SDBError(Exception):
     pass
 
