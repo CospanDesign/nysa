@@ -110,10 +110,12 @@ class _Status(object):
         if self.CheckLevel(StatusLevel.FATAL):
             self.status_output("Fatal", text, color=red)
 
-    def Print (self, text, color = white):
+    def Print (self, text, color = "white"):
+        color = color_from_string(color)
         print "%s%s%s" % (color, text, white),
 
-    def PrintLine(self, text, color = white):
+    def PrintLine(self, text, color = "white"):
+        color = color_from_string(color)
         print "%s%s%s" % (color, text, white)
 
     def status_output(self, level, text, color=white):
