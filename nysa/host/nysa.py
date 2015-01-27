@@ -37,14 +37,7 @@ import string
 import json
 from array import array as Array
 
-#put nysa in the system path
-sys.path.append(os.path.join(os.path.dirname(__file__),
-                             os.pardir,
-                             "cbuilder"))
-import sdb as sdb_controller
-from sdb_manager import SDBManager
-from sdb import SDBError
-
+from nysa_sdb_manager import NysaSDBManager
 
 class NysaCommError(Exception):
     """NysaCommError
@@ -102,20 +95,12 @@ class Nysa(object):
     def __init__(self, status = None):
         self.name = "Nysa"
         self.s = status
-        self.sdb_manager = SDBManager()
+        self.nsm = NysaSDBManager(self.s)
         if status: status.Debug("nysa started")
 
     def __del__(self):
         #print "Closing Nysa"
         pass
-
-    """initialize
-
-    This function will not be implemented within this abstract class and must be
-    implemented within the lower concrete class that is device speific
-    def initialize(self):
-      AssertionError("initialize function is not implemented")
-    """
 
     def set_timeout(self, timeout):
         """set_timeout
@@ -149,15 +134,13 @@ class Nysa(object):
         """
         return self.timeout
 
-    def read_register(self, device_id, address):
+    def read_register(self, address):
         """read_register
 
         Reads a single register from the read command and then converts it to an
         integer
 
         Args:
-          device_id (int):  Device identification number, this number is found
-                            in the SDB
           address (int):  Address of the register/memory to read
 
         Returns:
@@ -166,13 +149,13 @@ class Nysa(object):
         Raises:
           NysaCommError: Error in communication
         """
-        register_array = self.read(device_id, address, 1)
+        register_array = self.read(address, 1)
         return register_array[0] << 24 | \
                register_array[1] << 16 | \
                register_array[2] << 8  | \
                register_array[3]
 
-    def read(self, device_id, address, length = 1, memory_device = False, disable_auto_inc = False):
+    def read(self, address, length = 1, memory_device = False, disable_auto_inc = False):
         """read
 
         Generic read command used to read data from a Nysa image, this will be
@@ -184,8 +167,6 @@ class Nysa(object):
 
         Args:
           length (int): Number of 32 bit words to read from the FPGA
-          device_id (int):  Device identification number, this number is found
-                            in the SDB
           address (int):  Address of the register/memory to read
           memory_device (int): Whether the device is on the memory bus or the
                             peripheral bus
@@ -217,19 +198,16 @@ class Nysa(object):
         Raises:
           NysaCommError: Error in communication
         """
-        return self.read(device_id = 0,
-                         address = address,
+        return self.read(address = address,
                          length = size,
                          memory_device = True)
 
-    def write_register(self, device_id, address, value):
+    def write_register(self, address, value):
         """write_register
 
         Writes a single register from a 32-bit unsingned integer
 
         Args:
-          device_id (int): Device identification number, this number is found
-                           in the SDB
           address (int):  Address of the register/memory to read
           value (int)  32-bit unsigned integer to be written into the register
 
@@ -244,16 +222,14 @@ class Nysa(object):
         register_array[1]  = (value >> 16) & 0xFF
         register_array[2]  = (value >> 8) & 0xFF
         register_array[3]  = (value) & 0xFF
-        self.write(device_id, address, register_array)
+        self.write(address, register_array)
 
-    def enable_register_bit(self, device_id, address, bit, enable):
+    def enable_register_bit(self, address, bit, enable):
         """enable_register_bit
 
         Pass a bool value to set/clear a bit
 
         Args:
-          device_id (int): Device identification number, this number is found
-                           in the SDB
           address (int): Address of the register/memory to modify
           bit (int): Address of bit to set (31 - 0)
           enable (bool): set or clear a bit
@@ -265,18 +241,16 @@ class Nysa(object):
           NysaCommError: Error in communication
         """
         if enable:
-            self.set_register_bit(device_id, address, bit)
+            self.set_register_bit(address, bit)
         else:
-            self.clear_register_bit(device_id, address, bit)
+            self.clear_register_bit(address, bit)
 
-    def set_register_bit(self, device_id, address, bit):
+    def set_register_bit(self, address, bit):
         """set_register_bit
 
         Sets an individual bit in a register
 
         Args:
-          device_id (int): Device identification number, this number is found
-                           in the SDB
           address (int): Address of the register/memory to modify
           bit (int): Address of bit to set (31 - 0)
 
@@ -286,19 +260,17 @@ class Nysa(object):
         Raises:
           NysaCommError: Error in communication
         """
-        register = self.read_register(device_id, address)
+        register = self.read_register(address)
         bit_mask =  1 << bit
         register |= bit_mask
-        self.write_register(device_id, address, register)
+        self.write_register(address, register)
 
-    def clear_register_bit(self, device_id, address, bit):
+    def clear_register_bit(self, address, bit):
         """clear_register_bit
 
         Clear an individual bit in a register
 
         Args:
-          device_id (int): Device identification number, this number is found
-                           in the SDB
           address (int): Address of the register/memory to modify
           bit (int): Address of bit to set (31 - 0)
 
@@ -308,19 +280,17 @@ class Nysa(object):
         Raises:
           NysaCommError: Error in communication
         """
-        register = self.read_register(device_id, address)
+        register = self.read_register(address)
         bit_mask =  1 << bit
         register &= ~bit_mask
-        self.write_register(device_id, address, register)
+        self.write_register(address, register)
 
-    def is_register_bit_set(self, device_id, address, bit):
+    def is_register_bit_set(self, address, bit):
         """is_register_bit_set
 
         returns true if an individual bit is set, false if clear
 
         Args:
-          device_id (int): Device identification number ,this number is found
-                           in the SDB
           address (int): Address of the register/memory to read
           bit (int): Address of bit to check (31 - 0)
 
@@ -332,7 +302,7 @@ class Nysa(object):
         Raises:
           NysaCommError
         """
-        register = self.read_register(device_id, address)
+        register = self.read_register(address)
         bit_mask =  1 << bit
         return ((register & bit_mask) > 0)
 
@@ -354,14 +324,13 @@ class Nysa(object):
         """
         self.write(0, address, data, memory_device = True)
 
-    def write(self, device_id, address, data, memory_device = False, disable_auto_inc = False):
+    def write(self, address, data, memory_device = False, disable_auto_inc = False):
         """write
 
         Generic write command usd to write data to a Nysa image, this will be
         overriden based on the communication method with the specific FPGA board
 
         Args:
-          device_id (int): Device identification number, found in the SDB
           address (int): Address of the register/memory to read
           memory_device (int): True if the device is on the memory bus
           data (array of unsigned bytes): Array of raw bytes to send to the
@@ -380,28 +349,38 @@ class Nysa(object):
         if len(data) == 0:
             raise NysaCommError("Data length cannot be 0")
 
+    def get_sdb_base_address():
+        """
+        Return the base address of the SDB (This is platform specific)
+
+        Args:
+            Nothing
+
+        Returns:
+            (Tuple (Integer, Integer))
+                Address of the SDB Component
+
+        Raises:
+            AssertionError: This function must be overriden by a board specific
+            implementation
+        """
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
     def read_sdb(self):
         """read_sdb
 
         Read the contents of the SDB
 
         Args:
-          Nothing
+            Nothing
 
-        Returns (Array of bytes):
-          the raw SDB data, this can be ignored for normal operation 
+        Returns:
+            Nothing
 
         Raises:
-          NysaCommError: When a failure of communication is detected
+            NysaCommError: When a failure of communication is detected
         """
-        data = Array('B')
-        data = self.read(0, 0, 8)
-        num_of_devices  = sdb_controller.get_number_of_devices(data)
-        len_to_read = num_of_devices * 8
-
-        data = self.read(0, 0, len_to_read + 8)
-        self.sdb_manager.set_sdb(data)
-        return data
+        self.nsm.read_sdb(self)
 
     def pretty_print_sdb(self):
         """pretty_print_sdb
@@ -417,7 +396,7 @@ class Nysa(object):
         Raises:
           Nothing
         """
-        self.sdb_manager.pretty_print_sdb()
+        self.nsm.pretty_print_sdb()
 
     def get_number_of_devices(self):
         """get_number_of_devices
@@ -435,21 +414,20 @@ class Nysa(object):
         """
         return self.sdb_manager.get_number_of_devices()
 
-    def get_device_id(self, device_index):
-        """get_device
-
-        From the index within the SDB return the ID of this device
+    def get_base_address(self, device_index):
+        """
+        From the index within the SDB return the base address this device
 
         Args:
           device (int): index of the device
 
         Returns:
-          (int): Standard device ID
+          (long): 64-bit address value
 
         Raises:
           Nothing
         """
-        return self.sdb_manager.get_id_from_index(device_index)
+        return self.sdb_manager.get_base_from_index(device_index)
 
     def get_device_sub_id(self, device_index):
         """get_device_sub_id
@@ -483,7 +461,7 @@ class Nysa(object):
         """
         return self.sdb_manager.get_unique_id_from_index(device_index)
 
-    def get_device_name_from_id(self, device_id):
+    def get_device_name_from_base_address(self, device_id):
         """get_device_name_from_id
 
         From the id of the device return the name associated with it in the
