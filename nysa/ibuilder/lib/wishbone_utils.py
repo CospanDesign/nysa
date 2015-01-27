@@ -330,9 +330,9 @@ def generate_module_port_signals(invert_reset,
 
     #Keep track of the port count so the last one won't have a comma
     port_max = get_port_count(module_tags)
-    print "instance name: %s" % instance_name
-    if instance_name == "wb_i2c_0":
-        print "port max: %d" % port_max
+    #print "instance name: %s" % instance_name
+    #if instance_name == "wb_i2c_0":
+    #    print "port max: %d" % port_max
     port_count = 0
 
     input_ports = []
