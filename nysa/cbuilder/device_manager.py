@@ -24,6 +24,9 @@ Functions to manage devices
 
 import os
 import sys
+import json
+from sdb_component import SDBError
+from collections import OrderedDict as odict
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
@@ -49,13 +52,13 @@ def get_device_list():
     index = 0
     length = 0
     try:
-        f = open(os.path.join(os.path.dirname(__file__), "devices.json"), "r")
-        drt_tags = json.load(f)
+        f = open(LOCAL_DEVICE_LIST, "r")
+        sdb_tags = json.load(f)
     except TypeError as err:
         print "JSON Error: %s" % str(err)
-        raise DRTError("DRT Error: %s", str(err))
+        raise SDBError("DRT Error: %s", str(err))
 
-    dev_tags = drt_tags["devices"]
+    dev_tags = sdb_tags["devices"]
 
     length = len(dev_tags.keys())
 
@@ -95,13 +98,13 @@ def get_device_name_from_id(device_id):
     #print "Index: 0x%04X" % device_id
     dev_tags = {}
     try:
-        f = open(os.path.join(os.path.dirname(__file__), "devices.json"), "r")
-        drt_tags = json.load(f)
+        f = open(LOCAL_DEVICE_LIST, "r")
+        sdb_tags = json.load(f)
     except TypeError as err:
         print "JSON Error: %s" % str(err)
-        raise DRTError("DRT Error: %s", str(err))
+        raise SDBError("DRT Error: %s", str(err))
 
-    dev_tags = drt_tags["devices"]
+    dev_tags = sdb_tags["devices"]
     did = 0
     for device in dev_tags:
         #print "Looking at: %s" % device
@@ -118,7 +121,7 @@ def get_device_name_from_id(device_id):
 def get_device_index(name):
     """return the index of the device speicified by name
     The name can be found in the devices.json file
-    Example: if name == GPIO, then 1 will be returned
+    Example: if name == GPIO, then 2 will be returned
  
     Args:
       name (string): name of the core to identify
@@ -130,13 +133,20 @@ def get_device_index(name):
       Nothing
     
     """
-    dev_list = get_device_list()
+    dev_tags = {}
+    try:
+        f = open(LOCAL_DEVICE_LIST, "r")
+        sdb_tags = json.load(f)
+    except TypeError as err:
+        print "JSON Error: %s" % str(err)
+        raise SDBError("DRT Error: %s", str(err))
 
-    for i in range(0, len(dev_list)):
-        if name == dev_list[i]["name"]:
-            return i
+    dev_tags = sdb_tags["devices"]
+    if name not in dev_tags.keys():
+        raise SDBError("Name: %s is not a known type of devices" % name)
 
-    raise DRTError("Name: %s is not a known type of devices" % name)
+    return int(dev_tags[name]["ID"], 0)
+
 
 def get_device_type(index):
     """return the name of the device referenced by index
