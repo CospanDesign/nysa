@@ -97,8 +97,10 @@ def find_board(name, serial = None, status = None):
         pc = PlatformScanner(s)
         platforms = pc.get_platforms()
         names = []
+
         for platform_name in platforms:
-            boards = platforms[platform_name](s).scan()
+            platform = platforms[platform_name](s)
+            boards = platform.scan()
             #print "boards for %s: % s" % (platform_name, str(boards))
             if len(boards) > 0:
                 #print "Found %d board for %s" % (len(boards), platform_name)
