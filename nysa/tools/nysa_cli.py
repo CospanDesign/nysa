@@ -35,7 +35,7 @@ import reset_board
 import program_board
 import upload_board
 import list_platforms
-import drt_viewer
+import sdb_viewer
 import init
 import install_platform
 import install_verilog_modules
@@ -108,10 +108,10 @@ TOOL_DICT = {
         "module": device_list,
         "tool": device_list.device_list
     },
-    drt_viewer.NAME:{
+    sdb_viewer.NAME:{
         "type": "host",
-        "module": drt_viewer,
-        "tool": drt_viewer.view_drt
+        "module": sdb_viewer,
+        "tool": sdb_viewer.view_sdb
     },
     init.NAME:{
         "type": "utility",

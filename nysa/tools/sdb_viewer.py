@@ -24,12 +24,12 @@ import sys
 from nysa.host.platform_scanner import find_board
 from nysa.host.platform_scanner import PlatformScannerException
 
-NAME = "drt-viewer"
+NAME = "sdb-viewer"
 SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "Display the contents of the DRT of the specified board"
+DESCRIPTION = "Display the contents of the SDB of the specified board"
 
 EPILOG = "\n"
 
@@ -50,7 +50,7 @@ def setup_parser(parser):
     return parser
 
 
-def view_drt(args, status):
+def view_sdb(args, status):
     s = status
     #print "args.name: %s" % args.name
     name = args.name
@@ -67,6 +67,6 @@ def view_drt(args, status):
         if s: s.Error("%s" % str(ex))
         sys.exit(1)
 
-    board.read_drt()
-    board.pretty_print_drt()
+    board.read_sdb()
+    board.pretty_print_sdb()
 

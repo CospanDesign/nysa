@@ -30,7 +30,6 @@ import glob
 
 from string import Template
 
-from nysa.cbuilder.sdb import SDB
 from nysa.cbuilder.sdb import SDBError
 
 EXAMPLE_DIR = os.path.join("home", "user", "Projects", "cbuilder_projects", "project1")
