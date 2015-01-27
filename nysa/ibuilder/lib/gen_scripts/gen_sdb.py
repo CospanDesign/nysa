@@ -43,6 +43,7 @@ from gen import Gen
 from nysa.cbuilder import sdb_component as sdbc
 from nysa.cbuilder import sdb_object_model as som
 from nysa.cbuilder import som_rom_generator as srg
+from nysa.cbuilder import device_manager
 
 from nysa.cbuilder.sdb import SDBError
 
@@ -161,7 +162,9 @@ class GenSDB(Gen):
         #Add one for SDB ROM
         self.rom_element_count += 1
         self.rom_element_count += 1
-        sdb_rom = sdbc.create_device_record(name = "SDB")
+        version_major = device_manager.get_device_index("SDB")
+        sdb_rom = sdbc.create_device_record(name = "SDB",
+                                            version_major = version_major)
 
 
         #Add two for bridge and one extra for empty
@@ -182,6 +185,7 @@ class GenSDB(Gen):
 
             per = sdbc.create_device_record(name = key)
             per.parse_buffer(slave_buffer)
+            per.set_name(str(key))
             sm.insert_component(peripheral, per)
             self.rom_element_count += 1
 
