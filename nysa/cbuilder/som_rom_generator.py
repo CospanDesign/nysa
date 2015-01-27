@@ -49,6 +49,28 @@ def generate_rom_image(som):
     root = som.get_root()
     return _bus_to_rom(root, rom)
 
+def get_total_number_of_records(som):
+    """
+    Given a populated SOM return the total number of
+    Elements in the ROM (This is used to calculate
+    the size of the ROM within the FPGA)
+
+    Args:
+        som (SDBObjectModel): A populated SOM
+
+    Return:
+        (Integer): Total number of elements that will
+        be within the ROM
+
+    Raises:
+        SDBError, error while parsing the SOM
+    """
+    rom = Array('B')
+    root = som.get_root()
+    _bus_to_rom(root, rom)
+    return len(rom) / 64
+
+
 #Private functions (SDB -> ROM)
 def _bus_to_rom(bus, rom, addr = None):
     """

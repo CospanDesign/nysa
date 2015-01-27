@@ -13,6 +13,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 from nysa.cbuilder import sdb_component as sdbc
 from nysa.cbuilder import sdb_object_model as som
 from nysa.cbuilder.som_rom_generator import generate_rom_image
+from nysa.cbuilder.som_rom_generator import get_total_number_of_records
 
 from nysa.cbuilder.sdb import SDBInfo
 from nysa.cbuilder.sdb import SDBWarning
@@ -134,6 +135,36 @@ class Test (unittest.TestCase):
         rom = generate_rom_image(self.som)
         #print_sdb(rom)
 
+    def test_get_total_number_of_records(self):
+        self.som.initialize_root()
+        root = self.som.get_root()
+        url = sdbc.create_repo_url_record("http://www.geocities.com")
+        synthesis = sdbc.create_synthesis_record("Synthesis Name", 123, "cool tool", 1.0, "jeff")
+        intr = sdbc.create_integration_record("Integration Data",
+                                                vendor_id = 0x800BEAF15DEADC03,
+                                                device_id = 0x00000000)
+
+        peripheral = self.som.insert_bus()
+        peripheral.set_name("peripheral")
+        memory = self.som.insert_bus()
+        memory.set_name("memory")
+        self.som.insert_component(root, url)
+        self.som.insert_component(root, synthesis)
+        d1 = sdbc.create_device_record(name = "device 1", size = 0x100)
+        d2 = sdbc.create_device_record(name = "device 2", size = 0x100)
+        m1 = sdbc.create_device_record(name = "memory 1", size = 0x10000)
+        m2 = sdbc.create_device_record(name = "memory 2", size = 0x20000)
+        peripheral.set_child_spacing(0x0100000000)
+        self.som.insert_component(peripheral, d1)
+        self.som.insert_component(peripheral, d2)
+        self.som.insert_component(peripheral, intr)
+        self.som.insert_component(memory, m1)
+        self.som.insert_component(memory, m2)
+        count = get_total_number_of_records(self.som)
+        print "count: %d" % count
+        #print_sdb(rom)
+
+       
 def write_to_file(rom, filename):
     rom = sdbc.convert_rom_to_32bit_buffer(rom)
     f = open(filename, 'w')
