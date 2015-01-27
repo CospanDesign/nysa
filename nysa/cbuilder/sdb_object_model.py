@@ -543,7 +543,6 @@ class SOM(object):
         """
         bus.set_child_spacing(spacing)
         self._update()
-        
 
     #Private Functions
     def _update(self, root = None):
