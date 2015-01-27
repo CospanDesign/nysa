@@ -40,11 +40,14 @@ from string import Template
 import copy
 
 from gen import Gen
-from nysa.cbuilder.sdb import SDB
-from nysa.cbuilder.sdb import convert_rom_to_32bit_buffer
+from nysa.cbuilder import sdb_component as sdbc
+from nysa.cbuilder import sdb_object_model as som
+from nysa.cbuilder import som_rom_generator as srg
+
 from nysa.cbuilder.sdb import SDBError
 
 from nysa.ibuilder.lib import utils
+
 import nysa.ibuilder.lib.verilog_utils as vutils
 
 MAIN_INTERCONNECT = \
@@ -118,11 +121,17 @@ class GenSDB(Gen):
 
     def __init__(self):
         #print "in GenSDB"
+        self.rom_element_count = 0
         return
+
+    def get_number_of_records(self, tags, user_paths, debug = False):
+        rom = self.gen_script(tags = tags, user_paths = user_paths, debug = debug)
+        return self.rom_element_count
 
     def gen_script(self, tags = {}, buf = "", user_paths = [], debug = False):
         buf = ""
         tags = copy.deepcopy(tags)
+        self.rom_element_count = 0
         if "MEMORY" not in tags:
             tags["MEMORY"] = {}
 
@@ -138,91 +147,54 @@ class GenSDB(Gen):
             if key.lower() == "image_id":
                 image_id = tags[key]
 
-        self.sdb = SDB()
+        sm = som.SOM()
+        sm.initialize_root()
+        root = sm.get_root()
+        #Add 1 for Root
+        self.rom_element_count += 1
 
-        #Generate the main interconnect ROM
-        self.sdb.parse_buffer(MAIN_INTERCONNECT)
-        #self.sdb.d["SDB_DEVICE_ID"] = hex(board_id)
-        self.sdb.d["SDB_DEVICE_ID"] = hex(image_id << 16 | board_id)
-        self.sdb.set_start_address(0x000000000)
-        self.sdb.set_size(0x200000000)
-        #Indicate there are two sub interconnects
-        self.sdb.set_number_of_records(calculate_number_of_devices(tags))
-        rom = self.sdb.generate_interconnect_rom()
-        buf = convert_rom_to_32bit_buffer(rom)
-        buf += "\n"
+        peripheral = sm.insert_bus(root,
+                                    name = "peripheral")
+        memory = sm.insert_bus(     root,
+                                    name = "memory")
 
-        #Generate the Bridge for Peripherals
-        self.sdb.set_start_address(0x000000000)
-        self.sdb.set_size(0x100000000)
-        self.sdb.d["SDB_NAME"] = "Peripherals Bridge"
-        self.sdb.set_bridge_address(0x000000000)
-        rom = self.sdb.generate_bridge_rom()
-        buf += convert_rom_to_32bit_buffer(rom)
-        buf += "\n"
-
-        #Generate the Bridge for Memory
-        self.sdb.set_start_address(0x100000000)
-        self.sdb.set_size(0x100000000)
-        self.sdb.d["SDB_NAME"] = "Memory Bridge"
-        self.sdb.set_bridge_address(0x100000000)
-        rom = self.sdb.generate_bridge_rom()
-        buf += convert_rom_to_32bit_buffer(rom)
-        buf += "\n"
+        #Add one for SDB ROM
+        self.rom_element_count += 1
+        self.rom_element_count += 1
+        sdb_rom = sdbc.create_device_record(name = "SDB")
 
 
-        '''
+        #Add two for bridge and one extra for empty
+        self.rom_element_count += 3
 
-        #Generate the peripheral Interconnect
-        self.sdb.set_start_address(0x000000000)
-        self.sdb.set_size(0x100000000)
-        self.sdb.set_number_of_records(len(tags["SLAVES"]) + 1)
-        self.sdb.d["SDB_NAME"] = "Peripherals Bus"
-        rom = self.sdb.generate_interconnect_rom()
-        buf += convert_rom_to_32bit_buffer(rom)
-        buf += "\n"
-        '''
+        #Peripheral Bus
+        #Add one for interconnect
+        self.rom_element_count += 1
 
-        #Generate SDB Device
-        self.sdb.d["SDB_NAME"] = "SDB"
-        self.sdb.set_start_address(0x00)
-        self.sdb.set_size(calculate_sdb_size(tags))
-        self.sdb.d["SDB_ABI_VERSION_MAJOR"] = "0x000000000"
-        self.sdb.d["SDB_ABI_VERSION_MAJOR"] = "0x000000000"
-        rom = self.sdb.generate_device_rom()
-        buf += convert_rom_to_32bit_buffer(rom)
-        buf += "\n"
-
-        offset = 0x01000000
-        #Process the slave elements
+        #Add one per peripheral
         for i in range (0, len(tags["SLAVES"])):
             key = tags["SLAVES"].keys()[i]
-            name = tags["SLAVES"][key]["filename"]
-            absfilename = utils.find_rtl_file_location(name, self.user_paths)
+            filename = tags["SLAVES"][key]["filename"]
+            absfilename = utils.find_rtl_file_location(filename, self.user_paths)
             f = open(absfilename, 'r')
             slave_buffer = f.read()
             f.close()
-            self.sdb.parse_buffer(slave_buffer)
-            offset = 0x01000000 * (i + 1)
-            self.sdb.set_start_address(offset)
 
-            rom = self.sdb.generate_device_rom()
-            buf += convert_rom_to_32bit_buffer(rom)
-            buf += "\n"
+            per = sdbc.create_device_record(name = key)
+            per.parse_buffer(slave_buffer)
+            sm.insert_component(peripheral, per)
+            self.rom_element_count += 1
 
-        '''
-        #Generate the memory Interconnect
-        self.sdb.set_start_address(0x000000000)
-        self.sdb.set_size(0x100000000)
-        self.sdb.set_number_of_records(len(tags["MEMORY"]))
-        self.sdb.d["SDB_NAME"] = "Memory Bus"
-        rom = self.sdb.generate_interconnect_rom()
-        buf += convert_rom_to_32bit_buffer(rom)
-        buf += "\n"
-        '''
 
-        #Process the memory elements
-        mem_offset = 0x0100000000
+        #Add one for empty
+        self.rom_element_count += 1
+
+
+        #Memory Bus
+        #Add one for interconnect
+        self.rom_element_count += 1
+
+        #Add one per memory peripheral
         for i in range (0, len(tags["MEMORY"])):
             key = tags["MEMORY"].keys()[i]
             name = tags["MEMORY"][key]["filename"]
@@ -230,18 +202,29 @@ class GenSDB(Gen):
             f = open(absfilename, 'r')
             memory_buffer = f.read()
             f.close()
-            self.sdb.parse_buffer(memory_buffer)
-            self.sdb.set_start_address(mem_offset)
-            mem_offset += self.sdb.get_size_as_int()
 
-            rom = self.sdb.generate_device_rom()
-            buf += convert_rom_to_32bit_buffer(rom)
-            buf += "\n"
+            mem = sdbc.create_device_record(name = key)
+            mem.parse_buffer(memory_buffer)
+            sm.insert_component(memory, mem)
+            self.rom_element_count += 1
 
-        rom = self.sdb.generate_empty_rom()
-        buf += convert_rom_to_32bit_buffer(rom)
+        #add one for empty
+        self.rom_element_count += 1
 
-        return buf
+        #TODO: add Add one for URL of repo ?? Maybe
+        #TODO: add Add one for Synthesis Record
+        self.rom_element_count += 1
+
+        sdb_rom.set_size(self.rom_element_count * sdbc.SDB_ROM_RECORD_LENGTH)
+        sm.insert_component(peripheral, sdb_rom, 0)
+
+        #Generate the ROM image
+        sm.set_child_spacing(root,       0x0100000000)
+        sm.set_child_spacing(peripheral, 0x0010000000)
+        rom = srg.generate_rom_image(sm)
+        rom = sdbc.convert_rom_to_32bit_buffer(rom)
+
+        return rom
 
     def gen_name(self):
         print "generate a ROM"
