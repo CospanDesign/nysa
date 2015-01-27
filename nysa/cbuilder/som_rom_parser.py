@@ -141,7 +141,7 @@ def _parse_bus(som, bus, rom, addr):
     return som
 
 #ROM -> SDB
-def parse_rom_element(rom, addr, debug = False):
+def parse_rom_element(rom, addr = 0, debug = False):
     entity = sdbc()
     possible_magic = rom[addr + 0] << 24 | \
                      rom[addr + 1] << 16 | \
