@@ -44,6 +44,23 @@ if os.name == "nt":
     purple = ''
     cyan   = ''
 
+def color_from_string(color_name):
+    if color_name.lower() == "white":
+        return white
+    if color_name.lower() == "gray":
+        return gray
+    if color_name.lower() == "red":
+        return red
+    if color_name.lower() == "green":
+        return green
+    if color_name.lower() == "yellow":
+        return yellow
+    if color_name.lower() == "blue":
+        return blue
+    if color_name.lower() == "purple":
+        return purple
+    if color_name.lower() == "cyan":
+        return cyan
 
 StatusLevel = enum ('FATAL', 'ERROR', 'WARNING', 'INFO', 'IMPORTANT', 'DEBUG', 'VERBOSE')
 
@@ -93,11 +110,11 @@ class _Status(object):
         if self.CheckLevel(StatusLevel.FATAL):
             self.status_output("Fatal", text, color=red)
 
-    def Print (self, text):
-        self.status_output("", None, text)
+    def Print (self, text, color = white):
+        print "%s%s%s" % (color, text, white),
 
-    def PrintLine(self, text):
-        self.status_output("", None, text)
+    def PrintLine(self, text, color = white):
+        print "%s%s%s" % (color, text, white)
 
     def status_output(self, level, text, color=white):
         
