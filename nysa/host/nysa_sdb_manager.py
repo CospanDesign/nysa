@@ -27,14 +27,17 @@ from cbuilder.sdb_component  import SDB_ROM_RECORD_LENGTH
 from cbuilder import sdb_component as sdbc
 from cbuilder import sdb_object_model as som
 from cbuilder import som_rom_parser as srp
+from cbuilder import device_manager
 from cbuilder.sdb import SDBError
 
 class NysaSDBManager(object):
 
     def __init__(self, status = None):
         self.s = status
+        
         if self.s is None:
             self.s = Status()
+            self.s.Important("Generating a new Status")
 
     def is_memory_device(self, device_index):
         pass
@@ -64,14 +67,61 @@ class NysaSDBManager(object):
         pass
 
     def pretty_print_sdb(self):
-        print "Pretty pring SDB"
-        pass
+        self.s.Verbose("pretty print SDB")
+        self.s.PrintLine("SDB ", color = "blue")
+        #self.som
+        root = self.som.get_root()
+        self._print_bus(root, depth = 0)
+
+    def _print_bus(self, bus, depth = 0):
+        c = bus.get_component()
+        for t in range(depth):
+            self.s.Print("\t")
+        s = "Bus: {0:<10} @ 0x{1:0=16X} : Size: 0x{2:0=8X}".format(bus.get_name(), c.get_start_address_as_int(), c.get_size_as_int())
+        self.s.PrintLine(s, "purple")
+
+        for i in range(bus.get_child_count()):
+            c = bus.get_child_from_index(i)
+            if self.som.is_entity_a_bus(bus, i):
+                self._print_bus(c, depth = depth + 1)
+            else:
+                c = bus.get_child_from_index(i)
+                c = c.get_component()
+                major = c.get_abi_version_major_as_int()
+                minor = c.get_abi_version_minor_as_int()
+                dev_name = device_manager.get_device_name_from_id(major)
+                for t in range(depth + 1):
+                    self.s.Print("\t")
+                s = "{0:20} Type (Major:Minor) ({1:0=2X}:{2:0=2X}): {3:10}".format(c.get_name(),
+                                                   major,
+                                                   minor,
+                                                   dev_name)
+
+                self.s.PrintLine(s, "green")
+                for t in range(depth + 1):
+                    self.s.Print("\t")
+                s = "Address:        0x{0:0=16X}-0x{1:0=16X} : Size: 0x{2:0=8X}".format(c.get_start_address_as_int(),
+                                                                    c.get_end_address_as_int(),
+                                                                    c.get_size_as_int())
+                self.s.PrintLine(s, "green")
+                for t in range(depth + 1):
+                    self.s.Print("\t")
+                s = "Vendor:Product: {0:0=16X}:{1:0=8X}".format(c.get_vendor_id_as_int(),
+                                                                c.get_device_id_as_int())
+                                                                    
+                self.s.PrintLine(s, "green")
+                self.s.PrintLine("")
+
+
+
+        
+        
 
     def get_total_memory_size(self):
         pass
 
     def read_sdb(self, n):
-        self.s.Verbose("Parsing Top Interconnect Buffer")
+        self.s.Important("Parsing Top Interconnect Buffer")
         #Because Nysa works with many different platforms we need to get the
         #platform specific location of where the SDB actually is
         #XXX: Create this function in nysa
@@ -86,14 +136,14 @@ def _parse_bus(n, som, bus, addr, base_addr, status):
     #The first element at this address is the interconnect
     status.Verbose("Bus @ 0x%08X" % addr)
     entity_rom = n.read(addr, SDB_ROM_RECORD_LENGTH / 4)
-    print_sdb_rom(sdbc.convert_rom_to_32bit_buffer(entity_rom))
+    #print_sdb_rom(sdbc.convert_rom_to_32bit_buffer(entity_rom))
     bus_entity = srp.parse_rom_element(entity_rom)
     if not bus_entity.is_interconnect():
         raise SDBError("Rom data does not point to an interconnect")
     num_devices = bus_entity.get_number_of_records_as_int()
     status.Verbose("\tFound %d Devices" % num_devices)
     som.set_bus_component(bus, bus_entity)
-    print "Found bus: %s" % bus_entity.get_name()
+    #print "Found bus: %s" % bus_entity.get_name()
 
     entity_size = []
     entity_addr_start = []
@@ -101,7 +151,7 @@ def _parse_bus(n, som, bus, addr, base_addr, status):
     for i in range(1, (num_devices + 1)):
         I = (i * (SDB_ROM_RECORD_LENGTH / 4)) + addr
         entity_rom = n.read(I, SDB_ROM_RECORD_LENGTH / 4)
-        print_sdb_rom(sdbc.convert_rom_to_32bit_buffer(entity_rom))
+        #print_sdb_rom(sdbc.convert_rom_to_32bit_buffer(entity_rom))
         entity = srp.parse_rom_element(entity_rom)
         end = long(entity.get_end_address_as_int())
         start = long(entity.get_start_address_as_int())
@@ -109,14 +159,18 @@ def _parse_bus(n, som, bus, addr, base_addr, status):
         entity_size.append(end - start)
 
         if entity.is_bridge():
-            print "Found bridge"
+            #print "Found bridge"
             sub_bus = som.insert_bus(root = bus,
                                      name = entity.get_name())
             sub_bus_addr = entity.get_bridge_address_as_int() * 2 + base_addr
-            print "address: 0x%08X" % sub_bus_addr
             _parse_bus(n, som, sub_bus, sub_bus_addr, base_addr, status)
         else:
             som.insert_component(root = bus, component = entity)
+            status.Verbose("Found device %s Type (0x%02X): %s" % (
+                                            entity.get_name(), 
+                                            entity.get_abi_version_major_as_int(),
+                                            device_manager.get_device_name_from_id(entity.get_abi_version_major_as_int())))
+            #print_sdb_rom(sdbc.convert_rom_to_32bit_buffer(entity_rom))
 
     #Calculate Spacing
     spacing = 0
