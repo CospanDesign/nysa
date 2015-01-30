@@ -26,8 +26,6 @@ from sdb import SDBInfo
 from sdb import SDBWarning
 from sdb import SDBError
 
-
-
 class SOMComponent(object):
 
     def __init__(self, parent, c):
