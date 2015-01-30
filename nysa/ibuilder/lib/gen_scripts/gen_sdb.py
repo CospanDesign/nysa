@@ -130,7 +130,11 @@ class GenSDB(Gen):
         return self.rom_element_count
 
     def gen_script(self, tags = {}, buf = "", user_paths = [], debug = False):
-        buf = ""
+        rom = self.gen_rom(tags, buf, user_paths, debug)
+        buf = sdbc.convert_rom_to_32bit_buffer(rom)
+        return buf
+
+    def gen_rom(self, tags = {}, buf = "", user_paths = [], debug = False):
         tags = copy.deepcopy(tags)
         self.rom_element_count = 0
         if "MEMORY" not in tags:
@@ -226,9 +230,8 @@ class GenSDB(Gen):
         sm.set_child_spacing(root,       0x0100000000)
         sm.set_child_spacing(peripheral, 0x0010000000)
         rom = srg.generate_rom_image(sm)
-        rom = sdbc.convert_rom_to_32bit_buffer(rom)
-
         return rom
+
 
     def gen_name(self):
         print "generate a ROM"
