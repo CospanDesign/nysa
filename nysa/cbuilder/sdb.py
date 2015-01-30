@@ -25,16 +25,6 @@ import collections
 
 from nysa.common.status import Status
 
-from nysa.common.status import white
-from nysa.common.status import gray
-from nysa.common.status import red
-from nysa.common.status import green
-from nysa.common.status import yellow
-from nysa.common.status import blue
-from nysa.common.status import purple
-from nysa.common.status import cyan
-
-
 class SDBError(Exception):
     pass
 
@@ -54,5 +44,4 @@ class SDB (object):
 
         for e in self.ELEMENTS:
             self.d[e] = ""
-
 
