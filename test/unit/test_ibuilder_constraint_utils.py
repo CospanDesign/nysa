@@ -12,8 +12,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 
 #from ibuilder.lib import utils
 from nysa.ibuilder.lib import constraint_utils as cu
-from nysa.ibuilder.gui.wishbone_model import SlaveType
-from nysa.ibuilder.gui import wishbone_model
 
 TEST_CONSTRAINT = ""\
         "NET \"clk\"           LOC = C10 | IOSTANDARD = LVCMOS33;\n" \
@@ -108,11 +106,10 @@ class Test (unittest.TestCase):
         self.assertEquals(rate, '50000000')
 
     def test_read_clock_rate(self):
-        filename = os.path.join(self.nysa_base, "test", "fake", "test_board", "test.ucf")
+        filename = os.path.join(self.nysa_base, "test", "fake", "test_board", "board", "test.ucf")
 
         rate = cu.read_clock_rate(filename)
         self.assertEquals(rate, '50000000')
-
 
     def test_parse_signal_range(self):
         name, maximum, minimum = cu.parse_signal_range("signal[31:0]")
@@ -130,123 +127,4 @@ class Test (unittest.TestCase):
     def test_expand_user_constraints(self):
         uc = cu.expand_user_constraints(CONSOLODATED_CONSTRAINTS)
         self.assertIn("io_ftdi_data", uc)
-
-
-'''
-    def test_consolodate_constraints(self):
-        print "uc: %s" % str(EXPANDED_CONSTRAINTS)
-        ud = cu.consolodate_constraints(EXPANDED_CONSTRAINTS, debug = True)
-        self.assertIn("io_ftdi_data[1:0]", ud)
-'''
-
-'''
-        sdram = self.c.get_slave_bindings(SlaveType.MEMORY, 0)
-        #print "Pre SDRAM: %s" % str(sdram)
-        sdram = cu.expand_user_constraints(sdram, debug=self.dbg)
-        self.assertIn("io_sdram_data_mask", sdram)
-        #print "Expanded SDRAM: %s" % str(sdram)
-        ud = cu.consolodate_constraints(sdram, debug=self.dbg)
-        #print "Post SDRAM: %s" % str(ud)
-        self.assertIn("io_sdram_data[15:0]", ud)
-
-        #Test the peripheral interface
-        gpio = self.c.get_slave_bindings(SlaveType.PERIPHERAL, 2)
-        #print "Pre GPIO: %s" % str(gpio)
-        gpio = cu.expand_user_constraints(gpio, debug=self.dbg)
-        self.assertIn("gpio_out", gpio)
-        #print "Expanded GPIO: %s" % str(gpio)
-        ud = cu.consolodate_constraints(gpio, debug=self.dbg)
-        #print "Post GPIO: %s" % str(ud)
-        self.assertIn("gpio_in[3:2]", ud)
-
-        #Test another constraint file
-        filename = os.path.join(self.nysa_base, "nysa", "ibuilder", "example_projects", "lx9_default.json")
-        self.c = wishbone_model.WishboneModel(config_file=filename)
-        hib = self.c.get_host_interface_bindings()
-
-        uc = cu.expand_user_constraints(hib)
-        #print "uc: %s" % str(uc)
-        self.assertIn("o_phy_uart_out", uc.keys())
-
-        #print "user_dict: %s" %  str(uc)
-        ud = cu.consolodate_constraints(uc, debug = self.dbg)
-        self.assertIn("o_phy_uart_out", ud)
-
-    def test_expand_ports(self):
-
-        f = utils.find_rtl_file_location("wb_sdram.v")
-        parameters = utils.get_module_tags(filename=f,
-                                           bus="wishbone")
-        c_ports = parameters["ports"]
-        #print "c_ports: %s" % str(c_ports)
-        e_ports = cu.expand_ports(c_ports)
-        #e_ports = cu.get_only_signal_ports(e_ports)
-        #print ""
-        #print "e_ports: %s" % str(e_ports)
-        #print ""
-        self.assertFalse(e_ports["o_sdram_clk"]["range"])
-        self.assertTrue(e_ports["io_sdram_data"]["range"])
-
-        f = utils.find_rtl_file_location("wb_logic_analyzer.v")
-        parameters = utils.get_module_tags(filename=f,
-                                           bus="wishbone")
-        c_ports = parameters["ports"]
-        #print "c_ports: %s" % str(c_ports)
-        e_ports = cu.expand_ports(c_ports)
-        e_ports = cu.get_only_signal_ports(e_ports)
-        #print ""
-        #print "c_ports: %s" % str(e_ports)
-        #print ""
-        self.assertFalse(e_ports["o_la_uart_tx"]["range"])
-        self.assertFalse(e_ports["i_la_uart_rx"]["range"])
-
-        f = utils.find_rtl_file_location("wb_gpio.v")
-        parameters = utils.get_module_tags(filename=f,
-                                           bus="wishbone")
-        c_ports = parameters["ports"]
-        #print "c_ports: %s" % str(c_ports)
-        e_ports = cu.expand_ports(c_ports)
-        e_ports = cu.get_only_signal_ports(e_ports)
-        #print ""
-        #print "c_ports: %s" % str(e_ports)
-        #print ""
-        self.assertTrue(e_ports["gpio_out"]["range"])
-        self.assertTrue(e_ports["gpio_in"]["range"])
-
-
-
-    def test_get_only_signal_ports(self):
-        f = utils.find_rtl_file_location("wb_sdram.v")
-        parameters = utils.get_module_tags(filename=f,
-                                           bus="wishbone")
-        c_ports = parameters["ports"]
-        e_ports = cu.expand_ports(c_ports)
-        #print "e_ports: %s" % str(e_ports)
-        #print ""
-        ports = cu.get_only_signal_ports(e_ports)
-        #print "ports: %s" % str(ports)
-        #print ""
-
-    def test_consolodate_ports(self):
-        f = utils.find_rtl_file_location("wb_sdram.v")
-        parameters = utils.get_module_tags(filename=f,
-                                           bus="wishbone")
-        c_ports = parameters["ports"]
-        #print "c_ports: %s" % str(c_ports)
-        e_ports = cu.expand_ports(c_ports)
-        ports = cu.consolodate_ports(e_ports)
-
-        for direction in ports:
-            #print "Direction: %s" % direction
-            for port in ports[direction]:
-                #print "port: %s" % port
-                self.assertIn(port, c_ports[direction].keys())
-                self.assertDictEqual(ports[direction][port], c_ports[direction][port])
-
-
-'''
-
-
-if __name__ == "__main__":
-    unittest.main()
 
