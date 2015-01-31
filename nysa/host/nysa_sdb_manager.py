@@ -34,38 +34,197 @@ class NysaSDBManager(object):
 
     def __init__(self, status = None):
         self.s = status
-        
+
         if self.s is None:
             self.s = Status()
             self.s.Important("Generating a new Status")
 
-    def is_memory_device(self, device_index):
-        pass
-
-    def is_wishbone_bus(self):
-        pass
-
-    def is_axie_bus(self):
-        pass
-
+    #SOM Functions
     def get_number_of_devices(self):
+        """
+        Return the number of devices in the SDB Bus
+
+        Args:
+            Nothing
+
+        Returns:
+            (Integer) Number of devices on the SDB Bus
+
+        Raises:
+            Nothing
+        """
         pass
 
-    def find_device(self, vendor_id, product_id):
+    def find_device_from_ids(self, vendor_id = None, product_id = None):
+        """
+        Returns the URN of the device with the given vendor and or product ID
+
+        Args:
+            vendor_id (None or Integer): the vendor id number of the device
+            product_id (None or Integer): the product id number of the device
+
+        Returns:
+            (String): URN of the device of the form:
+            /peripherals/gpio1
+
+        Raises:
+            SDBError: device isn't found
+        """
         pass
 
-    def get_address_from_index(self, device_index):
+    def find_device_from_address(self, address):
+        """
+        Returns the URN of the device with the given address
+
+        Args:
+            address (Integer): the absolute base address of the device
+
+        Returns:
+            (String): URN of the device of the form:
+            /peripherals/gpio1
+
+        Raises:
+            SDBError: device isn't found
+        """
         pass
 
-    def get_product_id_from_index(self, device_index):
+    def find_device_from_abi(self, abi_class = 0, abi_major = None, abi_minor = None):
+        """
+        Returns the URN of the device with the given address
+
+        Args:
+            abi_class (Nothing/Integer): class of the device, note abi_class has
+                not been formally defined and this function may change for the
+                future
+            abi_major: (Nothing/Integer): major number of the device, refer to
+                to the device list to find the associated number of a device
+            abi_minor: (Nothing/Integer): minor nuber of the device, refer to
+                the device list to find the associated number of a device
+
+        Returns:
+            (String): URN of the device of the form:
+            /peripherals/gpio1
+
+        Raises:
+            SDBError: device isn't found
+        """
+
         pass
 
-    def get_size_from_index(self, device_index):
+    def read_sdb(self, n):
+        """
+        Reads the SDB of the device, this is used to initialize the SDB Object
+        Model with the content of the SDB on the host
+
+        Args:
+            n (Nysa Instance): A reference to nysa that the controller will
+                use to extrapolate the SDB from the device
+
+        Returns:
+            Nothing
+
+        Raises:
+            NysaCommError: Errors associated with communication
+        """
+        self.s.Important("Parsing Top Interconnect Buffer")
+        #Because Nysa works with many different platforms we need to get the
+        #platform specific location of where the SDB actually is
+        #XXX: Create this function in nysa
+        sdb_base_address = n.get_sdb_base_address()
+        self.som = som.SOM()
+        self.som.initialize_root()
+        bus = self.som.get_root()
+        _parse_bus(n, self.som, bus, sdb_base_address, sdb_base_address, self.s)
+
+    def is_wishbone_bus(self, urn = None):
+        """
+        Returns true if the SDB bus is a wishbone bus
+
+        Args:
+            urn (None/String): Absolute reference to the bus
+                leave blank for root
+
+        Returns (Boolean):
+           True: Is a wishbone bus 
+           False: Not a wishbone bus
+
+        Raises:
+            Nothing
+        """
+        root = self.som.get_root()
+        c = root.get_component()
+        if c.get_bus_type_as_int() == 0
+
+    def is_axi_bus(self):
+        """
+        Returns true if the SDB bus is an axi bus
+
+        Args:
+            urn (None/String): Absolute reference to the bus
+                leave blank for root
+
+        Returns (Boolean):
+           True: Is an axi bus 
+           False: Not an axi bus
+
+        Raises:
+            Nothing
+        """
+
+        raise AssertionError("AXI bus not implemented yet")
+
+    def is_storage_bus(self):
+        """
+        Returns true if the SDB bus is a storage bus
+
+        Args:
+            urn (None/String): Absolute reference to the bus
+                leave blank for root
+
+        Returns (Boolean):
+           True: Is a storage bus 
+           False: Not a storage bus
+
+        Raises:
+            Nothing
+        """
+        root = self.som.get_root()
+        c = root.get_component()
+        return c.get_bus_type_as_int() == 1
+
+    def get_total_memory_size(self):
         pass
 
+    #Device Functions
+    def get_device_address(self, urn):
+        pass
+
+    def get_device_size(self, urn):
+        pass
+
+    def get_device_vendor_id(self, urn):
+        pass
+
+    def get_device_product_id(self, urn):
+        pass
+
+    def get_device_size(self, urn):
+        pass
+
+    def get_device_abi_class(self, urn):
+        pass
+
+    def get_device_abi_major(self, urn):
+        pass
+
+    def get_device_abi_minor(self, urn):
+        pass
+
+    #Board Functions
     def get_board_name(self):
         pass
 
+    #Helpful Fuctions
     def pretty_print_sdb(self):
         self.s.Verbose("pretty print SDB")
         self.s.PrintLine("SDB ", color = "blue")
@@ -108,28 +267,9 @@ class NysaSDBManager(object):
                     self.s.Print("\t")
                 s = "Vendor:Product: {0:0=16X}:{1:0=8X}".format(c.get_vendor_id_as_int(),
                                                                 c.get_device_id_as_int())
-                                                                    
+
                 self.s.PrintLine(s, "green")
                 self.s.PrintLine("")
-
-
-
-        
-        
-
-    def get_total_memory_size(self):
-        pass
-
-    def read_sdb(self, n):
-        self.s.Important("Parsing Top Interconnect Buffer")
-        #Because Nysa works with many different platforms we need to get the
-        #platform specific location of where the SDB actually is
-        #XXX: Create this function in nysa
-        sdb_base_address = n.get_sdb_base_address()
-        self.som = som.SOM()
-        self.som.initialize_root()
-        bus = self.som.get_root()
-        _parse_bus(n, self.som, bus, sdb_base_address, sdb_base_address, self.s)
 
 
 def _parse_bus(n, som, bus, addr, base_addr, status):
@@ -167,7 +307,7 @@ def _parse_bus(n, som, bus, addr, base_addr, status):
         else:
             som.insert_component(root = bus, component = entity)
             status.Verbose("Found device %s Type (0x%02X): %s" % (
-                                            entity.get_name(), 
+                                            entity.get_name(),
                                             entity.get_abi_version_major_as_int(),
                                             device_manager.get_device_name_from_id(entity.get_abi_version_major_as_int())))
             #print_sdb_rom(sdbc.convert_rom_to_32bit_buffer(entity_rom))
@@ -197,8 +337,6 @@ def _parse_bus(n, som, bus, addr, base_addr, status):
     som.set_child_spacing(bus, spacing)
 
 
-
-    
 def print_sdb_rom(rom):
     #rom = sdbc.convert_rom_to_32bit_buffer(rom)
     rom = rom.splitlines()
