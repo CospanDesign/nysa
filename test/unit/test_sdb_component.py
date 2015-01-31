@@ -199,7 +199,6 @@ class Test (unittest.TestCase):
         url = sdb_component.create_repo_url_record("wwww.cospandesign.com")
         self.assertTrue(url.is_url_record())
 
-
     def test_generate_interconnect_rom_buffer(self):
         rom = self.sdbc.generate_interconnect_rom()
         buf = sdb_component.convert_rom_to_32bit_buffer(rom)
