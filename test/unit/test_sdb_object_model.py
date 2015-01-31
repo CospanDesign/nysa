@@ -71,7 +71,7 @@ class Test (unittest.TestCase):
     def setUp(self):
         self.status = Status()
         self.status.set_level(StatusLevel.VERBOSE)
-        self.som = som.SOM(self.status)
+        self.som = som.SOM()
 
     def test_initialize_root(self):
         self.som.initialize_root()
@@ -261,7 +261,6 @@ class Test (unittest.TestCase):
         dout = self.som.get_component(bus, 1)
         self.assertEqual(dout.get_start_address_as_int(), 0x20)
 
-
     def test_set_bus_name(self):
         test_name = "Renamed Bus"
         self.som.initialize_root()
@@ -311,7 +310,6 @@ class Test (unittest.TestCase):
                             self.som.remove_component_by_index,
                             root,
                             3)
-
 
     def test_insert_integration_record(self):
         self.som.initialize_root()
@@ -367,7 +365,6 @@ class Test (unittest.TestCase):
         record = self.som.get_component(root, 3)
         self.assertEqual(record, synthesis)
 
-
     def test_move_device(self):
         self.som.initialize_root()
         root = self.som.get_root()
@@ -382,7 +379,6 @@ class Test (unittest.TestCase):
         self.som.move_component(root, 2, root, 0)
         component = self.som.get_component(root, 0)
         self.assertEqual(din3, component)
-
 
     def test_iterate_bus(self):
         self.som.initialize_root()
@@ -407,5 +403,7 @@ class Test (unittest.TestCase):
 
         self.assertEqual(count, 2)
             
+
+
 
 

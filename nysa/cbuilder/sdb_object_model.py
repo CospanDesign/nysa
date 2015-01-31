@@ -365,6 +365,15 @@ class SOM(object):
 
         return bus.get_component().get_name()
 
+    def is_wishbone_bus(self):
+        return self.d["SDB_BUS_TYPE"] == "wishbone"
+
+    def is_axi_bus(self):
+        return self.d["SDB_BUS_TYPE"] == "axi"
+
+    def is_storage_bus(self):
+        return self.d["SDB_BUS_TYPE"] == "storage"
+
     #Bus Private Functions
 
     #Component Entity Functions
