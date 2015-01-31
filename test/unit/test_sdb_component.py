@@ -142,7 +142,7 @@ class Test (unittest.TestCase):
         self.assertEqual(od["SDB_WRITEABLE"]         , "True")
         self.assertEqual(od["SDB_READABLE"]          , "True")
         self.assertEqual(od["SDB_START_ADDRESS"]     , "0x1000000")
-        self.assertEqual(od["SDB_LAST_ADDRESS"]      , "0x1000005")
+        self.assertEqual(od["SDB_LAST_ADDRESS"]      , "0x1000005L")
         self.assertEqual(od["SDB_NRECS"]             , "10")
         self.assertEqual(od["SDB_BRIDGE_CHILD_ADDR"] , "0x1000000000000000")
 
@@ -199,40 +199,4 @@ class Test (unittest.TestCase):
         url = sdb_component.create_repo_url_record("wwww.cospandesign.com")
         self.assertTrue(url.is_url_record())
 
-    def test_generate_interconnect_rom_buffer(self):
-        rom = self.sdbc.generate_interconnect_rom()
-        buf = sdb_component.convert_rom_to_32bit_buffer(rom)
-        buf_lines = buf.splitlines()
-        test_lines = TEST_INTERCONNECT_ROM.splitlines()
-        print "Interconnect ROM Buffer"
-        print "Generated\tTest"
-        for i in range (len(buf_lines)):
-            print "%s\t%s" % (buf_lines[i], test_lines[i])
-
-        self.assertEqual(buf, TEST_INTERCONNECT_ROM)
-
-    def test_generate_bridge_rom_buffer(self):
-        rom = self.sdbc.generate_bridge_rom()
-        buf = sdb_component.convert_rom_to_32bit_buffer(rom)
-        buf_lines = buf.splitlines()
-        test_lines = TEST_BRIDGE_ROM.splitlines()
-        print "Bridge ROM Buffer"
-        print "Generated\tTest"
-        for i in range (len(buf_lines)):
-            print "%s\t%s" % (buf_lines[i], test_lines[i])
-
-        self.assertEqual(buf, TEST_BRIDGE_ROM)
-
-    def test_generate_device_rom_buffer(self):
-        rom = self.sdbc.generate_device_rom()
-        buf = sdb_component.convert_rom_to_32bit_buffer(rom)
-        buf_lines = buf.splitlines()
-        test_lines = TEST_DEVICE_ROM.splitlines()
-
-        print "Device ROM Buffer"
-        print "Generated\tTest"
-        for i in range (len(buf_lines)):
-            print "%s\t%s" % (buf_lines[i], test_lines[i])
-
-        self.assertEqual(buf, TEST_DEVICE_ROM)
 
