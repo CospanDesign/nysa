@@ -276,7 +276,7 @@ wishbone_mem_interconnect wmi (
 
 
 
-// drt ( device_rom_table )
+// sdb ( device_rom_table )
 
 //Wires
 wire                 s0_i_wbs_cyc;
@@ -290,7 +290,7 @@ wire                 s0_o_wbs_int;
 wire  [31:0]         s0_o_wbs_dat;
 wire                 s0_o_wbs_ack;
 
-device_rom_table  drt(
+device_rom_table  sdb(
   .clk                 (clk                 ),
   .rst                 (rst_n | startup_rst ),
   .i_wbs_cyc           (w_s0_i_wbs_cyc      ),

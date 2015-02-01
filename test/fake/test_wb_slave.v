@@ -23,53 +23,61 @@ SOFTWARE.
 */
 
 /*
-  8/31/2012
-    -Changed some of the naming for clarity
-	10/29/2011
-		-added an 'else' statement that so either the
-		reset HDL will be executed or the actual code
-		not both
-	10/23/2011
-		-fixed the wbs_ack_i to o_wbs_ack
-		-added the default entries for read and write
-			to illustrate the method of communication
-		-added license
-	9/10/2011
-		-removed the duplicate wbs_dat_i
-		-added the wbs_sel_i port
-*/
+  Self Defining Bus (SDB)
 
-/*
-	Use this to tell sycamore how to populate the Device ROM table
-	so that users can interact with your slave
+  Set the Vendor ID (Hexidecimal 64-bit Number)
+  SDB_VENDOR_ID:0x800000000000C594
 
-	META DATA
+  Set the Device ID (Hexcidecimal 32-bit Number)
+  SDB_DEVICE_ID:0x00000000
 
-	identification of your device 0 - 65536
-	DRT_ID:  1
+  Set the version of the Core XX.XXX.XXX Example: 01.000.000
+  SDB_CORE_VERSION:00.000.001
 
-  DRT_SUB_ID: 1
+  Set the Device Name: (19 UNICODE characters)
+  SDB_NAME:wb_test
 
-	flags (read drt.txt in the slave/device_rom_table directory 1 means
-	a standard device
-	DRT_FLAGS:  1
+  Set the class of the device (16 bits) Set as 0
+  SDB_ABI_CLASS:0
 
-	number of registers this should be equal to the nubmer of ???
-	parameters
-	DRT_SIZE:  5
+  Set the ABI Major Version: (8-bits)
+  SDB_ABI_VERSION_MAJOR:0x02
 
-	USER_PARAMETER: DEFAULT_INTERRUPT_MASK
-	USER_PARAMETER: DEFAULT_INTERRUPT_EDGE
+  Set the ABI Minor Version (8-bits)
+  SDB_ABI_VERSION_MINOR:0x01
 
+  Set the Module URL (63 Unicode Characters)
+  SDB_MODULE_URL:http://www.example.com
+
+  Set the date of module YYYY/MM/DD
+  SDB_DATE:2015/01/07
+
+  Device is executable (True/False)
+  SDB_EXECUTABLE:True
+
+  Device is readable (True/False)
+  SDB_READABLE:True
+
+  Device is writeable (True/False)
+  SDB_WRITEABLE:True
+
+  Device Size: Number of Registers
+  SDB_SIZE:8
+
+  USER_PARAMETER: DEFAULT_INTERRUPT_MASK
+  USER_PARAMETER: DEFAULT_INTERRUPT_EDGE
+  USER_PARAMETER: DEFAULT_INTERRUPT_BOTH_EDGE
+  USER_PARAMETER: DEFAULT_INTERRUPT_TIMEOUT
 */
 
 `include "project_defines.v"
-`define SPEED_RATE `CLOCK_RATE / 1000000
-`define TEST_DEFINE 1
 
 module wb_test#(
-  parameter DEFAULT_INTERRUPT_MASK = 0,
-  parameter DEFAULT_INTERRUPT_EDGE = 0
+  parameter DEFAULT_INTERRUPT_MASK      = 0,
+  parameter DEFAULT_INTERRUPT_EDGE      = 0,
+  parameter DEFAULT_INTERRUPT_BOTH_EDGE = 0,
+  parameter DEFAULT_INTERRUPT_TIMEOUT   = 0
+
   )(
   input               clk,
   input               rst,
@@ -95,24 +103,27 @@ module wb_test#(
 
 );
 
-
-
-localparam			GPIO			            =	32'h00000000;
-localparam			GPIO_OUTPUT_ENABLE		=	32'h00000001;
-localparam			INTERRUPTS		        =	32'h00000002;
-localparam			INTERRUPT_ENABLE	    =	32'h00000003;
-localparam			INTERRUPT_EDGE        =	32'h00000004;
-
+localparam      GPIO                  = 32'h00000000;
+localparam      GPIO_OUTPUT_ENABLE    = 32'h00000001;
+localparam      INTERRUPTS            = 32'h00000002;
+localparam      INTERRUPT_ENABLE      = 32'h00000003;
+localparam      INTERRUPT_EDGE        = 32'h00000004;
+localparam      INTERRUPT_BOTH_EDGE   = 32'h00000005;
+localparam      INTERRUPT_TIMEOUT     = 32'h00000006;
+localparam      READ_CLOCK_RATE       = 32'h00000007;
 
 //gpio registers
-reg			[31:0]	gpio_direction;
+reg     [31:0]  gpio_direction;
 wire    [31:0]  gpio;
 
 //interrupt registers
-reg			[31:0]	interrupts;
-reg			[31:0]	interrupt_enable;
-reg			[31:0]	interrupt_edge;
-reg					    clear_interrupts;
+reg     [31:0]  interrupts;
+reg     [31:0]  interrupt_enable;
+reg     [31:0]  interrupt_edge;
+reg     [31:0]  interrupt_both_edge;
+reg     [31:0]  interrupt_timeout_count;
+reg     [31:0]  interrupt_count;
+reg             clear_interrupts;
 
 
 genvar i;
@@ -124,104 +135,128 @@ endgenerate
 
 //blocks
 always @ (posedge clk) begin
-	if (rst) begin
-		o_wbs_dat	          <= 32'h00000000;
-		o_wbs_ack	          <= 0;
+  if (rst) begin
+    o_wbs_dat               <= 32'h00000000;
+    o_wbs_ack               <= 0;
 
-		//reset gpio's
-		gpio_out			      <= 32'h00000000;
-		gpio_direction			<= 32'h00000000;
+    //reset gpio's
+    gpio_out                <= 32'h00000000;
+    gpio_direction          <= 32'h00000000;
 
+    //reset interrupts
+    interrupt_enable        <= DEFAULT_INTERRUPT_MASK;
+    interrupt_edge          <= DEFAULT_INTERRUPT_EDGE;
+    interrupt_both_edge     <= DEFAULT_INTERRUPT_BOTH_EDGE;
+    interrupt_timeout_count <= DEFAULT_INTERRUPT_TIMEOUT;
+    clear_interrupts        <= 0;
+  end
+  else begin
+    clear_interrupts        <= 0;
+    //when the master acks our ack, then put our ack down
+    if (o_wbs_ack & ~ i_wbs_stb)begin
+      o_wbs_ack <= 0;
+    end
 
-		//reset interrupts
-		interrupt_enable		  <= DEFAULT_INTERRUPT_MASK;
-		interrupt_edge		  <= DEFAULT_INTERRUPT_EDGE;
-	  clear_interrupts 	  <= 0;
-	end
-	else begin
-	  clear_interrupts 	  <= 0;
-		//when the master acks our ack, then put our ack down
-		if (o_wbs_ack & ~ i_wbs_stb)begin
-			o_wbs_ack <= 0;
-		end
-
-		if (i_wbs_stb & i_wbs_cyc) begin
-			//master is requesting somethign
-			if (i_wbs_we) begin
-				//write request
-				case (i_wbs_adr)
-					GPIO: begin
-						$display("user wrote %h", i_wbs_dat);
-						gpio_out	<= i_wbs_dat & gpio_direction;
-					end
-					GPIO_OUTPUT_ENABLE: begin
-						$display("%h ->gpio_direction", i_wbs_dat);
-						gpio_direction	<= i_wbs_dat;
-					end
-					INTERRUPTS: begin
-						$display("trying to write %h to interrupts?!", i_wbs_dat);
-						//can't write to the interrupt
-					end
-					INTERRUPT_ENABLE: begin
-						$display("%h -> interrupt enable", i_wbs_dat);
-						interrupt_enable	<= i_wbs_dat;
-					end
-					INTERRUPT_EDGE: begin
-						$display("%h -> interrupt_edge", i_wbs_dat);
-						interrupt_edge	<= i_wbs_dat;
-					end
-					default: begin
-					end
-				endcase
-			end
-			else begin
-        if (!o_wbs_ack) begin //Fix double reads
-			  	//read request
-			  	case (i_wbs_adr)
-			  		GPIO: begin
-			  			$display("user read %h", i_wbs_adr);
-			  			o_wbs_dat <= gpio;
-			  		end
-			  		GPIO_OUTPUT_ENABLE: begin
-			  			$display("user read %h", i_wbs_adr);
-			  			o_wbs_dat <= gpio_direction;
-			  		end
-			  		INTERRUPTS: begin
-			  			$display("user read %h", i_wbs_adr);
-			  			o_wbs_dat 			<= interrupts;
-			  			clear_interrupts	<= 1;
-			  		end
-			  		INTERRUPT_ENABLE: begin
-			  			$display("user read %h", i_wbs_adr);
-			  			o_wbs_dat			<= interrupt_enable;
-			  		end
-			  		INTERRUPT_EDGE: begin
-			  			$display("user read %h", i_wbs_adr);
-			  			o_wbs_dat			<= interrupt_edge;
-			  		end
-			  		default: begin
-              o_wbs_dat <=  32'h00;
-			  		end
-			  	endcase
+    if (i_wbs_stb & i_wbs_cyc) begin
+      //master is requesting somethign
+      if (!o_wbs_ack) begin
+        if (i_wbs_we) begin
+          //write request
+          case (i_wbs_adr)
+            GPIO: begin
+              $display("user wrote %h", i_wbs_dat);
+              gpio_out                              <= i_wbs_dat & gpio_direction;
+            end
+            GPIO_OUTPUT_ENABLE: begin
+              $display("%h ->gpio_direction", i_wbs_dat);
+              gpio_direction                  <= i_wbs_dat;
+            end
+            INTERRUPTS: begin
+              $display("trying to write %h to interrupts?!", i_wbs_dat);
+              //can't write to the interrupt
+            end
+            INTERRUPT_ENABLE: begin
+              $display("%h -> interrupt enable", i_wbs_dat);
+              interrupt_enable                    <= i_wbs_dat;
+              clear_interrupts              <=  1;
+            end
+            INTERRUPT_EDGE: begin
+              $display("%h -> interrupt_edge", i_wbs_dat);
+              interrupt_edge                <= i_wbs_dat;
+              clear_interrupts              <=  1;
+            end
+            INTERRUPT_BOTH_EDGE: begin
+              $display("%h -> interrupt_both_edge", i_wbs_dat);
+              interrupt_both_edge           <= i_wbs_dat;
+              clear_interrupts              <=  1;
+            end
+            INTERRUPT_TIMEOUT: begin
+              interrupt_timeout_count       <=  i_wbs_dat;
+            end
+            default: begin
+            end
+          endcase
         end
-			end
-			o_wbs_ack <= 1;
-		end
-	end
+        else begin
+          if (!o_wbs_ack) begin //Fix double reads
+            //read request
+            case (i_wbs_adr)
+              GPIO: begin
+                $display("user read %h", i_wbs_adr);
+                o_wbs_dat           <= gpio;
+                clear_interrupts    <= 1;
+              end
+              GPIO_OUTPUT_ENABLE: begin
+                $display("user read %h", i_wbs_adr);
+                o_wbs_dat           <= gpio_direction;
+              end
+              INTERRUPTS: begin
+                $display("user read %h", i_wbs_adr);
+                o_wbs_dat           <= interrupts;
+                clear_interrupts    <= 1;
+              end
+              INTERRUPT_ENABLE: begin
+                $display("user read %h", i_wbs_adr);
+                o_wbs_dat           <= interrupt_enable;
+              end
+              INTERRUPT_EDGE: begin
+                $display("user read %h", i_wbs_adr);
+                o_wbs_dat           <= interrupt_edge;
+              end
+              INTERRUPT_BOTH_EDGE: begin
+                $display("user read %h", i_wbs_adr);
+                o_wbs_dat           <= interrupt_both_edge;
+              end
+              INTERRUPT_TIMEOUT: begin
+                o_wbs_dat           <= interrupt_timeout_count;
+              end
+              READ_CLOCK_RATE: begin
+                o_wbs_dat           <= `CLOCK_RATE;
+              end
+              default: begin
+                o_wbs_dat           <= 32'h00;
+              end
+            endcase
+          end
+        end
+        o_wbs_ack <= 1;
+      end
+    end
+  end
 end
 
 //interrupts
-reg	[31:0]	prev_gpio_in;
+reg     [31:0]  prev_gpio_in;
 
 //this is the change
 wire [31:0] pos_gpio_edge;
 wire [31:0] neg_gpio_edge;
-assign neg_gpio_edge = (~interrupt_edge & (interrupt_enable & ( prev_gpio_in & ~gpio_in)));
-assign pos_gpio_edge = ( interrupt_edge & (interrupt_enable & (~prev_gpio_in &  gpio_in)));
+assign neg_gpio_edge = ((~interrupt_edge | interrupt_both_edge) & (interrupt_enable & ( prev_gpio_in & ~gpio_in)));
+assign pos_gpio_edge = (( interrupt_edge | interrupt_both_edge) & (interrupt_enable & (~prev_gpio_in &  gpio_in)));
 
 /*
 initial begin
-	$monitor ("%t, interrupts: %h, mask: %h, edge: %h, gpio_edge: %h", $time, interrupts, interrupt_enable, interrupt_edge, gpio_edge);
+  $monitor ("%t, interrupts: %h, mask: %h, edge: %h, gpio_edge: %h", $time, interrupts, interrupt_enable, interrupt_edge, gpio_edge);
 end
 */
 
@@ -240,35 +275,58 @@ assign  debug[7]  = prev_gpio_in[3];
 assign  debug[8]  = pos_gpio_edge[2];
 assign  debug[9]  = pos_gpio_edge[3];
 
-assign  debug[10]  = neg_gpio_edge[2];
-assign  debug[11]  = neg_gpio_edge[3];
+assign  debug[10] = neg_gpio_edge[2];
+assign  debug[11] = neg_gpio_edge[3];
 
-assign  debug[12]  = interrupts[2];
-assign  debug[13]  = interrupts[3];
+assign  debug[12] = interrupts[2];
+assign  debug[13] = interrupts[3];
 
-assign  debug[14]  = clear_interrupts;
+assign  debug[14] = clear_interrupts;
 
 
 always @ (posedge clk) begin
-	if (rst) begin
-		interrupts	    <= 32'h00000000;
-		o_wbs_int	      <= 0;
-	end
-	else begin
-		if (clear_interrupts) begin
-			interrupts    <= 32'h00000000;
-			o_wbs_int	    <= 0;
-		end
-		if ((pos_gpio_edge > 0) || (neg_gpio_edge > 0)) begin
-			//check to see if there was a negative or postive edge that occured
-      interrupts    <= (pos_gpio_edge | neg_gpio_edge);
-  		$display ("found an interrupt in the slave");
-		end
-    if (interrupts > 0) begin
-		  o_wbs_int	    <= 1;
+  if (rst) begin
+    interrupt_count   <= 0;
+    interrupts        <= 32'h00000000;
+    o_wbs_int         <= 0;
+  end
+  else begin
+
+    //user requests to clear the interrupts
+    if (clear_interrupts) begin
+      interrupts    <= 32'h00000000;
     end
-	  prev_gpio_in	  <= gpio_in;
-	end
-end
+    if ((pos_gpio_edge > 0) || (neg_gpio_edge > 0)) begin
+      //check to see if there was a negative or postive edge that occured
+        interrupts    <= (pos_gpio_edge | neg_gpio_edge);
+        $display ("found an interrupt in the slave");
+      end
+
+
+      //Implement timeout behavior
+      if (interrupts == 0) begin
+        interrupt_count <=  0;
+      end
+
+      if ((interrupts > 0) && (interrupt_timeout_count > 0)) begin
+        if (interrupt_count < interrupt_timeout_count) begin
+          interrupt_count     <= interrupt_count + 1;
+        end
+        else begin
+          interrupts          <= 32'h00000000;
+          interrupt_count     <=  0;
+        end
+      end
+
+      //Set the wishbone interrupt pin on this module
+      if (interrupts > 0) begin
+        o_wbs_int           <= 1;
+      end
+      else begin
+        o_wbs_int           <= 0;
+      end
+      prev_gpio_in            <= gpio_in;
+    end
+  end
 
 endmodule
