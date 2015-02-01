@@ -1,5 +1,3 @@
-#! /usr/bin/python
-
 import unittest
 import sys
 import os
@@ -19,6 +17,11 @@ GPIO_TAGS = json.load(open( os.path.join(os.path.dirname(__file__),
 SDRAM_TAGS = json.load(open(os.path.join(os.path.dirname(__file__),
                             os.pardir,
                             "mock", "sdram_module_tags.txt"), 'r'))
+
+SLAVE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),
+                             os.path.pardir,
+                             "fake",
+                             "slave"))
 
 class Test (unittest.TestCase):
     """Unit test for utils"""
@@ -106,7 +109,7 @@ class Test (unittest.TestCase):
         self.assertIn("test_board", boards)
 
     def test_get_constraint_filenames_user_loc(self):
-        """Set the current directory to a search location""" 
+        """Set the current directory to a search location"""
         loc = os.path.join(os.path.dirname(__file__),
                            os.path.pardir,
                            "fake")
@@ -127,7 +130,7 @@ class Test (unittest.TestCase):
                            os.path.pardir,
                            "fake")
 
-        board_dict = utils.get_board_config(boardname, [loc], debug = True)
+        board_dict = utils.get_board_config(boardname, [loc], debug = False)
         self.assertEqual(board_dict["board_name"], "Test Board")
 
     def test_get_net_names(self):
@@ -146,7 +149,7 @@ class Test (unittest.TestCase):
         self.assertIn("clk", netnames)
 
     def test_get_constraint_file_path(self):
-        
+
         mock_utils = utils
         loc = os.path.join(os.path.dirname(__file__),
                            os.path.pardir,
@@ -178,13 +181,16 @@ class Test (unittest.TestCase):
         self.assertEqual(int(clock_rate), 100000000)
 
     def test_get_slave_list(self):
-        slave_list = utils.get_slave_list(debug = self.dbg)
+        #print "slave path: %s" % SLAVE_PATH
+        slave_list = utils.get_slave_list(  bus = "wishbone",
+                                            user_paths = [SLAVE_PATH],
+                                            debug = False)
         #print "slave list: %s" % str(slave_list)
         p = False
         for slave in slave_list:
             if "wb_gpio.v" in slave:
                 p = True
-        assert p
+        self.assertTrue(p)
 
     def test_get_slave_list_usr_loc(self):
         loc = os.path.join(os.path.dirname(__file__),
@@ -197,7 +203,7 @@ class Test (unittest.TestCase):
         for slave in slave_list:
             if "test_wb_slave.v" in slave:
                 p = True
-        assert p
+        self.assertTrue(p)
 
     def test_is_module_in_file_fail(self):
         module_name = "uart"
@@ -236,7 +242,7 @@ class Test (unittest.TestCase):
         }
         utils.recursive_dict_name_fix(d)
         self.assertNotIn("${NYSA}", d["dir"])
-    
+
     def test_create_native_path(self):
         non_native_path = "./."
         native_path = utils.create_native_path(non_native_path)
