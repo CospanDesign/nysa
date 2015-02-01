@@ -238,7 +238,6 @@ class Test (unittest.TestCase):
     def test_is_wishbone_slave_signal_fail(self):
         assert not wu.is_wishbone_slave_signal("not a wishbone signal")
 
-
     def test_is_wishbone_bus_signal(self):
         for s in WISHBONE_SIGNALS:
             signal = "%s %s" % (s, "test")
@@ -266,7 +265,7 @@ class Test (unittest.TestCase):
         assert MEMORY_INTERCONNECT in buf
 
     def test_generate_master_buffer(self):
-        buf = wu.generate_master_buffer(False)        
+        buf = wu.generate_master_buffer(False)
         assert MASTER_BUFFER in buf
 
     def test_create_wire_buf_single_port(self):
@@ -336,8 +335,9 @@ class Test (unittest.TestCase):
     def test_generate_simple_top(self):
         wt = WishboneTopGenerator()
         buf = wt.generate_simple_top(self.test_config)
-        assert self.simple_top == buf
-
+        buf = buf.strip()
+        self.simple_top = self.simple_top.strip()
+        self.assertEqual(self.simple_top, buf)
 
 if __name__ == "__main__":
   unittest.main()
