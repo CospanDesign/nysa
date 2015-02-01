@@ -28,16 +28,16 @@ class Test (unittest.TestCase):
     def test_get_number_of_devices(self):
         self.fail()
 
-    def test_find_device_from_ids(self, vendor_id = None, product_id = None):
+    def test_find_device_from_ids(self):
         self.fail()
 
-    def test_find_device_from_address(self, address):
+    def test_find_device_from_address(self):
         self.fail()
 
-    def find_device_from_abi(self, abi_class = None, abi_major = None, abi_minor = None):
+    def find_device_from_abi(self):
         self.fail()
 
-    def test_read_sdb(self, n):
+    def test_read_sdb(self):
         self.fail()
 
     def test_is_wishbone_bus(self):
@@ -53,28 +53,28 @@ class Test (unittest.TestCase):
         self.fail()
 
     #Device Functions
-    def test_get_device_address(self, urn):
+    def test_get_device_address(self):
         self.fail()
 
-    def test_get_device_size(self, urn):
+    def test_get_device_size(self):
         self.fail()
 
-    def test_get_device_vendor_id(self, urn):
+    def test_get_device_vendor_id(self):
         self.fail()
 
-    def test_get_device_product_id(self, urn):
+    def test_get_device_product_id(self):
         self.fail()
 
-    def test_get_device_size(self, urn):
+    def test_get_device_size(self):
         self.fail()
 
-    def test_get_device_abi_class(self, urn):
+    def test_get_device_abi_class(self):
         self.fail()
 
-    def test_get_device_abi_major(self, urn):
+    def test_get_device_abi_major(self):
         self.fail()
 
-    def test_get_device_abi_minor(self, urn):
+    def test_get_device_abi_minor(self):
         self.fail()
 
     #Board Function
