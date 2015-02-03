@@ -145,10 +145,10 @@ class SOMBus(SOMComponent):
         self.curr_pos += 1
         return self.children[pos]
 
-class SDBRoot(SOMBus):
+class SOMRoot(SOMBus):
 
     def __init__(self):
-        super(SDBRoot, self).__init__(None)
+        super(SOMRoot, self).__init__(None)
         self.c.d["SDB_NAME"] = "Root"
 
     def is_root(self):
@@ -499,7 +499,7 @@ class SOM(object):
 
     #Utility Functions
     def reset_som(self):
-        self.root = SDBRoot()
+        self.root = SOMRoot()
 
     def get_child_count(self, root = None):
         """
