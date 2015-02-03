@@ -62,6 +62,23 @@ def color_from_string(color_name):
     if color_name.lower() == "cyan":
         return cyan
 
+def level_from_string(level_name):
+    if level_name.lower() == "verbose":
+        return StatusLevel.VERBOSE
+    if level_name.lower() == "debug":
+        return StatusLevel.DEBUG
+    if level_name.lower() == "info":
+        return StatusLevel.INFO
+    if level_name.lower() == "important":
+        return StatusLevel.IMPORTANT
+    if level_name.lower() == "warning":
+        return StatusLevel.WARNING
+    if level_name.lower() == "error":
+        return StatusLevel.ERROR
+    if level_name.lower() == "fatal":
+        return StatusLevel.FATAL
+
+
 StatusLevel = enum ('FATAL', 'ERROR', 'WARNING', 'INFO', 'IMPORTANT', 'DEBUG', 'VERBOSE')
 
 _status_instance = None
@@ -146,6 +163,8 @@ class _Status(object):
         print "%s%s: %s%s" % (color, level, text, white)
 
     def set_level(self, level):
+        if isinstance(level, str):
+            level = level_from_string(level)
         self.level = level
 
     def GetLevel(self):
