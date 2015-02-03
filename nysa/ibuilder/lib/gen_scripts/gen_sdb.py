@@ -166,7 +166,7 @@ class GenSDB(Gen):
         #Add one for SDB ROM
         self.rom_element_count += 1
         self.rom_element_count += 1
-        version_major = device_manager.get_device_index("SDB")
+        version_major = device_manager.get_device_id_from_name("SDB")
         sdb_rom = sdbc.create_device_record(name = "SDB",
                                             version_major = version_major)
 
@@ -231,7 +231,6 @@ class GenSDB(Gen):
         sm.set_child_spacing(peripheral, 0x0010000000)
         rom = srg.generate_rom_image(sm)
         return rom
-
 
     def gen_name(self):
         print "generate a ROM"
