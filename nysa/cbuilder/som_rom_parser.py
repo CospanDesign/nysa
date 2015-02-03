@@ -177,7 +177,7 @@ def _parse_integration_element(entity, rom, addr, debug = False):
     _parse_rom_component_element(entity, rom, addr, debug)
 
 def _parse_repo_url_element(entity, rom, addr, debug = False):
-    entity.d["SDB_MODULE_URL"] = rom[addr:addr + RECORD_LENGTH - 1].tostring()
+    entity.d["SDB_MODULE_URL"] = rom[addr:addr + RECORD_LENGTH - 1].tostring().strip("\0")
 
 def _parse_rom_device_element(entity, rom, addr, debug = False):
     entity.d["SDB_ABI_CLASS"] = hex(  rom[addr + 0] <<  8 | \
@@ -268,12 +268,12 @@ def _parse_rom_product_element(entity, rom, addr, debug = False):
                                                                 date >> 8 & 0xFF,
                                                                 date & 0xFF)
     #print "Date: %s" % entity.d["SDB_DATE"]
-    entity.d["SDB_NAME"] =            rom[addr + 44:addr + 63].tostring()
+    entity.d["SDB_NAME"] =            rom[addr + 44:addr + 63].tostring().strip("\0")
 
 def _parse_synthesis_element(entity, rom, addr, debug = False):
-    entity.d["SDB_SYNTH_NAME"] =      rom[addr + 0x00:addr + 0x10].tostring()
-    entity.d["SDB_SYNTH_COMMIT_ID"] = rom[addr + 0x10:addr + 0x20].tostring()
-    entity.d["SDB_SYNTH_TOOL_NAME"] = rom[addr + 0x20:addr + 0x28].tostring()
+    entity.d["SDB_SYNTH_NAME"] =      rom[addr + 0x00:addr + 0x10].tostring().strip("\0")
+    entity.d["SDB_SYNTH_COMMIT_ID"] = rom[addr + 0x10:addr + 0x20].tostring().strip("\0")
+    entity.d["SDB_SYNTH_TOOL_NAME"] = rom[addr + 0x20:addr + 0x28].tostring().strip("\0")
     entity.d["SDB_SYNTH_TOOL_VER"] =  rom[addr + 0x28:addr + 0x2C].tostring()
     date =                            _convert_rom_to_int(rom[addr + 0x2C: addr + 0x30])
     entity.d["SDB_DATE"] =            "%02d%02d/%02d/%02d" % (  date >> 24 & 0xFF,
@@ -282,7 +282,7 @@ def _parse_synthesis_element(entity, rom, addr, debug = False):
                                                                 date & 0xFF)
 
     #entity.d["SDB_DATE"]       =      rom[addr + 40:addr + 48].tostring()
-    entity.d["SDB_SYNTH_USER_NAME"] = rom[addr + 0x30:addr + 0x3F].tostring()
+    entity.d["SDB_SYNTH_USER_NAME"] = rom[addr + 0x30:addr + 0x3F].tostring().strip("\0")
 
 def _convert_rom_to_int(rom):
     s = ""
