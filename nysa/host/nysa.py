@@ -83,7 +83,7 @@ class Nysa(object):
                 Name not found in sdb database
         """
         try:
-            return sdb_controller.get_device_index(name)
+            return sdb_controller.get_device_id_from_name(name)
         except SDBError, e:
             raise NysaError(e)
 
@@ -102,6 +102,7 @@ class Nysa(object):
         #print "Closing Nysa"
         pass
 
+    #Control Functions
     def set_timeout(self, timeout):
         """set_timeout
 
@@ -134,27 +135,6 @@ class Nysa(object):
         """
         return self.timeout
 
-    def read_register(self, address):
-        """read_register
-
-        Reads a single register from the read command and then converts it to an
-        integer
-
-        Args:
-          address (int):  Address of the register/memory to read
-
-        Returns:
-          (int): 32-bit unsigned register value
-
-        Raises:
-          NysaCommError: Error in communication
-        """
-        register_array = self.read(address, 1)
-        return register_array[0] << 24 | \
-               register_array[1] << 16 | \
-               register_array[2] << 8  | \
-               register_array[3]
-
     def read(self, address, length = 1, memory_device = False, disable_auto_inc = False):
         """read
 
@@ -181,6 +161,186 @@ class Nysa(object):
           implementation
         """
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
+    def write(self, address, data, memory_device = False, disable_auto_inc = False):
+        """write
+
+        Generic write command usd to write data to a Nysa image, this will be
+        overriden based on the communication method with the specific FPGA board
+
+        Args:
+          address (int): Address of the register/memory to read
+          memory_device (int): True if the device is on the memory bus
+          data (array of unsigned bytes): Array of raw bytes to send to the
+                                          device
+
+
+          disable_auto_inc (bool): if true, auto increment feature will be disabled
+        Returns:
+          Nothing
+
+        Raises:
+          AssertionError: This function must be overriden by a board specific
+          implementation
+        """
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+        if len(data) == 0:
+            raise NysaCommError("Data length cannot be 0")
+
+    def ping(self):
+        """ping
+
+        Pings the Nysa image
+
+        Args:
+          Nothing
+
+        Returns:
+          Nothing
+
+        Raises:
+          AssertionError: This function must be overriden by a board specific
+          NysaCommError: When a failure of communication is detected
+        """
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
+    def reset(self):
+        """reset
+
+        Software reset the Nysa FPGA Master, this may not actually reset the
+        entire FPGA image
+
+        Args:
+          Nothing
+
+        Returns:
+          Nothing
+
+        Raises:
+          AssertionError: This function must be overriden by a board specific
+          implementation
+          NysaCommError: A failure of communication is detected
+        """
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
+    def dump_core(self):
+        """dump_core
+
+        reads the state of the wishbone master prior to a reset, useful for
+        debuging
+
+        Args:
+          Nothing
+
+        Returns:
+          (Array of unsigned 32-bit values): Array of 32-bit values to be parsed
+                                             by core_analyzer
+
+        Raises:
+          AssertionError: This function must be overriden by a board specific
+                          implementation
+          NysaCommError: A failure of communication is detected
+        """
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
+    def wait_for_interrupts(self, wait_time = 1):
+        """wait_for_interrupts
+
+        listen for interrupts for the specified amount of time
+
+        Args:
+          wait_time (int): the amount of time in seconds to wait for an
+                           interrupt
+
+        Returns:
+          (boolean):
+            True: Interrupts were detected
+            False: No interrupts detected
+
+        Raises:
+          AssertionError: This function must be overriden by a board specifific
+          implementation
+        """
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
+    def is_interrupt_for_slave(self, device_id):
+        """is_interrupt_for_slave
+
+        Test to see if the interrupt is for the specified slave
+
+        Args:
+          device_id (int):  device to test for
+
+        Returns:
+          (boolean):
+            True: interrupt is for device
+            False: interrupt is not for the device
+
+        Raises:
+          Nothing
+        """
+        #print "Device interrupts: 0x%08X" % self.interrupts
+        if ( (1 << device_id) & self.interrupts) > 0:
+            return True
+        return False
+
+    def register_interrupt_callback(self, index, callback):
+        """ register_interrupt
+
+        Setup the thread to call the callback when an interrupt is detected
+
+        Args:
+            index (Integer): bit position of the device
+                if the device is 1, then set index = 1
+            callback: a function to call when an interrupt is detected
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
+    def unregister_interrupt_callback(self, index, callback = None):
+        """ unregister_interrupt_callback
+
+        Removes an interrupt callback from the reader thread list
+
+        Args:
+            index (Integer): bit position of the associated device
+                EX: if the device that will receive callbacks is 1, index = 1
+            callback: a function to remove from the callback list
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing (This function fails quietly if ther callback is not found)
+        """
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
+    #Helpful Control Functions
+    def read_register(self, address):
+        """read_register
+
+        Reads a single register from the read command and then converts it to an
+        integer
+
+        Args:
+          address (int):  Address of the register/memory to read
+
+        Returns:
+          (int): 32-bit unsigned register value
+
+        Raises:
+          NysaCommError: Error in communication
+        """
+        register_array = self.read(address, 1)
+        return register_array[0] << 24 | \
+               register_array[1] << 16 | \
+               register_array[2] << 8  | \
+               register_array[3]
 
     def read_memory(self, address, size):
         """read_memory
@@ -324,31 +484,51 @@ class Nysa(object):
         """
         self.write(0, address, data, memory_device = True)
 
-    def write(self, address, data, memory_device = False, disable_auto_inc = False):
-        """write
+    def ioctl(self, name, arg = None):
+        """
+        Platform specific functions to execute on a Nysa device implementation.
 
-        Generic write command usd to write data to a Nysa image, this will be
-        overriden based on the communication method with the specific FPGA board
+        For example a board may be capable of setting an external voltage or
+        reading configuration data from an EEPROM. All these extra functions
+        cannot be encompused in a generic driver
 
         Args:
-          address (int): Address of the register/memory to read
-          memory_device (int): True if the device is on the memory bus
-          data (array of unsigned bytes): Array of raw bytes to send to the
-                                          device
+            name (String): Name of the function to execute
+            args (object): A generic object that can be used to pass an
+                arbitrary or multiple arbitrary variables to the device
 
-
-          disable_auto_inc (bool): if true, auto increment feature will be disabled
         Returns:
-          Nothing
+            (object) an object from the underlying function
 
         Raises:
-          AssertionError: This function must be overriden by a board specific
-          implementation
+            NysaError:
+                An implementation specific error
+            AssertionError:
+                Not Implemented
         """
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
-        if len(data) == 0:
-            raise NysaCommError("Data length cannot be 0")
 
+    def list_ioctl(self):
+        """
+        Return a tuple of ioctl functions and argument types and descriptions
+        in the following format:
+            {
+                [name, description, args_type_object],
+                [name, description, args_type_object]
+                ...
+            }
+
+        Args:
+            Nothing
+
+        Raises:
+            AssertionError:
+                Not Implemented
+
+        """
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
+    #SDB Related
     def get_sdb_base_address():
         """
         Return the base address of the SDB (This is platform specific)
@@ -583,139 +763,6 @@ class Nysa(object):
         """
         return self.sdb_manager.is_axie_bus()
 
-    def ping(self):
-        """ping
-
-        Pings the Nysa image
-
-        Args:
-          Nothing
-
-        Returns:
-          Nothing
-
-        Raises:
-          AssertionError: This function must be overriden by a board specific
-          NysaCommError: When a failure of communication is detected
-        """
-        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
-
-    def reset(self):
-        """reset
-
-        Software reset the Nysa FPGA Master, this may not actually reset the
-        entire FPGA image
-
-        Args:
-          Nothing
-
-        Returns:
-          Nothing
-
-        Raises:
-          AssertionError: This function must be overriden by a board specific
-          implementation
-          NysaCommError: A failure of communication is detected
-        """
-        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
-
-    def dump_core(self):
-        """dump_core
-
-        reads the state of the wishbone master prior to a reset, useful for
-        debuging
-
-        Args:
-          Nothing
-
-        Returns:
-          (Array of unsigned 32-bit values): Array of 32-bit values to be parsed
-                                             by core_analyzer
-
-        Raises:
-          AssertionError: This function must be overriden by a board specific
-                          implementation
-          NysaCommError: A failure of communication is detected
-        """
-        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
-
-    def wait_for_interrupts(self, wait_time = 1):
-        """wait_for_interrupts
-
-        listen for interrupts for the specified amount of time
-
-        Args:
-          wait_time (int): the amount of time in seconds to wait for an
-                           interrupt
-
-        Returns:
-          (boolean):
-            True: Interrupts were detected
-            False: No interrupts detected
-
-        Raises:
-          AssertionError: This function must be overriden by a board specifific
-          implementation
-        """
-        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
-
-    def is_interrupt_for_slave(self, device_id):
-        """is_interrupt_for_slave
-
-        Test to see if the interrupt is for the specified slave
-
-        Args:
-          device_id (int):  device to test for
-
-        Returns:
-          (boolean):
-            True: interrupt is for device
-            False: interrupt is not for the device
-
-        Raises:
-          Nothing
-        """
-        #print "Device interrupts: 0x%08X" % self.interrupts
-        if ( (1 << device_id) & self.interrupts) > 0:
-            return True
-        return False
-
-    def register_interrupt_callback(self, index, callback):
-        """ register_interrupt
-
-        Setup the thread to call the callback when an interrupt is detected
-
-        Args:
-            index (Integer): bit position of the device
-                if the device is 1, then set index = 1
-            callback: a function to call when an interrupt is detected
-
-        Returns:
-            Nothing
-
-        Raises:
-            Nothing
-        """
-        AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
-
-    def unregister_interrupt_callback(self, index, callback = None):
-        """ unregister_interrupt_callback
-
-        Removes an interrupt callback from the reader thread list
-
-        Args:
-            index (Integer): bit position of the associated device
-                EX: if the device that will receive callbacks is 1, index = 1
-            callback: a function to remove from the callback list
-
-        Returns:
-            Nothing
-
-        Raises:
-            Nothing (This function fails quietly if ther callback is not found)
-        """
-        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
-
     def find_device(self, dev_id, sub_id = None, unique_id = None):
         """
         Find a device in the SDB that has the dev_id.
@@ -779,6 +826,7 @@ class Nysa(object):
         """
         return self.sdb_manager.get_image_id()
 
+    #Programming
     def upload(self, filepath):
         """
         Uploads an image to a board
@@ -814,47 +862,4 @@ class Nysa(object):
         """
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
-    def ioctl(self, name, arg = None):
-        """
-        Platform specific functions to execute on a Nysa device implementation.
-
-        For example a board may be capable of setting an external voltage or
-        reading configuration data from an EEPROM. All these extra functions
-        cannot be encompused in a generic driver
-
-        Args:
-            name (String): Name of the function to execute
-            args (object): A generic object that can be used to pass an
-                arbitrary or multiple arbitrary variables to the device
-
-        Returns:
-            (object) an object from the underlying function
-
-        Raises:
-            NysaError:
-                An implementation specific error
-            AssertionError:
-                Not Implemented
-        """
-        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
-
-    def list_ioctl(self):
-        """
-        Return a tuple of ioctl functions and argument types and descriptions
-        in the following format:
-            {
-                [name, description, args_type_object],
-                [name, description, args_type_object]
-                ...
-            }
-
-        Args:
-            Nothing
-
-        Raises:
-            AssertionError:
-                Not Implemented
-
-        """
-        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 

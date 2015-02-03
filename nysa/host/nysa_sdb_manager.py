@@ -26,6 +26,8 @@ from common.status import Status
 from cbuilder.sdb_component  import SDB_ROM_RECORD_LENGTH
 from cbuilder import sdb_component as sdbc
 from cbuilder import sdb_object_model as som
+from cbuilder.sdb_object_model import SOMRoot
+from cbuilder.sdb_object_model import SOMBus
 from cbuilder import som_rom_parser as srp
 from cbuilder import device_manager
 from cbuilder.sdb import SDBError
@@ -40,6 +42,76 @@ class NysaSDBManager(object):
             self.s.Important("Generating a new Status")
 
     #SOM Functions
+    def get_all_components_as_urns(self):
+        component_list = []
+        root = self.som.get_root()
+        component_list.extend(self._get_bus_list(root))
+
+        return list(set(component_list))
+
+    def _get_urn_from_component(self, component):
+        urn = "/" + component.get_name()
+        p = component.get_parent()
+        #while not isinstance(p, SOMRoot) and p is not None:
+        while p is not None:
+            #print "Parent: %s" % p.get_name()
+            urn = "/" + p.get_name() + urn
+            p = p.get_parent()
+        return urn
+
+    def _get_bus_list(self, bus):
+        #print "bus: %s" % bus.get_name()
+        bus_list = []
+        bus_list.append(self._get_urn_from_component(bus))
+        for i in range(bus.get_child_count()):
+            component = bus.get_child_from_index(i)
+            #print "component: %s" % component.get_name()
+            if isinstance(component, SOMBus):
+                #print "Found bus!"
+                bus_list.extend(self._get_bus_list(component))
+            if component.get_component().is_synthesis_record():
+                continue
+            if component.get_component().is_integration_record():
+                continue
+            if component.get_component().is_url_record():
+                continue
+            bus_list.append(self._get_urn_from_component(component))
+        return bus_list
+
+    def _get_component_from_urn(self, urn):
+        ls = urn.split("/")
+        name_list = []
+
+        for l in ls:
+            if len(l) > 0:
+                name_list.append(l)
+
+        root = self.som.get_root()
+        #print "ls: %s" % str(ls)
+
+        # If user set URN to "/"
+        if len(name_list) == 0:
+            return root
+
+        if (len(name_list) == 1) and (name_list[0] != root.get_name()):
+            raise SDBError("Could not find Component from URN: %s" % urn)
+
+        return self._get_component_from_bus_urn(root, name_list[1:])
+
+    def _get_component_from_bus_urn(self, bus, name_list):
+        #User has asked for a bus
+        if len(name_list) == 0:
+            return bus
+
+        #Go through all the sub components.
+        for child in bus:
+            if child.get_name() == name_list[0]:
+                #If the name is bus then go deeper
+                if isinstance(child, SOMBus):
+                    return self._get_component_from_bus_urn(child, name_list[1:])
+                #else the device is a component
+                return child
+
     def get_number_of_devices(self):
         """
         Return the number of devices in the SDB Bus
@@ -53,7 +125,37 @@ class NysaSDBManager(object):
         Raises:
             Nothing
         """
-        pass
+        urns = self.get_all_components_as_urns()
+        return len(urns)
+
+    def _find_component_from_func(self, bus, func, args):
+        #Check Bus First
+
+        if func(bus.get_component(), args):
+            return self._get_urn_from_component(bus)
+
+        #Check Each of the children
+        for child in bus:
+            if isinstance(child, SOMBus):
+                #This child is a bus, go to the next recursive level
+                return self._find_component_from_func(child, func, args)
+            #this is a child
+            elif func(child.get_component(), args):
+                return self._get_urn_from_component(child)
+
+    def _find_device_from_ids(self, c, args):
+        """Private function called with all devices"""
+        vendor_id = args[0]
+        product_id = args[1]
+        if vendor_id is not None:
+            #print "\tChecking: 0x%016X and 0x%016X" % (c.get_vendor_id_as_int(), vendor_id)
+            if c.get_vendor_id_as_int() != vendor_id:
+                return False
+        if product_id is not None:
+            #print "\tChecking: 0x%08X and 0x%08X" % (c.get_device_id_as_int(), product_id)
+            if c.get_device_id_as_int() != product_id:
+                return False
+        return True
 
     def find_device_from_ids(self, vendor_id = None, product_id = None):
         """
@@ -65,12 +167,20 @@ class NysaSDBManager(object):
 
         Returns:
             (String): URN of the device of the form:
-            /peripherals/gpio1
+            /top/peripherals/gpio1
 
         Raises:
             SDBError: device isn't found
         """
-        pass
+        return self._find_component_from_func(self.som.get_root(), self._find_device_from_ids, (vendor_id, product_id))
+
+    def _find_device_from_address(self, c, args):
+        """Private function called with all devices"""
+        address = args[0]
+        #print "Address: 0x%016X:0x%016X" % (address, c.get_start_address_as_int())
+        if address == c.get_start_address_as_int():
+            return True
+        return False
 
     def find_device_from_address(self, address):
         """
@@ -86,7 +196,26 @@ class NysaSDBManager(object):
         Raises:
             SDBError: device isn't found
         """
-        pass
+        return self._find_component_from_func(self.som.get_root(), self._find_device_from_address, (address,))
+
+    def _find_device_from_abi(self, c, args):
+        clazz = args[0]
+        major = args[1]
+        minor = args[2]
+
+        if clazz is not None:
+            if clazz != c.get_abi_class_as_int():
+                return False
+
+        if major is not None:
+            if major != c.get_abi_version_major_as_int():
+                return False
+
+        if minor is not None:
+            if minor != c.get_abi_version_minor_as_int():
+                return False
+
+        return True
 
     def find_device_from_abi(self, abi_class = 0, abi_major = None, abi_minor = None):
         """
@@ -108,8 +237,7 @@ class NysaSDBManager(object):
         Raises:
             SDBError: device isn't found
         """
-
-        pass
+        return self._find_component_from_func(self.som.get_root(), self._find_device_from_abi, (abi_class, abi_major, abi_minor,))
 
     def read_sdb(self, n):
         """
@@ -145,17 +273,24 @@ class NysaSDBManager(object):
                 leave blank for root
 
         Returns (Boolean):
-           True: Is a wishbone bus 
+           True: Is a wishbone bus
            False: Not a wishbone bus
 
         Raises:
             Nothing
         """
-        root = self.som.get_root()
-        c = root.get_component()
-        if c.get_bus_type_as_int() == 0
+        c = None
+        if urn is None:
+            c = self.som.get_root().get_component()
+        else:
+            component = self._get_component_from_urn(urn)
+            if not isinstance(component, SOMBus):
+                component = component.get_parent()
+            c = component.get_component()
 
-    def is_axi_bus(self):
+        return c.get_bus_type_as_int() == 0
+
+    def is_axi_bus(self, urn = None):
         """
         Returns true if the SDB bus is an axi bus
 
@@ -164,7 +299,7 @@ class NysaSDBManager(object):
                 leave blank for root
 
         Returns (Boolean):
-           True: Is an axi bus 
+           True: Is an axi bus
            False: Not an axi bus
 
         Raises:
@@ -173,7 +308,7 @@ class NysaSDBManager(object):
 
         raise AssertionError("AXI bus not implemented yet")
 
-    def is_storage_bus(self):
+    def is_storage_bus(self, urn = None):
         """
         Returns true if the SDB bus is a storage bus
 
@@ -182,47 +317,290 @@ class NysaSDBManager(object):
                 leave blank for root
 
         Returns (Boolean):
-           True: Is a storage bus 
+           True: Is a storage bus
            False: Not a storage bus
 
         Raises:
             Nothing
         """
-        root = self.som.get_root()
-        c = root.get_component()
+        c = None
+        if urn is None:
+            c = self.som.get_root().get_component()
+        else:
+            component = self._get_component_from_urn(urn)
+            if not isinstance(component, SOMBus):
+                component = component.get_parent()
+            c = component.get_component()
+
         return c.get_bus_type_as_int() == 1
 
-    def get_total_memory_size(self):
-        pass
-
     #Device Functions
+    def _verify_functional_device(self, component, error_name):
+        if  component.is_synthesis_record():
+            raise SDBError("Synthesis Record does not have an %s: %s" % (error_name, component))
+
+        if component.is_integration_record():
+            raise SDBError("Integration Record does not have an %s: %s" % (error_name, component))
+
+        if component.is_url_record():
+            raise SDBError("URL Record does not have an %s: %s" % (error_name, component))
+
     def get_device_address(self, urn):
-        pass
+        """
+        Return the address of the device
+
+        Args:
+            urn (String): Absolute reference to the bus
+
+        Returns (Long)
+            Base address of the device or interconnect
+
+        Raises:
+            SDBError: User attempted to get the address of a synthesis record
+            SDBError: User attempted to get the address of a URL record
+            SDBError: User attempted to get the address of an integration record
+        """
+        component = self._get_component_from_urn(urn).get_component()
+        self._verify_functional_device(component, "Address")
+        return component.get_start_address_as_int()
 
     def get_device_size(self, urn):
-        pass
+        """
+        Return the size of the device
+
+        Args:
+            urn (String): Absolute reference to the bus
+
+        Returns (Integer)
+            Size of the device or interconnect
+
+        Raises:
+            SDBError: User attempted to get the size of a synthesis record
+            SDBError: User attempted to get the size of a URL record
+            SDBError: User attempted to get the size of an integration record
+        """
+        component = self._get_component_from_urn(urn).get_component()
+        self._verify_functional_device(component, "Size")
+        return component.get_size_as_int()
 
     def get_device_vendor_id(self, urn):
-        pass
+        """
+        Return the vendor id of the device
+
+        Args:
+            urn (String): Absolute reference to the bus
+
+        Returns (Integer)
+            Size of the device or interconnect
+
+        Raises:
+            SDBError: User attempted to get the vendor id of a synthesis record
+            SDBError: User attempted to get the vendor id of a URL record
+            SDBError: User attempted to get the vendor id of an integration record
+        """
+
+        component = self._get_component_from_urn(urn).get_component()
+        self._verify_functional_device(component, "Vendor ID")
+        return component.get_vendor_id_as_int()
 
     def get_device_product_id(self, urn):
-        pass
+        """
+        Return the product id of the device
 
-    def get_device_size(self, urn):
-        pass
+        Args:
+            urn (String): Absolute reference to the bus
+
+        Returns (Integer)
+            Size of the device or interconnect
+
+        Raises:
+            SDBError: User attempted to get the product id of a synthesis record
+            SDBError: User attempted to get the product id of a URL record
+            SDBError: User attempted to get the product id of an integration record
+        """
+
+        component = self._get_component_from_urn(urn).get_component()
+        self._verify_functional_device(component, "Product ID")
+        return component.get_device_id_as_int()
 
     def get_device_abi_class(self, urn):
-        pass
+        """
+        Return the ABI class of the device
+
+        Args:
+            urn (String): Absolute reference to the bus
+
+        Returns (Integer)
+            Size of the device or interconnect
+
+        Raises:
+            SDBError: User attempted to get the ABI class of a synthesis record
+            SDBError: User attempted to get the ABI class of a URL record
+            SDBError: User attempted to get the ABI class of an integration record
+            SDBError: User attempted to get the ABI class of an interconnect
+        """
+        component = self._get_component_from_urn(urn).get_component()
+        self._verify_functional_device(component, "ABI Class")
+        if  component.is_interconnect():
+            raise SDBError("Interconnects do not have an ABI Class: %s" % component)
+        return component.get_abi_class_as_int()
 
     def get_device_abi_major(self, urn):
-        pass
+        """
+        Return the ABI major number of the device
+
+        Args:
+            urn (String): Absolute reference to the bus
+
+        Returns (Integer)
+            Size of the device or interconnect
+
+        Raises:
+            SDBError: User attempted to get the ABI major number of a synthesis record
+            SDBError: User attempted to get the ABI major number of a URL record
+            SDBError: User attempted to get the ABI major number of an integration record
+            SDBError: User attempted to get the ABI major number of an interconnect
+        """
+
+        component = self._get_component_from_urn(urn).get_component()
+        self._verify_functional_device(component, "ABI Major")
+        if  component.is_interconnect():
+            raise SDBError("Interconnects do not have an ABI Major: %s" % component)
+        return component.get_abi_version_major_as_int()
 
     def get_device_abi_minor(self, urn):
-        pass
+        """
+        Return the ABI minor number of the device
 
-    #Board Functions
-    def get_board_name(self):
-        pass
+        Args:
+            urn (String): Absolute reference to the bus
+
+        Returns (Integer)
+            Size of the device or interconnect
+
+        Raises:
+            SDBError: User attempted to get the ABI minor number of a synthesis record
+            SDBError: User attempted to get the ABI minor number of a URL record
+            SDBError: User attempted to get the ABI minor number of an integration record
+            SDBError: User attempted to get the ABI minor number of an interconnect
+        """
+
+        component = self._get_component_from_urn(urn).get_component()
+        self._verify_functional_device(component, "ABI Minor")
+        if  component.is_interconnect():
+            raise SDBError("Interconnects do not have an ABI Minor: %s" % component)
+        return component.get_abi_version_minor_as_int()
+
+    def is_bus(self, urn):
+        """
+        Returns True if the urn is referencing a component that is a bus
+
+        Args:
+            urn (String): Absolute reference to the bus
+
+        Raises:
+            SDBError: urn is not valid
+        """
+        return self._get_component_from_urn(urn).get_component().is_interconnect()
+
+    def find_urn_from_device_type(self, device_name, sub_type = None):
+        """
+        Returns a list of SDB components that reference all the criteria the
+        user specified
+
+        Args:
+            device_type (String): Type of device to find, 'gpio' or 'uart'
+                can be searched for
+            device_sub_type (None, Integer): a number to identify one version
+                of the device and another
+
+        Returns (List of Strings):
+            a list of sdb components URNs
+
+        Raises:
+            None
+        """
+        abi_class = 0
+        self.s.Verbose("ABI Class == 0")
+        abi_major = device_manager.get_device_id_from_name(device_name)
+        return self.find_urn_from_abi(abi_class, abi_major, sub_type)
+
+
+    def find_urn_from_abi(self, abi_class = 0, abi_major = None, abi_minor = None):
+        """
+        Returns a list of SDB components that reference all the criteria the
+        user specified
+
+        Args:
+            abi_class (None, Integer): Application Binary Interface Class,
+                currently most components use '0' as the class is not defined
+            abi_major (None, Integer): Application Binary Interface Major Number
+                the current list of abi_major numbers can be found using the
+                nysa command line tool ('nysa devices')
+            abi_minor (None, Integer): Applicatoin Binary Interface Minor Number
+                this is an identification within the major number, used to
+                distinguish one version of a device from another
+
+        Returns (List of Strings):
+            a list of sdb components URNs
+
+        Raises:
+            None
+        """
+        l = []
+        urns = self.get_all_components_as_urns()
+        if isinstance(abi_major, str):
+            abi_major = device_manager.get_device_id_from_name(abi_major)
+        for urn in urns:
+            if self.is_bus(urn):
+                continue
+            abi_class_test = self.get_device_abi_class(urn)
+            abi_major_test = self.get_device_abi_major(urn)
+            abi_minor_test = self.get_device_abi_minor(urn)
+            if abi_class is not None:
+                if abi_class_test != abi_class:
+                    continue
+            if abi_major is not None:
+                if abi_major_test != abi_major:
+                    continue
+            if abi_minor is not None:
+                if abi_minor_test != abi_minor:
+                    continue
+            #l.append(self._get_component_from_urn(urn).get_component())
+            l.append(urn)
+        return l
+
+    def find_urn_from_ids(self, vendor_id = None, product_id = None):
+        """
+        Returns a list of SDB components that reference all the criteria the
+        user specified
+
+        Args:
+            vendor_id (None, Integer): Vendor Identification number
+            product_id(None, Integer): Product Identification number
+
+        Returns (List of Strings):
+            a list of sdb components URNs
+
+        Raises:
+            None
+        """
+        l = []
+        urns = self.get_all_components_as_urns()
+        for urn in urns:
+            if self.is_bus(urn):
+                continue
+            vendor_id_test = self.get_device_vendor_id(urn)
+            product_id_test = self.get_device_product_id(urn)
+            if vendor_id is not None:
+                if vendor_id_test != vendor_id:
+                    continue
+            if product_id is not None:
+                if product_id_test != product_id:
+                    continue
+            #l.append(self._get_component_from_urn(urn).get_component())
+            l.append(urn)
+        return l
 
     #Helpful Fuctions
     def pretty_print_sdb(self):
@@ -336,7 +714,6 @@ def _parse_bus(n, som, bus, addr, base_addr, status):
 
     som.set_child_spacing(bus, spacing)
 
-
 def print_sdb_rom(rom):
     #rom = sdbc.convert_rom_to_32bit_buffer(rom)
     rom = rom.splitlines()
@@ -364,5 +741,4 @@ def print_sdb_rom(rom):
                 print "???"
 
         print "%s %s : %s %s" % (rom[i], rom[i + 1], rom[i + 2], rom[i + 3])
-
 
