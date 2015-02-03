@@ -42,7 +42,7 @@ class Test (unittest.TestCase):
         som = self.nsm.som
         root = som.get_root()
         self.assertEqual(self.nsm._get_component_from_urn(), root)
-            
+
         c = self.nsm._get_component_from_urn("/top/peripheral/gpio1")
         self.assertEqual(c.get_name(), "gpio1")
 
@@ -81,6 +81,17 @@ class Test (unittest.TestCase):
         self.assertIn("/top/peripheral/gpio1", urns)
         self.assertIn("/top/memory", urns)
         self.assertIn("/top/memory/wb_sdram", urns)
+
+    def test_get_all_devices_as_urns(self):
+        urns = self.nsm.get_all_devices_as_urns()
+        self.assertIn("/top/peripheral/SDB", urns)
+        self.assertIn("/top/peripheral/uart1", urns)
+        self.assertIn("/top/peripheral/gpio1", urns)
+        self.assertIn("/top/memory/wb_sdram", urns)
+
+        self.assertNotIn("/top", urns)
+        self.assertNotIn("/top/peripheral", urns)
+        self.assertNotIn("/top/memory", urns)
 
     def test_get_number_of_devices(self):
         count = self.nsm.get_number_of_devices()

@@ -49,6 +49,18 @@ class NysaSDBManager(object):
 
         return list(set(component_list))
 
+    def get_all_devices_as_urns(self):
+        c_urns = self.get_all_components_as_urns()
+        d_urns = []
+        for c_urn in c_urns:
+            c = self._get_component_from_urn(c_urn)
+            if isinstance(c, SOMBus):
+                continue
+            d_urns.append(c_urn)
+
+        return d_urns
+
+
     def _get_urn_from_component(self, component):
         urn = "/" + component.get_name()
         p = component.get_parent()
