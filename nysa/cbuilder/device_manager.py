@@ -36,14 +36,14 @@ LOCAL_DEVICE_LIST = os.path.abspath(LOCAL_DEVICE_LIST)
 def get_device_list():
     """Return a list of device names where the index corresponds to the device
     identification number
- 
+
     Args:
       Nothing
- 
+
     Returns:
       (list): List of devices
           (index corresponds to devices identification number)
- 
+
     Raises:
       Nothing
     """
@@ -118,20 +118,20 @@ def get_device_name_from_id(device_id):
             return device
     return "Unknown Device"
 
-def get_device_index(name):
+def get_device_id_from_name(name):
     """return the index of the device speicified by name
     The name can be found in the devices.json file
     Example: if name == GPIO, then 2 will be returned
- 
+
     Args:
       name (string): name of the core to identify
- 
+
     Return:
       device identification number
- 
+
     Raises:
       Nothing
-    
+
     """
     dev_tags = {}
     try:
@@ -142,6 +142,10 @@ def get_device_index(name):
         raise SDBError("DRT Error: %s", str(err))
 
     dev_tags = sdb_tags["devices"]
+    for key in dev_tags:
+        if name.lower().strip() == key.lower().strip():
+            name = key
+
     if name not in dev_tags.keys():
         raise SDBError("Name: %s is not a known type of devices" % name)
 
@@ -156,7 +160,7 @@ def get_device_type(index):
 
     Return:
         (string) Name of the device
-    
+
     Raises:
         Nothing
     """
