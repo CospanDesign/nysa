@@ -638,6 +638,10 @@ class NysaSDBManager(object):
         return l
 
     #Helpful Fuctions
+    def is_memory_device(self, urn):
+        memory_major = device_manager.get_device_id_from_name("memory")
+        return self.get_device_abi_major(urn) == memory_major
+
     def get_total_memory_size(self):
         urns = self.find_urn_from_device_type("memory")
         size = 0

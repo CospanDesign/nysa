@@ -212,4 +212,9 @@ class Test (unittest.TestCase):
         #print "size: 0x%016X" % size
         self.assertEqual(size, long(0x0800000))
 
+    def test_is_memory_device(self):
+        mem = "/top/memory/wb_sdram"
+        not_mem = "/top/peripheral/gpio1"
+        self.assertTrue(self.nsm.is_memory_device(mem))
+        self.assertFalse(self.nsm.is_memory_device(not_mem))
 
