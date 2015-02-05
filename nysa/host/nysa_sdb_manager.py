@@ -23,14 +23,17 @@ __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
 from common.status import Status
 
+from cbuilder.sdb import SDBError
+
 from cbuilder.sdb_component  import SDB_ROM_RECORD_LENGTH
-from cbuilder import sdb_component as sdbc
-from cbuilder import sdb_object_model as som
+
 from cbuilder.sdb_object_model import SOMRoot
 from cbuilder.sdb_object_model import SOMBus
+
+from cbuilder import sdb_object_model as som
+from cbuilder import sdb_component as sdbc
 from cbuilder import som_rom_parser as srp
 from cbuilder import device_manager
-from cbuilder.sdb import SDBError
 
 class NysaSDBManager(object):
 
@@ -59,7 +62,6 @@ class NysaSDBManager(object):
             d_urns.append(c_urn)
 
         return d_urns
-
 
     def _get_urn_from_component(self, component):
         urn = "/" + component.get_name()
@@ -125,6 +127,22 @@ class NysaSDBManager(object):
                 return child
 
     def get_number_of_devices(self):
+        """
+        Return the number of devices in the SDB Bus
+
+        Args:
+            Nothing
+
+        Returns:
+            (Integer) Number of devices on the SDB Bus
+
+        Raises:
+            Nothing
+        """
+        urns = self.get_all_devices_as_urns()
+        return len(urns)
+
+    def get_number_of_components(self):
         """
         Return the number of devices in the SDB Bus
 
@@ -533,10 +551,15 @@ class NysaSDBManager(object):
             None
         """
         abi_class = 0
+        abi_major = 0
         self.s.Verbose("ABI Class == 0")
-        abi_major = device_manager.get_device_id_from_name(device_name)
-        return self.find_urn_from_abi(abi_class, abi_major, sub_type)
 
+        try:
+            abi_major = device_manager.get_device_id_from_name(device_name)
+        except SDBError as ex:
+            return []
+        #print "abi major: %d" % abi_major
+        return self.find_urn_from_abi(abi_class, abi_major = abi_major, abi_minor = sub_type)
 
     def find_urn_from_abi(self, abi_class = 0, abi_major = None, abi_minor = None):
         """
@@ -615,6 +638,13 @@ class NysaSDBManager(object):
         return l
 
     #Helpful Fuctions
+    def get_total_memory_size(self):
+        urns = self.find_urn_from_device_type("memory")
+        size = 0
+        for urn in urns:
+            size += self.get_device_size(urn)
+        return size
+
     def pretty_print_sdb(self):
         self.s.Verbose("pretty print SDB")
         self.s.PrintLine("SDB ", color = "blue")

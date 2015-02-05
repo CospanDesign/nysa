@@ -93,9 +93,13 @@ class Test (unittest.TestCase):
         self.assertNotIn("/top/peripheral", urns)
         self.assertNotIn("/top/memory", urns)
 
+    def test_get_number_of_components(self):
+        count = self.nsm.get_number_of_components()
+        self.assertEqual(count, 7)
+
     def test_get_number_of_devices(self):
         count = self.nsm.get_number_of_devices()
-        self.assertEqual(count, 7)
+        self.assertEqual(count, 4)
 
     def test_get_component_from_urn(self):
         urn = "/top/peripheral/uart1"
@@ -203,5 +207,9 @@ class Test (unittest.TestCase):
         self.assertEqual(len(urns), 4)
         #print "urns: %s" % str(urns)
 
+    def test_get_total_memory_size(self):
+        size = self.nsm.get_total_memory_size()
+        #print "size: 0x%016X" % size
+        self.assertEqual(size, long(0x0800000))
 
 
