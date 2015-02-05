@@ -735,16 +735,48 @@ class Nysa(object):
         """
         return self.nsm.get_device_abi_minor(urn)
 
-    def find_device(self, device_name, sub_type = None):
+    def is_device_in_platform(self, device):
+        """
+        Returns true if a platform has the device
+
+        Args:
+            device(Driver): a Driver object
+
+        Returns:
+            True: device exists in the platform
+            False: device does not exist in the platform
+
+        Returns:
+            Nothing
+        """
+        return len(self.find_device(device)) > 0
+
+    def find_device(self, driver):
+        """
+        Returns a list of URNs that can be used to instantiate a driver
+
+        Args:
+            device (Driver object)
+
+        Returns: (List of URNs)
+            a list of URNs that can be used to instantiate a device
+
+        Raises:
+            Nothing
+        """
+        return self.nsm.find_device_from_driver(driver)
+
+    def find_device_from_name(self, device_name, abi_minor = None, abi_class = 0):
         """
         Returns a list of SDB components that reference all the criteria the
         user specified
 
         Args:
-            device_type (String): Type of device to find, 'gpio' or 'uart'
-                can be searched for
-            device_sub_type (None, Integer): a number to identify one version
+            device_name (String or Integer, Driver Object): Type of device to
+                find, 'gpio' or 'uart'  can be searched for
+            device_abi_minor (None, Integer): a number to identify one version
                 of the device and another
+            abi_class (None, Integer): A number identifying the class
 
         Returns (List of Strings):
             a list of sdb components URNs
@@ -752,7 +784,7 @@ class Nysa(object):
         Raises:
             None
         """
-        return self.nsm.find_urn_from_device_type(device_name, sub_type)
+        return self.nsm.find_urn_from_device_type(device_name, abi_minor, abi_class)
 
     def find_urn_from_abi(self, abi_class = 0, abi_major = None, abi_minor = None):
         """

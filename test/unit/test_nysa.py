@@ -10,6 +10,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
 
+from nysa.cbuilder import device_manager
+from nysa.host.driver import driver
+
 from nysa.host.platform_scanner import find_board
 from nysa.host.platform_scanner import PlatformScannerException
 
@@ -171,25 +174,25 @@ class Test (unittest.TestCase):
         abi_minor = self.n.get_device_abi_minor("/top/peripheral/gpio1")
         self.assertEqual(abi_minor, 1)
 
-    def test_find_device(self):
+    def test_find_device_from_name(self):
         #Test just specifying the device name
         device_name = "gpio"
-        sub_type = None
-        device_list = self.n.find_device(device_name = device_name, sub_type = sub_type)
+        abi_minor = None
+        device_list = self.n.find_device_from_name(device_name = device_name, abi_minor = abi_minor)
         self.assertIn("/top/peripheral/gpio1", device_list)
         self.assertEqual(len(device_list), 1)
 
         #Test specifying device name and sub type
         device_name = "gpio"
-        sub_type = 1
-        device_list = self.n.find_device(device_name, sub_type = sub_type)
+        abi_minor = 1
+        device_list = self.n.find_device_from_name(device_name, abi_minor = abi_minor)
         self.assertIn("/top/peripheral/gpio1", device_list)
         self.assertEqual(len(device_list), 1)
 
         #Specify an incorerect type
         device_name = "hi"
-        sub_type = 1
-        device_list = self.n.find_device(device_name, sub_type = sub_type)
+        abi_minor = 1
+        device_list = self.n.find_device_from_name(device_name, abi_minor = abi_minor)
         self.assertEqual(len(device_list), 0)
 
     def test_find_urn_from_abi(self):
@@ -247,6 +250,46 @@ class Test (unittest.TestCase):
         not_mem = "/top/peripheral/gpio1"
         self.assertTrue(self.n.is_memory_device(mem))
         self.assertFalse(self.n.is_memory_device(not_mem))
+
+    def test_is_device_in_platform(self):
+        class MockGPIODriver(driver.Driver):
+            def __init__(self, n, dev_id, debug):
+                super(MockDriver, self).__init__(n, dev_id, debug)
+
+            @staticmethod
+            def get_abi_class():
+                return 0
+
+            @staticmethod
+            def get_abi_major():
+                return device_manager.get_device_id_from_name("gpio")
+
+            @staticmethod
+            def get_abi_minor():
+                return None
+
+        #print "Output: %s" % self.n.is_device_in_platform(MockGPIODriver)
+        self.assertTrue(self.n.is_device_in_platform(MockGPIODriver))
+
+    def test_find_device_using_driver(self):
+        class MockGPIODriver(driver.Driver):
+            def __init__(self, n, dev_id, debug):
+                super(MockDriver, self).__init__(n, dev_id, debug)
+
+            @staticmethod
+            def get_abi_class():
+                return 0
+
+            @staticmethod
+            def get_abi_major():
+                return device_manager.get_device_id_from_name("gpio")
+
+            @staticmethod
+            def get_abi_minor():
+                return None
+
+        urns = self.n.find_device(MockGPIODriver)
+        self.assertIn("/top/peripheral/gpio1", urns)
 
     #Programming
     def test_upload(self):

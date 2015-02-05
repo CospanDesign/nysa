@@ -21,6 +21,12 @@
 
 __author__ = 'dave.mccoy@cospandesign.com (Dave McCoy)'
 
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir))
+
 from common.status import Status
 
 from cbuilder.sdb import SDBError
@@ -34,6 +40,7 @@ from cbuilder import sdb_object_model as som
 from cbuilder import sdb_component as sdbc
 from cbuilder import som_rom_parser as srp
 from cbuilder import device_manager
+from host.driver.driver import Driver
 
 class NysaSDBManager(object):
 
@@ -268,6 +275,28 @@ class NysaSDBManager(object):
             SDBError: device isn't found
         """
         return self._find_component_from_func(self.som.get_root(), self._find_device_from_abi, (abi_class, abi_major, abi_minor,))
+
+    def find_device_from_driver(self, driver):
+        """
+        Returns a list of SDB components that reference all the criteria the
+        user specified
+
+        Args:
+            device (Driver Object): Type of device to find, a subclass of the
+                driver object
+
+        Returns (List of Strings):
+            a list of sdb components URNs
+
+        Raises:
+            None
+        """
+
+        abi_class = driver.get_abi_class()
+        abi_major = driver.get_abi_major()
+        abi_minor = driver.get_abi_minor()
+        #print "class: %s, major: %s minor: %s" % (str(abi_class), str(abi_major), str(abi_minor))
+        return self.find_urn_from_abi(abi_class, abi_major, abi_minor)
 
     def read_sdb(self, n):
         """
@@ -533,7 +562,7 @@ class NysaSDBManager(object):
         """
         return self._get_component_from_urn(urn).get_component().is_interconnect()
 
-    def find_urn_from_device_type(self, device_name, sub_type = None):
+    def find_urn_from_device_type(self, device_name, sub_type = None, abi_class = 0):
         """
         Returns a list of SDB components that reference all the criteria the
         user specified
@@ -543,6 +572,7 @@ class NysaSDBManager(object):
                 can be searched for
             device_sub_type (None, Integer): a number to identify one version
                 of the device and another
+            abi_class (None, Integer): A number identifying the class
 
         Returns (List of Strings):
             a list of sdb components URNs
@@ -550,9 +580,8 @@ class NysaSDBManager(object):
         Raises:
             None
         """
-        abi_class = 0
         abi_major = 0
-        self.s.Verbose("ABI Class == 0")
+        self.s.Verbose("ABI Class == %d" % abi_class)
 
         try:
             abi_major = device_manager.get_device_id_from_name(device_name)

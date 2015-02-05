@@ -25,9 +25,6 @@ import time
 
 from array import array as Array
 
-from nysa.host.nysa import Nysa
-from nysa.host.nysa import NysaCommError
-from nysa.host.nysa import NysaError
 import Queue
 import threading
 from threading import Lock
@@ -51,7 +48,23 @@ class Driver(object):
         self.unregister_interrupt_callback()
 
     @staticmethod
-    def get_core_id():
+    def get_abi_class():
+        """
+        Returns the identification number of the ABI Class that this device
+        uses
+
+        Args:
+            Nothing
+
+        Returns (Integer):
+            By default this number returns 0, which is the experimental
+            version, this function should be overriden by subclasses if
+            a newer version of the abi class is used
+        """
+        raise AssertionError("get_abi_major() function is not implemented")
+
+    @staticmethod
+    def get_abi_major():
         """
         Returns the identification number of the device this module controls
 
@@ -59,15 +72,16 @@ class Driver(object):
             Nothing
 
         Returns (Integer):
-            Number corresponding to the device in the online sdb repositor file
+            Number corresponding to the device in the online sdb repository
+            file
 
         Raises:
             SDBError: Device ID Not found in online sdb repositor
         """
-        raise AssertionError("get_core_id() function is not implemented")
+        raise AssertionError("get_abi_major() function is not implemented")
 
     @staticmethod
-    def get_core_sub_id():
+    def get_abi_minor():
         """Returns the identification of the specific implementation of this
         controller
 
@@ -89,7 +103,7 @@ class Driver(object):
         Raises:
             Nothing
         """
-        raise AssertionError("get_core_id() function is not implemented")
+        raise AssertionError("get_abi_major() function is not implemented")
 
     def register_interrupt_callback(self, callback = None):
         """register_interrupt_callback
@@ -308,7 +322,6 @@ class Driver(object):
           NysaCommError: Error in communication
         """
         self.n.set_register_bit(self.dev_id, address, bit)
-
 
     def clear_register_bit(self, address, bit):
         """clear_register_bit
