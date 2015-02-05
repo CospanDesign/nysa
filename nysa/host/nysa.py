@@ -72,7 +72,7 @@ class Nysa(object):
         Example: GPIO return 0x01 (this is defined within sdb database
 
         Args:
-            name (String): Name of the device to identify 
+            name (String): Name of the device to identify
 
         Returns:
             (Integer):
@@ -578,6 +578,22 @@ class Nysa(object):
         """
         self.nsm.pretty_print_sdb()
 
+    def get_number_of_components(self):
+        """get_number_of_components
+
+        Returns the number of components found on the SDB
+
+        Args:
+          Nothing
+
+        Returns:
+          (int): The number of components on the SDB
+
+        Raises:
+          Nothing
+        """
+        return self.nsm.get_number_of_components()
+
     def get_number_of_devices(self):
         """get_number_of_devices
 
@@ -592,11 +608,12 @@ class Nysa(object):
         Raises:
           Nothing
         """
-        return self.sdb_manager.get_number_of_devices()
+        return self.nsm.get_number_of_devices()
 
-    def get_base_address(self, device_index):
+    #Stuff to edit
+    def get_device_address(self, urn):
         """
-        From the index within the SDB return the base address this device
+        From the URN get the base address of the device
 
         Args:
           device (int): index of the device
@@ -607,76 +624,9 @@ class Nysa(object):
         Raises:
           Nothing
         """
-        return self.sdb_manager.get_base_from_index(device_index)
+        return self.nsm.get_device_address(urn)
 
-    def get_device_sub_id(self, device_index):
-        """get_device_sub_id
-
-        From the index within the SDB return the sub ID of this device
-
-        Args:
-            device (unsigned int): index of the device
-
-        Returns:
-            (unsigned int): Device sub ID number
-
-        Raises:
-            Nothing
-        """
-        return self.sdb_manager.get_sub_id_from_index(device_index)
-
-    def get_device_unique_id(self, device_index):
-        """get_device_unique_id
-
-        From the index within the SDB return the unique ID of the device
-
-        Args:
-            device (unsienged int): index of the device
-
-        Returns:
-            (unsigned int): Device sub ID number
-
-        Raises:
-            Nothing
-        """
-        return self.sdb_manager.get_unique_id_from_index(device_index)
-
-    def get_device_name_from_base_address(self, device_id):
-        """get_device_name_from_id
-
-        From the id of the device return the name associated with it in the
-        config file
-
-        Args:
-            device_id(unsigned int): id of the device
-
-        Returns:
-            (string): name of the device, if not found returns
-            'Unknown Device"
-
-        Raises:
-            Nothing
-        """
-        return sdb_controller.get_device_name_from_id(device_id)
-
-    def get_device_address(self, device_index):
-        """get_device_address
-
-        From the index within the SDB return the address of where to find this
-        device
-
-        Args:
-          device (int): index of the device
-
-        Returns:
-          (int): 32-bit address of the device
-
-        Raises:
-          Nothing
-        """
-        return self.sdb_manager.get_address_from_index(device_index)
-
-    def get_device_size(self, device_index):
+    def get_device_size(self, urn):
         """get_device_size
 
         Gets the size of the peripheral/memory
@@ -685,24 +635,175 @@ class Nysa(object):
         if memory gets the size of the memory
 
         Args:
-          device (int): index of the device
+          urn (string): urn of the device, example
+            "/top/peripheral/gpio1"
 
         Returns:
-          (int): size
+          (long): size
 
         Raises:
-          Nothing
+          SDBError: User attempted to get the size of a component that doesn't
+            have a size
         """
-        return self.sdb_manager.get_size_from_index(device_index)
+        return self.nsm.get_device_size(urn)
 
-    def is_memory_device(self, device_index):
+    def get_device_vendor_id(self, urn):
+        """get_device_vendor_id
+
+        Gets the vendor ID of the peripheral or memory device
+
+        Args:
+          urn (string): urn of the device, example
+            "/top/peripheral/gpio1"
+
+        Returns:
+          (long): Vendor ID
+
+        Raises:
+          SDBError: User attempted to get the vendor_id of a component that
+            doesn't have a vendor_id
+        """
+
+        return self.nsm.get_device_vendor_id(urn)
+
+    def get_device_product_id(self, urn):
+        """get_device_product_id
+
+        Gets the product ID of the peripheral or memory device
+
+        Args:
+          urn (string): urn of the device, example
+            "/top/peripheral/gpio1"
+
+        Returns:
+          (int): Product ID
+
+        Raises:
+          SDBError: User attempted to get the product_id of a component that
+            doesn't have a product ID
+        """
+        return self.nsm.get_device_product_id(urn)
+
+    def get_device_abi_class(self, urn):
+        """
+        Gets the ABI class of the peripheral or memory device
+
+        Args:
+          urn (string): urn of the device, example
+            "/top/peripheral/gpio1"
+
+        Returns:
+          (int): ABI Class
+
+        Raises:
+          SDBError: User attempted to get the abi_class of a component that
+            doesn't have a ABI class
+        """
+        return self.nsm.get_device_abi_class(urn)
+
+    def get_device_abi_major(self, urn):
+        """
+        Gets the ABI major of the peripheral or memory device
+
+        Args:
+          urn (string): urn of the device, example
+            "/top/peripheral/gpio1"
+
+        Returns:
+          (int): ABI major
+
+        Raises:
+          SDBError: User attempted to get the abi_major of a component that
+            doesn't have a ABI major
+        """
+        return self.nsm.get_device_abi_major(urn)
+
+    def get_device_abi_minor(self, urn):
+        """
+        Gets the ABI minor of the peripheral or memory device
+
+        Args:
+          urn (string): urn of the device, example
+            "/top/peripheral/gpio1"
+
+        Returns:
+          (int): ABI minor
+
+        Raises:
+          SDBError: User attempted to get the abi_minor of a component that
+            doesn't have a ABI minor
+        """
+        return self.nsm.get_device_abi_minor(urn)
+
+    def find_device(self, device_name, sub_type = None):
+        """
+        Returns a list of SDB components that reference all the criteria the
+        user specified
+
+        Args:
+            device_type (String): Type of device to find, 'gpio' or 'uart'
+                can be searched for
+            device_sub_type (None, Integer): a number to identify one version
+                of the device and another
+
+        Returns (List of Strings):
+            a list of sdb components URNs
+
+        Raises:
+            None
+        """
+        return self.nsm.find_urn_from_device_type(device_name, sub_type)
+
+    def find_urn_from_abi(self, abi_class = 0, abi_major = None, abi_minor = None):
+        """
+        Returns a list of SDB components that reference all the criteria the
+        user specified
+
+        Args:
+            abi_class (None, Integer): Application Binary Interface Class,
+                currently most components use '0' as the class is not defined
+            abi_major (None, Integer): Application Binary Interface Major Number
+                the current list of abi_major numbers can be found using the
+                nysa command line tool ('nysa devices')
+            abi_minor (None, Integer): Applicatoin Binary Interface Minor Number
+                this is an identification within the major number, used to
+                distinguish one version of a device from another
+
+        Returns (List of Strings):
+            a list of sdb components URNs
+
+        Raises:
+            None
+        """
+        return self.nsm.find_urn_from_abi(abi_class, abi_major, abi_minor)
+
+    def find_urn_from_ids(self, vendor_id = None, product_id = None):
+        """
+        Returns a list of SDB components that reference all the criteria the
+        user specified
+
+        Args:
+            vendor_id (None, Integer): Vendor Identification number
+            product_id(None, Integer): Product Identification number
+
+        Returns (List of Strings):
+            a list of sdb components URNs
+
+        Raises:
+            None
+        """
+        return self.nsm.find_urn_from_ids(vendor_id, product_id)
+
+
+
+    def is_memory_device(self, urn):
         """is_memory_device
 
         Queries the SDB to see if the device is on the memory bus or the
         peripheral bus
 
         Args:
-          device (int): Index of the device to test
+          urn (String): universal resource name of device
 
         Returns:
           (boolean):
@@ -712,7 +813,7 @@ class Nysa(object):
         Raises:
           Nothing
         """
-        return self.sdb_manager.is_memory_device(device_index)
+        return self.nsm.is_memory_device(urn)
 
     def get_total_memory_size(self):
         """get_total_memory_size
@@ -726,12 +827,12 @@ class Nysa(object):
           Nothing
 
         Returns:
-          (int): Size of the total memory
+          (long): Size of the total memory
 
         Raises:
           SDBError: SDB Not defined
         """
-        return self.sdb_manager.get_total_memory_size()
+        return self.nsm.get_total_memory_size()
 
     def is_wishbone_bus(self):
         """is_wishbone_bus
@@ -746,54 +847,22 @@ class Nysa(object):
         Raises:
             SDBError: SDB not defines
         """
-        return self.sdb_manager.is_wishbone_bus()
+        return self.nsm.is_wishbone_bus()
 
-    def is_axie_bus(self):
-        """is_axie_bus
-        Returns true if the FPGA image is using a axie bus
+    def is_axi_bus(self):
+        """is_axi_bus
+        Returns true if the FPGA image is using a axi bus
 
         Returns:
             (Boolean):
-                True: Image uses axie bus
-                False: Image doesn't use axie bus
+                True: Image uses axi bus
+                False: Image doesn't use axi bus
 
         Raises:
             SDBError: SDB not defines
 
         """
-        return self.sdb_manager.is_axie_bus()
-
-    def find_device(self, dev_id, sub_id = None, unique_id = None):
-        """
-        Find a device in the SDB that has the dev_id.
-
-        If the sub_id and or the unique_id is not specified the device returns
-        the first device that is found.
-
-        The function will attempt to match as many parameters as the user
-        specifies
-
-        XXX: Unique ID is not supported yet!
-
-        Args:
-            dev_id (int): a device identification number
-            sub_id (int): sub identification number for a device
-            unique_id (int): a unique integer that identifies the device
-
-        Returns:
-            None: if the device is not found
-            Integer: this specifies the device index
-
-        Raises:
-            NysaError
-        """
-        dev = 0
-        try:
-            dev = self.sdb_manager.find_device(dev_id, sub_id, unique_id, debug = (self.s is not None))
-        except SDBError, e:
-            raise NysaCommError("Device not found in SDB")
-
-        return dev
+        return self.nsm.is_axi_bus()
 
     def get_board_name(self):
         """
@@ -809,7 +878,7 @@ class Nysa(object):
             SDBError if SDB is not defined
         """
         #return self.sdb_manager.get_board_name(int(self.sdb_lines[3]))
-        return self.sdb_manager.get_board_name()
+        raise AssertionError("This function should be overridden")
 
     def get_image_id(self):
         """
