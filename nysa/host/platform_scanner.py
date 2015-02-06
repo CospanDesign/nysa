@@ -109,23 +109,23 @@ def find_board(name, serial = None, status = None):
 
         if len(names) == 1:
             #print "Found: %s " % str(names)
-            if s: s.Important("Found: %s" % names[0])    
+            if s: s.Important("Found: %s" % names[0])
             name = names[0]
 
         else:
-            
+
             if "sim" in names:
                 names.remove("sim")
 
             if len(names) == 1:
-                if s: s.Important("Found: %s" % names[0])    
+                if s: s.Important("Found: %s" % names[0])
                 name = names[0]
             else:
                 raise ("more than one option for attached board: %s" % str(names))
                 sys.exit(1)
 
     name = name.lower()
-    
+
     if name not in platform_class_dict:
         raise PlatformScannerException("%s is not currently installed, please install more platforms" % name)
 
@@ -134,7 +134,7 @@ def find_board(name, serial = None, status = None):
 
     if len(dev_dict) == 0:
         raise PlatformScannerException("No boards found for %s" % name)
-        
+
 
     if len(dev_dict) == 1:
         name = dev_dict.keys()[0]
