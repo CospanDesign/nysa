@@ -79,50 +79,20 @@ class SPI(Driver):
     SPI
         Communication with SPI Core
     """
+    @staticmethod
+    def get_abi_class():
+        return 0
 
     @staticmethod
-    def get_core_id():
-        """
-        Returns the identification number of the device this module controls
-
-        Args:
-            Nothing
-
-        Returns (Integer):
-            Number corresponding to the device in the online sdb repositor file
-
-        Raises:
-            SDBError: Device ID Not found in online sdb repositor
-        """
-        return Nysa.get_id_from_name("SPI")
+    def get_abi_major():
+        return Driver.get_device_id_from_name("spi")
 
     @staticmethod
-    def get_core_sub_id():
-        """Returns the identification of the specific implementation of this
-        controller
-
-        Example: Cospan Design wrote the HDL GPIO core with sub_id = 0x01
-            this module was designed to interface and exploit features that
-            are specific to the Cospan Design version of the GPIO controller.
-
-            Some controllers may add extra functionalities that others do not
-            sub_ids are used to differentiate them and select the right python
-            controller for those HDL modules
-
-        Args:
-            Nothing
-
-        Returns (Integer):
-            Number ID for the HDL Module that this controls
-            (Note: 0 = generic control or baseline funtionality of the module)
-
-        Raises:
-            Nothing
-        """
+    def get_abi_minor():
         return COSPAN_DESIGN_SPI_MODULE
 
-    def __init__(self, nysa, dev_id, debug = False):
-        super(SPI, self).__init__(nysa, dev_id, debug)
+    def __init__(self, nysa, urn, debug = False):
+        super(SPI, self).__init__(nysa, urn, debug)
         self._calculate_data_size()
         self.set_control(0)
 
@@ -828,169 +798,4 @@ class SPI(Driver):
             #print "SPI: Final total read data: %s" % str(read_data)
 
         return read_data[-(response_bit_length / 8):]
-
-def unit_test(nysa, dev_id, debug = False):
-
-    spi = SPI(nysa, dev_id)
-    clock_rate = spi.get_clock_rate()
-    print "Clock rate: %d" % clock_rate
-
-    char_len = spi.get_character_length()
-    print "Character Length: %d" % char_len
-    print "Setting Charcter Length to 16"
-    spi.set_character_length(16)
-    char_len = spi.get_character_length()
-    print "Character Length: %d" % char_len
-
-    print "Is busy?"
-    is_busy = spi.is_busy()
-    if is_busy:
-        print "\tBusy!"
-    else:
-        print "\tNot Busy!"
-
-    print "Enable Interrupts"
-    spi.enable_interrupt(True)
-    print "Is Interrupts enabled?"
-    if spi.is_interrupt_enabled():
-        print "\tInterrupt is enabled"
-    else:
-        print "\tInterrupt is not enabled"
-
-    print "Disable Interrupts"
-    spi.enable_interrupt(False)
-    print "Is Interrupts enabled?"
-    if spi.is_interrupt_enabled():
-        print "\tInterrupt is enabled"
-    else:
-        print "\tInterrupt is not enabled"
-
-    print "Test LSB Enabled"
-    print "Setting LSB Enabled"
-    spi.set_lsb_enable(True)
-    print "Is LSB Enabled?"
-    if spi.is_lsb_enabled():
-        print "\tEnabled"
-    else:
-        print "\tNot Enabled"
-
-    print "Disable LSB Enabled"
-    spi.set_lsb_enable(False)
-    print "Is LSB Enabled?"
-    if spi.is_lsb_enabled():
-        print "\tEnabled"
-    else:
-        print "\tNot Enabled"
-
-    #clock rate
-    print "Setting clock rate to 1MHz"
-    spi.set_spi_clock_rate(1000000)
-
-    #get/set TX/RX polarity
-    print "Setting TX Polarity to positive"
-    spi.set_tx_polarity(True)
-
-    if spi.is_tx_polarity_positive():
-        print "TX Polarity is positive"
-    else:
-        print "TX Polarity is negative"
-
-    print "Setting TX Polarity to negative"
-    spi.set_tx_polarity(False)
-
-    if spi.is_tx_polarity_positive():
-        print "TX Polarity is positive"
-    else:
-        print "TX Polarity is negative"
-
-    spi.set_tx_polarity(True)
-
-    print "Setting RX Polarity to positive"
-    spi.set_rx_polarity(True)
-
-    if spi.is_rx_polarity_positive():
-        print "RX Polarity is positive"
-    else:
-        print "RX Polarity is negative"
-
-    print "Setting RX Polarity to negative"
-    spi.set_rx_polarity(False)
-
-    if spi.is_rx_polarity_positive():
-        print "RX Polarity is positive"
-    else:
-        print "RX Polarity is negative"
-
-    spi.set_rx_polarity(True)
-
-    #slave select
-    print "Getting slave select raw"
-    slave_select = spi.get_slave_select_raw()
-    print "Slave select: %d" % slave_select
-
-    print "Setting slave select raw"
-    spi.set_slave_select_raw(0x01)
-
-    print "Getting slave select raw"
-    slave_select = spi.get_slave_select_raw()
-    print "Slave select: %d" % slave_select
-
-    spi.set_slave_select_raw(0x00)
-
-
-    #set slave select bit
-    print "Checking setting/clearing slave bit"
-
-    print "Checking if bit 0 is set"
-    if spi.is_spi_slave_selected(0):
-        print "bit 0 is set"
-    else:
-        print "bit 0 is not set"
-
-    print "Setting bit 0"
-    spi.set_spi_slave_select(0, True)
-
-    #set auto select mode
-    spi.auto_ss_control_enable(True)
-    if spi.is_auto_ss():
-        print "Auto ss successfully set"
-    else:
-        print "Auto ss not successfully set"
-
-
-    print "Checking if bit 0 is set"
-    if spi.is_spi_slave_selected(0):
-        print "bit 0 is set"
-    else:
-        print "bit 0 is not set"
-
-    #Setup to interface
-
-    print "Setting TX Polarity to positive"
-    spi.set_tx_polarity(True)
-
-    print "Setting RX Polarity to positive"
-    spi.set_rx_polarity(True)
-
-    print "Setting Write Data"
-    write_data = Array('B', [0xAA, 0xAA, 0xAA, 0xAA])
-    spi.set_character_length(0)
-    spi.set_write_data(write_data)
-
-    print "start a transaction"
-    spi.start_transaction()
-
-
-    while spi.is_busy():
-        print "busy!"
-
-    print "Getting read data:"
-    read_data = spi.get_read_data(0)
-    print "Read data: %s" % str(read_data)
-
-
-    #print "Getting read data:"
-    #read_data = spi.get_read_data(16)
-    #print "Read data: %s" % str(read_data)
-
 

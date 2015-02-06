@@ -102,46 +102,16 @@ class Stepper(Driver):
     """
     Stepper Motor Controller
     """
+    @staticmethod
+    def get_abi_class(self):
+        return 0
 
     @staticmethod
-    def get_core_id():
-        """
-        Returns the identification number of the device this module controls
-
-        Args:
-            Nothing
-
-        Returns (Integer):
-            Number corresponding to the device in the online sdb repositor file
-
-        Raises:
-            SDBError: Device ID Not found in online sdb repositor
-        """
-        return Nysa.get_id_from_name("STEPPER")
+    def get_abi_major(self):
+        return Driver.get_device_id_from_name("stepper")
 
     @staticmethod
-    def get_core_sub_id():
-        """Returns the identification of the specific implementation of this
-        controller
-
-        Example: Cospan Design wrote the HDL GPIO core with sub_id = 0x01
-            this module was designed to interface and exploit features that
-            are specific to the Cospan Design version of the GPIO controller.
-
-            Some controllers may add extra functionalities that others do not
-            sub_ids are used to differentiate them and select the right python
-            controller for those HDL modules
-
-        Args:
-            Nothing
-
-        Returns (Integer):
-            Number ID for the HDL Module that this controls
-            (Note: 0 = generic control or baseline funtionality of the module)
-
-        Raises:
-            Nothing
-        """
+    def get_abi_minor(self):
         return COSPAN_DESIGN_STEPPER_MODULE
 
     @staticmethod
@@ -150,8 +120,8 @@ class Stepper(Driver):
         print "steps: 0x%08X" % steps
         return steps
 
-    def __init__(self, nysa, dev_id, debug = False):
-        super(Stepper, self).__init__(nysa, dev_id, debug)
+    def __init__(self, nysa, urn, debug = False):
+        super(Stepper, self).__init__(nysa, urn, debug)
         status = 0x00
 
     def __del__(self):
@@ -188,7 +158,6 @@ class Stepper(Driver):
             NysaCommError: Error in communication
         """
         self.write_register(CONFIGURATION, configuration)
-
 
     def get_control(self):
         """get_control
@@ -236,8 +205,6 @@ class Stepper(Driver):
             print "\tHalf Step"
         if ((control >> 4) & 0xF) == 3:
             print "\tMicro Step"
-
-
 
     def get_command(self):
         """get_command
@@ -287,7 +254,6 @@ class Stepper(Driver):
         """
         return self.read_register(CLOCK_RATE)
 
-
     def get_status(self):
         """get_status
 
@@ -330,7 +296,6 @@ class Stepper(Driver):
             NysaCommError: Error in communication
         """
         return self.read_register(STEPS)
-
 
     def set_steps(self, steps):
         """set_steps
@@ -384,7 +349,6 @@ class Stepper(Driver):
 
         print "int steps: 0x%08X" % int_steps
         self.write_register(STEPS, int_steps)
-
 
     def get_walk_period(self):
         """get_walk_period
@@ -481,7 +445,6 @@ class Stepper(Driver):
             NysaCommError: Error in communication
         """
         self.write_register(STEP_ACCELLERATION, step_accelleration)
-
 
     def get_micro_step_hold(self):
         """get_micro_step_hold
@@ -581,8 +544,6 @@ class Stepper(Driver):
         f_curr_pos = curr_pos >> 9
         f_curr_pos += (curr_pos & 0xFF) * 0.0001
         return f_curr_pos
-
-
 
     def set_current_position(self, position):
         """set_current_position
@@ -699,82 +660,4 @@ class Stepper(Driver):
         if (status & (STATUS_ERR_BAD_STEP | STATUS_ERR_BAD_CMD | STATUS_ERR_BAD_CONFIG)):
             return True
         return False
-
-def unit_test(nysa, dev_id, debug = False):
-    print "Stepper Motor Unit Test: ID: %d" % dev_id
-    stepper = Stepper(nysa, dev_id, debug = debug)
-    #Set the motor to bipolar
-    if debug:
-        print "Clock Rate: 0x%08X" % stepper.get_clock_rate()
-    stepper.configure_bipolar_stepper()
-    if debug:
-        print "configuration: 0x%08X" % stepper.get_configuration()
-    if debug:
-        stepper.print_status(stepper.get_status())
-    #Setup the walk period
-    stepper.set_walk_period         (0x00100000)
-    stepper.set_run_period          (0x00008000)
-    #stepper.set_step_accelleration(1000)
-    stepper.set_step_accelleration  (      1000)
-    stepper.set_micro_step_hold     (         0)
-    stepper.set_max_position        (       200)
-    print "Max position: %d" % stepper.get_max_position()
-    #Enable Interrupt
-
-    #Set the direction to forward
-    stepper.set_direction(1)    # Forward
-    #stepper.set_direction(0)    # Reverse
-           
-    #Set to full steps
-    #stepper.set_full_step()
-    #stepper.set_half_step()
-    stepper.set_micro_step()
-    if debug:
-        stepper.print_status(stepper.get_status())
-
-    #Set to not continuous
-    #stepper.enable_continuous(True)
-    #stepper.go()
-    #time.sleep(2)
-    #stepper.stop()
-    #time.sleep(1)
-    stepper.enable_continuous(False)
-
-    stepper.set_steps(stepper.construct_step_count( full_steps  = 100,
-                                                    half_steps  = 0,
-                                                    micro_steps = 0))
-    #stepper.set_float_steps(10.00)
- 
-    if debug:
-        stepper.print_control(stepper.get_control())
-    #Set the go command
-    stepper.go()
-    if debug:
-        stepper.print_status(stepper.get_status())
-
-    start = time.time()
-    step_time = time.time()
-    syms = ['\\', '|', '/', '-']
-    syms_pos = 0
-    bs = '\b'
-    while (stepper.is_busy()):
-        sys.stdout.write("\b%s" % syms[syms_pos])
-        syms_pos += 1
-        if syms_pos >= len(syms):
-            syms_pos = 0
-        sys.stdout.flush()
-        time.sleep(.1)
-
-
-    sys.stdout.write("\b")
-
-    print "Current Position: 0x%08X" % (stepper.get_current_position())
-    print "Final Delta T (Seconds): %f" % (time.time() - start)
-    print "Final Status: 0x%08X" % (stepper.get_status())
-    print "Final Command: 0x%08X" % (stepper.get_command())
-    #while (stepper.wait_for_interrupts()):
-    #    print "Waiting for interrupts..."
-    #    time.sleep(10)
-    print "Finished"
-
 

@@ -41,7 +41,7 @@ from driver import Driver
 from driver import NysaDMAException
 from driver import DMAWriteController
 
-LCD_SUBID                   = 3
+LCD_ST7781R                 = 3
 
 #LCD Constants
 LCD_WIDTH                   = 320
@@ -71,7 +71,7 @@ CONTROL_COMMAND_MODE        = 4
 CONTROL_COMMAND_WRITE       = 5
 CONTROL_COMMAND_READ        = 6
 CONTROL_COMMAND_RS          = 7
-                            
+
 CONTROL_CHIP_SELECT         = 8
 CONTROL_ENABLE_TEARING      = 9
 CONTROL_SOFT_TEAR           = 10
@@ -88,48 +88,19 @@ class LCDST7781RError(Exception):
 class LCDST7781R(Driver):
 
     @staticmethod
-    def get_core_id():
-        """
-        Returns the identification number of the device this module controls
-
-        Args:
-            Nothing
-
-        Returns (Integer):
-            Number corresponding to the device in the online sdb repositor file
-
-        Raises:
-            SDBError: Device ID Not found in online sdb repositor
-        """
-        return Nysa.get_id_from_name("LCD")
+    def get_abi_class():
+        return 0
 
     @staticmethod
-    def get_core_sub_id():
-        """Returns the identification of the specific implementation of this
-        controller
+    def get_abi_major():
+        return Driver.get_device_id_from_name("LCD")
 
-        Example: Cospan Design wrote the HDL GPIO core with sub_id = 0x01
-            this module was designed to interface and exploit features that
-            are specific to the Cospan Design version of the GPIO controller.
+    @staticmethod
+    def get_abi_minor():
+        return LCD_ST7781R
 
-            Some controllers may add extra functionalities that others do not
-            sub_ids are used to differentiate them and select the right python
-            controller for those HDL modules
-
-        Args:
-            Nothing
-
-        Returns (Integer):
-            Number ID for the HDL Module that this controls
-            (Note: 0 = generic control or baseline funtionality of the module)
-
-        Raises:
-            Nothing
-        """
-        return LCD_SUBID
-
-    def __init__(self, nysa, lcd_id, debug = False):
-        super(LCDST7781R, self).__init__(nysa, lcd_id, debug)
+    def __init__(self, nysa, urn, debug = False):
+        super(LCDST7781R, self).__init__(nysa, urn, debug)
         print "LCDST7781R_ LCD Device ID: %d" % self.dev_id
         #self.write_register(PIXEL_COUNT, LCD_WIDTH * LCD_HEIGHT)
 
@@ -149,7 +120,7 @@ class LCDST7781R(Driver):
                                                 empty1     = STATUS_MEMORY_1_EMPTY)
         except NysaDMAException as ex:
             raise LCDST7781R_ERROR("Error initializing the DMA Writer: %s" % str(ex))
-        
+
     def get_control(self):
         """get_control
 
@@ -391,7 +362,7 @@ class LCDST7781R(Driver):
         self.write_command(0x0F, Array('B', [0x00, 0x00]))
 
         time.sleep(0.100)
- 
+
         self.write_command(0x30, Array('B', [0x00, 0x00]))
         self.write_command(0x31, Array('B', [0x04, 0x05]))
         self.write_command(0x32, Array('B', [0x02, 0x03]))
@@ -410,10 +381,10 @@ class LCDST7781R(Driver):
         self.write_command(0x51, Array('B', [0x00, 0xEF]))
         self.write_command(0x52, Array('B', [0x00, 0x00]))
         self.write_command(0x53, Array('B', [0x01, 0x3F]))
- 
+
         time.sleep(0.100)
 
- 
+
         self.write_command(0x60, Array('B', [0xA7, 0x00]))
         self.write_command(0x61, Array('B', [0x00, 0x01]))
 
@@ -446,8 +417,6 @@ class LCDST7781R(Driver):
 
 
         self.enable_lcd(True)
-
-
 
 def pixel_frequency_to_array(pll_clock = 100, pixel_freq = 5.3):
     """

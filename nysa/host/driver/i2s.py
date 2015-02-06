@@ -40,9 +40,6 @@ from array import array as Array
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
-from nysa.host.nysa import Nysa
-from nysa.host.nysa import NysaCommError
-
 from driver import Driver
 from driver import DMAWriteController
 
@@ -79,54 +76,24 @@ class I2SError(Exception):
     pass
 
 class I2S(Driver):
-    """I2S
-        
-        I2S Driver
     """
-    @staticmethod
-    def get_core_id():
-        """
-        Returns the identification number of the device this module controls
-
-        Args:
-            Nothing
-
-        Returns (Integer):
-            Number corresponding to the device in the online sdb repositor file
-
-        Raises:
-            NysaError: Device ID Not found in online sdb repositor
-        """
-        return Nysa.get_id_from_name("I2S")
+    I2S
+    """
 
     @staticmethod
-    def get_core_sub_id():
-        """Returns the identification of the specific implementation of this
-        controller
+    def get_abi_class(self):
+        return 0
 
-        Example: Cospan Design wrote the HDL GPIO core with sub_id = 0x01
-            this module was designed to interface and exploit features that
-            control features that may be specific to the Cospan Design version
-            of the GPIO controller.
+    @staticmethod
+    def get_abi_major(self):
+        return Driver.get_device_id_from_name("i2s")
 
-            Some controllers may add extra functionalities that others do not
-            sub_ids are used to differentiate them and select the right python
-            controller for those HDL modules
-
-        Args:
-            Nothing
-
-        Returns (Integer):
-            Number ID for the HDL Module that this controls
-            (Note: 0 = generic control or baseline funtionality of the module)
-
-        Raises:
-            Nothing
-        """
+    @staticmethod
+    def get_abi_minor(self):
         return COSPAN_DESIGN_I2S_MODULE
 
-    def __init__(self, nysa, dev_id, debug = False):
-        super(I2S, self).__init__(nysa, dev_id, debug)
+    def __init__(self, nysa, urn, debug = False):
+        super(I2S, self).__init__(nysa, urn, debug)
         self.wdma = DMAWriteController(device       = self,
                                        mem_base0    = MEM_OFFSET0,
                                        mem_base1    = AUDIO_BUF_SIZE,
@@ -145,9 +112,6 @@ class I2S(Driver):
 
     def get_available_memory_blocks(self):
         return self.wdma.get_available_memory_blocks()
-
-    def set_dev_id(self, dev_id):
-        self.dev_id = dev_id
 
     def get_status(self):
         return self.read_register(STATUS)
@@ -199,7 +163,7 @@ class I2S(Driver):
             NysaCommError: Error in communication
         """
         return self.is_register_bit_set(CONTROL, CONTROL_WAVE_POST_FIFO)
-        
+
     def enable_pre_fifo_test(self, enable):
         """Enable the FIFO test before the both the final FIFO and the I2S
         phy layer, this is usefule to determine if there is an error with
@@ -349,11 +313,11 @@ class I2S(Driver):
         31: left = 0, right = 1 channel
         30 - 24: Reserved
         23 - 0: Audio data
-        
+
         This will automatically detect where the memory should be written, it
         will set up interrupts and attempt to continuously write down data to
         the device.
-        
+
         Args:
             aduio_data (Array of bytes): corresponding to the audio data in the
             format described above
@@ -367,51 +331,4 @@ class I2S(Driver):
         """
         self.wdma.write(audio_data)
 
-def unit_test(n):
-    """unit_test
 
-    Run the unit test for the I2S
-    """
-
-    print "I2S Unit Test"
-    dev_index = 0
-    try:
-        dev_index = n.find_device(I2S.get_core_id())
-    except NysaError, e:
-        print "Failed to find device on bus"
-        return
-
-    i2s = I2S(n, dev_index, debug = False)
-    i2s.register_dump()
-    print "Is i2s enabled: %s" % str(i2s.is_i2s_enabled())
-    print "Control: 0x%08X" % i2s.read_register(CONTROL)
-
-    print "Enabling I2S..."
-    i2s.enable_i2s(True)
-    print "Control: 0x%08X" % i2s.read_register(CONTROL)
-
-    print "Is i2s enabled: %s" % str(i2s.is_i2s_enabled())
-    print "Disable i2s..."
-    i2s.enable_i2s(False)
-    print "Is i2s enabled: %s" % str(i2s.is_i2s_enabled())
-
-    print "Sample Rate: %d" % i2s.get_sample_rate()
-    print "Set custom sample rate to 44.1Khz"
-    i2s.set_custom_sample_rate(44100)
-    print "Sample Rate (may not match exactly): %d" % i2s.get_sample_rate()
-
-    i2s.enable_i2s(True)
-    print "Enable post sine wave test"
-    i2s.enable_post_fifo_test(True)
-    time.sleep(4)
-    i2s.enable_post_fifo_test(False)
-
-    print "Enable pre sine wave test"
-    #i2s.enable_pre_fifo_test(True)
-    #time.sleep(4)
-    #i2s.enable_pre_fifo_test(False)
-    #i2s.enable_i2s(False)
-
-
-
-    

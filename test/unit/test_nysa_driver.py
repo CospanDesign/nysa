@@ -116,7 +116,7 @@ class Test (unittest.TestCase):
 
         urns = self.n.find_device(MockDMAWriterDriver)
         self.dmaw = MockDMAWriterDriver(self.n, urns[0], False)
-        s.set_level("verbose")
+        s.set_level("error")
 
     def test_write(self):
         address = 0x20

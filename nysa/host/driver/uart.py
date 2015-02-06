@@ -86,49 +86,19 @@ class UART(Driver):
     """
 
     @staticmethod
-    def get_core_id():
-        """
-        Returns the identification number of the device this module controls
-
-        Args:
-            Nothing
-
-        Returns (Integer):
-            Number corresponding to the device in the online sdb repositor file
-
-        Raises:
-            SDBError: Device ID Not found in online sdb repositor
-        """
-        return Nysa.get_id_from_name("UART")
+    def get_abi_class(self):
+        return 0
 
     @staticmethod
-    def get_core_sub_id():
-        """Returns the identification of the specific implementation of this
-        controller
+    def get_abi_major(self):
+        return Driver.get_device_id_from_name("uart")
 
-        Example: Cospan Design wrote the HDL GPIO core with sub_id = 0x01
-            this module was designed to interface and exploit features that
-            are specific to the Cospan Design version of the GPIO controller.
-
-            Some controllers may add extra functionalities that others do not
-            sub_ids are used to differentiate them and select the right python
-            controller for those HDL modules
-
-        Args:
-            Nothing
-
-        Returns (Integer):
-            Number ID for the HDL Module that this controls
-            (Note: 0 = generic control or baseline funtionality of the module)
-
-        Raises:
-            Nothing
-        """
+    @staticmethod
+    def get_abi_minor(self):
         return COSPAN_DESIGN_UART_MODULE
 
-    def __init__(self, nysa, dev_id, debug = False):
-        print "dev id: %d" % dev_id
-        super(UART, self).__init__(nysa, dev_id, debug)
+    def __init__(self, nysa, urn, debug = False):
+        super(UART, self).__init__(nysa, urn, debug)
 
     def get_control(self):
         """get_control
@@ -711,10 +681,10 @@ class UART(Driver):
         self.get_status()
 
 
-def unit_test(nysa, dev_id, debug = False):
+def unit_test(nysa, urn, debug = False):
     """Unit test for UART
     """
-    uart = UART(nysa, dev_id, debug = debug)
+    uart = UART(nysa, urn, debug = debug)
     #uart.reset()
     uart.set_control(0)
     print "Testing UART config"

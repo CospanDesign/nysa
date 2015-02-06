@@ -30,7 +30,7 @@ class Test (unittest.TestCase):
         self.n.read_sdb()
         urns = self.n.find_device(I2C)
         self.simple_dev = MockGPIODriver(self.n, urns[0], False)
-        s.set_level("verbose")
+        s.set_level("error")
         '''
 
     def notest_i2c(self):

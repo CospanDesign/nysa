@@ -34,14 +34,11 @@ import random
 
 from array import array as Array
 
-from nysa.host.nysa import Nysa
-from nysa.host.nysa import NysaCommError
-
 from driver import Driver
 from driver import NysaDMAException
 from driver import DMAWriteController
 
-LCD_SUBID                   = 1
+LCD_SSD1963                   = 1
 
 
 
@@ -75,7 +72,7 @@ MEM_0_SIZE                  = 0x05
 MEM_1_BASE                  = 0x06
 MEM_1_SIZE                  = 0x07
 
-#Control Bit Values         
+#Control Bit Values
 CONTROL_ENABLE              = 0
 CONTROL_ENABLE_INTERRUPT    = 1
 CONTROL_COMMAND_MODE        = 2
@@ -87,10 +84,10 @@ CONTROL_COMMAND_PARAMETER   = 7
 CONTROL_WRITE_OVERRIDE      = 8
 CONTROL_CHIP_SELECT         = 9
 CONTROL_ENABLE_TEARING      = 10
-                            
-#Status Bit Values          
+
+#Status Bit Values
 STATUS_MEMORY_0_EMPTY       = 0
-STATUS_MEMORY_1_EMPTY       = 1 
+STATUS_MEMORY_1_EMPTY       = 1
 
 #MCU Addresses
 MEM_ADR_NOP                 = 0x00
@@ -176,51 +173,19 @@ class LCDSSD1963Error(Exception):
 class LCDSSD1963(Driver):
 
     @staticmethod
-    def get_core_id():
-        """
-        Returns the identification number of the device this module controls
-
-        Args:
-            Nothing
-
-        Returns (Integer):
-            Number corresponding to the device in the online sdb repositor file
-
-        Raises:
-            SDBError: Device ID Not found in online sdb repositor
-        """
-        return Nysa.get_id_from_name("LCD")
+    def get_abi_class():
+        return 0
 
     @staticmethod
-    def get_core_sub_id():
-        """Returns the identification of the specific implementation of this
-        controller
+    def get_abi_major():
+        return Driver.get_device_id_from_name("LCD")
 
-        Example: Cospan Design wrote the HDL GPIO core with sub_id = 0x01
-            this module was designed to interface and exploit features that
-            are specific to the Cospan Design version of the GPIO controller.
+    @staticmethod
+    def get_abi_minor():
+        return LCD_SSD1963
 
-            Some controllers may add extra functionalities that others do not
-            sub_ids are used to differentiate them and select the right python
-            controller for those HDL modules
-
-        Args:
-            Nothing
-
-        Returns (Integer):
-            Number ID for the HDL Module that this controls
-            (Note: 0 = generic control or baseline funtionality of the module)
-
-        Raises:
-            Nothing
-        """
-        return LCD_SUBID
-
-    def __init__(self, nysa, lcd_id, debug = False):
-        super(LCDSSD1963, self).__init__(nysa, lcd_id, debug)
-        print "LCDSSD1963_ LCD Device ID: %d" % self.dev_id
-        #self.write_register(PIXEL_COUNT, LCD_WIDTH * LCD_HEIGHT)
-
+    def __init__(self, nysa, urn, debug = False):
+        super(LCDSSD1963, self).__init__(nysa, urn, debug)
         self.status = 0
         try:
             self.dma_writer = DMAWriteController(device     = self,
@@ -238,7 +203,7 @@ class LCDSSD1963(Driver):
                                                 empty1     = STATUS_MEMORY_1_EMPTY)
         except NysaDMAException as ex:
             raise LCDSSD1963_ERROR("Error initializing the DMA Writer: %s" % str(ex))
-        
+
     def get_control(self):
         """get_control
 
