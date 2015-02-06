@@ -18,15 +18,11 @@ class Test(unittest.TestCase):
 
     def test_all_functions(self):
         s = status.Status()
-        s.Verbose("verbose")
+        s.Verbose("error")
         s.Debug("debug")
         s.Info("info")
         s.Important("important")
         s.Warning("warning")
         s.Error("error")
         s.Fatal("fatal")
-
-
-if __name__ == "__main__":
-  unittest.main()
 

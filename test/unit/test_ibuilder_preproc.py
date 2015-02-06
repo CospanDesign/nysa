@@ -29,10 +29,9 @@ class Test (unittest.TestCase):
         self.module_buffer = f.read()
         f.close()
 
-
     def test_generate_define_table(self):
         """generate a define table given a file"""
-        def_string = "`define TEST_DEFINE 1"
+        self.module_buffer = "`define TEST_DEFINE 1"
         result = preprocessor.generate_define_table(self.module_buffer, debug = self.dbg)
         self.assertEqual(result["TEST_DEFINE"], '1')
 

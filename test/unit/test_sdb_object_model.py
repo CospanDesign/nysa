@@ -17,7 +17,6 @@ from nysa.cbuilder.sdb import SDBInfo
 from nysa.cbuilder.sdb import SDBWarning
 from nysa.cbuilder.sdb import SDBError
 
-from nysa.common.status import StatusLevel
 from nysa.common.status import Status
 
 SDB_DATA =  \
@@ -70,7 +69,7 @@ class Test (unittest.TestCase):
 
     def setUp(self):
         self.status = Status()
-        self.status.set_level(StatusLevel.VERBOSE)
+        self.status.set_level("error")
         self.som = som.SOM()
 
     def test_initialize_root(self):
