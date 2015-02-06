@@ -148,6 +148,10 @@ class Test (unittest.TestCase):
         self.assertFalse(self.nsm.is_storage_bus("/top/peripheral"))
         self.assertFalse(self.nsm.is_storage_bus("/top/peripheral/gpio1"))
 
+    def test_get_device_index_in_bus(self):
+        index = self.nsm.get_device_index_in_bus("/top/peripheral/gpio1")
+        self.assertEqual(index, 2)
+        
     #Device Functions
     def test_get_device_address(self):
         address = self.nsm.get_device_address("/top/peripheral/gpio1")
@@ -217,4 +221,9 @@ class Test (unittest.TestCase):
         not_mem = "/top/peripheral/gpio1"
         self.assertTrue(self.nsm.is_memory_device(mem))
         self.assertFalse(self.nsm.is_memory_device(not_mem))
+
+    def test_get_address_of_memory_bus(self):
+        mem_addr = 0x0100000000
+        addr = self.nsm.get_address_of_memory_bus()
+        self.assertEqual(mem_addr, addr)
 

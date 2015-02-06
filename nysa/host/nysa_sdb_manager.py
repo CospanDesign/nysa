@@ -70,6 +70,15 @@ class NysaSDBManager(object):
 
         return d_urns
 
+    def _get_component_index(self, component):
+        parent = component.get_parent()
+        index = 0
+        for c in parent:
+            if component == c:
+                return index
+            index += 1
+        return index
+
     def _get_urn_from_component(self, component):
         urn = "/" + component.get_name()
         p = component.get_parent()
@@ -297,6 +306,22 @@ class NysaSDBManager(object):
         abi_minor = driver.get_abi_minor()
         #print "class: %s, major: %s minor: %s" % (str(abi_class), str(abi_major), str(abi_minor))
         return self.find_urn_from_abi(abi_class, abi_major, abi_minor)
+
+    def get_device_index_in_bus(self, urn):
+        """
+        Return the index of the device in the parent bus
+
+        Args:
+            urn (string): Unique Reference Name identifying the device
+
+        Returns: (Integer)
+            index of the device in the peripheral in the bus
+
+        Raises:
+            Nothing
+        """
+        component = self._get_component_from_urn(urn)
+        return self._get_component_index(component)
 
     def read_sdb(self, n):
         """
@@ -670,6 +695,9 @@ class NysaSDBManager(object):
     def is_memory_device(self, urn):
         memory_major = device_manager.get_device_id_from_name("memory")
         return self.get_device_abi_major(urn) == memory_major
+
+    def get_address_of_memory_bus(self):
+        return self.get_device_address("/top/memory")
 
     def get_total_memory_size(self):
         urns = self.find_urn_from_device_type("memory")
