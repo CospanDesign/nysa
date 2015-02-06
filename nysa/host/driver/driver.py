@@ -29,19 +29,22 @@ import Queue
 import threading
 from threading import Lock
 
+from nysa.cbuilder.device_manager import get_device_id_from_name
 
 class Driver(object):
     def __init__(self,
                  n,
-                 dev_id,
+                 urn,
                  debug):
         self.n = n
-        self.dev_id = dev_id + 1
-        if debug: print "Dev ID: %d" % self.dev_id
+        self.urn = urn
+        if debug: print "Dev ID: %s" % self.urn
         self.debug = debug
         self.interrupt_detected = False
         #print "interrupts: 0x%08X" % self.n.interrupts
-        self.n.interrupts = (self.n.interrupts & ~(1 << self.dev_id))
+        self.peripheral_index = self.n.get_peripheral_device_index(self.urn)
+        self.n.interrupts = (self.n.interrupts & ~(1 << self.peripheral_index))
+        self.base_addr = self.n.get_device_address(self.urn)
         #print "interrupts: 0x%08X" % self.n.interrupts
 
     def __del__(self):
@@ -129,7 +132,7 @@ class Driver(object):
         if callback is None:
             callback = self.interrupt_callback
 
-        self.n.register_interrupt_callback(self.dev_id, callback)
+        self.n.register_interrupt_callback(self.peripheral_index, callback)
 
     def unregister_interrupt_callback(self, callback = None):
         """unregister_interrupt_callback
@@ -148,7 +151,7 @@ class Driver(object):
         Raises:
             Nothing
         """
-        self.n.unregister_interrupt_callback(self.dev_id, callback = callback)
+        self.n.unregister_interrupt_callback(self.peripheral_index, callback = callback)
 
     def set_timeout(self, timeout):
         """set_timeout
@@ -197,14 +200,16 @@ class Driver(object):
         Raises:
           NysaCommError: Error in communication
         """
-        return self.n.read_register(self.dev_id, address)
+        address = long(self.base_addr + address)
+        return self.n.read_register(address)
 
-    def read(self, address, length = 1):
+    def read(self, address, length = 1, disable_auto_inc = False):
         """read
 
         Args:
           length (int): Number of 32 bit words to read from the FPGA
           address (int):  Address of the register/memory to read
+          disable_auto_inc (boolean): Disable the auto increment behavior
 
         Returns:
           (Array of unsigned bytes): A byte array containtin the raw data
@@ -213,7 +218,8 @@ class Driver(object):
         Raises:
           NysaCommError: Error in communication
         """
-        return self.n.read(self.dev_id, address, length, memory_device = False)
+        address = long(self.base_addr + address)
+        return self.n.read(address, length, memory_device = False, disable_auto_inc = disable_auto_inc)
 
     def read_memory(self, address, size):
         """read_memory
@@ -248,9 +254,10 @@ class Driver(object):
         Raises:
           NysaCommError: Error in communication
         """
-        self.n.write_register(self.dev_id, address, value)
+        address = long(self.base_addr + address)
+        self.n.write_register(address, value)
 
-    def write(self, address, data = None):
+    def write(self, address, data, disable_auto_inc = False):
         """write
 
         Generic write command usd to write data to an Nysa image, this will be
@@ -260,6 +267,7 @@ class Driver(object):
           address (int): Address of the register/memory to read
           data (array of unsigned bytes): Array of raw bytes to send to the
                                           device
+          disable_auto_inc (boolean): Disable the auto increment behavior
 
         Returns:
           Nothing
@@ -268,7 +276,8 @@ class Driver(object):
           AssertionError: This function must be overriden by a board specific
           implementation
         """
-        self.n.write(self.dev_id, address, data, memory_device = False)
+        address = long(self.base_addr + address)
+        self.n.write(address, data, memory_device = False, disable_auto_inc = disable_auto_inc)
 
     def write_memory(self, address, data):
         """write_memory
@@ -304,7 +313,8 @@ class Driver(object):
         Raises:
           NysaCommError: Error in communication
         """
-        self.n.enable_register_bit(self.dev_id, address, bit, enable)
+        address = long(self.base_addr + address)
+        self.n.enable_register_bit(address, bit, enable)
 
     def set_register_bit(self, address, bit):
         """set_register_bit
@@ -321,7 +331,8 @@ class Driver(object):
         Raises:
           NysaCommError: Error in communication
         """
-        self.n.set_register_bit(self.dev_id, address, bit)
+        address = long(self.base_addr + address)
+        self.n.set_register_bit(address, bit)
 
     def clear_register_bit(self, address, bit):
         """clear_register_bit
@@ -338,7 +349,8 @@ class Driver(object):
         Raises:
           NysaCommError: Error in communication
         """
-        self.n.clear_register_bit(self.dev_id, address, bit)
+        address = long(self.base_addr + address)
+        self.n.clear_register_bit(address, bit)
 
     def is_register_bit_set(self, address, bit):
         """is_register_bit_set
@@ -357,7 +369,8 @@ class Driver(object):
         Raises:
           NysaCommError
         """
-        return self.n.is_register_bit_set(self.dev_id, address, bit)
+        address = long(self.base_addr + address)
+        return self.n.is_register_bit_set(address, bit)
 
     def wait_for_interrupts(self, wait_time = 1):
         """wait_for_interrupts
@@ -379,10 +392,8 @@ class Driver(object):
             self.interrupt_detected = False
             return True
         retval = self.n.wait_for_interrupts(wait_time)
-        self.n.interrupts &= ~(1 << self.dev_id)
+        self.n.interrupts &= ~(1 << self.peripheral_index)
         return retval
-
-        #return self.n.is_interrupt_for_slave(self.dev_id)
 
     def interrupt_callback(self):
         self.interrupt_detected = True
@@ -394,7 +405,7 @@ class Driver(object):
         Reads the size number of registers from the SDB and
         prints them all out
         """
-        count = self.n.get_device_size(self.dev_id - 1)
+        count = self.n.get_device_size(self.urn)
         print "Register Dump"
         for i in range(count):
             print "Register [0x%02X]: 0x%08X" % (i, self.read_register(i))
