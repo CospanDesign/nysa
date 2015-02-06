@@ -67,48 +67,19 @@ class GPIO(Driver):
         Communication with a GPIO Core
     """
     @staticmethod
-    def get_core_id():
-        """
-        Returns the identification number of the device this module controls
+    def get_abi_class():
+        return 0
 
-        Args:
-            Nothing
-
-        Returns (Integer):
-            Number corresponding to the device in the online sdb repositor file
-
-        Raises:
-            SDBError: Device ID Not found in online sdb repositor
-        """
+    @staticmethod
+    def get_abi_major():
         return Nysa.get_id_from_name("GPIO")
 
     @staticmethod
-    def get_core_sub_id():
-        """Returns the identification of the specific implementation of this
-        controller
-
-        Example: Cospan Design wrote the HDL GPIO core with sub_id = 0x01
-            this module was designed to interface and exploit features that
-            are specific to the Cospan Design version of the GPIO controller.
-
-            Some controllers may add extra functionalities that others do not
-            sub_ids are used to differentiate them and select the right python
-            controller for those HDL modules
-
-        Args:
-            Nothing
-
-        Returns (Integer):
-            Number ID for the HDL Module that this controls
-            (Note: 0 = generic control or baseline funtionality of the module)
-
-        Raises:
-            Nothing
-        """
+    def get_abi_minor():
         return COSPAN_DESIGN_GPIO_MODULE
 
-    def __init__(self, nysa, dev_id, debug = False):
-        super(GPIO, self).__init__(nysa, dev_id, debug)
+    def __init__(self, nysa, urn, debug = False):
+        super(GPIO, self).__init__(nysa, urn, debug)
 
     def set_port_direction(self, direction):
         """set_port_direction
@@ -298,9 +269,6 @@ class GPIO(Driver):
         return self.read_register(READ_CLOCK_RATE)
 
 
-
-
-
     def get_interrupts(self):
         """get_interrupts
 
@@ -317,16 +285,16 @@ class GPIO(Driver):
         """
         return self.read_register(INTERRUPTS)
 
-def unit_test(n, dev_id = None, debug = False):
+def unit_test(n, urn = None, debug = False):
     """unit_test
 
     Run the unit test of the GPIO
     """
-    dev_index = n.find_device(GPIO.get_core_id())
-    if dev_index is None:
+    urns = n.find_device(GPIO)
+    if len(urns) == 0:
         print "Failed to find GPIO Device!\n"
         return
-    gpio = GPIO(n, dev_index)
+    gpio = GPIO(n, urns[0])
 
     print "Testing output ports (like LEDs)"
 
