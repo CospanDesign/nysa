@@ -42,10 +42,7 @@ from array import array as Array
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
-from nysa.host.nysa import Nysa
-from nysa.host.nysa import NysaCommError
-
-from driver import Driver
+from nysa.host.driver import driver
 
 #Sub Module ID
 COSPAN_DESIGN_GPIO_MODULE = 0x01
@@ -60,7 +57,7 @@ INTERRUPT_BOTH_EDGE =   0x00000005
 INTERRUPT_TIMEOUT   =   0x00000006
 READ_CLOCK_RATE     =   0x00000007
 
-class GPIO(Driver):
+class GPIO(driver.Driver):
 
     """ GPIO
 
@@ -72,7 +69,7 @@ class GPIO(Driver):
 
     @staticmethod
     def get_abi_major():
-        return Nysa.get_id_from_name("GPIO")
+        return driver.get_device_id_from_name("gpio")
 
     @staticmethod
     def get_abi_minor():
@@ -283,5 +280,6 @@ class GPIO(Driver):
             NysaCommError
         """
         return self.read_register(INTERRUPTS)
+
 
 

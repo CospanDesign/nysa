@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
 
-from nysa.host.driver import gpio
+from nysa.host.driver import i2s
 from nysa.common.status import Status
 
 class Test (unittest.TestCase):
@@ -19,55 +19,52 @@ class Test (unittest.TestCase):
         s = Status()
         s.set_level("fatal")
 
-        print "Unit test!"
+    def notest_i2s(self):
+        """unit_test
 
-    def notest_gpio(self):
-        '''
-        urns = n.find_device(GPIO)
-        if len(urns) == 0:
-            print "Failed to find GPIO Device!\n"
-            return
-        gpio = GPIO(n, urns[0])
-
-        print "Testing output ports (like LEDs)"
-
-        print "Flashing all the outputs for one second"
-
-        print "Set all the ports to outputs"
-        gpio.set_port_direction(0xFFFFFFFF)
-
-        print "Set all the values to 1s"
-        gpio.set_port_raw(0xFFFFFFFF)
-        time.sleep(1)
-        print "Set all the values to 0s"
-        gpio.set_port_raw(0x00000000)
-
-        print "Reading inputs (Like buttons) in 2 second"
-        gpio.set_port_direction(0x00000000)
-
-        time.sleep(2)
-        print "Read value: 0x%08X" % gpio.get_port_raw()
-        print "Reading inputs (Like buttons) in 2 second"
-        time.sleep(2)
-        print "Read value: 0x%08X" % gpio.get_port_raw()
-
-        print "Interrupts: 0x%08X" % gpio.get_interrupts()
-
-        print "Testing Interrupts, setting interrupts up for positive edge detect"
-        print "Interrupts: 0x%08X" % gpio.get_interrupts()
-        gpio.set_interrupt_edge(0xFFFFFFFF)
-        gpio.set_interrupt_enable(0xFFFFFFFF)
-
-        print "Waiting for 5 seconds for the interrupts to fire"
-        if gpio.wait_for_interrupts(5):
-            print "Interrupt detected!\n"
-            #if gpio.is_interrupt_for_slave():
-            print "Interrupt for GPIO detected!"
-            print "Interrupts: 0x%08X" % gpio.get_interrupts()
-            print "Read value: 0x%08X" % gpio.get_port_raw()
-
-        print "Interrupts: 0x%08X" % gpio.get_interrupts()
-        '''
+        Run the unit test for the I2S
+        """
         pass
+        '''
+
+        print "I2S Unit Test"
+        dev_index = 0
+        try:
+            dev_index = n.find_device(I2S.get_core_id())
+        except NysaError, e:
+            print "Failed to find device on bus"
+            return
+
+        i2s = I2S(n, dev_index, debug = False)
+        i2s.register_dump()
+        print "Is i2s enabled: %s" % str(i2s.is_i2s_enabled())
+        print "Control: 0x%08X" % i2s.read_register(CONTROL)
+
+        print "Enabling I2S..."
+        i2s.enable_i2s(True)
+        print "Control: 0x%08X" % i2s.read_register(CONTROL)
+
+        print "Is i2s enabled: %s" % str(i2s.is_i2s_enabled())
+        print "Disable i2s..."
+        i2s.enable_i2s(False)
+        print "Is i2s enabled: %s" % str(i2s.is_i2s_enabled())
+
+        print "Sample Rate: %d" % i2s.get_sample_rate()
+        print "Set custom sample rate to 44.1Khz"
+        i2s.set_custom_sample_rate(44100)
+        print "Sample Rate (may not match exactly): %d" % i2s.get_sample_rate()
+
+        i2s.enable_i2s(True)
+        print "Enable post sine wave test"
+        i2s.enable_post_fifo_test(True)
+        time.sleep(4)
+        i2s.enable_post_fifo_test(False)
+
+        print "Enable pre sine wave test"
+        #i2s.enable_pre_fifo_test(True)
+        #time.sleep(4)
+        #i2s.enable_pre_fifo_test(False)
+        #i2s.enable_i2s(False)
+        '''
 
 
