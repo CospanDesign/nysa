@@ -96,6 +96,7 @@ class Nysa(object):
         self.name = "Nysa"
         self.s = status
         self.nsm = NysaSDBManager(self.s)
+        self.mem_addr = None
         if status: status.Debug("nysa started")
 
     def __del__(self):
@@ -358,6 +359,10 @@ class Nysa(object):
         Raises:
           NysaCommError: Error in communication
         """
+        if self.mem_addr is None:
+            self.mem_addr = self.nsm.get_address_of_memory_bus()
+        address += self.mem_addr
+
         return self.read(address = address,
                          length = size,
                          memory_device = True)
@@ -482,7 +487,11 @@ class Nysa(object):
         Raises:
           NysaCommError: Error in communication
         """
-        self.write(0, address, data, memory_device = True)
+        if self.mem_addr is None:
+            self.mem_addr = self.nsm.get_address_of_memory_bus()
+
+        address = self.mem_addr + address
+        self.write(address, data, memory_device = True)
 
     def ioctl(self, name, arg = None):
         """
@@ -610,7 +619,6 @@ class Nysa(object):
         """
         return self.nsm.get_number_of_devices()
 
-    #Stuff to edit
     def get_device_address(self, urn):
         """
         From the URN get the base address of the device
@@ -826,7 +834,21 @@ class Nysa(object):
         """
         return self.nsm.find_urn_from_ids(vendor_id, product_id)
 
+    def get_peripheral_device_index(self, urn):
+        """
+        Return the index of the device in the peripheral
 
+        Args:
+            urn (string): Unique Reference Name identifying the device
+
+        Returns: (Integer)
+            index of the device in the peripheral in the bus
+
+        Raises:
+            Nothing
+        """
+
+        return self.nsm.get_device_index_in_bus(urn)
 
     def is_memory_device(self, urn):
         """is_memory_device

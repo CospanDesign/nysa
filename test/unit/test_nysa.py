@@ -291,6 +291,12 @@ class Test (unittest.TestCase):
         urns = self.n.find_device(MockGPIODriver)
         self.assertIn("/top/peripheral/gpio1", urns)
 
+    def test_get_peripheral_device_index(self):
+        urn = "/top/peripheral/gpio1"
+        index = 2
+        peripheral_index = self.n.get_peripheral_device_index(urn)
+        self.assertEqual(index, peripheral_index)
+
     #Programming
     def test_upload(self):
         self.n.upload("")
