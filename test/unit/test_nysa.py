@@ -52,64 +52,56 @@ class Test (unittest.TestCase):
     def test_read(self):
         address = 0
         length = 1
-        memory_device = False
         disable_auto_inc = False
         #Test Length 1 Read
-        resp = self.n.read(address, length, memory_device, disable_auto_inc)
+        resp = self.n.read(address, length, disable_auto_inc)
         self.assertEqual(len(resp), length * 4)
 
         #Test Length 2 read
         address = 0
         length = 2
-        memory_device = False
         disable_auto_inc = False
-        resp = self.n.read(address, length, memory_device, disable_auto_inc)
+        resp = self.n.read(address, length, disable_auto_inc)
         self.assertEqual(len(resp), length * 4)
 
         #Test Read at address 0x10
         length = 1
         address = 0x10
-        memory_device = False
         disable_auto_inc = False
-        resp = self.n.read(address, length, memory_device, disable_auto_inc)
+        resp = self.n.read(address, length, disable_auto_inc)
         self.assertEqual(len(resp), length * 4)
 
         #Test read a memory device
         length = 1
         address = 0x00
-        memory_device = True
         disable_auto_inc = False
-        resp = self.n.read(address, length, memory_device, disable_auto_inc)
+        resp = self.n.read(address, length, disable_auto_inc)
         self.assertEqual(len(resp), length * 4)
 
     def test_write(self):
         address = 0
         data = Array('B', [0x00, 0x00, 0x00, 0x00])
-        memory_device = False
         disable_auto_inc = False
         #Test Length 1 Read
-        self.n.write(address, data, memory_device, disable_auto_inc)
+        self.n.write(address, data, disable_auto_inc)
 
         #Test Length 2 read
         address = 0
         data = Array('B', [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-        memory_device = False
         disable_auto_inc = False
-        self.n.write(address, data, memory_device, disable_auto_inc)
+        self.n.write(address, data, disable_auto_inc)
 
         #Test Read at address 0x10
         data = Array('B', [0x00, 0x00, 0x00, 0x00])
         address = 0x10
-        memory_device = False
         disable_auto_inc = False
-        self.n.write(address, data, memory_device, disable_auto_inc)
+        self.n.write(address, data, disable_auto_inc)
 
         #Test read a memory device
         data = Array('B', [0x00, 0x00, 0x00, 0x00])
         address = 0x00
-        memory_device = True
         disable_auto_inc = False
-        self.n.write(address, data, memory_device, disable_auto_inc)
+        self.n.write(address, data, disable_auto_inc)
 
     def test_ping(self):
         self.n.ping()
@@ -135,12 +127,11 @@ class Test (unittest.TestCase):
     #Stuff to edit
     def test_get_device_address(self):
         addr = self.n.get_device_address("/top/peripheral/gpio1")
-        self.assertEqual(addr, long(0x020000000))
+        self.assertEqual(addr, long(0x02000000))
 
     def test_get_device_size(self):
         size = self.n.get_device_size("/top/peripheral/gpio1")
         self.assertEqual(size, long(0x08))
-
 
     def test_is_wishbone_bus(self):
         self.assertTrue(self.n.is_wishbone_bus())
@@ -153,14 +144,13 @@ class Test (unittest.TestCase):
         name = self.n.get_board_name()
         self.assertEqual(name, "sim")
 
-
     def test_get_device_vendor_id(self):
         vendor_id = self.n.get_device_vendor_id("/top/peripheral/gpio1")
         self.assertEqual(vendor_id, long(0x800000000000C594))
 
     def test_get_device_product_id(self):
         product_id = self.n.get_device_product_id("/top/peripheral/gpio1")
-        self.assertEqual(product_id, 0x00000000)
+        self.assertEqual(product_id, 0x00000002)
 
     def test_get_device_abi_class(self):
         abi_class = self.n.get_device_abi_class("/top/peripheral/gpio1")
@@ -238,8 +228,8 @@ class Test (unittest.TestCase):
     def test_find_urn_from_ids(self):
         urns = self.n.find_urn_from_ids(0x800000000000C594)
         self.assertEqual(len(urns), 3)
-        urns = self.n.find_urn_from_ids(vendor_id = None, product_id = 0x00)
-        self.assertEqual(len(urns), 4)
+        urns = self.n.find_urn_from_ids(vendor_id = None, product_id = 0x02)
+        self.assertEqual(len(urns), 1)
 
     def test_get_total_memory_size(self):
         size = self.n.get_total_memory_size()

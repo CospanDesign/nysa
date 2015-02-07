@@ -115,7 +115,7 @@ class Test (unittest.TestCase):
         self.assertEqual(urn, "/top")
 
     def test_find_device_from_address(self):
-        address = 0x010000000
+        address = 0x01000000
         urn = self.nsm.find_device_from_address(address)
         #print "urn: %s" % urn
         self.assertEqual(urn, "/top/peripheral/uart1")
@@ -151,7 +151,7 @@ class Test (unittest.TestCase):
     def test_get_device_index_in_bus(self):
         index = self.nsm.get_device_index_in_bus("/top/peripheral/gpio1")
         self.assertEqual(index, 2)
-        
+
     #Device Functions
     def test_get_device_address(self):
         address = self.nsm.get_device_address("/top/peripheral/gpio1")
@@ -168,7 +168,7 @@ class Test (unittest.TestCase):
         c = create_integration_record("integrating is fun")
         som.insert_component(root, c)
 
-        self.assertEqual(address, long(0x020000000))
+        self.assertEqual(address, long(0x02000000))
 
     def test_is_bus(self):
         self.assertFalse(self.nsm.is_bus("/top/peripheral/gpio1"))
@@ -184,7 +184,7 @@ class Test (unittest.TestCase):
 
     def test_get_device_product_id(self):
         product_id = self.nsm.get_device_product_id("/top/peripheral/gpio1")
-        self.assertEqual(product_id, 0x00000000)
+        self.assertEqual(product_id, 0x00000002)
 
     def test_get_device_abi_class(self):
         abi_class = self.nsm.get_device_abi_class("/top/peripheral/gpio1")
@@ -207,8 +207,8 @@ class Test (unittest.TestCase):
     def test_find_urn_from_ids(self):
         urns = self.nsm.find_urn_from_ids(0x800000000000C594)
         self.assertEqual(len(urns), 3)
-        urns = self.nsm.find_urn_from_ids(vendor_id = None, product_id = 0x00)
-        self.assertEqual(len(urns), 4)
+        urns = self.nsm.find_urn_from_ids(vendor_id = None, product_id = 0x02)
+        self.assertEqual(len(urns), 1)
         #print "urns: %s" % str(urns)
 
     def test_get_total_memory_size(self):

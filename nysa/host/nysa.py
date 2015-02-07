@@ -136,7 +136,7 @@ class Nysa(object):
         """
         return self.timeout
 
-    def read(self, address, length = 1, memory_device = False, disable_auto_inc = False):
+    def read(self, address, length = 1, disable_auto_inc = False):
         """read
 
         Generic read command used to read data from a Nysa image, this will be
@@ -149,8 +149,6 @@ class Nysa(object):
         Args:
           length (int): Number of 32 bit words to read from the FPGA
           address (int):  Address of the register/memory to read
-          memory_device (int): Whether the device is on the memory bus or the
-                            peripheral bus
           disable_auto_inc (bool): if true, auto increment feature will be disabled
 
         Returns:
@@ -163,26 +161,23 @@ class Nysa(object):
         """
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
-    def write(self, address, data, memory_device = False, disable_auto_inc = False):
+    def write(self, address, data, disable_auto_inc = False):
         """write
 
         Generic write command usd to write data to a Nysa image, this will be
         overriden based on the communication method with the specific FPGA board
 
         Args:
-          address (int): Address of the register/memory to read
-          memory_device (int): True if the device is on the memory bus
-          data (array of unsigned bytes): Array of raw bytes to send to the
-                                          device
-
-
-          disable_auto_inc (bool): if true, auto increment feature will be disabled
+            address (int): Address of the register/memory to read
+            data (array of unsigned bytes): Array of raw bytes to send to the
+                                           device
+            disable_auto_inc (bool): if true, auto increment feature will be disabled
         Returns:
-          Nothing
+            Nothing
 
         Raises:
-          AssertionError: This function must be overriden by a board specific
-          implementation
+            AssertionError: This function must be overriden by a board specific
+                implementation
         """
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
         if len(data) == 0:
@@ -467,7 +462,7 @@ class Nysa(object):
             self.mem_addr = self.nsm.get_address_of_memory_bus()
 
         address = self.mem_addr + address
-        self.write(address, data, memory_device = True)
+        self.write(address, data)
 
     def read_memory(self, address, size):
         """read_memory
@@ -490,8 +485,7 @@ class Nysa(object):
         address += self.mem_addr
 
         return self.read(address = address,
-                         length = size,
-                         memory_device = True)
+                         length = size)
 
     def ioctl(self, name, arg = None):
         """

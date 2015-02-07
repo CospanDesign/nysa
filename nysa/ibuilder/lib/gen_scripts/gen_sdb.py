@@ -228,7 +228,7 @@ class GenSDB(Gen):
 
         #Generate the ROM image
         sm.set_child_spacing(root,       0x0100000000)
-        sm.set_child_spacing(peripheral, 0x0010000000)
+        sm.set_child_spacing(peripheral, 0x0001000000)
         rom = srg.generate_rom_image(sm)
         return rom
 

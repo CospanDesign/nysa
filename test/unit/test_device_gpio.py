@@ -68,7 +68,6 @@ class Test (unittest.TestCase):
         self.s.Important("Using Platform: %s" % plat[0])
         self.s.Important("Instantiated a GPIO Device: %s" % urn)
 
-
     def test_gpio(self):
         if self.gpio is None:
             self.s.Fatal("Cannot Run Test when no device is found!")

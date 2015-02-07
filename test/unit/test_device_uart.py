@@ -13,86 +13,130 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 from nysa.host.driver import uart
 from nysa.common.status import Status
 
+from nysa.host.platform_scanner import PlatformScanner
+
 class Test (unittest.TestCase):
 
     def setUp(self):
-        s = Status()
-        s.set_level("fatal")
+        self.s = Status()
+        self.s.set_level("debug")
 
-        print "Unit test!"
-        pass
-        '''
-        for name in get_platforms():
-            try:
-                self.n = find_board(name, status = s)
-            except PlatformScannerException as ex:
-                pass
-        self.n.read_sdb()
-        urns = self.n.find_device(I2C)
-        self.simple_dev = MockGPIODriver(self.n, urns[0], False)
-        s.set_level("error")
-        '''
+        self.configure_device(uart.UART)
 
-    def notest_uart(self):
+    def configure_device(self, driver):
+        self.s.Debug("type of driver: %s" % str(driver))
+        plat = ["", None, None]
+        pscanner = PlatformScanner()
+        platform_dict = pscanner.get_platforms()
+        platform_names = platform_dict.keys()
+
+        if "sim" in platform_names:
+            #If sim is in the platforms, move it to the end
+            platform_names.remove("sim")
+            platform_names.append("sim")
+        urn = None
+        for platform_name in platform_names:
+            if plat[1] is not None:
+                break
+
+            self.s.Debug("Platform: %s" % str(platform_name))
+
+            platform_instance = platform_dict[platform_name](self.s)
+            #self.s.Verbose("Platform Instance: %s" % str(platform_instance))
+
+            instances_dict = platform_instance.scan()
+
+            for name in instances_dict:
+
+                #s.Verbose("Found Platform Item: %s" % str(platform_item))
+                n = instances_dict[name]
+                plat = ["", None, None]
+
+                if n is not None:
+                    self.s.Important("Found a nysa instance: %s" % name)
+                    n.read_sdb()
+                    #import pdb; pdb.set_trace()
+                    if n.is_device_in_platform(driver):
+                        plat = [platform_name, name, n]
+                        break
+                    continue
+
+                #self.s.Verbose("\t%s" % psi)
+
+        if plat[1] is None:
+            self.d = None
+            return
+        n = plat[2]
+        self.n = n
+        urn = n.find_device(driver)[0]
+        self.d = driver(n, urn)
+        self.s.Important("Using Platform: %s" % plat[0])
+        self.s.Important("Instantiated a driver Device: %s" % urn)
+
+
+    def test_uart(self):
         """Unit test for UART
         """
-        """
-        uart = UART(nysa, urn, debug = debug)
-        #uart.reset()
-        uart.set_control(0)
-        print "Testing UART config"
-        baudrate = uart.get_baudrate()
-        print "Initial baudrate = %d" % baudrate
-        print "Setting baudrate to 115200"
-        uart.set_baudrate(115200)
+        if self.d is None:
+            return
+        if self.n.get_board_name() == "sim":
+            self.s.Warning("Unable to run UART test with simulator")
+            return
+
+        self.d.set_control(0)
+        self.s.Debug ("Testing UART config")
+        baudrate = self.d.get_baudrate()
+        self.s.Debug ("Initial baudrate = %d" % baudrate)
+        self.s.Debug ("Setting baudrate to 115200")
+        self.d.set_baudrate(115200)
         '''
-        uart.set_baudrate(57600)
-        if uart.get_baudrate() > (57600 - (57600 * .01)) and uart.get_baudrate() < (57600 + (57600 * .01)) :
-            print "Baudrate is within 1% of target"
+        self.d.set_baudrate(57600)
+        if self.d.get_baudrate() > (57600 - (57600 * .01)) and self.d.get_baudrate() < (57600 + (57600 * .01)) :
+            self.s.Debug ("Baudrate is within 1% of target")
         else:
-            print "Baudrate is not correct!"
+            self.s.Debug ("Baudrate is not correct!")
 
-        print "Reverting back to initial baudrate"
-        uart.set_baudrate(baudrate)
+        self.s.Debug ("Reverting back to initial baudrate")
+        self.d.set_baudrate(baudrate)
 
-        print "\tXXX: Cannot test hardware flow control!"
+        self.s.Debug ("\tXXX: Cannot test hardware flow control!")
         '''
-        print "\tControl: 0x%08X" % uart.get_control()
+        self.s.Debug ("\tControl: 0x%08X" % self.d.get_control())
 
-        print "Writing a string"
-        uart.write_string("STEAM ROXORS THE BIG ONE!1!!\r\n")
+        self.s.Debug ("Writing a string")
+        self.d.write_string("STEAM ROXORS THE BIG ONE!1!!\r\n")
 
 
-        print "disable all interrupts"
-        uart.disable_interrupts()
-        print "Testing receive interrupt"
-        uart.enable_read_interrupt()
-        print "\tControl: 0x%08X" % uart.get_control()
+        self.s.Debug ("disable all interrupts")
+        self.d.disable_interrupts()
+        self.s.Debug ("Testing receive interrupt")
+        self.d.enable_read_interrupt()
+        self.s.Debug ("\tControl: 0x%08X" % self.d.get_control())
 
-        print "Read: %s " % uart.read_string(-1)
-        uart.get_status()
+        self.s.Debug ("Read: %s " % self.d.read_string(-1))
+        self.d.get_status()
 
-        print "Waiting 5 second for receive interrupts"
-        if uart.wait_for_interrupts(10) > 0:
-            #if uart.is_interrupt_for_slave():
-            print "Found a read interrupt"
+        self.s.Debug ("Waiting 5 second for receive interrupts")
+        if self.d.wait_for_interrupts(10) > 0:
+            #if self.d.is_interrupt_for_slave():
+            self.s.Debug ("Found a read interrupt")
 
-            print "Read: %s" % uart.read_string(-1)
+            self.s.Debug ("Read: %s" % self.d.read_string(-1))
 
-        print "After waiting for interupt"
+        self.s.Debug ("After waiting for interupt")
 
-        print "\tControl: 0x%08X" % uart.get_control()
+        self.s.Debug ("\tControl: 0x%08X" % self.d.get_control())
 
-        #uart.disable_read_interrupt()
+        #self.d.disable_read_interrupt()
 
-        print "Testing write interrupt"
-        uart.enable_write_interrupt()
-        print "Waiting 1 second for write interrupts"
-        #if uart.wait_for_interrupts(1) > 0:
-        #    if uart.is_interrupt_for_slave():
+        self.s.Debug ("Testing write interrupt")
+        self.d.enable_write_interrupt()
+        self.s.Debug ("Waiting 1 second for write interrupts")
+        #if self.d.wait_for_interrupts(1) > 0:
+        #    if self.d.is_interrupt_for_slave():
         #        print "Found a write interrupt!"
 
-        #uart.disable_write_interrupt()
+        #self.d.disable_write_interrupt()
 
         #print "Testing write"
 
@@ -160,5 +204,3 @@ class Test (unittest.TestCase):
             print "Read overflow"
 
         '''
-        """
-        pass

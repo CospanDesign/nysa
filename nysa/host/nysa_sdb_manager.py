@@ -300,12 +300,54 @@ class NysaSDBManager(object):
         Raises:
             None
         """
+        l = []
+        urns = self.get_all_components_as_urns()
+        driver_abi_class = driver.get_abi_class()
+        driver_abi_major = driver.get_abi_major()
+        driver_abi_minor = driver.get_abi_minor()
+        driver_vendor_id = driver.get_vendor_id()
+        driver_device_id = driver.get_device_id()
+        driver_version = driver.get_version()
+        driver_date = driver.get_date()
 
-        abi_class = driver.get_abi_class()
-        abi_major = driver.get_abi_major()
-        abi_minor = driver.get_abi_minor()
-        #print "class: %s, major: %s minor: %s" % (str(abi_class), str(abi_major), str(abi_minor))
-        return self.find_urn_from_abi(abi_class, abi_major, abi_minor)
+        if isinstance(driver_abi_major, str):
+            driver_abi_major= device_manager.get_device_id_from_name(driver_abi_major)
+        for urn in urns:
+            if self.is_bus(urn):
+                continue
+
+            device_abi_class = self.get_device_abi_class(urn)
+            device_abi_major = self.get_device_abi_major(urn)
+            device_abi_minor = self.get_device_abi_minor(urn)
+            device_vendor_id = self.get_device_vendor_id(urn)
+            device_device_id = self.get_device_product_id(urn)
+            device_version = self.get_device_version(urn)
+            device_date = self.get_device_date(urn)
+
+            if driver_abi_class is not None:
+                if driver_abi_class != device_abi_class:
+                    continue
+            if driver_abi_major is not None:
+                if driver_abi_major != device_abi_major:
+                    continue
+            if driver_abi_minor is not None:
+                if driver_abi_minor != device_abi_minor:
+                    continue
+            if driver_vendor_id is not None:
+                if driver_vendor_id != device_vendor_id:
+                    continue
+            if driver_device_id is not None:
+                if driver_device_id != device_device_id:
+                    continue
+            if driver_version is not None:
+                if driver_version != device_version:
+                    continue
+            if driver_date is not None:
+                if driver_date != device_date:
+                    continue
+
+            l.append(urn)
+        return l
 
     def get_device_index_in_bus(self, urn):
         """
@@ -353,7 +395,7 @@ class NysaSDBManager(object):
         Returns true if the SDB bus is a wishbone bus
 
         Args:
-            urn (None/String): Absolute reference to the bus
+            urn (None/String): Absolute reference to the component
                 leave blank for root
 
         Returns (Boolean):
@@ -379,7 +421,7 @@ class NysaSDBManager(object):
         Returns true if the SDB bus is an axi bus
 
         Args:
-            urn (None/String): Absolute reference to the bus
+            urn (None/String): Absolute reference to the component
                 leave blank for root
 
         Returns (Boolean):
@@ -397,7 +439,7 @@ class NysaSDBManager(object):
         Returns true if the SDB bus is a storage bus
 
         Args:
-            urn (None/String): Absolute reference to the bus
+            urn (None/String): Absolute reference to the component
                 leave blank for root
 
         Returns (Boolean):
@@ -434,7 +476,7 @@ class NysaSDBManager(object):
         Return the address of the device
 
         Args:
-            urn (String): Absolute reference to the bus
+            urn (String): Absolute reference to the component
 
         Returns (Long)
             Base address of the device or interconnect
@@ -453,7 +495,7 @@ class NysaSDBManager(object):
         Return the size of the device
 
         Args:
-            urn (String): Absolute reference to the bus
+            urn (String): Absolute reference to the component
 
         Returns (Integer)
             Size of the device or interconnect
@@ -472,10 +514,10 @@ class NysaSDBManager(object):
         Return the vendor id of the device
 
         Args:
-            urn (String): Absolute reference to the bus
+            urn (String): Absolute reference to the component
 
-        Returns (Integer)
-            Size of the device or interconnect
+        Returns (Long)
+            Vendor ID of the device or interconnect
 
         Raises:
             SDBError: User attempted to get the vendor id of a synthesis record
@@ -492,10 +534,10 @@ class NysaSDBManager(object):
         Return the product id of the device
 
         Args:
-            urn (String): Absolute reference to the bus
+            urn (String): Absolute reference to the component
 
         Returns (Integer)
-            Size of the device or interconnect
+            Product ID of the device or interconnect
 
         Raises:
             SDBError: User attempted to get the product id of a synthesis record
@@ -512,10 +554,10 @@ class NysaSDBManager(object):
         Return the ABI class of the device
 
         Args:
-            urn (String): Absolute reference to the bus
+            urn (String): Absolute reference to the component
 
         Returns (Integer)
-            Size of the device or interconnect
+            ABI Class of the device or interconnect
 
         Raises:
             SDBError: User attempted to get the ABI class of a synthesis record
@@ -534,10 +576,10 @@ class NysaSDBManager(object):
         Return the ABI major number of the device
 
         Args:
-            urn (String): Absolute reference to the bus
+            urn (String): Absolute reference to the component
 
         Returns (Integer)
-            Size of the device or interconnect
+            ABI Major of the device or interconnect
 
         Raises:
             SDBError: User attempted to get the ABI major number of a synthesis record
@@ -557,10 +599,10 @@ class NysaSDBManager(object):
         Return the ABI minor number of the device
 
         Args:
-            urn (String): Absolute reference to the bus
+            urn (String): Absolute reference to the component
 
         Returns (Integer)
-            Size of the device or interconnect
+            ABI Minor ID of the device or interconnect
 
         Raises:
             SDBError: User attempted to get the ABI minor number of a synthesis record
@@ -575,12 +617,62 @@ class NysaSDBManager(object):
             raise SDBError("Interconnects do not have an ABI Minor: %s" % component)
         return component.get_abi_version_minor_as_int()
 
+    def get_device_version(self, urn):
+        """
+        Return the version of the device
+
+        Args:
+            urn (String): Absolute reference to the component
+
+        Returns (Integer)
+            Version of the device or interconnect
+
+        Raises:
+            SDBError: User attempted to get the version of a synthesis record
+            SDBError: User attempted to get the version of a URL record
+        """
+        component = self._get_component_from_urn(urn).get_component()
+        if  component.is_synthesis_record():
+            raise SDBError("Synthesis Record does not have an %s: %s" % ("Version", component))
+
+        if component.is_url_record():
+            raise SDBError("URL Record does not have an %s: %s" % ("Version", component))
+
+        return component.get_version_as_int()
+
+    def get_device_date(self, urn):
+        """
+        Return the Date number of the device
+
+        Args:
+            urn (String): Absolute reference to the component
+
+        Returns (Integer)
+            Date of the device or interconnect
+
+        Raises:
+            SDBError: User attempted to get the Date number of a synthesis record
+            SDBError: User attempted to get the Date number of a URL record
+            SDBError: User attempted to get the Date number of an integration record
+            SDBError: User attempted to get the Date number of an interconnect
+        """
+        component = self._get_component_from_urn(urn).get_component()
+        if  component.is_synthesis_record():
+            raise SDBError("Synthesis Record does not have an %s: %s" % ("Version", component))
+
+        if component.is_url_record():
+            raise SDBError("URL Record does not have an %s: %s" % ("Version", component))
+
+        return component.get_abi_version_minor_as_int()
+
+
+
     def is_bus(self, urn):
         """
         Returns True if the urn is referencing a component that is a bus
 
         Args:
-            urn (String): Absolute reference to the bus
+            urn (String): Absolute reference to the component
 
         Raises:
             SDBError: urn is not valid
