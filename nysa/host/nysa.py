@@ -343,30 +343,6 @@ class Nysa(object):
                register_array[2] << 8  | \
                register_array[3]
 
-    def read_memory(self, address, size):
-        """read_memory
-
-        Reads a byte array of the specified size from the specified address from
-        memory
-
-        Args:
-          address (int): Starting location o memory to read from
-          size (int): total number of 32-bit words to read
-
-        Returns:
-          Nothing
-
-        Raises:
-          NysaCommError: Error in communication
-        """
-        if self.mem_addr is None:
-            self.mem_addr = self.nsm.get_address_of_memory_bus()
-        address += self.mem_addr
-
-        return self.read(address = address,
-                         length = size,
-                         memory_device = True)
-
     def write_register(self, address, value):
         """write_register
 
@@ -492,6 +468,30 @@ class Nysa(object):
 
         address = self.mem_addr + address
         self.write(address, data, memory_device = True)
+
+    def read_memory(self, address, size):
+        """read_memory
+
+        Reads a byte array of the specified size from the specified address from
+        memory
+
+        Args:
+          address (int): Starting location o memory to read from
+          size (int): total number of 32-bit words to read
+
+        Returns:
+          Nothing
+
+        Raises:
+          NysaCommError: Error in communication
+        """
+        if self.mem_addr is None:
+            self.mem_addr = self.nsm.get_address_of_memory_bus()
+        address += self.mem_addr
+
+        return self.read(address = address,
+                         length = size,
+                         memory_device = True)
 
     def ioctl(self, name, arg = None):
         """
