@@ -219,7 +219,7 @@ class Driver(object):
           NysaCommError: Error in communication
         """
         address = long(self.base_addr + address)
-        return self.n.read(address, length, memory_device = False, disable_auto_inc = disable_auto_inc)
+        return self.n.read(address, length, disable_auto_inc = disable_auto_inc)
 
     def read_memory(self, address, size):
         """read_memory
@@ -277,7 +277,7 @@ class Driver(object):
           implementation
         """
         address = long(self.base_addr + address)
-        self.n.write(address, data, memory_device = False, disable_auto_inc = disable_auto_inc)
+        self.n.write(address, data, disable_auto_inc = disable_auto_inc)
 
     def write_memory(self, address, data):
         """write_memory
