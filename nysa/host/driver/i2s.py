@@ -40,7 +40,7 @@ from array import array as Array
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
-from driver import Driver
+import driver
 from driver import DMAWriteController
 
 #Register Constants
@@ -75,21 +75,21 @@ COSPAN_DESIGN_I2S_MODULE = 0x01
 class I2SError(Exception):
     pass
 
-class I2S(Driver):
+class I2S(driver.Driver):
     """
     I2S
     """
 
     @staticmethod
-    def get_abi_class(self):
+    def get_abi_class():
         return 0
 
     @staticmethod
-    def get_abi_major(self):
-        return Driver.get_device_id_from_name("i2s")
+    def get_abi_major():
+        return driver.get_device_id_from_name("i2s")
 
     @staticmethod
-    def get_abi_minor(self):
+    def get_abi_minor():
         return COSPAN_DESIGN_I2S_MODULE
 
     def __init__(self, nysa, urn, debug = False):
@@ -106,6 +106,9 @@ class I2S(Driver):
                                        timeout      = 3,
                                        empty0       = STATUS_MEM_0_EMPTY,
                                        empty1       = STATUS_MEM_1_EMPTY)
+
+    def get_control(self):
+        return self.read_register(CONTROL)
 
     def get_mem_block_size(self):
         return self.wdma.get_size()

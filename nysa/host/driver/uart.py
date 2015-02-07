@@ -38,11 +38,7 @@ import time
 
 from array import array as Array
 
-
-from nysa.host.nysa import Nysa
-from nysa.host.nysa import NysaCommError
-
-from driver import Driver
+import driver
 
 COSPAN_DESIGN_UART_MODULE = 0x01
 
@@ -81,20 +77,20 @@ class UARTError (Exception):
     pass
 
 
-class UART(Driver):
+class UART(driver.Driver):
     """UART
     """
 
     @staticmethod
-    def get_abi_class(self):
+    def get_abi_class():
         return 0
 
     @staticmethod
-    def get_abi_major(self):
-        return Driver.get_device_id_from_name("uart")
+    def get_abi_major():
+        return driver.get_device_id_from_name("uart")
 
     @staticmethod
-    def get_abi_minor(self):
+    def get_abi_minor():
         return COSPAN_DESIGN_UART_MODULE
 
     def __init__(self, nysa, urn, debug = False):
@@ -624,7 +620,6 @@ class UART(Driver):
         control = control & ~(CONTROL_RTS_CTS_FC | CONTROL_DTS_DSR_FC)
         self.set_control(control)
 
-
     def enable_read_interrupt(self):
         """enable_read_interrupt
 
@@ -644,7 +639,6 @@ class UART(Driver):
             print "Disable the read interrupt"
 
         self.clear_register_bit(CONTROL, CONTROL_INT_READ)
-
 
     def enable_write_interrupt(self):
         """enable_write_interrupt
@@ -666,7 +660,6 @@ class UART(Driver):
 
         self.clear_register_bit(CONTROL, CONTROL_INT_WRITE)
 
-
     def disable_interrupts(self):
         """disable_interrupts
 
@@ -679,140 +672,6 @@ class UART(Driver):
         control = control & ~(CONTROL_INT_WRITE | CONTROL_INT_READ)
         self.set_control(control)
         self.get_status()
-
-
-def unit_test(nysa, urn, debug = False):
-    """Unit test for UART
-    """
-    uart = UART(nysa, urn, debug = debug)
-    #uart.reset()
-    uart.set_control(0)
-    print "Testing UART config"
-    baudrate = uart.get_baudrate()
-    print "Initial baudrate = %d" % baudrate
-    print "Setting baudrate to 115200"
-    uart.set_baudrate(115200)
-    '''
-    uart.set_baudrate(57600)
-    if uart.get_baudrate() > (57600 - (57600 * .01)) and uart.get_baudrate() < (57600 + (57600 * .01)) :
-        print "Baudrate is within 1% of target"
-    else:
-        print "Baudrate is not correct!"
-
-    print "Reverting back to initial baudrate"
-    uart.set_baudrate(baudrate)
-
-    print "\tXXX: Cannot test hardware flow control!"
-    '''
-    print "\tControl: 0x%08X" % uart.get_control()
-
-    print "Writing a string"
-    uart.write_string("STEAM ROXORS THE BIG ONE!1!!\r\n")
-
-
-    print "disable all interrupts"
-    uart.disable_interrupts()
-    print "Testing receive interrupt"
-    uart.enable_read_interrupt()
-    print "\tControl: 0x%08X" % uart.get_control()
-
-    print "Read: %s " % uart.read_string(-1)
-    uart.get_status()
-
-    print "Waiting 5 second for receive interrupts"
-    if uart.wait_for_interrupts(10) > 0:
-        #if uart.is_interrupt_for_slave():
-        print "Found a read interrupt"
-
-        print "Read: %s" % uart.read_string(-1)
-
-    print "After waiting for interupt"
-
-    print "\tControl: 0x%08X" % uart.get_control()
-
-    #uart.disable_read_interrupt()
-
-    print "Testing write interrupt"
-    uart.enable_write_interrupt()
-    print "Waiting 1 second for write interrupts"
-    #if uart.wait_for_interrupts(1) > 0:
-    #    if uart.is_interrupt_for_slave():
-    #        print "Found a write interrupt!"
-    
-    #uart.disable_write_interrupt()
-
-    #print "Testing write"
-
-    """
-    print "Writing the maximum amount of data possible"
-    write_max = uart.get_write_available() - 2
-    print "Max: %d" % write_max
-    data_out = Array('B')
-    num = 0
-    try:
-        for i in range (0, write_max):
-            num = (i) % 256
-            if (i / 256) % 2 == 1:
-                data_out.append( 255 - (num))
-            else:
-                data_out.append(num)
-
-
-    except OverflowError as err:
-        print "Overflow Error: %d >= 256" % num
-        sys.exit(1)
-    uart.write_raw(data_out)
-
-    print "Testing read: Type something"
-
-
-    time.sleep(3)
-
-    fail = False
-    fail_count = 0
-    data = uart.read_all_data()
-
-    if len(data_out) != len(data):
-        print "data_in length not equal to data_out length:"
-        print "\totugoing: %d incomming: %d" % (len(data_out), len(data))
-        fail = True
-
-    else:
-        for i in range (0, len(data_out)):
-            if data[i] != data_out[i]:
-                fail = True
-                print "Mismatch at %d: READ DATA %d != WRITE DATA %d" % (i, data[i], data_out[i])
-                fail_count += 1
-
-
-    if len(data) > 0:
-        print "Read some data from the UART"
-        print "data (raw): %s" % str(data)
-        print "data (string): %s" % str(data.tostring())
-
-
-    if not fail:
-        print "UART test passed!"
-    elif (fail_count == 0):
-        print "Data length of data_in and data_out do not match"
-    else:
-        print "Failed: %d mismatches" % fail_count
-
-
-    uart.write_raw(data_out)
-    print "look for the status conditions"
-    print "Status: " + hex(uart.get_status())
-
-    if uart.is_read_overflow():
-        print "Read overflow"
-
-    """
-
-
-
-
-
-
 
 
 

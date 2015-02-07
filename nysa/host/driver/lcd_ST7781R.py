@@ -37,7 +37,7 @@ from array import array as Array
 from nysa.host.nysa import Nysa
 from nysa.host.nysa import NysaCommError
 
-from driver import Driver
+import driver
 from driver import NysaDMAException
 from driver import DMAWriteController
 
@@ -85,7 +85,7 @@ STATUS_MEMORY_1_EMPTY       = 1
 class LCDST7781RError(Exception):
     pass
 
-class LCDST7781R(Driver):
+class LCDST7781R(driver.Driver):
 
     @staticmethod
     def get_abi_class():
@@ -93,7 +93,7 @@ class LCDST7781R(Driver):
 
     @staticmethod
     def get_abi_major():
-        return Driver.get_device_id_from_name("LCD")
+        return driver.get_device_id_from_name("LCD")
 
     @staticmethod
     def get_abi_minor():

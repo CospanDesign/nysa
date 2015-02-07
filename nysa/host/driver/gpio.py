@@ -42,7 +42,7 @@ from array import array as Array
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
-from nysa.host.driver import driver
+import driver
 
 #Sub Module ID
 COSPAN_DESIGN_GPIO_MODULE = 0x01
@@ -74,6 +74,14 @@ class GPIO(driver.Driver):
     @staticmethod
     def get_abi_minor():
         return COSPAN_DESIGN_GPIO_MODULE
+
+    @staticmethod
+    def get_vendor_id():
+        return 0x800000000000C594
+
+    @staticmethod
+    def get_device_id():
+        return 0x00000002
 
     def __init__(self, nysa, urn, debug = False):
         super(GPIO, self).__init__(nysa, urn, debug)

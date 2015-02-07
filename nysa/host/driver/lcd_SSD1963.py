@@ -34,7 +34,7 @@ import random
 
 from array import array as Array
 
-from driver import Driver
+import driver
 from driver import NysaDMAException
 from driver import DMAWriteController
 
@@ -170,7 +170,7 @@ MEM_ADR_GET_PIX_DAT_INT     = 0xF1
 class LCDSSD1963Error(Exception):
     pass
 
-class LCDSSD1963(Driver):
+class LCDSSD1963(driver.Driver):
 
     @staticmethod
     def get_abi_class():

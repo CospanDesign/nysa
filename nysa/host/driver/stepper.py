@@ -42,7 +42,7 @@ from array import array as Array
 from nysa.host.nysa import Nysa
 from nysa.host.nysa import NysaCommError
 
-from driver import Driver
+import driver
 
 COSPAN_DESIGN_STEPPER_MODULE = 0x01
 
@@ -98,20 +98,20 @@ class StepperError(Exception):
     """
     pass
 
-class Stepper(Driver):
+class Stepper(driver.Driver):
     """
     Stepper Motor Controller
     """
     @staticmethod
-    def get_abi_class(self):
+    def get_abi_class():
         return 0
 
     @staticmethod
-    def get_abi_major(self):
-        return Driver.get_device_id_from_name("stepper")
+    def get_abi_major():
+        return driver.get_device_id_from_name("stepper")
 
     @staticmethod
-    def get_abi_minor(self):
+    def get_abi_minor():
         return COSPAN_DESIGN_STEPPER_MODULE
 
     @staticmethod

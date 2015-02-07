@@ -42,7 +42,7 @@ from array import array as Array
 from nysa.host.nysa import Nysa
 from nysa.host.nysa import NysaCommError
 
-from driver import Driver
+import driver
 from driver import NysaDMAException
 from driver import DMAReadController
 
@@ -92,7 +92,7 @@ I2C_IMG_COUNTS  =   0x1A
 class SFCameraError(Exception):
     pass
 
-class SFCamera(Driver):
+class SFCamera(driver.Driver):
 
     @staticmethod
     def get_abi_class():
@@ -100,7 +100,7 @@ class SFCamera(Driver):
 
     @staticmethod
     def get_abi_major():
-        return Driver.get_device_id_from_name("camera")
+        return driver.get_device_id_from_name("camera")
 
     @staticmethod
     def get_abi_minor():

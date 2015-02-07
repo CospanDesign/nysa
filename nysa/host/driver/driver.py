@@ -56,6 +56,8 @@ class Driver(object):
         Returns the identification number of the ABI Class that this device
         uses
 
+        If not used return None or let the base class return None for you
+
         Args:
             Nothing
 
@@ -64,12 +66,14 @@ class Driver(object):
             version, this function should be overriden by subclasses if
             a newer version of the abi class is used
         """
-        raise AssertionError("get_abi_major() function is not implemented")
+        return None
 
     @staticmethod
     def get_abi_major():
         """
         Returns the identification number of the device this module controls
+
+        If not used return None or let the base class return None for you
 
         Args:
             Nothing
@@ -81,12 +85,14 @@ class Driver(object):
         Raises:
             SDBError: Device ID Not found in online sdb repositor
         """
-        raise AssertionError("get_abi_major() function is not implemented")
+        return None
 
     @staticmethod
     def get_abi_minor():
         """Returns the identification of the specific implementation of this
         controller
+
+        If not used return None or let the base class return None for you
 
         Example: Cospan Design wrote the HDL GPIO core with sub_id = 0x01
             this module was designed to interface and exploit features that
@@ -106,7 +112,75 @@ class Driver(object):
         Raises:
             Nothing
         """
-        raise AssertionError("get_abi_major() function is not implemented")
+        return None
+
+    @staticmethod
+    def get_vendor_id():
+        """Returns the vendor identification of the device
+
+        If not used return None or let the base class return None for you
+
+        Args:
+            Nothing
+
+        Returns (Long):
+            Vendor ID of the HDL Module
+
+        Raises:
+            Nothing
+        """
+        return None
+
+    @staticmethod
+    def get_device_id():
+        """Returns the device identification of the device
+
+        If not used return None or let the base class return None for you
+
+        Args:
+            Nothing
+
+        Returns (Integer):
+            Device ID of the HDL Module
+
+        Raises:
+            Nothing
+        """
+        return None
+
+    @staticmethod
+    def get_version():
+        """Returns the version of the device
+
+        If not used return None or let the base class return None for you
+
+        Args:
+            Nothing
+
+        Returns (Integer):
+            Version ID of the HDL Module
+
+        Raises:
+            Nothing
+        """
+        return None
+
+    @staticmethod
+    def get_date():
+        """Returns the date of the device
+
+        If not used return None or let the base class return None for you
+
+        Args:
+            Nothing
+
+        Returns (Integer):
+            Date ID of the HDL Module
+
+        Raises:
+            Nothing
+        """
+        return None
 
     def register_interrupt_callback(self, callback = None):
         """register_interrupt_callback

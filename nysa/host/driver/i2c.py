@@ -39,7 +39,7 @@ import time
 from array import array as Array
 
 
-from driver import Driver
+import driver
 
 COSPAN_DESIGN_I2C_MODULE = 0x01
 
@@ -83,20 +83,20 @@ class I2CError (Exception):
     pass
 
 
-class I2C(Driver):
+class I2C(driver.Driver):
     """I2C
     """
 
     @staticmethod
-    def get_abi_class(self):
+    def get_abi_class():
         return 0
 
     @staticmethod
-    def get_abi_major(self):
-        return Driver.get_device_id_from_name("i2s")
+    def get_abi_major():
+        return driver.get_device_id_from_name("i2s")
 
     @staticmethod
-    def get_abi_minor(self):
+    def get_abi_minor():
         return COSPAN_DESIGN_I2C_MODULE
 
     def __init__(self, nysa, urn, debug = False):
