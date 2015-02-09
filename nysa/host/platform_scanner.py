@@ -51,6 +51,18 @@ class PlatformScanner(object):
         return board_path_dict
 
     def get_platforms(self):
+        """
+        Return a dictionary of boards with the unique name as the KEY
+
+        Args:
+            Nothing
+
+        Returns:
+            (Dictionary of Platforms)
+
+        Raises:
+            Nothing
+        """
         board_path_dict = self.get_board_path_dict()
 
         #platform_paths_list = []
@@ -85,6 +97,48 @@ class PlatformScanner(object):
 
         return plat_class_dict
 
+def get_platforms_with_device(driver, status = None):
+    """
+    From a driver return a list of platforms that have a reference to a
+    device that can be controller through this driver
+
+    Args:
+        driver (Driver Object): a driver to find a reference to
+
+    Return:
+        (List of platforms that support the driver)
+
+    Raises:
+        Nothing
+    """
+    status.Debug("Type of driver: %s" % str(driver))
+    platforms = []
+    pscanner = PlatformScanner()
+    platform_dict = pscanner.get_platforms()
+    platform_names = platform_dict.keys()
+
+    if "sim" in platform_names:
+        #If sim is in the platform names move it to the back
+        platform_names.remove("sim")
+        platform_names.append("sim")
+
+    for platform_name in platform_names:
+        status.Debug("Platform: %s" % str(platform_name))
+        #Get a reference to a platform object (like sim, or dionysus)
+        platform_instance = platform_dict[platform_name](status)
+
+        #Scan for instances of that particular platform
+        instances_dict = platform_instance.scan()
+
+        for name in instances_dict:
+            n = instances_dict[name]
+            if n is not None:
+                status.Debug("Found a Nysa Instance: %s" % name)
+                n.read_sdb()
+                if n.is_device_in_platform(driver):
+                    platforms.append(n)
+
+    return platforms
 
 def find_board(name, serial = None, status = None):
     s = status
