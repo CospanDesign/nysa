@@ -106,7 +106,9 @@ class SFCamera(driver.Driver):
     def get_abi_minor():
         return SPARKFUN_640_480_CAMERA_MODULE
 
-    def __init__(self, nysa, urn, i2c_id, debug = False):
+    def __init__(self, nysa, urn, debug = False):
+        raise AssertionError("Need to find reference to I2C ID")
+        i2c_urn = ""
         super(SFCamera, self).__init__(nysa, urn, debug)
         self.i2c = i2c.I2C(nysa, dev_id = i2c_id, debug = debug)
         self.i2c.enable_i2c(True)
