@@ -178,7 +178,7 @@ class LCDSSD1963(driver.Driver):
 
     @staticmethod
     def get_abi_major():
-        return Driver.get_device_id_from_name("LCD")
+        return driver.get_device_id_from_name("LCD")
 
     @staticmethod
     def get_abi_minor():
