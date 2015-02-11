@@ -665,8 +665,6 @@ class NysaSDBManager(object):
 
         return component.get_abi_version_minor_as_int()
 
-
-
     def is_bus(self, urn):
         """
         Returns True if the urn is referencing a component that is a bus
@@ -783,6 +781,37 @@ class NysaSDBManager(object):
             l.append(urn)
         return l
 
+    def get_integration_references(self, urn):
+        """
+        Given a URN return a list of URNs that the integration record is
+        pointing to
+ 
+        Args:
+            urn (String): Universal Reference Name pointing to a particular
+            device
+ 
+        Return (List of URNs):
+            An empty list if there is no reference to the URN
+            
+        Raises:
+            Nothing
+        """
+        urn_references = []
+        component = self._get_component_from_urn(urn)
+        parent = component.get_parent()
+        from_urn = None
+        to_urns = []
+
+        for c in parent:
+            if c.get_component().is_integration_record():
+                from_urn, to_urns = self.parse_integration_data(c)
+                #print "urn: %s" % urn
+                #print "From URN: %s" % from_urn
+                if from_urn == urn:
+                    #print "Found: %s" % from_urn
+                    return to_urns
+        return []
+
     #Helpful Fuctions
     def is_memory_device(self, urn):
         memory_major = device_manager.get_device_id_from_name("memory")
@@ -798,6 +827,53 @@ class NysaSDBManager(object):
             size += self.get_device_size(urn)
         return size
 
+    def parse_integration_data(self, integration):
+        """
+        Parses an integration record into a tuple with two parts:
+            1: A URN referencing the from component
+            2: A list of URNs referencing the destination component
+
+        Args:
+            A reference to a SOM Component
+
+        Returns (Tuple):
+            (From URN, List of To URNs)
+
+        Raises:
+            Nothing
+        """
+        component = integration.get_component()
+        #Get the actual data from the integration record
+        data = component.get_name().strip()
+        bus = integration.get_parent()
+
+        #got a numeric referece to the from index component
+        #print "Data: %s" % data
+        #print "Data: %s" % str(data.partition(":")[0])
+        from_index = int(data.partition(":")[0])
+        #from_component = self.som.get_component(bus, from_index)
+        from_component = bus.get_child_from_index(from_index)
+
+        #Got a URN reference of the from index component
+        from_urn = self._get_urn_from_component(from_component)
+
+        #Get a list of strings for the to indexes
+        to_sindexes = data.partition(":")[2]
+        to_sindexes_list = to_sindexes.split(",")
+        #change all reference to the to component indexes to a list of strings
+        to_indexes = []
+        for sindex in to_sindexes_list:
+            to_indexes.append(int(sindex))
+
+        #Get a list of to indexes in the form of URNs
+        to_urns = []
+        for index in to_indexes:
+            to_component = bus.get_child_from_index(index)
+            #print "to urn: %d" % index
+            to_urns.append(self._get_urn_from_component(to_component))
+
+        return (from_urn, to_urns)
+
     def pretty_print_sdb(self):
         self.s.Verbose("pretty print SDB")
         self.s.PrintLine("SDB ", color = "blue")
@@ -811,6 +887,9 @@ class NysaSDBManager(object):
             self.s.Print("\t")
         s = "Bus: {0:<10} @ 0x{1:0=16X} : Size: 0x{2:0=8X}".format(bus.get_name(), c.get_start_address_as_int(), c.get_size_as_int())
         self.s.PrintLine(s, "purple")
+        for t in range(depth):
+            self.s.Print("\t")
+        self.s.PrintLine("Number of components: %d" % bus.get_child_count(), "purple")
 
         for i in range(bus.get_child_count()):
             c = bus.get_child_from_index(i)
@@ -844,11 +923,10 @@ class NysaSDBManager(object):
                 self.s.PrintLine(s, "green")
                 self.s.PrintLine("")
 
-
 def _parse_bus(n, som, bus, addr, base_addr, status):
     #The first element at this address is the interconnect
-    status.Verbose("Bus @ 0x%08X" % addr)
     entity_rom = n.read(addr, SDB_ROM_RECORD_LENGTH / 4)
+    status.Verbose("Bus @ 0x%08X: Name: %s" % (addr, bus.get_name()))
     #print_sdb_rom(sdbc.convert_rom_to_32bit_buffer(entity_rom))
     bus_entity = srp.parse_rom_element(entity_rom)
     if not bus_entity.is_interconnect():
@@ -864,8 +942,8 @@ def _parse_bus(n, som, bus, addr, base_addr, status):
     for i in range(1, (num_devices + 1)):
         I = (i * (SDB_ROM_RECORD_LENGTH / 4)) + addr
         entity_rom = n.read(I, SDB_ROM_RECORD_LENGTH / 4)
-        #print_sdb_rom(sdbc.convert_rom_to_32bit_buffer(entity_rom))
         entity = srp.parse_rom_element(entity_rom)
+        #print_sdb_rom(sdbc.convert_rom_to_32bit_buffer(entity_rom))
         end = long(entity.get_end_address_as_int())
         start = long(entity.get_start_address_as_int())
         entity_addr_start.append(start)
@@ -873,6 +951,7 @@ def _parse_bus(n, som, bus, addr, base_addr, status):
 
         if entity.is_bridge():
             #print "Found bridge"
+            status.Verbose("Found Bridge:")
             sub_bus = som.insert_bus(root = bus,
                                      name = entity.get_name())
             sub_bus_addr = entity.get_bridge_address_as_int() * 2 + base_addr

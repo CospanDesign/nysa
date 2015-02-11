@@ -40,6 +40,26 @@ class Test (unittest.TestCase):
         self.assertEqual(rom_in, rom_out)
     '''
 
+    def test_full_dionysus_read(self):
+        from nysa.host.platform_scanner import PlatformScanner
+        pscanner = PlatformScanner()
+        platform_dict = pscanner.get_platforms()
+        platform_names = platform_dict.keys()
+        if "dionysus" not in platform_names:
+            return
+
+        s = Status()
+        platform_instance = platform_dict["dionysus"](s)
+        platforms = platform_instance.scan()
+        if len(platforms) == 0:
+            return
+        dionysus = platforms[platforms.keys()[0]]
+        #print "Found Dionysus"
+        s.set_level("fatal")
+        s.Verbose("Read SDB")
+        dionysus.read_sdb()
+        
+
     def test_full_bus(self):
         sm = som.SOM()
         sm.initialize_root()

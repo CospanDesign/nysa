@@ -164,7 +164,7 @@ class Test (unittest.TestCase):
         print "count: %d" % count
         #print_sdb(rom)
 
-       
+
 def write_to_file(rom, filename):
     rom = sdbc.convert_rom_to_32bit_buffer(rom)
     f = open(filename, 'w')

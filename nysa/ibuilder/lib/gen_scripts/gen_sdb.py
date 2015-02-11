@@ -27,7 +27,7 @@ Changes:
 12/13/2011
     -Changed the response from 25 characters to 32
 12/02/2011
-    -Changed the D R T size from 4 to 8
+    -Changed the DRT size from 4 to 8
 07/17/2013
     -Added license
 """
@@ -106,6 +106,9 @@ def calculate_sdb_size(tags):
     #Add all the memory slaves
     count += len(tags["MEMORY"])
     #Empty Buffer at the end
+
+    #XXX: Need to add all integration values into this
+
     count += 1
     count = (512 / 32) * count
     return count
@@ -114,8 +117,37 @@ def calculate_number_of_devices(tags):
     #Add one for the SDB
     count = 1
     count += len(tags["SLAVES"])
+    for slave in tags["SLAVES"]:
+        if is_integration_required(tags["SLAVES"][slave]):
+            count += 1
     count += len(tags["MEMORY"])
     return count
+
+def is_integration_required(slave_dict):
+    if "integration" in slave_dict.keys():
+        return True
+    return False
+
+def generate_integration_record(slave_tags, slave):
+    SDB_OFFSET = 1
+    integration_list = slave_tags[slave]["integration"]
+    slave_list = slave_tags.keys()
+    #print "slave list: %s" % str(slave_list)
+    slave_pos = slave_list.index(slave) + SDB_OFFSET 
+    integration_buffer = "%d:" % slave_pos
+
+    #Create an integration buffer
+    for s in integration_list:
+        #print "\tslave: %s" % s
+        pos = int(slave_list.index(s)) + SDB_OFFSET
+        #print "\t\tPosition: %d" % pos
+        integration_buffer += str(pos)
+        if integration_list.index(s) != len(integration_list) - 1:
+            integration_buffer += ","
+    
+    #print "Generated Integration Record for %s: %s" % (slave, integration_buffer)
+    c = sdbc.create_integration_record(information = integration_buffer)
+    return c
 
 class GenSDB(Gen):
     """Generate the SDB ROM"""
@@ -135,6 +167,11 @@ class GenSDB(Gen):
         return buf
 
     def gen_rom(self, tags = {}, buf = "", user_paths = [], debug = False):
+        sm = self.gen_som(tags, buf, user_paths, debug)
+        rom = srg.generate_rom_image(sm)
+        return rom
+
+    def gen_som(self, tags = {}, buf = "", user_paths = [], debug = False):
         tags = copy.deepcopy(tags)
         self.rom_element_count = 0
         if "MEMORY" not in tags:
@@ -170,7 +207,6 @@ class GenSDB(Gen):
         sdb_rom = sdbc.create_device_record(name = "SDB",
                                             version_major = version_major)
 
-
         #Add two for bridge and one extra for empty
         self.rom_element_count += 3
 
@@ -181,6 +217,12 @@ class GenSDB(Gen):
         #Add one per peripheral
         for i in range (0, len(tags["SLAVES"])):
             key = tags["SLAVES"].keys()[i]
+
+            if is_integration_required(tags["SLAVES"][key]):
+                ir = generate_integration_record(tags["SLAVES"], key)
+                #print "Inserting Integration record for: %s" % key
+                sm.insert_component(peripheral, ir)
+
             filename = tags["SLAVES"][key]["filename"]
             absfilename = utils.find_rtl_file_location(filename, self.user_paths)
             f = open(absfilename, 'r')
@@ -193,10 +235,8 @@ class GenSDB(Gen):
             sm.insert_component(peripheral, per)
             self.rom_element_count += 1
 
-
         #Add one for empty
         self.rom_element_count += 1
-
 
         #Memory Bus
         #Add one for interconnect
@@ -229,8 +269,7 @@ class GenSDB(Gen):
         #Generate the ROM image
         sm.set_child_spacing(root,       0x0100000000)
         sm.set_child_spacing(peripheral, 0x0001000000)
-        rom = srg.generate_rom_image(sm)
-        return rom
+        return sm
 
     def gen_name(self):
         print "generate a ROM"

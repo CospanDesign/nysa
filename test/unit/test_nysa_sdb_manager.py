@@ -227,3 +227,22 @@ class Test (unittest.TestCase):
         addr = self.nsm.get_address_of_memory_bus()
         self.assertEqual(mem_addr, addr)
 
+
+    def test_get_integration_references(self):
+        peripheral = self.nsm._get_component_from_urn("/top/peripheral")
+        from_urn = "/top/peripheral/gpio1"
+            
+        from_pos = self.nsm.get_device_index_in_bus(from_urn)
+        to_pos = self.nsm.get_device_index_in_bus("/top/peripheral/uart1")
+
+        data = "from_pos:to_pos"
+        data = "%d:%d,%d" % (from_pos, to_pos, to_pos)
+        c = create_integration_record(data)
+        som = self.nsm.som
+        som.insert_component(peripheral, c)
+
+        to_urns = self.nsm.get_integration_references(from_urn)
+        #print "To URNs: %s" % str(to_urns)
+        self.assertEqual(to_urns[0], "/top/peripheral/uart1")
+        self.assertEqual(to_urns[1], "/top/peripheral/uart1")
+

@@ -233,7 +233,7 @@ class ProjectGenerator(object):
 
 
         #extrapolate the bus template
-#XXX: Need to check all the constraint files
+        #XXX: Need to check all the constraint files
         clock_rate = ""
         for c in cpaths:
             clock_rate = utils.read_clock_rate(c)
