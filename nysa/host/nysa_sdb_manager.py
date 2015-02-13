@@ -796,6 +796,7 @@ class NysaSDBManager(object):
         Raises:
             Nothing
         """
+        self.s.Debug("From URN: %s" % urn)
         urn_references = []
         component = self._get_component_from_urn(urn)
         parent = component.get_parent()

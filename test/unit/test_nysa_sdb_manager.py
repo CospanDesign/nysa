@@ -227,7 +227,6 @@ class Test (unittest.TestCase):
         addr = self.nsm.get_address_of_memory_bus()
         self.assertEqual(mem_addr, addr)
 
-
     def test_get_integration_references(self):
         peripheral = self.nsm._get_component_from_urn("/top/peripheral")
         from_urn = "/top/peripheral/gpio1"
