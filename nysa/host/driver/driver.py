@@ -486,6 +486,23 @@ class Driver(object):
 
         print ""
 
+    def get_integration_references(self, urn):
+        """
+        Given a URN return a list of URNs that the integration record is
+        pointing to
+ 
+        Args:
+            urn (String): Universal Reference Name pointing to a particular
+            device
+ 
+        Return (List of URNs):
+            An empty list if there is no reference to the URN
+            
+        Raises:
+            Nothing
+        """
+        return self.n.get_integration_references(urn)
+
 class NysaDMAException(Exception):
     '''
     DMA has incorrectly been setup

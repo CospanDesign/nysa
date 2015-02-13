@@ -928,20 +928,22 @@ class Nysa(object):
         #return self.sdb_manager.get_board_name(int(self.sdb_lines[3]))
         raise AssertionError("This function should be overridden")
 
-    def get_image_id(self):
+    def get_integration_references(self, urn):
         """
-        Returns the image id
-
+        Given a URN return a list of URNs that the integration record is
+        pointing to
+ 
         Args:
-            Nothing
-
-        Returns:
-            (int): Image ID of the FPGA image
-
+            urn (String): Universal Reference Name pointing to a particular
+            device
+ 
+        Return (List of URNs):
+            An empty list if there is no reference to the URN
+            
         Raises:
-            SDBError if SDB is not defined
+            Nothing
         """
-        return self.sdb_manager.get_image_id()
+        return self.nsm.get_integration_references(urn)
 
     #Programming
     def upload(self, filepath):
