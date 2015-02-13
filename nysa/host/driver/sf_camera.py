@@ -107,10 +107,9 @@ class SFCamera(driver.Driver):
         return SPARKFUN_640_480_CAMERA_MODULE
 
     def __init__(self, nysa, urn, debug = False):
-        raise AssertionError("Need to find reference to I2C ID")
-        i2c_urn = ""
         super(SFCamera, self).__init__(nysa, urn, debug)
-        self.i2c = i2c.I2C(nysa, dev_id = i2c_id, debug = debug)
+        i2c_urn = self.get_integration_references(self.urn)[0]
+        self.i2c = i2c.I2C(nysa, i2c_urn, debug = debug)
         self.i2c.enable_i2c(True)
         self.i2c.enable_interrupt(True)
         self.i2c.get_status()
@@ -124,7 +123,6 @@ class SFCamera(driver.Driver):
         size = row_count * pixel_count
         self.width = pixel_count / 2
         self.height = row_count
-
 
         self.status = 0
         try:
@@ -146,9 +144,7 @@ class SFCamera(driver.Driver):
             raise SFCameraError("Error initializing the DMA Reader: %s" % str(ex))
 
     def __del__(self):
-        print "Shutdown"
         self.i2c.enable_i2c(False)
-        #self.set_control(0)
 
     def get_width(self):
         return self.width
