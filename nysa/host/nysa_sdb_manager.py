@@ -27,6 +27,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
+from array import array as Array
 from common.status import Status
 
 from cbuilder.sdb import SDBError
@@ -375,20 +376,22 @@ class NysaSDBManager(object):
                 use to extrapolate the SDB from the device
 
         Returns:
-            Nothing
+            Array of bytes consisting of SDB
 
         Raises:
             NysaCommError: Errors associated with communication
         """
+        sdb_data = Array('B')
         self.s.Important("Parsing Top Interconnect Buffer")
         #Because Nysa works with many different platforms we need to get the
         #platform specific location of where the SDB actually is
-        #XXX: Create this function in nysa
         sdb_base_address = n.get_sdb_base_address()
         self.som = som.SOM()
         self.som.initialize_root()
         bus = self.som.get_root()
-        _parse_bus(n, self.som, bus, sdb_base_address, sdb_base_address, self.s)
+        sdb_data.extend(_parse_bus(n, self.som, bus, sdb_base_address, sdb_base_address, self.s))
+        sdb_data = n.read(sdb_base_address, len(sdb_data) / 4)
+        return sdb_data
 
     def is_wishbone_bus(self, urn = None):
         """
@@ -926,7 +929,9 @@ class NysaSDBManager(object):
 
 def _parse_bus(n, som, bus, addr, base_addr, status):
     #The first element at this address is the interconnect
+    sdb_data = Array('B')
     entity_rom = n.read(addr, SDB_ROM_RECORD_LENGTH / 4)
+    sdb_data.extend(entity_rom)
     status.Verbose("Bus @ 0x%08X: Name: %s" % (addr, bus.get_name()))
     #print_sdb_rom(sdbc.convert_rom_to_32bit_buffer(entity_rom))
     bus_entity = srp.parse_rom_element(entity_rom)
@@ -940,9 +945,10 @@ def _parse_bus(n, som, bus, addr, base_addr, status):
     entity_size = []
     entity_addr_start = []
 
-    for i in range(1, (num_devices + 1)):
+    for i in range(1, (num_devices + 2)):
         I = (i * (SDB_ROM_RECORD_LENGTH / 4)) + addr
         entity_rom = n.read(I, SDB_ROM_RECORD_LENGTH / 4)
+        sdb_data.extend(entity_rom)
         entity = srp.parse_rom_element(entity_rom)
         #print_sdb_rom(sdbc.convert_rom_to_32bit_buffer(entity_rom))
         end = long(entity.get_end_address_as_int())
@@ -956,8 +962,10 @@ def _parse_bus(n, som, bus, addr, base_addr, status):
             sub_bus = som.insert_bus(root = bus,
                                      name = entity.get_name())
             sub_bus_addr = entity.get_bridge_address_as_int() * 2 + base_addr
-            _parse_bus(n, som, sub_bus, sub_bus_addr, base_addr, status)
+            sdb_data.extend(_parse_bus(n, som, sub_bus, sub_bus_addr, base_addr, status))
         else:
+            if entity.is_empty_record():
+                continue
             som.insert_component(root = bus, component = entity)
             status.Verbose("Found device %s Type (0x%02X): %s" % (
                                             entity.get_name(),
@@ -988,6 +996,7 @@ def _parse_bus(n, som, bus, addr, base_addr, status):
         prev_start = start_addr
 
     som.set_child_spacing(bus, spacing)
+    return sdb_data
 
 def print_sdb_rom(rom):
     #rom = sdbc.convert_rom_to_32bit_buffer(rom)
