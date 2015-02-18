@@ -456,6 +456,11 @@ class SDBComponent (object):
             return True
         return False
 
+    def is_empty_record(self):
+        if self.d["SDB_RECORD_TYPE"] == SDB_RECORD_TYPE_EMPTY:
+            return True
+        return False
+
     def get_module_record_type(self):
         return self.d["SDB_RECORD_TYPE"]
 
