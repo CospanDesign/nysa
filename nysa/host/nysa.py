@@ -558,12 +558,12 @@ class Nysa(object):
             Nothing
 
         Returns:
-            Nothing
+            Array of bytes of the SDB
 
         Raises:
             NysaCommError: When a failure of communication is detected
         """
-        self.nsm.read_sdb(self)
+        return self.nsm.read_sdb(self)
 
     def pretty_print_sdb(self):
         """pretty_print_sdb
