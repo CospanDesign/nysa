@@ -38,7 +38,8 @@ class Driver(object):
                  debug):
         self.n = n
         self.urn = urn
-        if debug: print "Dev ID: %s" % self.urn
+        #if debug: print "Dev ID: %s" % self.urn
+        #print "Dev ID: %s" % self.urn
         self.debug = debug
         self.interrupt_detected = False
         #print "interrupts: 0x%08X" % self.n.interrupts
@@ -502,6 +503,7 @@ class Driver(object):
             Nothing
         """
         return self.n.get_integration_references(urn)
+
 
 class NysaDMAException(Exception):
     '''
