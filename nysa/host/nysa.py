@@ -532,7 +532,7 @@ class Nysa(object):
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
     #SDB Related
-    def get_sdb_base_address():
+    def get_sdb_base_address(self):
         """
         Return the base address of the SDB (This is platform specific)
 
