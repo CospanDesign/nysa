@@ -53,7 +53,7 @@ def get_device_list():
     length = 0
     try:
         f = open(LOCAL_DEVICE_LIST, "r")
-        sdb_tags = json.load(f)
+        sdb_tags = json.load(f, object_pairs_hook = odict)
     except TypeError as err:
         print "JSON Error: %s" % str(err)
         raise SDBError("DRT Error: %s", str(err))
