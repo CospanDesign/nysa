@@ -112,7 +112,37 @@ def generate_slave(args, status):
     #XXX: Not really useful now but in the future when we use AXI this will come in handy
     wishbone_bus = True
     output_path = os.path.expanduser(args.output[0])
-    name = args.name[0]
+
+    slave_dict = {}
+    slave_dict["NAME"] = args.name[0]
+    slave_dict["ABI_MAJOR"] = args.major[0]
+    slave_dict["ABI_MINOR"] = args.minor[0]
+
+    generate_slave_from_dict(slave_dict, output_path, status)
+
+def generate_slave_from_dict(slave_dict, output_path, status):
+    if "VENDOR_ID" not in slave_dict:
+        slave_dict["VENDOR_ID"] = "0x800000000000C594"
+    if "DEVICE_ID" not in slave_dict:
+        slave_dict["DEVICE_ID"] = "0x800000000000C594"
+    if "ABI_CLASS" not in slave_dict:
+        slave_dict["ABI_CLASS"] = "0"
+    if "CORE_VERSION" not in slave_dict:
+        slave_dict["CORE_VERSION"] = "00.000.001"
+    if "URL" not in slave_dict:
+        slave_dict["URL"] = "http://www.example.com"
+    if "DATE" not in slave_dict:
+        slave_dict["DATE"] = time.strftime("%Y/%m/%d")
+    if "EXECUTABLE" not in slave_dict:
+        slave_dict["EXECUTABLE"] = "True"
+    if "WRITEABLE" not in slave_dict:
+        slave_dict["WRITEABLE"] = "True"
+    if "READABLE" not in slave_dict:
+        slave_dict["READABLE"] = "True"
+    if "SIZE" not in slave_dict:
+        slave_dict["SIZE"] = "3"
+
+    name = slave_dict["NAME"]
 
     #Get a reference to the template directory
     template_path = os.path.join(os.path.dirname(__file__),
@@ -134,19 +164,19 @@ def generate_slave(args, status):
 
     #Substitute all values we got from the user
     slave_buffer = template.safe_substitute(
-        SDB_VENDOR_ID           = "0x800000000000C594",
-        SDB_DEVICE_ID           = "0x00000000",
-        SDB_CORE_VERSION        = "00.000.001",
-        SDB_NAME                = name,
-        SDB_ABI_CLASS           = "0",
-        SDB_ABI_VERSION_MAJOR   = args.major[0],
-        SDB_ABI_VERSION_MINOR   = args.minor[0],
-        SDB_MODULE_URL          = "http://www.example.com",
-        SDB_DATE                = time.strftime("%Y/%m/%d"),
-        SDB_EXECUTABLE          = "True",
-        SDB_WRITEABLE           = "True",
-        SDB_READABLE            = "True",
-        SDB_SIZE                = "3"
+        SDB_VENDOR_ID           = slave_dict["VENDOR_ID"],
+        SDB_DEVICE_ID           = slave_dict["DEVICE_ID"],
+        SDB_CORE_VERSION        = slave_dict["CORE_VERSION"],
+        SDB_NAME                = slave_dict["NAME"],
+        SDB_ABI_CLASS           = slave_dict["ABI_CLASS"],
+        SDB_ABI_VERSION_MAJOR   = slave_dict["ABI_MAJOR"],
+        SDB_ABI_VERSION_MINOR   = slave_dict["ABI_MINOR"],
+        SDB_MODULE_URL          = slave_dict["URL"],
+        SDB_DATE                = slave_dict["DATE"],
+        SDB_EXECUTABLE          = slave_dict["EXECUTABLE"],
+        SDB_WRITEABLE           = slave_dict["WRITEABLE"],
+        SDB_READABLE            = slave_dict["READABLE"],
+        SDB_SIZE                = slave_dict["SIZE"]
     )
     #print "slave buffer:"
     #print slave_buffer
