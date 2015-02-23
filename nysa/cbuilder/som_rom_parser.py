@@ -247,8 +247,8 @@ def _parse_rom_interconnect_element(entity, rom, addr, debug = False):
 def _parse_rom_component_element(entity, rom, addr, debug = False):
     entity.d["SDB_START_ADDRESS"] =   hex(_convert_rom_to_int(rom[addr +  8: addr + 16]))
     entity.d["SDB_LAST_ADDRESS"] =    hex(_convert_rom_to_int(rom[addr + 16: addr + 24]))
-    start_address = int(entity.d["SDB_START_ADDRESS"], 16)
-    end_address = int(entity.d["SDB_LAST_ADDRESS"], 16)
+    start_address = long(entity.d["SDB_START_ADDRESS"], 16)
+    end_address = long(entity.d["SDB_LAST_ADDRESS"], 16)
     entity.set_size(end_address - start_address)
     _parse_rom_product_element(entity, rom, addr, debug)
 
