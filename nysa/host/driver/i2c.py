@@ -93,7 +93,7 @@ class I2C(driver.Driver):
 
     @staticmethod
     def get_abi_major():
-        return driver.get_device_id_from_name("i2s")
+        return driver.get_device_id_from_name("i2c")
 
     @staticmethod
     def get_abi_minor():
