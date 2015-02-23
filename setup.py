@@ -4,7 +4,6 @@ import os
 import glob
 
 from setuptools import setup, find_packages
-from distutils.command.install import install as DistutilsInstall
 
 long_desc=open("README.md").read(),
 
