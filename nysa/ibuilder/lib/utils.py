@@ -295,6 +295,7 @@ def get_board_config (board_name, user_paths = [], debug = False):
     """
     sm = site_manager.SiteManager()
     board_location = None
+    bn = str(board_name).lower()
     try:
         board_location = get_board_directory(board_name)
     except site_manager.SiteManagerError as ex:
@@ -304,7 +305,7 @@ def get_board_config (board_name, user_paths = [], debug = False):
     if board_location is not None:
         if debug: print "board location: %s" % board_location
         if debug: print "board_name: %s" % board_name
-        f = open(os.path.join(board_location, board_name, "board", "config.json"), "r")
+        f = open(os.path.join(board_location, bn, "board", "config.json"), "r")
         config_dict = json.load(f)
         f.close()
         return config_dict
@@ -323,7 +324,7 @@ def get_board_config (board_name, user_paths = [], debug = False):
             if debug: print "Dirs: " + str(dirs)
             if board_name in dirs:
                 if debug: print "Found the directory"
-                filename = os.path.join(root, board_name, "board", "config.json")
+                filename = os.path.join(root, bn, "board", "config.json")
                 if debug: print "filename: %s" % filename
                 break
 
