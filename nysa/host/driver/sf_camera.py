@@ -108,7 +108,9 @@ class SFCamera(driver.Driver):
 
     def __init__(self, nysa, urn, debug = False):
         super(SFCamera, self).__init__(nysa, urn, debug)
+        #print "Camera URN : %s" % urn
         i2c_urn = self.get_integration_references(self.urn)[0]
+        #print "i2c: URN: %s" % i2c_urn
         self.i2c = i2c.I2C(nysa, i2c_urn, debug = debug)
         self.i2c.enable_i2c(True)
         self.i2c.enable_interrupt(True)
