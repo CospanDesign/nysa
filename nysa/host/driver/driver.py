@@ -504,6 +504,17 @@ class Driver(object):
         """
         return self.n.get_integration_references(urn)
 
+    def get_size(self):
+        """
+        Returns the size of this core in 32-bit words
+        """
+        return self.n.get_device_size(self.urn)
+
+    def get_name(self):
+        """
+        Returns the name of the device
+        """
+        return self.n.get_device_name(self.urn)
 
 class NysaDMAException(Exception):
     '''
