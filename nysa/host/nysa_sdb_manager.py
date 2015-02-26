@@ -474,6 +474,25 @@ class NysaSDBManager(object):
         if component.is_url_record():
             raise SDBError("URL Record does not have an %s: %s" % (error_name, component))
 
+    def get_device_name(self, urn):
+        """
+        Returns the name of the device
+
+        Args:
+            urn (String): Absolute reference to the component
+
+        Returns (String)
+            Name of the device
+
+        Raises:
+            SDBError: User attempted to get the name of a synthesis record
+            SDBError: User attempted to get the name of a URL record
+            SDBError: User attempted to get the name of an integration record
+        """
+        component = self._get_component_from_urn(urn).get_component()
+        self._verify_functional_device(component, "Name")
+        return component.get_name()
+
     def get_device_address(self, urn):
         """
         Return the address of the device

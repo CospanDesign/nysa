@@ -613,6 +613,21 @@ class Nysa(object):
         """
         return self.nsm.get_number_of_devices()
 
+    def get_device_name(self, urn):
+        """
+        From the URN get the name of the device
+
+        Args:
+          device (int): index of the device
+
+        Returns:
+          (string): name of the device
+
+        Raises:
+          Nothing
+        """
+        return self.nsm.get_device_name(urn)
+
     def get_device_address(self, urn):
         """
         From the URN get the base address of the device
