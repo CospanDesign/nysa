@@ -64,7 +64,7 @@ class NysaSDBManager(object):
         c_urns = self.get_all_components_as_urns()
         d_urns = []
         for c_urn in c_urns:
-            c = self._get_component_from_urn(c_urn)
+            c = self.get_component_from_urn(c_urn)
             if isinstance(c, SOMBus):
                 continue
             d_urns.append(c_urn)
@@ -109,7 +109,7 @@ class NysaSDBManager(object):
             bus_list.append(self._get_urn_from_component(component))
         return bus_list
 
-    def _get_component_from_urn(self, urn):
+    def get_component_from_urn(self, urn):
         ls = urn.split("/")
         name_list = []
 
@@ -363,7 +363,7 @@ class NysaSDBManager(object):
         Raises:
             Nothing
         """
-        component = self._get_component_from_urn(urn)
+        component = self.get_component_from_urn(urn)
         return self._get_component_index(component)
 
     def read_sdb(self, n):
@@ -412,7 +412,7 @@ class NysaSDBManager(object):
         if urn is None:
             c = self.som.get_root().get_component()
         else:
-            component = self._get_component_from_urn(urn)
+            component = self.get_component_from_urn(urn)
             if not isinstance(component, SOMBus):
                 component = component.get_parent()
             c = component.get_component()
@@ -456,7 +456,7 @@ class NysaSDBManager(object):
         if urn is None:
             c = self.som.get_root().get_component()
         else:
-            component = self._get_component_from_urn(urn)
+            component = self.get_component_from_urn(urn)
             if not isinstance(component, SOMBus):
                 component = component.get_parent()
             c = component.get_component()
@@ -489,7 +489,7 @@ class NysaSDBManager(object):
             SDBError: User attempted to get the name of a URL record
             SDBError: User attempted to get the name of an integration record
         """
-        component = self._get_component_from_urn(urn).get_component()
+        component = self.get_component_from_urn(urn).get_component()
         self._verify_functional_device(component, "Name")
         return component.get_name()
 
@@ -508,7 +508,7 @@ class NysaSDBManager(object):
             SDBError: User attempted to get the address of a URL record
             SDBError: User attempted to get the address of an integration record
         """
-        component = self._get_component_from_urn(urn).get_component()
+        component = self.get_component_from_urn(urn).get_component()
         self._verify_functional_device(component, "Address")
         return component.get_start_address_as_int()
 
@@ -527,7 +527,7 @@ class NysaSDBManager(object):
             SDBError: User attempted to get the size of a URL record
             SDBError: User attempted to get the size of an integration record
         """
-        component = self._get_component_from_urn(urn).get_component()
+        component = self.get_component_from_urn(urn).get_component()
         self._verify_functional_device(component, "Size")
         return component.get_size_as_int()
 
@@ -547,7 +547,7 @@ class NysaSDBManager(object):
             SDBError: User attempted to get the vendor id of an integration record
         """
 
-        component = self._get_component_from_urn(urn).get_component()
+        component = self.get_component_from_urn(urn).get_component()
         self._verify_functional_device(component, "Vendor ID")
         return component.get_vendor_id_as_int()
 
@@ -567,7 +567,7 @@ class NysaSDBManager(object):
             SDBError: User attempted to get the product id of an integration record
         """
 
-        component = self._get_component_from_urn(urn).get_component()
+        component = self.get_component_from_urn(urn).get_component()
         self._verify_functional_device(component, "Product ID")
         return component.get_device_id_as_int()
 
@@ -587,7 +587,7 @@ class NysaSDBManager(object):
             SDBError: User attempted to get the ABI class of an integration record
             SDBError: User attempted to get the ABI class of an interconnect
         """
-        component = self._get_component_from_urn(urn).get_component()
+        component = self.get_component_from_urn(urn).get_component()
         self._verify_functional_device(component, "ABI Class")
         if  component.is_interconnect():
             raise SDBError("Interconnects do not have an ABI Class: %s" % component)
@@ -610,7 +610,7 @@ class NysaSDBManager(object):
             SDBError: User attempted to get the ABI major number of an interconnect
         """
 
-        component = self._get_component_from_urn(urn).get_component()
+        component = self.get_component_from_urn(urn).get_component()
         self._verify_functional_device(component, "ABI Major")
         if  component.is_interconnect():
             raise SDBError("Interconnects do not have an ABI Major: %s" % component)
@@ -633,7 +633,7 @@ class NysaSDBManager(object):
             SDBError: User attempted to get the ABI minor number of an interconnect
         """
 
-        component = self._get_component_from_urn(urn).get_component()
+        component = self.get_component_from_urn(urn).get_component()
         self._verify_functional_device(component, "ABI Minor")
         if  component.is_interconnect():
             raise SDBError("Interconnects do not have an ABI Minor: %s" % component)
@@ -653,7 +653,7 @@ class NysaSDBManager(object):
             SDBError: User attempted to get the version of a synthesis record
             SDBError: User attempted to get the version of a URL record
         """
-        component = self._get_component_from_urn(urn).get_component()
+        component = self.get_component_from_urn(urn).get_component()
         if  component.is_synthesis_record():
             raise SDBError("Synthesis Record does not have an %s: %s" % ("Version", component))
 
@@ -678,7 +678,7 @@ class NysaSDBManager(object):
             SDBError: User attempted to get the Date number of an integration record
             SDBError: User attempted to get the Date number of an interconnect
         """
-        component = self._get_component_from_urn(urn).get_component()
+        component = self.get_component_from_urn(urn).get_component()
         if  component.is_synthesis_record():
             raise SDBError("Synthesis Record does not have an %s: %s" % ("Version", component))
 
@@ -697,7 +697,7 @@ class NysaSDBManager(object):
         Raises:
             SDBError: urn is not valid
         """
-        return self._get_component_from_urn(urn).get_component().is_interconnect()
+        return self.get_component_from_urn(urn).get_component().is_interconnect()
 
     def find_urn_from_device_type(self, device_name, sub_type = None, abi_class = 0):
         """
@@ -767,7 +767,7 @@ class NysaSDBManager(object):
             if abi_minor is not None:
                 if abi_minor_test != abi_minor:
                     continue
-            #l.append(self._get_component_from_urn(urn).get_component())
+            #l.append(self.get_component_from_urn(urn).get_component())
             l.append(urn)
         return l
 
@@ -799,7 +799,7 @@ class NysaSDBManager(object):
             if product_id is not None:
                 if product_id_test != product_id:
                     continue
-            #l.append(self._get_component_from_urn(urn).get_component())
+            #l.append(self.get_component_from_urn(urn).get_component())
             l.append(urn)
         return l
 
@@ -807,20 +807,20 @@ class NysaSDBManager(object):
         """
         Given a URN return a list of URNs that the integration record is
         pointing to
- 
+
         Args:
             urn (String): Universal Reference Name pointing to a particular
             device
- 
+
         Return (List of URNs):
             An empty list if there is no reference to the URN
-            
+
         Raises:
             Nothing
         """
         self.s.Debug("From URN: %s" % urn)
         urn_references = []
-        component = self._get_component_from_urn(urn)
+        component = self.get_component_from_urn(urn)
         parent = component.get_parent()
         from_urn = None
         to_urns = []

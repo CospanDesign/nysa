@@ -947,18 +947,75 @@ class Nysa(object):
         """
         Given a URN return a list of URNs that the integration record is
         pointing to
- 
+
         Args:
             urn (String): Universal Reference Name pointing to a particular
             device
- 
+
         Return (List of URNs):
             An empty list if there is no reference to the URN
-            
+
         Raises:
             Nothing
         """
         return self.nsm.get_integration_references(urn)
+
+    def get_all_urns(self):
+        """
+        Returns all the components as a list of URNS
+
+        Args:
+            Nothing
+
+        Returns:
+            (List of strings)
+
+        Raises:
+            Nothing
+        """
+        return self.nsm.get_all_components_as_urns()
+
+    def get_peripheral_devices_as_urns(self):
+        """
+        Returns a list of all the peirpheral devices as URNs
+
+        Args:
+            Nothing
+
+        Returns:
+            (List of URNs)
+
+        Raises:
+            Nothing
+        """
+        urns = self.nsm.get_all_devices_as_urns()
+        peripheral_urns = []
+        for urn in urns:
+            if self.nsm.is_memory_device(urn):
+                continue
+            peripheral_urns.append(urn)
+        return peripheral_urns
+
+    def get_memory_devices_as_urns(self):
+        """
+        Returns a list of all the peirpheral devices as URNs
+
+        Args:
+            Nothing
+
+        Returns:
+            (List of URNs)
+
+        Raises:
+            Nothing
+        """
+        urns = self.nsm.get_all_devices_as_urns()
+        memory_urns = []
+        for urn in urns:
+            if not self.nsm.is_memory_device(urn):
+                continue
+            memory_urns.append(urn)
+        return memory_urns
 
     #Programming
     def upload(self, filepath):
