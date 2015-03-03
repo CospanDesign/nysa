@@ -12,7 +12,7 @@ from urllib2 import build_opener, HTTPCookieProcessor
 
 
 
-SITE_PATH = os.path.join(site.getuserbase(), "nysa")
+SITE_PATH = os.path.join(site.USER_BASE, "nysa")
 VERSION_PATH = os.path.join(SITE_PATH, "versions.json")
 PATHS_PATH = os.path.join(SITE_PATH, "paths.json")
 BOARD_ID_PATH = os.path.join(SITE_PATH, "board_id.json")
