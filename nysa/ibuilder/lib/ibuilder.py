@@ -124,6 +124,14 @@ class ProjectGenerator(object):
         try:
             if self.s: self.s.Verbose("Reading configuration file: %s" % filename)
             self.project_tags = json.load(open(filename, "r"), object_pairs_hook=collections.OrderedDict)
+            path = os.path.join(utils.get_board_directory(self.project_tags["board"]), self.project_tags["board"])
+            default_path = os.path.join(path, "board", "default.json")
+            #print "Default Path: %s" % default_path
+            board_dict = json.load(open(default_path, "r"), object_pairs_hook=collections.OrderedDict)
+            for key in board_dict:
+                if key not in self.project_tags:
+                    if self.s: self.s.Important("Injecting default board key (%s) into project configuration" % key)
+                    self.project_tags[key] = board_dict[key]
         except IOError as err:
             if self.s: self.s.Fatal("Error while loadng the project tags: %s" % str(err))
             raise PGE("Error while loadng the project tags: %s" % str(err))
