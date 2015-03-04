@@ -22,6 +22,10 @@
 import os
 import shutil
 import string
+try:
+    import getpass
+except:
+    pass
 
 import utils
 
@@ -79,25 +83,47 @@ def initialize_environment(env, xilinx_path = "", build_tool = "ISE", version_nu
     env['XILINX_PLANAHEAD'] = os.path.join(xpath, "PlanAhead")
     env['XILINX'] = xpath
 
-    #This is used for the license file
+    if "USER" not in os.environ:
+        os.environ["USER"] = getpass.getuser()
+	if "XILINXD_LICENSE_FILE" in os.environ:
+		#print "Found License File Location: %s" % os.environ["XILINXD_LICENSE_FILE"]
+		env['ENV']['XILINXD_LICENSE_FILE'] = os.environ["XILINXD_LICENSE_FILE"]
+	if "LM_LICENSE_FILE" in os.environ:
+		env['ENV']['LM_LICENSE_FILE'] = os.environ["LM_LICENSE_FILE"]
     env['ENV']['USER'] = os.environ["USER"]
     env['ENV']['HOME'] = os.environ["HOME"]
 
     if 'LD_LIBRARY_PATH' not in env:
         env['LD_LIBRARY_PATH'] = ''
+    #print "xilinx path: %s" % xilinx_path
+    #print "build tool: %s" % build_tool
+    #print "version number: %s" % version_number
+    #print "xpath: %s" % xpath
+    #This is used for the license file
+	if os.name == "nt":
+		env["ENV"]["USERNAME"] = env['ENV']["USER"]
 
     if build_tool.lower() == "ise" or build_tool.lower() == "planahead":
         env.AppendENVPath("PATH", os.path.join(xpath, "PlanAhead", "bin"))
         env.AppendENVPath("PATH", os.path.join(xpath, "ISE", "sysgen", "util"))
         if utils.is_64_bit():
             #64 bit machine
-            env.AppendENVPath("PATH", os.path.join(xpath, "common", "bin", "lin64"))
-            env.AppendENVPath("PATH", os.path.join(xpath, "ISE", "bin", "lin64"))
-            lib_path = os.path.join(xpath, "ISE", "lib", "lin64")
-            env['LD_LIBRARY_PATH'] = string.join([lib_path, env['LD_LIBRARY_PATH']], os.pathsep)
-            lib_path = os.path.join(xpath, "common", "lib", "lin64")
-            env['LD_LIBRARY_PATH'] = string.join([lib_path, env['LD_LIBRARY_PATH']], os.pathsep)
-            #print "LD_LIBRARY_PATH: %s" % str(env['LD_LIBRARY_PATH'])
+            if os.name == "nt":
+                env.AppendENVPath("PATH", os.path.join(xpath, "common", "bin", "nt64"))
+                env.AppendENVPath("PATH", os.path.join(xpath, "ISE", "bin", "nt64"))
+                lib_path = os.path.join(xpath, "ISE", "lib", "nt64")
+                env['LD_LIBRARY_PATH'] = string.join([lib_path, env['LD_LIBRARY_PATH']], os.pathsep)
+                lib_path = os.path.join(xpath, "common", "lib", "nt64")
+                env['LD_LIBRARY_PATH'] = string.join([lib_path, env['LD_LIBRARY_PATH']], os.pathsep)
+                #print "LD_LIBRARY_PATH: %s" % str(env['LD_LIBRARY_PATH'])
+            else:
+                env.AppendENVPath("PATH", os.path.join(xpath, "common", "bin", "lin64"))
+                env.AppendENVPath("PATH", os.path.join(xpath, "ISE", "bin", "lin64"))
+                lib_path = os.path.join(xpath, "ISE", "lib", "lin64")
+                env['LD_LIBRARY_PATH'] = string.join([lib_path, env['LD_LIBRARY_PATH']], os.pathsep)
+                lib_path = os.path.join(xpath, "common", "lib", "lin64")
+                env['LD_LIBRARY_PATH'] = string.join([lib_path, env['LD_LIBRARY_PATH']], os.pathsep)
+                #print "LD_LIBRARY_PATH: %s" % str(env['LD_LIBRARY_PATH'])
         else:
             #32 bit machine
             env.AppendENVPath("PATH", os.path.join(xpath, "common", "bin", "lin"))

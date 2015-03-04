@@ -247,7 +247,7 @@ def get_window_drives():
         if bitmask & 1:
             #if the associated bit for that letter is set
             drives.append(letter)
-        bitmaks >>= 1
+        bitmask >>= 1
 
     return drives
 
@@ -335,29 +335,35 @@ def find_xilinx_path(path = "", build_tool = "ISE", version_number = ""):
             return None
 
     elif os.name == "nt":
-        if path is not None or len(path) > 0:
+        if path is not None and len(path) > 0:
             xilinx_base = path
         else:
             #Windows
             drives = get_window_drives()
             for drive in drives:
+                print "Drive: %s" % str(drive)
                 #Check each base directory
                 try:
                     dirnames = os.listdir("%s:" % drive)
-                    if WINDOWS_XLINX_DEFAULT_BASE in dirnames:
-                        xilinx_base = os.path.join("%s:" % drive,
-                                WINDOWS_XILINX_DEFUALT_BASE)
-                        if os.path.exists(xilinx_base):
-                            #this doesn't exists
-                            continue
-                        #Found the first occurance of Xilinx drop out
+                    #if WINDOWS_XILINX_DEFAULT_BASE in dirnames:
+
+                    xpath = os.path.join
+                    xilinx_base = os.path.join("%s:" % drive,
+                            os.path.sep,
+                            WINDOWS_XILINX_DEFAULT_BASE)
+                    print "Checking: %s" % xilinx_base
+                    if os.path.exists(xilinx_base):
+                        print "Found: %s" % xilinx_base
+                        #this doesn't exists
                         break
+                    #Found the first occurance of Xilinx drop out
+
 
                 except WindowsError, err:
                     #This drive is not usable
                     pass
 
-        if len(xiilinx_base) == 0:
+        if len(xilinx_base) == 0:
                 return None
 
     #Found the Xilinx base
