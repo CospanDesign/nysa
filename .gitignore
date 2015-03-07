@@ -4,6 +4,8 @@ test/fake/temp
 tools/nysa
 wip
 
+docs/_build
+
 # VIM temporary files
 *~
 *.swp

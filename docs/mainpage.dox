@@ -1,7 +1,0 @@
-/** @mainpage Nysa FPGA Toolset
- *  @par Nysa is an FPGA toolset that can be broken down into three groups
- *  - CBuilder (Core Builder): Build cores for an FPGA
- *  - IBuilder (Image Builder): Build bit images that can be loaded onto FPGAs
- *  - Host: Interact with an FPGA image
- *
- */
