@@ -310,12 +310,14 @@ def get_board_config (board_name, user_paths = [], debug = False):
         config_dict = {}
 
         if debug: print "Looking for: " + board_name
+        final_path = None
 
         for bl in board_locations:
             for root, dirs, names in os.walk(bl):
                 if debug: print "Dirs: " + str(dirs)
                 if board_name in dirs:
                     if debug: print "Found the directory"
+                    final_path = os.path.join(root)
                     filename = os.path.join(root, bn, "board", "config.json")
                     if os.path.exists(filename):
                         if debug: print "filename: %s" % filename
@@ -324,6 +326,8 @@ def get_board_config (board_name, user_paths = [], debug = False):
         if len(filename) == 0:
             if debug: print "didn't find board config file"
             return {}
+
+        board_location = final_path
 
     else:
         filename = os.path.join(board_location, bn, "board", "config.json")
@@ -337,22 +341,53 @@ def get_board_config (board_name, user_paths = [], debug = False):
     if debug:
         print "Opened up the board config file for %s" % (board_name)
 
-    print "Looking for a parent board"
+    #Create absolute references to any files within the board config files
+    if "default_constraint_files" in config_dict:
+        #Create absolute references to any filenames declared
+        filenames = config_dict["default_constraint_files"]
+        abs_filenames = []
+        path = os.path.join(board_location, bn, "board")
+        if debug: print "Path: %s" % str(path)
+        for filename in filenames:
+            if not os.path.exists(filename):
+                if ("/" in filename) or ("\\" in filename):
+                    path_list = []
+                    if "/" in filename:
+                        path_list = filename.split("/")
+                    else:
+                        path_list = filename.split("\\")
+
+                    filename = path
+                    for p in path_list:
+                        filename = os.path.join(filename, p)
+                else:
+                    filename = os.path.join(path, filename)
+
+                filename = os.path.abspath(filename)
+
+            abs_filenames.append(filename)
+
+        config_dict["default_constraint_files"] = abs_filenames
+
+    if debug: print "Looking for a parent board"
     if "parent_board" in config_dict:
-        print "Found a reference to parent!"
+        if debug: print "Found a reference to parent!"
         for parent in config_dict["parent_board"]:
-            print "Parent: %s" % parent
+            if debug: print "Parent: %s" % parent
             parent_config = get_board_config(parent, user_paths, debug = debug)
             for key in parent_config:
-                print "Looking at key: %s" % key
+                if debug: print "Looking at key: %s" % key
                 if key not in config_dict:
-                    print "\tKey not in child dict, inserting..."
+                    if debug: print "\tKey not in child dict, inserting..."
                     config_dict[key] = parent_config[key]
                 if isinstance(config_dict[key], list):
-                    print "\tFound a list, appending values..."
+                    if debug: print "\tFound a list, appending values..."
                     config_dict[key] += parent_config[key]
-                    print "\tNew list: %s" % str(config_dict[key])
+                    if debug: print "\tNew list: %s" % str(config_dict[key])
      #for debug
+    if "paths" not in config_dict:
+        config_dict["paths"] = []
+    config_dict["paths"].append(board_location)
     return config_dict
 
 def get_net_names(filepath, debug = False):

@@ -84,7 +84,6 @@ def generate_project(filename, user_paths = [], output_directory = None, status 
     Raises:
       IOError: An error in project generation has occured
     """
-    #print "IBUILDER User paths: %s" % str(user_paths)
     tags = get_project_tags(filename)
 
     if not utils.board_exists(tags["board"]):
@@ -109,6 +108,43 @@ class ProjectGenerator(object):
         self.template_tags = {}
         self.s = status
 
+    def _get_default_board_config(self, board):
+        path = os.path.join(utils.get_board_directory(board), board)
+        bd = utils.get_board_config(board)
+        name = "default.json"
+        if "default_project" in bd:
+            name = bd["default_project"]
+            
+        default_path = os.path.join(path, "board", name)
+        #print "Path: %s" % default_path
+
+        board_dict = json.load(open(default_path, "r"), object_pairs_hook=collections.OrderedDict)
+        if "parent_board" in bd:
+            for parent in bd["parent_board"]:
+                pd = utils.get_board_config(parent)
+                name = "default.json"
+                if "default_project" in pd:
+                    name = pd["default_project"]
+
+                path = os.path.join(utils.get_board_directory(parent), parent)
+                default_path = os.path.join(path, "board", name)
+                parent_dict = json.load(open(default_path, "r"), object_pairs_hook=collections.OrderedDict)
+
+                for key in parent_dict:
+                    #print "key: %s" % key
+                    if key in board_dict:
+                        if isinstance(board_dict[key], list):
+                            #print "board_dict  [%s]: %s" % (key, str(board_dict[key]))
+                            #print "parent_dict [%s]: %s" % (key, str(parent_dict[key]))
+                            l = parent_dict[key] + board_dict[key]
+                            #print "L: %s" % l
+                            #Remove duplicates
+                            board_dict[key] = list(set(l))
+                    else:
+                        board_dict[key] = parent_dict[key]
+        #print "board dict: %s" % str(board_dict)
+        return board_dict
+        
     def read_config_file(self, filename="", debug=False):
         """Read in a configuration file name and create a class dictionary
 
@@ -121,23 +157,25 @@ class ProjectGenerator(object):
         Raises:
           TypeError
         """
-        try:
-            if self.s: self.s.Verbose("Reading configuration file: %s" % filename)
-            self.project_tags = json.load(open(filename, "r"), object_pairs_hook=collections.OrderedDict)
-            path = os.path.join(utils.get_board_directory(self.project_tags["board"]), self.project_tags["board"])
-            default_path = os.path.join(path, "board", "default.json")
-            #print "Default Path: %s" % default_path
-            board_dict = json.load(open(default_path, "r"), object_pairs_hook=collections.OrderedDict)
-            for key in board_dict:
-                if key not in self.project_tags:
-                    if self.s: self.s.Important("Injecting default board key (%s) into project configuration" % key)
-                    self.project_tags[key] = board_dict[key]
-        except IOError as err:
-            if self.s: self.s.Fatal("Error while loadng the project tags: %s" % str(err))
-            raise PGE("Error while loadng the project tags: %s" % str(err))
-        except TypeError as err:
-            if self.s: self.s.Fatal("Error reading the tags in the project file: %s" % str(err))
-            raise PGE("Error reading the tags in the project file: %s" % str(err))
+        #try:
+        if self.s: self.s.Verbose("Reading configuration file: %s" % filename)
+        self.project_tags = json.load(open(filename, "r"), object_pairs_hook=collections.OrderedDict)
+        path = os.path.join(utils.get_board_directory(self.project_tags["board"]), self.project_tags["board"])
+        board_dict = self._get_default_board_config(self.project_tags["board"])
+
+        #default_path = os.path.join(path, "board", "default.json")
+        #board_dict = json.load(open(default_path, "r"), object_pairs_hook=collections.OrderedDict)
+        for key in board_dict:
+            #print "key: %s" % key
+            if key not in self.project_tags:
+                if self.s: self.s.Important("Injecting default board key (%s) into project configuration" % key)
+                self.project_tags[key] = board_dict[key]
+        #except IOError as err:
+        #    if self.s: self.s.Fatal("Error while loadng the project tags: %s" % str(err))
+        #    raise PGE("Error while loadng the project tags: %s" % str(err))
+        #except TypeError as err:
+        #    if self.s: self.s.Fatal("Error reading the tags in the project file: %s" % str(err))
+        #    raise PGE("Error reading the tags in the project file: %s" % str(err))
 
     def read_template_file(self, filename, debug=False):
         """Attemp to read in template file
@@ -223,12 +261,17 @@ class ProjectGenerator(object):
         cfiles = []
         cpaths = []
 
+        if "paths" in board_dict:
+            self.user_paths.extend(board_dict["paths"])
+
         pt = self.project_tags
-        if "constraint_files" in pt.keys():
-            cfiles = pt["constraint_files"]
-            for c in cfiles:
-                cpaths.append(utils.get_constraint_file_path(self.project_tags["board"], c))
-                #cpaths.append(utils.get_constraint_file_path(c))
+        if "constraint_files" not in pt.keys():
+            pt["constraint_files"] = []
+
+        cfiles = pt["constraint_files"]
+        for c in cfiles:
+            cpaths.append(utils.get_constraint_file_path(self.project_tags["board"], c))
+            #cpaths.append(utils.get_constraint_file_path(c))
 
         #if the user didn't specify any constraint files
         #load the default
@@ -241,7 +284,6 @@ class ProjectGenerator(object):
 
 
         #extrapolate the bus template
-        #XXX: Need to check all the constraint files
         clock_rate = ""
         for c in cpaths:
             clock_rate = utils.read_clock_rate(c)
@@ -255,7 +297,8 @@ class ProjectGenerator(object):
             raise PGE("Unable to find the clock rate in any of the constraint"
                       "files: %s" % str(cpaths))
 
-        self.project_tags["CLOCK_RATE"] = utils.read_clock_rate(cpaths[0])
+        #self.project_tags["CLOCK_RATE"] = utils.read_clock_rate(cpaths[0])
+        self.project_tags["CLOCK_RATE"] = clock_rate
         self.read_template_file(self.project_tags["TEMPLATE"])
 
         #set all the tags within the filegen structure
