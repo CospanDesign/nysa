@@ -302,51 +302,56 @@ def get_board_config (board_name, user_paths = [], debug = False):
         if debug: print "%s is not in the installed path, checking user paths..." % board_name
         pass
 
-    if board_location is not None:
-        if debug: print "board location: %s" % board_location
-        if debug: print "board_name: %s" % board_name
-        f = open(os.path.join(board_location, bn, "board", "config.json"), "r")
-        config_dict = json.load(f)
-        f.close()
-        return config_dict
+    if board_location is None:
+        board_locations = user_paths
 
+        filename = ""
+        buf = ""
+        config_dict = {}
 
-    board_locations = user_paths
+        if debug: print "Looking for: " + board_name
 
-    filename = ""
-    buf = ""
-    config_dict = {}
+        for bl in board_locations:
+            for root, dirs, names in os.walk(bl):
+                if debug: print "Dirs: " + str(dirs)
+                if board_name in dirs:
+                    if debug: print "Found the directory"
+                    filename = os.path.join(root, bn, "board", "config.json")
+                    if os.path.exists(filename):
+                        if debug: print "filename: %s" % filename
+                        break
 
-    if debug: print "Looking for: " + board_name
+        if len(filename) == 0:
+            if debug: print "didn't find board config file"
+            return {}
 
-    for bl in board_locations:
-        for root, dirs, names in os.walk(bl):
-            if debug: print "Dirs: " + str(dirs)
-            if board_name in dirs:
-                if debug: print "Found the directory"
-                filename = os.path.join(root, bn, "board", "config.json")
-                if debug: print "filename: %s" % filename
-                break
-
-    if len(filename) == 0:
-        if debug: print "didn't find board config file"
-        return {}
-
+    else:
+        filename = os.path.join(board_location, bn, "board", "config.json")
 
     #open up the config file
-    try:
-        file_in = open(filename)
-        buf = file_in.read()
-        config_dict = json.loads(buf)
-        file_in.close()
-        #XXX: This should probably raise an error to the calling function
-    except:
-        #fail
-        if debug: print "failed to open file: " + filename
+    file_in = open(filename)
+    buf = file_in.read()
+    config_dict = json.loads(buf)
+    file_in.close()
 
     if debug:
         print "Opened up the board config file for %s" % (board_name)
 
+    print "Looking for a parent board"
+    if "parent_board" in config_dict:
+        print "Found a reference to parent!"
+        for parent in config_dict["parent_board"]:
+            print "Parent: %s" % parent
+            parent_config = get_board_config(parent, user_paths, debug = debug)
+            for key in parent_config:
+                print "Looking at key: %s" % key
+                if key not in config_dict:
+                    print "\tKey not in child dict, inserting..."
+                    config_dict[key] = parent_config[key]
+                if isinstance(config_dict[key], list):
+                    print "\tFound a list, appending values..."
+                    config_dict[key] += parent_config[key]
+                    print "\tNew list: %s" % str(config_dict[key])
      #for debug
     return config_dict
 
