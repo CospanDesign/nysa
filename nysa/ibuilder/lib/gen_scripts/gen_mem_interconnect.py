@@ -24,6 +24,9 @@ class GenMemInterconnect(Gen):
 
 def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
 
+  if "MEMORY" not in tags:
+    return ""
+
   num_slaves = len(tags["MEMORY"].keys())
   if debug: print "Number of slaves: %d" % num_slaves
 
