@@ -285,11 +285,15 @@ class ProjectGenerator(object):
 
         #extrapolate the bus template
         clock_rate = ""
-        for c in cpaths:
-            clock_rate = utils.read_clock_rate(c)
-            if len(clock_rate) > 0:
-                #First place I can find the clock rate drop out
-                break
+        if "clockrate" in board_dict:
+            if self.s: self.s.Info("User Specified a clockrate of: %d" % board_dict["clockrate"])
+            clock_rate = board_dict["clockrate"]
+        if len(clock_rate) == 0:
+            for c in cpaths:
+                clock_rate = utils.read_clock_rate(c)
+                if len(clock_rate) > 0:
+                    #First place I can find the clock rate drop out
+                    break
 
         if len (clock_rate) == 0:
             if self.s: self.s.Fatal("Unable to find the clock rate in any of the constraint"
