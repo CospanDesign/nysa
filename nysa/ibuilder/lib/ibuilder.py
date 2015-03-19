@@ -263,6 +263,9 @@ class ProjectGenerator(object):
 
         if "paths" in board_dict:
             self.user_paths.extend(board_dict["paths"])
+            self.user_paths = list(set(self.user_paths))
+
+        self.filegen = ModuleProcessor(user_paths = self.user_paths)
 
         pt = self.project_tags
         if "constraint_files" not in pt.keys():
@@ -287,7 +290,7 @@ class ProjectGenerator(object):
         clock_rate = ""
         if "clockrate" in board_dict:
             if self.s: self.s.Info("User Specified a clockrate of: %d" % board_dict["clockrate"])
-            clock_rate = board_dict["clockrate"]
+            clock_rate = str(board_dict["clockrate"])
         if len(clock_rate) == 0:
             for c in cpaths:
                 clock_rate = utils.read_clock_rate(c)
@@ -339,7 +342,7 @@ class ProjectGenerator(object):
             #file_dest = self.project_tags["BASE_DIR"] + "/rtl/bus/slave"
             fn = self.project_tags["SLAVES"][slave]["filename"]
             try:
-                self.filegen.process_file(filename = fn, file_dict = fdict, directory=file_dest, debug=False)
+                self.filegen.process_file(filename = fn, file_dict = fdict, directory=file_dest)
             except ModuleFactoryError as err:
                 if status: status.Error("ModuleFactoryError while generating slave: %s" % str(err))
                 raise ModuleFactoryError(err)
@@ -357,6 +360,33 @@ class ProjectGenerator(object):
                 except ModuleFactoryError as err:
                     if status: status.Error("ModuleFactoryError while generating memory: %s" % str(err))
                     raise ModuleFactoryError(err)
+
+        if 'infrastructure' in self.project_tags:
+            if status: status.Verbose("User Specified an infrastructure(s)")
+            for entry in self.project_tags["infrastructure"]:
+                name = entry.keys()[0]
+                im = entry[name]
+                path = utils.get_board_directory(name)
+                path = os.path.join(path, name, "infrastructure", im["filename"])
+                
+                ftdict = {"location":path}
+                file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "bus", "infrastructure")
+                fn = im["filename"]
+                self.filegen.process_file(filename = fn, file_dict = fdict, directory=file_dest)
+
+        if "cores" in self.project_tags:
+            if status: status.Verbose("User Specified an core(s)")
+            for entry in self.project_tags["cores"]:
+                name = entry.keys()[0]
+                for core in entry[name]:
+                    file_location = None
+                    path = utils.get_board_directory(name)
+                    path = os.path.join(path, name, "cores")
+                    for root, dirs, files in os.walk(path):
+                        if core in files:
+                            file_location =  os.path.join(root, core)
+
+                    shutil.copy (file_location, os.path.join(self.project_tags["BASE_DIR"], "cores", core))
 
         #Copy the user specified constraint files to the constraints directory
         for constraint_fname in cfiles:

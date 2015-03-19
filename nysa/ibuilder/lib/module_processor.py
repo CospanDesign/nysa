@@ -72,7 +72,7 @@ class ModuleProcessor:
   def __init__ (self, user_paths = []):
 #    print "SAPLIB_BASE: " + os.environ["SAPLIB_BASE"]
 #    print "Path: " + str(sys.path)
-    self.user_paths = user_paths
+    self.user_paths = list(set(user_paths))
     self.gen_module = None
     self.gen = None
     self.buf = ""
@@ -166,6 +166,7 @@ class ModuleProcessor:
       IOError
 
     """
+    debug = False
     if (len(filename) == 0):
       raise ModuleFactoryError ("No filename specified")
 
@@ -249,7 +250,7 @@ class ModuleProcessor:
       print "Project name: " + self.tags["PROJECT_NAME"]
 
     #if the generation flag is set in the dictionary
-    if (file_dict.has_key("gen_script")):
+    if "gen_script" in file_dict:
       if (debug):
         print "found the generation script"
         print "run generation script: " + file_dict["gen_script"]

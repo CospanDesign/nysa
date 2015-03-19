@@ -177,16 +177,17 @@ def create_script(config):
             #Handle configuration below
             continue
         if flags[flag] == "_true":
-            bgs.write("%s%s" % (flag, os.linesep))
+            bgs.write("%s\n" % flag)
             #Special Case where flag is by itself
             continue
-        bgs.write("%s %s%s" % (flag, flags[flag], os.linesep))
+        
+        bgs.write("%s %s\n" % (flag, flags[flag]))
 
-    bgs.write("%s" % os.linesep)
+	bgs.write("\n")
 
     #Add all the configuration sub options to the mix
     for c in flags["configuration"]:
-        bgs.write("%s%s" % (c, os.linesep))
+        bgs.write("%s\n" % c)
 
     bgs.close()
     return bgs_fn

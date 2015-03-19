@@ -379,6 +379,11 @@ def generate_module_port_signals(invert_reset,
 
     for port in output_ports:
         port_count += 1
+        if port == "rst":
+            continue
+        if port == "clk":
+            continue
+
         line = ""
         #Check to see if this is one of the pre-defined wires
         wire = ""
@@ -526,9 +531,21 @@ class WishboneTopGenerator(object):
                         bname = "%s_%s" % (name, bind_name)
                         self.bindings[bname] = self.tags["MEMORY"][name]["bind"][bind_name]
 
-
         #Remove all ports from the possible wires
         self.add_ports_to_wires()
+
+        #If there is an infrastructure, generate the infrastructure buffer
+        inf_buf = ""
+        if "infrastructure" in self.tags:
+            inf_buf = "//Infrastructures\n\n"
+            for platform_inf_dict in self.tags["infrastructure"]:
+                name = platform_inf_dict.keys()[0]
+                inf_dict = platform_inf_dict[name]
+                inf_buf += self.generate_infrastructure_buffer(name, inf_dict)
+                if "bind" in inf_dict:
+                    for bind_name in inf_dict["bind"]:
+                        self.bindings[bind_name] = inf_dict["bind"][bind_name]
+
 
         #Setting up ports
         arb_buf = self.generate_arbiter_buffer(debug = debug)
@@ -582,16 +599,16 @@ class WishboneTopGenerator(object):
             num_mem_slaves = len(self.tags["MEMORY"])
             mem_index = 0
             for i in range(len(self.tags["MEMORY"])):
-                mem_name = self.tags["MEMORY"].keys()[i] 
+                mem_name = self.tags["MEMORY"].keys()[i]
                 filename = self.tags["MEMORY"][mem_name]["filename"]
                 if debug: print "Mem device: %s, mem file: %s" % (mem_name, filename)
-                absfilename = utils.find_rtl_file_location(filename)
+                absfilename = utils.find_rtl_file_location(filename, self.user_paths)
                 mem_tags = vutils.get_module_tags(filename = absfilename,
                                                  bus = "wishbone",
                                                  user_paths = self.user_paths)
                 mem_buf = self.generate_wishbone_buffer(mem_name,
                                                         index = i,
-                                                        slave_tags = self.tags["MEMORY"][name],
+                                                        slave_tags = self.tags["MEMORY"][mem_name],
                                                         module_tags = mem_tags,
                                                         mem_slave = True)
                 mem_buffer_list.append(mem_buf)
@@ -605,6 +622,9 @@ class WishboneTopGenerator(object):
         buf += "\n\n"
         #Add the startup
         buf += generate_startup()
+        buf += "\n\n"
+        #Add the infrastructure
+        buf += inf_buf
         buf += "\n\n"
         #Add the master
         buf += generate_master_buffer(invert_reset)
@@ -630,15 +650,14 @@ class WishboneTopGenerator(object):
 
         #Add assign statements
         buf += generate_assigns_buffer(invert_reset,
-                                            self.bindings, 
-                                            self.internal_bindings, 
+                                            self.bindings,
+                                            self.internal_bindings,
                                             debug = debug)
         buf += "\n\n"
 
         buf += "endmodule"
 
         return string.expandtabs(buf, 2)
-
 
     def add_ports_to_wires(self):
         """Add all the ports to wires list so that no item adds extra wires"""
@@ -651,9 +670,11 @@ class WishboneTopGenerator(object):
         buf =  "//General Signals\n"
         #buf +=  "{0:<20}{1};\n".format("wire", "clk")
         #buf +=  "{0:<20}{1};\n".format("wire", "rst | startup_rst")
+        buf +=  "{0:<20}{1};\n".format("wire", "clk")
 
         self.wires.append("clk")
-        self.wires.append("rst")
+        if ("bind" in board_dict) and ("rst" in board_dict["bind"]):
+            self.wires.append("rst")
 
         if invert_rst:
             buf += "{0:<20}{1};\n".format("wire", "rst_n")
@@ -818,7 +839,6 @@ class WishboneTopGenerator(object):
         if debug:
             print "wr_buf: \n" + buf
         return string.expandtabs(buf, 2)
-
 
     def generate_internal_bindings(self):
         if len(self.internal_bindings.keys()) == 0:
@@ -1004,13 +1024,66 @@ class WishboneTopGenerator(object):
         buf += "\t%s" % name
         invert_reset = utils.get_board_config(self.tags["board"])["invert_reset"]
         buf += generate_module_port_signals(invert_reset,
-                                            pre_name, 
-                                            name, 
-                                            slave_tags, 
+                                            pre_name,
+                                            name,
+                                            slave_tags,
                                             module_tags)
 
         buf += "\n\n"
         return string.expandtabs(buf, 2)
+
+    def generate_infrastructure_buffer(self, name, idict):
+        buf = "//Infrastructure for %s\n\n" % name
+        absfilename = utils.find_rtl_file_location(idict["filename"], self.user_paths)
+        module_tags = vutils.get_module_tags(filename = absfilename, user_paths = self.user_paths)
+        board_dict = utils.get_board_config(self.tags["board"])
+        buf += "//Wires\n"
+
+        pre_name = ""
+        for io in IO_TYPES:
+            if io == "inout":
+                continue
+
+            for port in module_tags["ports"][io].keys():
+                wire = ""
+                port_dict = module_tags["ports"][io][port]
+                if port == "clk" or port == "rst":
+                    continue
+
+                #if port in self.wires:
+                #    if debug: print "%s is in wires already" % port
+                #    continue
+
+                wire = "%s" % port
+                if wire in self.wires:
+                    continue
+
+                self.wires.append(port)
+
+                max_val = 0
+                min_val = 0
+                if port_dict["size"] > 1:
+                    max_val = port_dict["max_val"]
+                    min_val = port_dict["min_val"]
+                buf += create_wire_buf(wire,
+                                       port_dict["size"],
+                                       max_val,
+                                       min_val)
+
+
+            buf += "\n"
+
+        buf += "%s %s_inf" % (module_tags["module"], name)
+        invert_reset = board_dict["invert_reset"]
+        buf += generate_module_port_signals(invert_reset,
+                                            "",
+                                            "",
+                                            idict,
+                                            module_tags)
+
+        buf += "\n\n"
+        #print "Generate buffer: %s" % buf
+        return buf
 
     def generate_arbiter_buffer(self, debug = False):
         buf = ""
@@ -1155,9 +1228,9 @@ class WishboneTopGenerator(object):
             buf += "%s %s (\n" % (arb_module, arb_name)
             buf += "\t.{0:20}({1:20}),\n".format("clk", "clk")
             if board_dict["invert_reset"]:
-                buf += "\t.{0:20}({1:20}),\n".format("rst", "rst_n")
+                buf += "\t.{0:20}({1:20}),\n".format("rst", "rst_n | startup_rst")
             else:
-                buf += "\t.{0:20}({1:20}),\n".format("rst", "rst")
+                buf += "\t.{0:20}({1:20}),\n".format("rst", "rst | startup_rst")
             buf += "\n"
 
             buf += "\t//masters\n"
@@ -1238,7 +1311,6 @@ class WishboneTopGenerator(object):
             buf += ");\n"
 
             return string.expandtabs(buf, 2)
-
 
     def generate_parameters(self, name="", slave_tags={}, debug = False):
         buf = ""
