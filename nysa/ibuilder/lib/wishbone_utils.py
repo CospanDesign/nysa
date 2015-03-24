@@ -316,17 +316,23 @@ def generate_module_port_signals(invert_reset,
                                  instance_name = "",
                                  slave_tags = {},
                                  module_tags = {},
-                                 debug = False):
+                                 add_startup_rst = True):
 
 
-
+    debug = False
     buf = "(\n"
     #Add the port declarations
     buf += "\t.{0:<20}({1:<20}),\n".format("clk", "clk")
     if invert_reset:
-        buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst_n | startup_rst")
+        if add_startup_rst:
+            buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst_n | startup_rst")
+        else:
+            buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst_n")
     else:
-        buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst | startup_rst")
+        if add_startup_rst:
+            buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst | startup_rst")
+        else:
+            buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst")
 
     #Keep track of the port count so the last one won't have a comma
     port_max = get_port_count(module_tags)
@@ -504,12 +510,22 @@ class WishboneTopGenerator(object):
                     enable_memory_bus = True
         self.num_slaves = len(self.slave_list) + 1
 
+        self.internal_bindings = {}
+        if "board_internal_bind" in self.tags:
+            self.internal_bindings = self.tags["board_internal_bind"]
+
         if "internal_bind" in self.tags:
-            self.internal_bindings = self.tags["internal_bind"]
+            for key in self.tags["board_internal_bind"]:
+                self.internal_bindings[key] = self.tags["internal_bind"][key]
 
         #Add Global Bindings
+        self.bindings = {}
+        if "board_bind" in self.tags:
+            self.bindings = self.tags["board_bind"]
+
         if "bind" in self.tags:
-            self.bindings = self.tags["bind"]
+            for key in self.tags["bind"]:
+                self.bindings[key] = self.tags["bind"][key]
 
         #Add the Host Interface Bindings
         if "bind" in self.tags["INTERFACE"]:
@@ -668,13 +684,11 @@ class WishboneTopGenerator(object):
         board_dict = utils.get_board_config(self.tags["board"])
 
         buf =  "//General Signals\n"
-        #buf +=  "{0:<20}{1};\n".format("wire", "clk")
-        #buf +=  "{0:<20}{1};\n".format("wire", "rst | startup_rst")
         buf +=  "{0:<20}{1};\n".format("wire", "clk")
+        buf +=  "{0:<20}{1};\n".format("wire", "rst")
 
         self.wires.append("clk")
-        if ("bind" in board_dict) and ("rst" in board_dict["bind"]):
-            self.wires.append("rst")
+        self.wires.append("rst")
 
         if invert_rst:
             buf += "{0:<20}{1};\n".format("wire", "rst_n")
@@ -1075,11 +1089,12 @@ class WishboneTopGenerator(object):
 
         buf += "%s %s_inf" % (module_tags["module"], name)
         invert_reset = board_dict["invert_reset"]
-        buf += generate_module_port_signals(invert_reset,
+        buf += generate_module_port_signals(False,
                                             "",
                                             "",
                                             idict,
-                                            module_tags)
+                                            module_tags,
+                                            False)
 
         buf += "\n\n"
         #print "Generate buffer: %s" % buf

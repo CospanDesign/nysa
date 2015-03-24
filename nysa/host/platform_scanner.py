@@ -180,6 +180,8 @@ def find_board(name, serial = None, status = None):
 
     name = name.lower()
 
+    #print "platforms: %s" % str(platform_class_dict.keys())
+    #print "name: %s" % str(name)
     if name not in platform_class_dict:
         raise PlatformScannerException("%s is not currently installed, please install more platforms" % name)
 
