@@ -443,6 +443,9 @@ def generate_assigns_buffer(invert_reset, bindings, internal_bindings, debug=Fal
             if key == "rst":
                 continue
 
+            if key == internal_bindings[key]["signal"]:
+                pass
+
             buf += "assign\t{0:<20}=\t{1};\n".format(key, internal_bindings[key]["signal"])
 
     buf += "\n\n"
@@ -454,7 +457,9 @@ def generate_assigns_buffer(invert_reset, bindings, internal_bindings, debug=Fal
             if key == "rst":
                 continue
 
-
+            
+            if key == bindings[key]["loc"]:
+                continue
             if bindings[key]["direction"] == "input":
                 buf += "assign\t{0:<20}=\t{1};\n".format(key, bindings[key]["loc"])
             elif bindings[key]["direction"] == "output":
@@ -1014,7 +1019,7 @@ class WishboneTopGenerator(object):
                         continue
 
 
-                if (wire in self.wires):
+                if wire in self.wires:
                     continue
 
                 self.wires.append(port)
