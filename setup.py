@@ -16,11 +16,10 @@ try:
     long_desc = convert("README.md", 'rst')
 except:
     long_desc="FPGA core/image generator and FPGA communiation"
-    pass
 
 setup( 
     name='nysa',
-    version='0.8.05',
+    version='0.8.6',
     description='FPGA core/image generator and FPGA communication',
     author='Cospan Design',
     author_email='dave.mccoy@cospandesign.com',

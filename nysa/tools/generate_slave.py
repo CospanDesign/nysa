@@ -151,7 +151,6 @@ def generate_slave_from_dict(slave_dict, output_path, status):
                                  "template",
                                  "wishbone")
     template_path = os.path.abspath(template_path)
-    print "Template Path :%s " % template_path
 
     #Create the output directory
     output_dir = os.path.join(output_path, name)
