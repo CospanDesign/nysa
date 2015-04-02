@@ -5,24 +5,28 @@ import glob
 
 from setuptools import setup, find_packages
 
-long_desc=open("README.md").read(),
+
+
+long_desc=""
 
 try:
+    long_desc=open("README.md").read(),
     #Try and convert the readme from markdown to pandoc
     from pypandoc import convert
     long_desc = convert("README.md", 'rst')
 except:
+    long_desc="FPGA core/image generator and FPGA communiation"
     pass
 
 setup( 
     name='nysa',
-    version='0.8.03',
+    version='0.8.05',
     description='FPGA core/image generator and FPGA communication',
     author='Cospan Design',
     author_email='dave.mccoy@cospandesign.com',
     packages=find_packages('.'),
     url="http://nysa.cospandesign.com",
-    package_data={'' : ["*.json", "*.txt"]},
+    package_data={'' : ["*.json", "*.txt, *.md"]},
     data_files=[
     ],
     include_package_data = True,

@@ -1,4 +1,5 @@
 recursive-include nysa *.txt
+recursive-include nysa *.md
 recursive-include nysa/data/template *
 recursive-include nysa *.md
 recursive-include nysa *.json

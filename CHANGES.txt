@@ -1,3 +1,5 @@
 V0.8.00, 07/08/2014   --  Initial Pypi upload
 V0.8.01, 09/12/2014   --  Adding in the unified nysa tool that can be used to perform the task that previously multiple tools performed
 v0.8.02, 09/12/2014   --  Implemented a bash completion script that simplifies the command line interface
+v0.8.04, 04/02/2015   --  Changing Nysa to use SDB instead of DRT
+v0.8.05, 04/02/2015   --  Changed the search path for python
