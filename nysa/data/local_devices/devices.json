@@ -77,6 +77,10 @@
             "description":"Clock Synthesizer",
             "ID":"0x0012"
         },
+        "DMA":{
+            "description":"Direct Memory Access controller",
+            "ID":"0x0013"
+        },
         "DMA Reader":{
             "description":"A test core for DMA Reader",
             "ID":"0x0020"
