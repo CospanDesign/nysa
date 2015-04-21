@@ -385,8 +385,11 @@ class ProjectGenerator(object):
                     for root, dirs, files in os.walk(path):
                         if core in files:
                             file_location =  os.path.join(root, core)
-
-                    shutil.copy (file_location, os.path.join(self.project_tags["BASE_DIR"], "cores", core))
+                            break
+                    if not os.path.exists(file_location):
+                        raise PE("Core: %s does not exist" % core)
+                    dest_path = utils.resolve_path(self.project_tags["BASE_DIR"])
+                    shutil.copy (file_location, os.path.join(dest_path, "cores", core))
 
         #Copy the user specified constraint files to the constraints directory
         for constraint_fname in cfiles:
