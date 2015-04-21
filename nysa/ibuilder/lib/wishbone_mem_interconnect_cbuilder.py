@@ -81,11 +81,12 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
     if debug:
         print "slave tags: " + str(slave_tags)
 
-    mem_size = slave_tags["keywords"]["SDB_SIZE"].strip()
+    mem_size = int(slave_tags["keywords"]["SDB_SIZE"].strip(), 0)
 
     param_buf = param_buf + "parameter MEM_SEL_%d\t=\t%d;\n" % (i, i)
     param_buf = param_buf + "parameter MEM_OFFSET_%d\t=\t %d;\n" % (i, mem_offset)
-    param_buf = param_buf + "parameter MEM_SIZE_%d\t=\t %s;\n" % (i, mem_size)
+    #param_buf = param_buf + "parameter MEM_SIZE_%d\t=\t %s;\n" % (i, mem_size)
+    param_buf = param_buf + "parameter MEM_SIZE_%d\t=\t 32'h%08X;\n" % (i, mem_size)
     mem_offset += int(mem_size, 0)
 
 

@@ -91,7 +91,8 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
     mem_size = int(slave_tags["keywords"]["SDB_SIZE"].strip(), 0)
 
     param_buf = param_buf + "parameter MEM_SEL_%d\t=\t%d;\n" % (i, i)
-    param_buf = param_buf + "parameter MEM_OFFSET_%d\t=\t %d;\n" % (i, mem_offset)
+    #param_buf = param_buf + "parameter MEM_OFFSET_%d\t=\t %d;\n" % (i, mem_offset)
+    param_buf = param_buf + "parameter MEM_OFFSET_%d\t=\t 32'h%08X;\n" % (i, mem_offset)
     param_buf = param_buf + "parameter MEM_SIZE_%d\t=\t 32'h%02X;\n" % (i, mem_size)
     mem_offset += mem_size
 
@@ -146,7 +147,10 @@ def generate_wb_mem_interconnect(tags = {}, user_paths = [], debug = False):
     assign_buf += "assign o_s%d_stb  =\t(mem_select == MEM_SEL_%d) ? i_m_stb: 1'b0;\n" % (i, i)
     assign_buf += "assign o_s%d_sel  =\t(mem_select == MEM_SEL_%d) ? i_m_sel: 4'b0;\n" % (i, i)
     assign_buf += "assign o_s%d_cyc  =\t(mem_select == MEM_SEL_%d) ? i_m_cyc: 1'b0;\n" % (i, i)
-    assign_buf += "assign o_s%d_adr  =\t(mem_select == MEM_SEL_%d) ? i_m_adr: 32'h0;\n" % (i, i)
+    if i == 0:
+        assign_buf += "assign o_s%d_adr  =\t(mem_select == MEM_SEL_%d) ? i_m_adr: 32'h0;\n" % (i, i)
+    else:
+        assign_buf += "assign o_s%d_adr  =\t(mem_select == MEM_SEL_%d) ? i_m_adr - MEM_OFFSET_%d: 32'h0;\n" %(i, i, i)
     assign_buf += "assign o_s%d_dat  =\t(mem_select == MEM_SEL_%d) ? i_m_dat: 32'h0;\n" % (i, i)
     assign_buf +="\n"
 
