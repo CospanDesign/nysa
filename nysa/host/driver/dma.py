@@ -164,10 +164,10 @@ class DMA(driver.Driver):
             self.enable_channel(i, False)
 
     def get_channel_count(self):
-        return self.read_register(CHANNEL_COUNT)
+        return self.channel_count
 
     def get_sink_count(self):
-        return self.read_register(SINK_COUNT)
+        return self.sink_count
 
     def get_instruction_count(self):
         return INSTRUCTION_COUNT
@@ -207,6 +207,7 @@ class DMA(driver.Driver):
         raise AssertionError("Not implemented yet!")
         pass
 
+    #Channels or Source Commands
     def set_channel_sink_addr(self, channel, address):
         """
         Setup the addr where this channel will write to
@@ -392,6 +393,50 @@ class DMA(driver.Driver):
             raise DMAError("Illegal source count: %d > %d" % (source, self.channel_count - 1))
         return self.is_register_bit_set(CHANNEL_ADDR_CONTROL_BASE + source, BIT_CFG_SRC_ADDR_DEC)
 
+    def enable_channel(self, channel, enable):
+        """
+        Start executing instructions for a channel pointed to by the instruction
+        pointer
+
+        Args:
+            channel (unsigned char): channel to configure
+
+        Returns:
+            Nothing
+
+        Raises:
+            NysaCommError
+            DMAError:
+                User requested an address out of range
+
+        """
+        if channel > self.channel_count - 1:
+            raise DMAError("Illegal channel count: %d > %d" % (channel, self.channel_count - 1))
+
+        self.enable_register_bit(CHANNEL_ADDR_CONTROL_BASE + channel, BIT_CFG_DMA_ENABLE, enable)
+
+    def is_channel_enable(self, channel):
+        """
+        Returns true if channel is enable
+
+        Args:
+            channel (unsigned char): channel to configure
+
+        Returns (bool):
+            is channel enable
+
+        Raises:
+            NysaCommError
+            DMAError:
+                User requested an address out of range
+        """
+        if channel > self.channel_count - 1:
+            raise DMAError("Illegal channel count: %d > %d" % (channel, self.channel_count - 1))
+        value = self.is_register_bit_set(CHANNEL_ADDR_CONTROL_BASE + channel, BIT_CFG_DMA_ENABLE)
+        self.n.s.Verbose("Channel %d Enable: %s" % (channel, str(value)))
+        return value
+
+    #Sink Commands
     def enable_dest_address_increment(self, sink, enable):
         """
         Enable incrementing the address on 32-bit value read from the dest
@@ -530,88 +575,7 @@ class DMA(driver.Driver):
             raise DMAError("Illegal sink count: %d > %d" % (sink, self.sink_count - 1))
         return self.is_register_bit_set(SINK_ADDR_CONTROL_BASE + sink, BIT_CFG_DEST_DATA_QUANTUM)
 
-    def enable_channel(self, channel, enable):
-        """
-        Start executing instructions for a channel pointed to by the instruction
-        pointer
-
-        Args:
-            channel (unsigned char): channel to configure
-
-        Returns:
-            Nothing
-
-        Raises:
-            NysaCommError
-            DMAError:
-                User requested an address out of range
-
-        """
-        if channel > self.channel_count - 1:
-            raise DMAError("Illegal channel count: %d > %d" % (channel, self.channel_count - 1))
-
-        self.enable_register_bit(CHANNEL_ADDR_CONTROL_BASE + channel, BIT_CFG_DMA_ENABLE, enable)
-
-    def is_channel_enable(self, channel):
-        """
-        Returns true if channel is enable
-
-        Args:
-            channel (unsigned char): channel to configure
-
-        Returns (bool):
-            is channel enable
-
-        Raises:
-            NysaCommError
-            DMAError:
-                User requested an address out of range
-        """
-        if channel > self.channel_count - 1:
-            raise DMAError("Illegal channel count: %d > %d" % (channel, self.channel_count - 1))
-        value = self.is_register_bit_set(CHANNEL_ADDR_CONTROL_BASE + channel, BIT_CFG_DMA_ENABLE)
-        self.n.s.Verbose("Channel %d Enable: %s" % (channel, str(value)))
-        return value
-
-    def set_instruction(self,   inst_addr,          \
-                                source_addr,        \
-                                dest_addr,          \
-                                count,              \
-                                ingress_enable,     \
-                                egress_enable,      \
-                                cmd_continue,       \
-                                next_instruction,   \
-                                ingress_bond_addr,  \
-                                egress_bond_addr):
-        """
-        Setup individual instruction
-
-        Args:
-            inst_addr (unsigned integer): Address of instruction
-            source_addr (unsigned long): Address within source device
-            sink_addr (unsigned long): Address within destination device
-            count (unsigned integer): number of 32-bit data to read/write
-            ingress_enable (bool): Enable ingress channel bond
-            egress_enable (bool): Enable egress channel bond
-            cmd_continue (bool): When finished executing the instruction
-                continue to execute the next instruction specified by
-                next instruction
-            next_instruction(unsigned integer): address of the next instruction
-                to execute
-            ingress_bond_addr (unsigned integer): channel address of the
-                bonded channel (to wait for finished writing data)
-            egress_bond_addr (unsigned integer): chanenl address of the
-                bonded channel (to wait for finished reading data)
-
-        Return:
-            Nothing
-
-        Raises:
-            NysaCommError
-        """
-        if inst_addr > INSTRUCTION_COUNT - 1:
-            raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
-
+    #Instructions
     def set_instruction_source_address(self, inst_addr, source_addr):
         """
         Sets the source address for the instruction transaction
@@ -630,6 +594,26 @@ class DMA(driver.Driver):
         self.write_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_SRC_ADDR_LOW,  ((source_addr) &        0xFFFFFFFF))
         self.write_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_SRC_ADDR_HIGH, ((source_addr >> 32) &  0xFFFFFFFF))
 
+    def get_instruction_source_address(self, inst_addr):
+        """
+        Gets the source address for the instruction transaction
+
+        Args:
+            instr_addr (unsigned int): Address of instruction
+        Returns:
+            source_addr (64-bit unsigned): source address of where to get data
+        Raises:
+            NysaCommError
+            DMAError
+        """
+        if inst_addr > INSTRUCTION_COUNT - 1:
+            raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
+        addr = long(0)
+        addr += self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_SRC_ADDR_LOW)
+        addr = addr << 32
+        addr |= self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_SRC_ADDR_HIGH)
+        return addr
+
     def set_instruction_dest_address(self, inst_addr, dest_addr):
         """
 
@@ -647,7 +631,27 @@ class DMA(driver.Driver):
         self.write_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_DEST_ADDR_LOW,  ((dest_addr) &         0xFFFFFFFF))
         self.write_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_DEST_ADDR_HIGH, ((dest_addr >> 32) &   0xFFFFFFFF))
 
-    def set_instruction_count(self, inst_addr, count):
+    def get_instruction_dest_address(self, inst_addr):
+        """
+
+        Args:
+            instr_addr (unsigned int): Address of instruction
+            sink_addr (64-bit unsigned): Address of where to put data
+        Returns:
+            Nothing
+        Raises:
+            NysaCommError
+            DMAError
+        """
+        if inst_addr > INSTRUCTION_COUNT - 1:
+            raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
+        addr = long(0)
+        addr += self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_DEST_ADDR_LOW)
+        addr = addr << 32
+        addr |= self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_DEST_ADDR_HIGH)
+        return addr
+
+    def set_instruction_data_count(self, inst_addr, count):
         """
 
         Args:
@@ -662,7 +666,64 @@ class DMA(driver.Driver):
             raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
         self.write_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_COUNT, count)
 
-    def set_instruction_ingress(self, inst_addr, enable, ingress_inst_addr = None):
+    def get_instruction_data_count(self, inst_addr):
+        """
+
+        Args:
+            instr_addr (unsigned int): Address of instruction
+        Returns:
+            Nothing
+        Raises:
+            NysaCommError
+            DMAError
+        """
+        if inst_addr > INSTRUCTION_COUNT - 1:
+            raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
+        return self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_COUNT)
+
+    def enable_ingress_bond(self, inst_addr, enable):
+        """
+        Enable Bonding of one instruction to another, this instruction will
+        wait for another instruction to be done before executing
+
+        Args:
+            inst_addr (unsigned int): Address of instruction
+            enable (boolean):
+                True: Enable Ingress Bonding
+                False: Disable Ingress Bonding
+
+        Returns:
+            Nothing
+
+        Raises:
+            NysaCommError
+            DMAError
+        """
+        if inst_addr > INSTRUCTION_COUNT - 1:
+            raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
+
+        self.enable_register_bit(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL, BIT_INST_CMD_BOND_INGRESS, enable)
+
+    def is_ingress_bond(self, inst_addr):
+        """
+        Is bonding of one instruction to another enabled
+
+        Args:
+            inst_addr (unsigned int): Address of instruction
+
+        Returns:
+            Nothing
+
+        Raises:
+            NysaCommError
+            DMAError
+        """
+        if inst_addr > INSTRUCTION_COUNT - 1:
+            raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
+
+        return self.is_register_bit_set(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL, BIT_INST_CMD_BOND_INGRESS)
+
+    def set_instruction_ingress(self, inst_addr, ingress_inst_addr):
         """
         Sets both the ingress address as well as a flag to enable
         the ingress action
@@ -675,12 +736,6 @@ class DMA(driver.Driver):
             NysaCommError
             DMAError
         """
-        if not enable:
-            ingress_inst_addr = 0
-
-        elif ingress_inst_addr is None:
-            raise DMAError("Ingress Address cannot be left blank!")
-
         if inst_addr > INSTRUCTION_COUNT - 1:
             raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
 
@@ -692,9 +747,72 @@ class DMA(driver.Driver):
         r &= ~mask
         r |= ingress_inst_addr << BIT_INST_CMD_BOND_ADDR_IN_BOT
         self.write_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL, r)
-        self.enable_register_bit(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL, BIT_INST_CMD_BOND_INGRESS, enable)
 
-    def set_instruction_egress(self, inst_addr, enable, egress_inst_addr = None):
+    def get_instruction_ingress(self, inst_addr):
+        """
+        Get the ingress address
+
+        Args:
+            instr_addr (unsigned int): Address of instruction
+        Returns:
+            Nothing
+        Raises:
+            NysaCommError
+            DMAError
+        """
+        if inst_addr > INSTRUCTION_COUNT - 1:
+            raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
+
+        r = self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL)
+        mask = ((1 << BIT_INST_CMD_BOND_ADDR_IN_TOP) - (1 << BIT_INST_CMD_BOND_ADDR_IN_BOT))
+        r &= mask
+        address = r >> BIT_INST_CMD_BOND_ADDR_IN_BOT
+        return address
+
+    def enable_egress_bond(self, inst_addr, enable):
+        """
+        Enable Bonding of one instruction to another, this instruction will
+        wait for another instruction to be done before executing
+
+        Args:
+            inst_addr (unsigned int): Address of instruction
+            enable (boolean):
+                True: Enable Egress Bonding
+                False: Disable Egress Bonding
+
+        Returns:
+            Nothing
+
+        Raises:
+            NysaCommError
+            DMAError
+        """
+        if inst_addr > INSTRUCTION_COUNT - 1:
+            raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
+
+        self.enable_register_bit(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL, BIT_INST_CMD_BOND_EGRESS, enable)
+
+    def is_egress_bond(self, inst_addr):
+        """
+        is bonding of one instruction to another, this instruction will
+        wait for another instruction to be done before executing
+
+        Args:
+            inst_addr (unsigned int): Address of instruction
+
+        Returns:
+            Nothing
+
+        Raises:
+            NysaCommError
+            DMAError
+        """
+        if inst_addr > INSTRUCTION_COUNT - 1:
+            raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
+
+        return self.is_register_bit_set(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL, BIT_INST_CMD_BOND_EGRESS)
+
+    def set_instruction_egress(self, inst_addr, egress_inst_addr):
         """
 
         Args:
@@ -705,12 +823,6 @@ class DMA(driver.Driver):
             NysaCommError
             DMAError
         """
-        if not enable:
-            egress_inst_addr = 0
-
-        elif egress_inst_addr is None:
-            raise DMAError("Egress Address cannot be left blank!")
-
         if inst_addr > INSTRUCTION_COUNT - 1:
             raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
         if egress_inst_addr > INSTRUCTION_COUNT - 1:
@@ -720,9 +832,24 @@ class DMA(driver.Driver):
         r &= ~mask
         r |= egress_inst_addr << BIT_INST_CMD_BOND_ADDR_OUT_BOT
         self.write_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL, r)
+
+    def get_instruction_egress(self, inst_addr):
+        """
+        Args:
+            instr_addr (unsigned int): Address of instruction
+        Returns:
+            Nothing
+        Raises:
+            NysaCommError
+            DMAError
+        """
+        if inst_addr > INSTRUCTION_COUNT - 1:
+            raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
         r = self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL)
-        self.enable_register_bit(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL, BIT_INST_CMD_BOND_EGRESS, enable)
-        r = self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL)
+        mask = (1 << BIT_INST_CMD_BOND_ADDR_OUT_TOP) - (1 << BIT_INST_CMD_BOND_ADDR_OUT_BOT)
+        r &= mask
+        address = (r >> BIT_INST_CMD_BOND_ADDR_OUT_BOT)
+        return address
 
     def set_instruction_next_instruction(self, inst_addr, next_instruction):
         """
@@ -762,6 +889,22 @@ class DMA(driver.Driver):
             raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
         self.enable_register_bit(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL, BIT_INST_CMD_CONTINUE, enable)
 
+    def is_instruction_continue(self, inst_addr):
+        """
+        Is Instruction Continue
+
+        Args:
+            instr_addr (unsigned int): Address of instruction
+        Returns:
+            Nothing
+        Raises:
+            NysaCommError
+            DMAError
+        """
+        if inst_addr > INSTRUCTION_COUNT - 1:
+            raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
+        return self.is_register_bit_set(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL, BIT_INST_CMD_CONTINUE)
+
     def enable_instruction_src_addr_reset_on_cmd(self, inst_addr, enable):
         """
         Enable source address reset on command
@@ -779,6 +922,22 @@ class DMA(driver.Driver):
             raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
         self.enable_register_bit(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL, BIT_INST_SRC_RST_ON_INST, enable)
 
+    def is_instruction_src_addr_reset_on_cmd(self, inst_addr):
+        """
+        Is instruction source address reset on command
+
+        Args:
+            instr_addr (unsigned int): Address of instruction
+        Returns:
+            Nothing
+        Raises:
+            NysaCommError
+            DMAError
+        """
+        if inst_addr > INSTRUCTION_COUNT - 1:
+            raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
+        return self.is_register_bit_set(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL, BIT_INST_SRC_RST_ON_INST)
+
     def enable_instruction_dest_addr_reset_on_cmd(self, inst_addr, enable):
         """
         Enable dest address reset on command
@@ -795,6 +954,22 @@ class DMA(driver.Driver):
         if inst_addr > INSTRUCTION_COUNT - 1:
            raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
         self.enable_register_bit(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL, BIT_INST_DEST_RST_ON_INST, enable)
+
+    def is_instruction_dest_addr_reset_on_cmd(self, inst_addr):
+        """
+        Is dest address reset on command
+
+        Args:
+            instr_addr (unsigned int): Address of instruction
+        Returns:
+            Nothing
+        Raises:
+            NysaCommError
+            DMAError
+        """
+        if inst_addr > INSTRUCTION_COUNT - 1:
+           raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
+        return self.is_register_bit_set(INST_BASE + (INST_OFFSET * inst_addr) + INST_CNTRL, BIT_INST_DEST_RST_ON_INST)
 
     def setup_double_buffer(self,
                             start_inst_addr,
@@ -849,18 +1024,20 @@ class DMA(driver.Driver):
         self.set_instruction_source_address(    start_inst_addr,        source_addr)
         self.set_instruction_next_instruction(  start_inst_addr,        start_inst_addr + 1)
         self.set_instruction_dest_address(      start_inst_addr,        mem_addr0)
-        self.set_instruction_count(             start_inst_addr,        count)
+        self.set_instruction_data_count(        start_inst_addr,        count)
         self.enable_instruction_continue(       start_inst_addr,        True)
-        self.set_instruction_ingress(           start_inst_addr,        True, start_inst_addr + 2)
+        self.set_instruction_ingress(           start_inst_addr,        start_inst_addr + 2)
+        self.enable_ingress_bond(               start_inst_addr,        True)
         self.set_channel_instruction_pointer(   source,                 start_inst_addr)
 
         #Setup Instruction 1
         self.set_instruction_source_address(    start_inst_addr + 1,    source_addr)
         self.set_instruction_next_instruction(  start_inst_addr + 1,    start_inst_addr)
         self.set_instruction_dest_address(      start_inst_addr + 1,    mem_addr1)
-        self.set_instruction_count(             start_inst_addr + 1,    count)
+        self.set_instruction_data_count(        start_inst_addr + 1,    count)
         self.enable_instruction_continue(       start_inst_addr + 1,    True)
-        self.set_instruction_ingress(           start_inst_addr + 1,    True, start_inst_addr + 3)
+        self.set_instruction_ingress(           start_inst_addr + 1,    start_inst_addr + 3)
+        self.enable_ingress_bond(               start_inst_addr,        True)
 
         #Instruction 2 and 3 will be the double buffer for the output
 
@@ -868,17 +1045,19 @@ class DMA(driver.Driver):
         self.set_instruction_source_address(    start_inst_addr + 2,    mem_addr0)
         self.set_instruction_next_instruction(  start_inst_addr + 2,    start_inst_addr + 3)
         self.set_instruction_dest_address(      start_inst_addr + 2,    sink_addr)
-        self.set_instruction_count(             start_inst_addr + 2,    count)
+        self.set_instruction_data_count(        start_inst_addr + 2,    count)
         self.enable_instruction_continue(       start_inst_addr + 2,    True)
-        self.set_instruction_egress(            start_inst_addr + 2,    True, start_inst_addr)
+        self.set_instruction_egress(            start_inst_addr + 2,    start_inst_addr)
+        self.enable_egress_bond(                start_inst_addr + 2,    True)
         self.set_channel_instruction_pointer(   mem_source,             start_inst_addr + 2)
 
         #Setup Instruction 3
         self.set_instruction_source_address(    start_inst_addr + 3,    mem_addr0)
         self.set_instruction_next_instruction(  start_inst_addr + 3,    start_inst_addr + 2)
         self.set_instruction_dest_address(      start_inst_addr + 3,    sink_addr)
-        self.set_instruction_count(             start_inst_addr + 3,    count)
+        self.set_instruction_data_count(        start_inst_addr + 3,    count)
         self.enable_instruction_continue(       start_inst_addr + 3,    True)
-        self.set_instruction_egress(            start_inst_addr + 3,    True, start_inst_addr + 1)
+        self.set_instruction_egress(            start_inst_addr + 3,    start_inst_addr + 1)
+        self.enable_egress_bond(                start_inst_addr + 3,    True)
 
 
