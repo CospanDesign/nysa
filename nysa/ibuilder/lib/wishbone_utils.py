@@ -519,8 +519,9 @@ class WishboneTopGenerator(object):
         if "board_internal_bind" in self.tags:
             self.internal_bindings = self.tags["board_internal_bind"]
 
+        #Extend the internal bindings
         if "internal_bind" in self.tags:
-            for key in self.tags["board_internal_bind"]:
+            for key in self.tags["internal_bind"]:
                 self.internal_bindings[key] = self.tags["internal_bind"][key]
 
         #Add Global Bindings

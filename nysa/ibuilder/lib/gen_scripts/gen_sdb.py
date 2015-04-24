@@ -253,6 +253,7 @@ class GenSDB(Gen):
 
             mem = sdbc.create_device_record(name = key)
             mem.parse_buffer(memory_buffer)
+            mem.set_name(str(key))
             sm.insert_component(memory, mem)
             self.rom_element_count += 1
 
