@@ -608,10 +608,9 @@ class DMA(driver.Driver):
         """
         if inst_addr > INSTRUCTION_COUNT - 1:
             raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
-        addr = long(0)
-        addr += self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_SRC_ADDR_LOW)
+        addr = long(self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_SRC_ADDR_HIGH))
         addr = addr << 32
-        addr |= self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_SRC_ADDR_HIGH)
+        addr |= long(self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_SRC_ADDR_LOW))
         return addr
 
     def set_instruction_dest_address(self, inst_addr, dest_addr):
@@ -645,10 +644,9 @@ class DMA(driver.Driver):
         """
         if inst_addr > INSTRUCTION_COUNT - 1:
             raise DMAError("Specified instruction address out of range (%d > %d)" % (inst_addr, INSTRUCTION_COUNT))
-        addr = long(0)
-        addr += self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_DEST_ADDR_LOW)
+        addr = long(self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_DEST_ADDR_HIGH))
         addr = addr << 32
-        addr |= self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_DEST_ADDR_HIGH)
+        addr |= long(self.read_register(INST_BASE + (INST_OFFSET * inst_addr) + INST_DEST_ADDR_LOW))
         return addr
 
     def set_instruction_data_count(self, inst_addr, count):
