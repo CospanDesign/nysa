@@ -156,7 +156,7 @@ def resolve_defines(work_string="", define_dict={}, debug = False):
     if debug: print "starting string: " + work_string
     work_string = work_string.strip()
     #while there is still a tick mark in the string
-    while (work_string.__contains__("`")):
+    while "`" in work_string:
         if debug: print "found debug marker"
         #look through the filedict
         #only need to look after the ` portion
@@ -194,6 +194,21 @@ def resolve_defines(work_string="", define_dict={}, debug = False):
 
 
     return work_string
+
+def evaluate_define_region(in_string, define_name):
+    """
+    Given a define name and an input string, determine if we
+    need to remove a portion of the code,
+
+    This handles the following statements:
+    `ifdef DEFINE_NAME
+        ADD IF DEFINE_NAME IS DEFINES
+    `else
+        ADD IF DEFINE_NAME IS NOT DEFINED
+    `endif
+    """
+
+    pass
 
 
 def evaluate_range(in_string = "", define_dict = {}, debug = False):

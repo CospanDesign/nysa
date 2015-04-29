@@ -589,7 +589,8 @@ class WishboneTopGenerator(object):
         absfilename = utils.find_rtl_file_location("sdb.v", self.user_paths)
         slave_tags = vutils.get_module_tags(filename = absfilename,
                                            bus = "wishbone",
-                                           user_paths = self.user_paths)
+                                           user_paths = self.user_paths,
+                                           project_tags = self.tags)
         slave_buf = self.generate_wishbone_buffer(name = "sdb",
                                                   index = 0,
                                                   slave_tags = {},
@@ -605,7 +606,8 @@ class WishboneTopGenerator(object):
             absfilename = utils.find_rtl_file_location(slave, self.user_paths)
             slave_tags = vutils.get_module_tags(filename = absfilename,
                                                bus = "wishbone",
-                                               user_paths = self.user_paths)
+                                               user_paths = self.user_paths,
+                                               project_tags = self.tags)
 
             slave_buf = self.generate_wishbone_buffer(slave_name,
                                                       index = i + 1,
@@ -627,7 +629,8 @@ class WishboneTopGenerator(object):
                 absfilename = utils.find_rtl_file_location(filename, self.user_paths)
                 mem_tags = vutils.get_module_tags(filename = absfilename,
                                                  bus = "wishbone",
-                                                 user_paths = self.user_paths)
+                                                 user_paths = self.user_paths,
+                                                 project_tags = self.tags)
                 mem_buf = self.generate_wishbone_buffer(mem_name,
                                                         index = i,
                                                         slave_tags = self.tags["MEMORY"][mem_name],
@@ -911,7 +914,8 @@ class WishboneTopGenerator(object):
         absfilepath = utils.find_rtl_file_location(self.tags["INTERFACE"]["filename"])
         module_tags = vutils.get_module_tags(filename = absfilepath,
                                             bus = "wishbone",
-                                            user_paths = self.user_paths)
+                                            user_paths = self.user_paths,
+                                            project_tags = self.tags)
         #print "module_tags: %s" % str(module_tags)
         name = "io"
         board_dict = utils.get_board_config(self.tags["board"])
@@ -1055,7 +1059,9 @@ class WishboneTopGenerator(object):
     def generate_infrastructure_buffer(self, name, idict):
         buf = "//Infrastructure for %s\n\n" % name
         absfilename = utils.find_rtl_file_location(idict["filename"], self.user_paths)
-        module_tags = vutils.get_module_tags(filename = absfilename, user_paths = self.user_paths)
+        module_tags = vutils.get_module_tags(   filename = absfilename,
+                                                user_paths = self.user_paths,
+                                                project_tags = self.tags)
         board_dict = utils.get_board_config(self.tags["board"])
         buf += "//Wires\n"
 

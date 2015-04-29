@@ -36,7 +36,7 @@ def get_eol(total, index):
     return ""
 
 
-def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug=False):
+def get_module_buffer_tags(buf, bus = "", keywords = [], user_paths = [], project_tags = {}, debug = False):
     raw_buf = buf
     tags = {}
     tags["keywords"] = {}
@@ -116,6 +116,9 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
 
     ldebug = debug
     define_dict = preprocessor.generate_define_table(raw_buf, user_paths, ldebug)
+    if 'defines' in project_tags:
+        for d in project_tags["defines"]:
+            define_dict[d] = project_tags["defines"][d]
 
     #find all the IO's
     for io in ports:
@@ -260,7 +263,7 @@ def get_module_buffer_tags(buf="", bus="", keywords = [], user_paths = [], debug
 
 
 
-def get_module_tags(filename="", bus="", keywords = [], user_paths = [], debug=False):
+def get_module_tags(filename="", bus="", keywords = [], user_paths = [], project_tags = {}, debug=False):
     """Gets the tags for the module within the specified filename
 
     Given a module within a filename search through the module and
@@ -292,6 +295,7 @@ def get_module_tags(filename="", bus="", keywords = [], user_paths = [], debug=F
     return get_module_buffer_tags(buf = buf,
                                   keywords = keywords,
                                   user_paths = user_paths,
+                                  project_tags = project_tags,
                                   debug = debug)
 
 

@@ -148,7 +148,7 @@ class ModuleProcessor:
     self.tags = tags
     return
 
-  def process_file(self, filename = "", file_dict={}, directory="", debug=False):
+  def process_file(self, filename, file_dict, directory="", debug=False):
     """process_file
 
     read in a file, modify it (if necessary), then write it to the location
@@ -167,12 +167,6 @@ class ModuleProcessor:
 
     """
     debug = False
-    if (len(filename) == 0):
-      raise ModuleFactoryError ("No filename specified")
-
-    if (len(directory) == 0):
-      raise ModuleFactoryError ("No output directory specified")
-
     if (filename.endswith(".v")):
       self.verilog_file_list.append(filename)
 

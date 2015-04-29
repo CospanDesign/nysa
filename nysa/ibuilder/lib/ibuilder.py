@@ -114,7 +114,7 @@ class ProjectGenerator(object):
         name = "default.json"
         if "default_project" in bd:
             name = bd["default_project"]
-            
+
         default_path = os.path.join(path, "board", name)
         #print "Path: %s" % default_path
 
@@ -144,7 +144,7 @@ class ProjectGenerator(object):
                         board_dict[key] = parent_dict[key]
         #print "board dict: %s" % str(board_dict)
         return board_dict
-        
+
     def read_config_file(self, filename="", debug=False):
         """Read in a configuration file name and create a class dictionary
 
@@ -368,7 +368,7 @@ class ProjectGenerator(object):
                 im = entry[name]
                 path = utils.get_board_directory(name)
                 path = os.path.join(path, name, "infrastructure", im["filename"])
-                
+
                 ftdict = {"location":path}
                 file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "bus", "infrastructure")
                 fn = im["filename"]
