@@ -137,6 +137,17 @@ def is_wishbone_bus_signal(signal):
         return True
     return False
 
+def generate_defines(define_dict):
+    buf = "//Defines\n"
+    for key in define_dict:
+        buf += "`define %s" % key
+        if len(define_dict[key]) > 0:
+            buf += " %s" % define_dict[key]
+        buf += "\n"
+
+    buf += "\n"
+    return buf
+
 
 def generate_startup():
     buf = "//Startup reset\n\n"
@@ -515,6 +526,7 @@ class WishboneTopGenerator(object):
                     enable_memory_bus = True
         self.num_slaves = len(self.slave_list) + 1
 
+
         self.internal_bindings = {}
         if "board_internal_bind" in self.tags:
             self.internal_bindings = self.tags["board_internal_bind"]
@@ -555,6 +567,11 @@ class WishboneTopGenerator(object):
 
         #Remove all ports from the possible wires
         self.add_ports_to_wires()
+
+        #defines
+        define_buf = ""
+        if "defines" in self.tags:
+            define_buf = generate_defines(self.tags["defines"])
 
         #If there is an infrastructure, generate the infrastructure buffer
         inf_buf = ""
@@ -640,7 +657,11 @@ class WishboneTopGenerator(object):
 
 
         #Add the ports
-        buf =  self.generate_top_ports(debug = debug)
+        buf = "//Top HDL\n"
+        buf += "\n\n"
+        buf += define_buf
+        buf += "\n\n"
+        buf +=  self.generate_top_ports(debug = debug)
         buf += "\n\n"
         #Add the boiler plate register/wires
         buf += bp_buf
