@@ -69,6 +69,24 @@ class GenProjectConfig(Gen):
                 config[key] = {}
                 config[key] = board_config["build_flags"][key]
 
+        if "build_flags" in tags:
+            #Go through each of hte tool keys and add all the tools in there ('ie xst)"
+            for tool_key in tags["build_flags"]:
+                if tool_key not in config:
+                    #Add the tool if it doesn't already exist
+                    config[tool_key] = {}
+                for key in tags["build_flags"][tool_key]:
+                    if key == "flags":
+                        continue
+                    config[tool_key][key] = tags["build_flags"][tool_key][key]
+
+                #Add the flags
+                if "flags" in tags["build_flags"][tool_key]:
+                    if "flags" not in config[tool_key]:
+                        config[tool_key]["flags"] = {}
+                    for key in tags["build_flags"][tool_key]["flags"]:
+                        config[tool_key]["flags"][key] = tags["build_flags"][tool_key]["flags"][key]
+
         return json.dumps(config, sort_keys = True, indent = 4, separators = [',', ':'])
 
     def gen_name(self):
