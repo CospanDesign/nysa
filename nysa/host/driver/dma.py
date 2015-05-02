@@ -436,6 +436,25 @@ class DMA(driver.Driver):
         self.n.s.Verbose("Channel %d Enable: %s" % (channel, str(value)))
         return value
 
+    def get_channel_status(self, channel):
+        """
+        Returns the channel status
+        
+        Args:
+            channel (unsigned char): channel to configure
+
+        Returns (32-bit unsigned integer)
+            Channel status flags
+
+        Raises:
+            NysaCommError
+            DMAError:
+                user requested a channel that is out of range
+        """
+        if channel > self.channel_count - 1:
+            raise DMAError("Illegal channel count: %d > %d" % (channel, self.channel_count - 1))
+        return self.read_register(CHANNEL_ADDR_STATUS_BASE + channel)
+
     #Sink Commands
     def enable_dest_address_increment(self, sink, enable):
         """
