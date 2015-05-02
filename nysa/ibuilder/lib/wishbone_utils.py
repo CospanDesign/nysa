@@ -537,13 +537,14 @@ class WishboneTopGenerator(object):
                 self.internal_bindings[key] = self.tags["internal_bind"][key]
 
         #Add Global Bindings
-        self.bindings = {}
         if "board_bind" in self.tags:
             self.bindings = self.tags["board_bind"]
 
-        if "bind" in self.tags:
-            for key in self.tags["bind"]:
-                self.bindings[key] = self.tags["bind"][key]
+        if "bind" not in self.tags:
+            self.tags["bind"] = {}
+
+        for key in self.tags["bind"]:
+            self.bindings[key] = self.tags["bind"][key]
 
         #Add the Host Interface Bindings
         if "bind" in self.tags["INTERFACE"]:
@@ -1085,24 +1086,18 @@ class WishboneTopGenerator(object):
                                                 project_tags = self.tags)
         board_dict = utils.get_board_config(self.tags["board"])
         buf += "//Wires\n"
-
         pre_name = ""
         for io in IO_TYPES:
             if io == "inout":
                 continue
 
-            for port in module_tags["ports"][io].keys():
-                wire = ""
-                port_dict = module_tags["ports"][io][port]
+            ports = module_tags["ports"][io]
+            for port in ports:
+                port_dict = ports[port]
                 if port == "clk" or port == "rst":
                     continue
 
-                #if port in self.wires:
-                #    if debug: print "%s is in wires already" % port
-                #    continue
-
-                wire = "%s" % port
-                if wire in self.wires:
+                if port in self.wires:
                     continue
 
                 self.wires.append(port)
@@ -1112,7 +1107,7 @@ class WishboneTopGenerator(object):
                 if port_dict["size"] > 1:
                     max_val = port_dict["max_val"]
                     min_val = port_dict["min_val"]
-                buf += create_wire_buf(wire,
+                buf += create_wire_buf(port,
                                        port_dict["size"],
                                        max_val,
                                        min_val)
