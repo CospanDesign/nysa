@@ -96,6 +96,7 @@ MAIN_INTERCONNECT = \
     "  SDB_READABLE:True\n" \
     "\n"
 
+'''
 def calculate_sdb_size(tags):
     #Start out with one for the interconnect
     count = 1
@@ -122,6 +123,7 @@ def calculate_number_of_devices(tags):
             count += 1
     count += len(tags["MEMORY"])
     return count
+'''
 
 def is_integration_required(slave_dict):
     if "integration" in slave_dict.keys():
@@ -145,7 +147,6 @@ def generate_integration_record(slave_tags, slave):
         if integration_list.index(s) != len(integration_list) - 1:
             integration_buffer += ","
     
-    #print "Generated Integration Record for %s: %s" % (slave, integration_buffer)
     c = sdbc.create_integration_record(information = integration_buffer)
     return c
 
