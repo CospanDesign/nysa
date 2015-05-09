@@ -175,7 +175,7 @@ def find_board(name, serial = None, status = None):
                 if s: s.Important("Found: %s" % names[0])
                 name = names[0]
             else:
-                raise ("more than one option for attached board: %s" % str(names))
+                raise PlatformScannerException("more than one option for attached board: %s" % str(names))
                 sys.exit(1)
 
     name = name.lower()
