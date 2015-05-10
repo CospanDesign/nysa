@@ -97,6 +97,42 @@ class PlatformScanner(object):
 
         return plat_class_dict
 
+def get_platforms(status = None):
+    """
+    Return all platforms in the system
+
+    Args:
+        status (Status): a debug status object
+
+    Return:
+        (list of platforms)
+
+    Raises:
+        Nothing
+    """
+    platforms = []
+    pscanner = PlatformScanner()
+    platform_dict = pscanner.get_platforms()
+    platform_names = platform_dict.keys()
+
+    if "sim" in platform_names:
+        platform_names.remove("sim")
+        platform_names.append("sim")
+
+    for platform_name in platform_names:
+        platform_instance = platform_dict[platform_name](status)
+
+        instances_dict = platform_instance.scan()
+
+        for name in instances_dict:
+            n = instances_dict[name]
+            if n is not None:
+                status.Debug("Found a Nysa Instance: %s" % name)
+                platforms.append(n)
+
+    return platforms
+
+
 def get_platforms_with_device(driver, status = None):
     """
     From a driver return a list of platforms that have a reference to a
