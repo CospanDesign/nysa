@@ -127,7 +127,7 @@ def get_platforms(status = None):
         for name in instances_dict:
             n = instances_dict[name]
             if n is not None:
-                status.Debug("Found a Nysa Instance: %s" % name)
+                if status: status.Debug("Found a Nysa Instance: %s" % name)
                 platforms.append(n)
 
     return platforms
@@ -147,7 +147,7 @@ def get_platforms_with_device(driver, status = None):
     Raises:
         Nothing
     """
-    status.Debug("Type of driver: %s" % str(driver))
+    if status: status.Debug("Type of driver: %s" % str(driver))
     platforms = []
     pscanner = PlatformScanner()
     platform_dict = pscanner.get_platforms()
@@ -159,7 +159,7 @@ def get_platforms_with_device(driver, status = None):
         platform_names.append("sim")
 
     for platform_name in platform_names:
-        status.Debug("Platform: %s" % str(platform_name))
+        if status: status.Debug("Platform: %s" % str(platform_name))
         #Get a reference to a platform object (like sim, or dionysus)
         platform_instance = platform_dict[platform_name](status)
 
@@ -169,7 +169,7 @@ def get_platforms_with_device(driver, status = None):
         for name in instances_dict:
             n = instances_dict[name]
             if n is not None:
-                status.Debug("Found a Nysa Instance: %s" % name)
+                if status: status.Debug("Found a Nysa Instance: %s" % name)
                 n.read_sdb()
                 if n.is_device_in_platform(driver):
                     platforms.append(n)
