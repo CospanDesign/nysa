@@ -110,18 +110,23 @@ def get_platforms(status = None):
     Raises:
         Nothing
     """
+    if status: status.Debug("Type of driver: %s" % str(driver))
     platforms = []
     pscanner = PlatformScanner()
     platform_dict = pscanner.get_platforms()
     platform_names = platform_dict.keys()
 
     if "sim" in platform_names:
+        #If sim is in the platform names move it to the back
         platform_names.remove("sim")
         platform_names.append("sim")
 
     for platform_name in platform_names:
+        if status: status.Debug("Platform: %s" % str(platform_name))
+        #Get a reference to a platform object (like sim, or dionysus)
         platform_instance = platform_dict[platform_name](status)
 
+        #Scan for instances of that particular platform
         instances_dict = platform_instance.scan()
 
         for name in instances_dict:
@@ -131,7 +136,6 @@ def get_platforms(status = None):
                 platforms.append(n)
 
     return platforms
-
 
 def get_platforms_with_device(driver, status = None):
     """
