@@ -30,6 +30,13 @@ import os
 import time
 from array import array as Array
 
+import platform
+SYSTEM_NAME = platform.system()
+SYSTEM_DIST = ("","","")
+if SYSTEM_NAME == "Linux":
+    SYSTEM_DIST = platform.linux_distribution()
+ 
+
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 class Platform(object):
@@ -54,3 +61,6 @@ class Platform(object):
 
     def test_build_tools(self):
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
+    def setup_platform(self):
+        return

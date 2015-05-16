@@ -1,4 +1,5 @@
 import os
+import sys
 import urllib
 import urllib2
 import json
@@ -9,10 +10,12 @@ import zipfile
 import tempfile
 import datetime
 import subprocess
+import importlib
+import inspect
 from cookielib import CookieJar
 from urllib2 import build_opener, HTTPCookieProcessor
-
-
+sys.path.append(os.path.join(os.path.dirname(__file__),
+                             os.pardir))
 
 SITE_PATH = os.path.join(site.USER_BASE, "nysa")
 VERSION_PATH = os.path.join(SITE_PATH, "versions.json")
@@ -381,6 +384,19 @@ class SiteManager(object):
 
             self.add_board(name, timestamp, install_dir)
             if self.s: self.s.Important("Updating path dictionary")
+            #check if there is any setup to do
+            import_str = "%s.nysa_platform" % name
+            #package = importlib.import_module(import_str)
+            #platform = package.nysa_platform
+            platform = importlib.import_module(import_str)
+            
+            pdict = inspect.getmembers(platform)
+            from nysa.host.nysa_platform import Platform
+            for member_name, obj in pdict:
+                if inspect.isclass(obj) and issubclass(obj, Platform) and obj is not Platform:
+                    if self.s: self.s.Info("Calling platform specific setup function")
+                    p = obj(self.s)
+                    p.setup_platform()
 
         if self.s: self.s.Info("Wrote path dictionary to config file @ %s" % SITE_PATH)
 
