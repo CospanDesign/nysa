@@ -81,6 +81,10 @@
             "description":"Direct Memory Access controller",
             "ID":"0x0013"
         },
+        "Storage Manager":{
+            "description":"Manage Storage Devices like SATA",
+            "ID":"0x0014"
+        },
         "DMA Reader":{
             "description":"A test core for DMA Reader",
             "ID":"0x0020"
