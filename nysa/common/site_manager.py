@@ -7,6 +7,8 @@ import shutil
 import csv
 import zipfile
 import tempfile
+import datetime
+import subprocess
 from cookielib import CookieJar
 from urllib2 import build_opener, HTTPCookieProcessor
 
@@ -37,6 +39,15 @@ USER_BASE_DEV_DIR = "dev"
 USER_BASE_APP_DIR = "apps"
 USER_BASE_IBUILDER_DIR = "user_ibuilder_projects"
 USER_BASE_CBUILDER_DIR = "user_cbuilder_projects"
+
+def get_python_install_dir():
+    p = None
+    try:
+        p = site.getsitepackages()[0]
+    except AttributeError as e:
+        from distutils.sysconfig import get_python_lib
+        p = get_python_lib()
+    return p
 
 def get_paths_path():
     return PATHS_PATH
@@ -132,11 +143,11 @@ class SiteManager(object):
 
     def get_paths_dict(self, force = False):
         global paths_dict
-        #print "pre path dict: %s" % str(paths_dict)
-        if paths_dict is not None or force:
-            #print "\tGetting cached version"
-            return paths_dict
-        #print "\tGetting non-cached version"
+        ##print "pre path dict: %s" % str(paths_dict)
+        #if paths_dict is not None or force:
+        #    #print "\tGetting cached version"
+        #    return paths_dict
+        ##print "\tGetting non-cached version"
         f = open(get_paths_path())
         paths_dict = json.load(f)
         f.close()
@@ -169,7 +180,6 @@ class SiteManager(object):
         f = open(get_paths_path(), "w")
         f.write(json.dumps(paths_dict, sort_keys = True, indent = 2, separators=(",", ": ")))
         f.close()
-        self.get_paths_dict(force = True)
 
     def add_verilog_package(self, name, timestamp, path):
         paths_dict = self.get_paths_dict()
@@ -250,74 +260,129 @@ class SiteManager(object):
                 return True
         return False
 
-    def install_remote_board_package(self, name, branch = DEFAULT_BOARD_BRANCH):
-        opener = build_opener(HTTPCookieProcessor(CookieJar()))
-        resp = opener.open(BOARD_SPREADSHEET_URL)
-        data = resp.read()
-        data = data.strip()
-        row_data = data.split("\n")
-        grid_data = []
-        for i in range(len(row_data)):
-            grid_data.append([])
-            grid_data[i].extend(row_data[i].split(","))
+    def install_verilog_module(self, name = None):
+        repo_dict = self.get_remote_verilog_dict()
+        
+        names = []
+        if name is None:
+            #All platforms
+            names = repo_dict.keys()
+            if self.s: self.s.Important("Installing all verilog repositories")
 
-        #print "grid data: %s" % str(grid_data)
-        self.update_board_id_dict(grid_data)
-        result = None
-        for row in grid_data:
-            #print "row: %s" % str(row)
-            if row[0].strip() == "Timestamp":
-                continue
-            if row[1].lower() == name.lower():
-                result = row
-                break
+        elif isinstance(name, list):
+            print "list: %s" % name
 
-        if result is None:
-            raise SiteManagerError("Did not find remote board: %s" % name)
+            if len(name) == 0:
+                #All of them
+                name = repo_dict.keys()
+            for n in name:
+                if n not in repo_dict.keys():
+                    #Check to see if this is a valid platform
+                    err_str = "" \
+                    "Error %s is not a valid verilog repository!\n" \
+                    "Valid repos include:\n"
+                    for nm in repo_dict.keys():
+                        err_str += "\t%s\n" % nm
+ 
+                    err_str += "\n"
+                    raise SiteManagerError(err_str)
 
-        url = result[2]
-        timestamp = result[0]
-        archive_url = None
-        if url.endswith('zip'):
-            print "Found zip file URL"
-            raise SiteManagerError("Current version of stie manager can only fetch Github URLs")
-        elif "github" not in url:
-            raise SiteManagerError("Current version of site manager can only fetch Github URLs")
+                names.append(n)
 
-        if "github" in url:
-            archive_url = url + "/archive/%s.zip" % branch
+        elif name == "all":
+            #All platforms
+            names = board_dict.keys()
+            if self.s: self.s.Important("Installing all repository")
 
-        if not os.path.exists(get_board_package_path()):
-            os.makedirs(os.path.join(get_board_package_path()))
+        else:
+            if name not in board_dict.keys():
+                #Check to see if this is a valid platform
+                err_str = "" \
+                "Error %s is not a valid repository!\n" \
+                "Valid platforms include:\n"
+                for n in repo_dict.keys():
+                    err_str += "\t%s\n" % n
 
-        opener = build_opener(HTTPCookieProcessor(CookieJar()))
-        resp = opener.open(archive_url)
-        data = resp.read()
+                err_str += "\n"
+                raise SiteManagerError(err_str)
 
-        #board_path = os.path.join(get_board_package_path(), name.lower())
-        #board_path = os.path.join(get_board_package_path(), name.lower())
+            names = [name]
 
-        if not os.path.exists(get_board_package_path()):
-            os.makedirs(get_board_package_path())
+        now = datetime.datetime.now()
+        timestamp = now.strftime("%x %X")
+        name = None
+        for name in names:
+            if self.s: self.s.Important("Installing verilog repo: %s" % name)
+            self.update_verilog_package(name)
 
-        tempdir = tempfile.mkdtemp()
+    def install_remote_board_package(self, name = None, branch = DEFAULT_BOARD_BRANCH):
+        install_dir = get_python_install_dir()
 
-        #tempdir = get_board_package_path()
-        temparchive = os.path.join(tempdir, "archive.zip")
-        urllib.urlretrieve(archive_url, temparchive)
-        #f = open(temparchive, "a")
-        #f.write(data)
-        #f.close()
+        #get the online board dictionary
+        board_dict = self.get_remote_board_dict()
 
-        zf = zipfile.ZipFile(temparchive, "a")
-        zf.extractall(get_board_package_path())
-        zf.close()
-        shutil.rmtree(tempdir)
-        dir_name = "%s-%s" % (url.rpartition("/")[2], branch)
-        board_dir = os.path.join(get_board_package_path(), dir_name)
+        names = []
+        if name is None:
+            #All platforms
+            names = board_dict.keys()
+            if self.s: self.s.Important("Installing all platforms")
 
-        self.add_board(name, timestamp, board_dir)
-        self.get_paths_dict(force = True)
+        elif isinstance(name, list):
+            print "list: %s" % name
+
+            if len(name) == 0:
+                #All of them
+                name = board_dict.keys()
+            for n in name:
+                if n not in board_dict.keys():
+                    #Check to see if this is a valid platform
+                    err_str = "" \
+                    "Error %s is not a valid platform!\n" \
+                    "Valid platforms include:\n"
+                    for nm in board_dict.keys():
+                        err_str += "\t%s\n" % nm
+ 
+                    err_str += "\n"
+                    raise SiteManagerError(err_str)
+
+                names.append(n)
+
+        elif name == "all":
+            #All platforms
+            names = board_dict.keys()
+            if self.s: self.s.Important("Installing all platforms")
+
+        else:
+            if name not in board_dict.keys():
+                #Check to see if this is a valid platform
+                err_str = "" \
+                "Error %s is not a valid platform!\n" \
+                "Valid platforms include:\n"
+                for n in board_dict.keys():
+                    err_str += "\t%s\n" % n
+
+                err_str += "\n"
+                raise SiteManagerError(err_str)
+
+            names = [name]
+            if self.s: self.s.Important("Installing %s" % name)
+
+        now = datetime.datetime.now()
+        timestamp = now.strftime("%x %X")
+        name = None
+
+        for name in names:
+            if self.s: self.s.Important("Installing: %s" % name)
+            if len(board_dict[name]["pip"]) == 0:
+                board_dict[name]["pip"] = "git+" + board_dict[name]["repository"] + ".git"
+            if self.s: self.s.Important("Installing from URL: %s" % (board_dict[name]["pip"]))
+
+            v = subprocess.call(["sudo", "pip", "install", "--upgrade", board_dict[name]["pip"]])
+
+            self.add_board(name, timestamp, install_dir)
+            if self.s: self.s.Important("Updating path dictionary")
+
+        if self.s: self.s.Info("Wrote path dictionary to config file @ %s" % SITE_PATH)
 
     def get_board_id_dict(self):
         f = open(get_board_id_path(), "r")

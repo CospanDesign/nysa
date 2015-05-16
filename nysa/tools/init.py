@@ -26,6 +26,9 @@ import json
 from nysa.ibuilder.lib import utils
 from nysa.common import site_manager
 
+import install_platform
+import install_verilog_modules
+
 NAME = "init"
 SCRIPT_NAME = "nysa %s" % NAME
 
@@ -151,5 +154,10 @@ def init(args, status):
         #Make the user cbuilder probject directory
         if s: s.Important("Generating user cbuilder directory")
         os.makedirs(user_cbuilder_path)
+
+    #Adding Default Verilog Packages
+    sm.install_verilog_module()
+    #Adding Default boards
+    sm.install_remote_board_package()
 
 

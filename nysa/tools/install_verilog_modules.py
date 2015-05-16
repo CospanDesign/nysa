@@ -75,10 +75,5 @@ def install(args, status):
         names = [args.name]
 
     print "%sInstalling repositories:%s " % (sts.purple, sts.white),
-    for name in names:
-        #verilog_dir = os.path.join(site_manager.get_verilog_package_path(), name)
-        #print "Dir: %s" % verilog_dir
-        print "\t%s%s%s" % (sts.blue, name, sts.white)
-        #sm.add_verilog_package(name, repo_dict[name]["timestamp"], verilog_dir)
-        sm.update_verilog_package(name)
+    sm.install_verilog_module(names)
 

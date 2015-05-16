@@ -76,11 +76,15 @@ def install(args, status):
         names = [args.name]
 
 
+    sm.install_remote_board_package(names)
+    '''
     print "%sInstalling platforms:%s " % (sts.purple, sts.white),
     for name in names:
         print "\t%s%s%s" % (sts.blue, name, sts.white)
         if len(board_dict[name]["pip"]) == 0:
             board_dict[name]["pip"] = "git+" + board_dict[name]["repository"] + ".git"
         print "\t%sInstalling from URL: %s%s" % (sts.blue, board_dict[name]["pip"], sts.white)
-        subprocess.call(["sudo", "pip", "install", "--upgrade", board_dict[name]["pip"]])
+        v = subprocess.call(["sudo", "pip", "install", "--upgrade", board_dict[name]["pip"]])
+        print "v: %s" % v
+    '''
 
