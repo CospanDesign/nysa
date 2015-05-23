@@ -92,6 +92,10 @@
         "DMA Writer":{
             "description":"A test core for DMA Writer",
             "ID":"0x0021"
+        },
+        "Platform":{
+            "description":"A Nysa Platform",
+            "ID":"0x0022"
         }
     }
 }
