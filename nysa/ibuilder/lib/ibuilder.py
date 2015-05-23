@@ -97,6 +97,21 @@ def generate_project(filename, user_paths = [], output_directory = None, status 
     result = pg.generate_project(filename, output_directory = output_directory)
     return result
 
+def get_parent_board_paths(board_dict):
+    paths = []
+    if "parent_board" not in board_dict:
+        return
+
+    for parent in board_dict["parent_board"]:
+        bd = utils.get_board_config(parent)
+        if "paths" in bd:
+            paths.extend(bd["paths"])
+        paths.append(utils.get_board_directory(parent))
+        if "parent_board" in bd:
+            paths.extend(get_parent_board_paths(bd))
+
+    return list(set(paths))
+
 
 class ProjectGenerator(object):
     """Generates IBuilder Projects"""
@@ -265,6 +280,10 @@ class ProjectGenerator(object):
             self.user_paths.extend(board_dict["paths"])
             self.user_paths = list(set(self.user_paths))
 
+        if "parent_board" in board_dict:
+            self.user_paths.extend(get_parent_board_paths(board_dict))
+            self.user_paths = list(set(self.user_paths))
+
         self.filegen = ModuleProcessor(user_paths = self.user_paths)
 
         pt = self.project_tags
@@ -347,6 +366,25 @@ class ProjectGenerator(object):
                 if status: status.Error("ModuleFactoryError while generating slave: %s" % str(err))
                 raise ModuleFactoryError(err)
 
+            slave_dir = os.path.split(utils.find_rtl_file_location(fn, self.user_paths))[0]
+            if "constraint_files" in self.project_tags["SLAVES"][slave]:
+                temp_paths = self.user_paths
+                temp_paths.append(slave_dir)
+                print "slave path: %s" % slave_dir
+
+                for c in self.project_tags["SLAVES"][slave]["constraint_files"]:
+                    cpaths.append(utils.get_constraint_file_path(self.project_tags["board"], c, temp_paths))
+
+            if "cores" in self.project_tags["SLAVES"][slave]:
+                if status: status.Verbose("User Specified an core(s) for a slave")
+                for c in self.project_tags["SLAVES"][slave]["cores"]:
+                    
+                    file_location = os.path.join(slave_dir, os.pardir, "cores", c)
+                    if not os.path.exists(file_location):
+                        raise PGE("Core: %s does not exist" % file_location)
+                    dest_path = utils.resolve_path(self.project_tags["BASE_DIR"])
+                    shutil.copy (file_location, os.path.join(dest_path, "cores", c))
+
             #each slave
 
         if ("MEMORY" in self.project_tags):
@@ -387,7 +425,7 @@ class ProjectGenerator(object):
                             file_location =  os.path.join(root, core)
                             break
                     if not os.path.exists(file_location):
-                        raise PE("Core: %s does not exist" % core)
+                        raise PGE("Core: %s does not exist" % file_location)
                     dest_path = utils.resolve_path(self.project_tags["BASE_DIR"])
                     shutil.copy (file_location, os.path.join(dest_path, "cores", core))
 
