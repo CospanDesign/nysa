@@ -5,8 +5,6 @@ import glob
 
 from setuptools import setup, find_packages
 
-
-
 long_desc=""
 
 try:
