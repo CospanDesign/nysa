@@ -38,7 +38,7 @@ import sys
 import os
 import shutil
 import json
-import collections
+from collections import OrderedDict
 
 import utils
 import arbiter
@@ -56,7 +56,7 @@ from common import status
 
 def get_project_tags(config_filename):
     f = open(config_filename, "r")
-    tags = json.load(f, object_pairs_hook = collections.OrderedDict)
+    tags = json.load(f, object_pairs_hook = OrderedDict)
     f.close()
     return tags
 
@@ -133,7 +133,7 @@ class ProjectGenerator(object):
         default_path = os.path.join(path, "board", name)
         #print "Path: %s" % default_path
 
-        board_dict = json.load(open(default_path, "r"), object_pairs_hook=collections.OrderedDict)
+        board_dict = json.load(open(default_path, "r"), object_pairs_hook=OrderedDict)
         if "parent_board" in bd:
             for parent in bd["parent_board"]:
                 pd = utils.get_board_config(parent)
@@ -143,10 +143,10 @@ class ProjectGenerator(object):
 
                 path = os.path.join(utils.get_board_directory(parent), parent)
                 default_path = os.path.join(path, "board", name)
-                parent_dict = json.load(open(default_path, "r"), object_pairs_hook=collections.OrderedDict)
+                parent_dict = json.load(open(default_path, "r"), object_pairs_hook=OrderedDict)
 
                 for key in parent_dict:
-                    #print "key: %s" % key
+                    if self.s: self.s.Verbose("Working on %s key: %s" % (parent, key))
                     if key in board_dict:
                         if isinstance(board_dict[key], list):
                             #print "board_dict  [%s]: %s" % (key, str(board_dict[key]))
@@ -174,12 +174,12 @@ class ProjectGenerator(object):
         """
         #try:
         if self.s: self.s.Verbose("Reading configuration file: %s" % filename)
-        self.project_tags = json.load(open(filename, "r"), object_pairs_hook=collections.OrderedDict)
+        self.project_tags = json.load(open(filename, "r"), object_pairs_hook=OrderedDict)
         path = os.path.join(utils.get_board_directory(self.project_tags["board"]), self.project_tags["board"])
         board_dict = self._get_default_board_config(self.project_tags["board"])
 
         #default_path = os.path.join(path, "board", "default.json")
-        #board_dict = json.load(open(default_path, "r"), object_pairs_hook=collections.OrderedDict)
+        #board_dict = json.load(open(default_path, "r"), object_pairs_hook=OrderedDict)
         for key in board_dict:
             #print "key: %s" % key
             if key not in self.project_tags:
@@ -272,7 +272,7 @@ class ProjectGenerator(object):
         if output_directory is not None:
             self.project_tags["BASE_DIR"] = output_directory
 
-        board_dict = utils.get_board_config(self.project_tags["board"])
+        board_dict = utils.get_board_config(self.project_tags["board"], debug = False)
         cfiles = []
         cpaths = []
 
@@ -283,6 +283,19 @@ class ProjectGenerator(object):
         if "parent_board" in board_dict:
             self.user_paths.extend(get_parent_board_paths(board_dict))
             self.user_paths = list(set(self.user_paths))
+
+        #Go through the board dict and see if there is anything that needs to be incorporated into the project tags
+        for key in board_dict:
+            if key not in self.project_tags:
+                self.project_tags[key] = board_dict[key]
+            elif isinstance(self.project_tags[key], OrderedDict):
+                for k in board_dict[key]:
+                    self.project_tags[key][k] = board_dict[key][k]
+            elif isinstance(self.project_tags[key], list):
+                self.project_tags[key].extend(board_dict[key])
+            elif isinstance(self.project_tags[key], dict):
+                for k in board_dict[key]:
+                    self.project_tags[key][k] = board_dict[key][k]
 
         self.filegen = ModuleProcessor(user_paths = self.user_paths)
 
@@ -370,10 +383,11 @@ class ProjectGenerator(object):
             if "constraint_files" in self.project_tags["SLAVES"][slave]:
                 temp_paths = self.user_paths
                 temp_paths.append(slave_dir)
-                print "slave path: %s" % slave_dir
 
                 for c in self.project_tags["SLAVES"][slave]["constraint_files"]:
-                    cpaths.append(utils.get_constraint_file_path(self.project_tags["board"], c, temp_paths))
+                    file_location = utils.get_constraint_file_path(self.project_tags["board"], c, temp_paths)
+                    dest_path = utils.resolve_path(self.project_tags["BASE_DIR"])
+                    shutil.copy (file_location, os.path.join(dest_path, "constraints", c))
 
             if "cores" in self.project_tags["SLAVES"][slave]:
                 if status: status.Verbose("User Specified an core(s) for a slave")
@@ -399,6 +413,7 @@ class ProjectGenerator(object):
                     if status: status.Error("ModuleFactoryError while generating memory: %s" % str(err))
                     raise ModuleFactoryError(err)
 
+        '''
         if 'infrastructure' in self.project_tags:
             if status: status.Verbose("User Specified an infrastructure(s)")
             for entry in self.project_tags["infrastructure"]:
@@ -411,6 +426,7 @@ class ProjectGenerator(object):
                 file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "bus", "infrastructure")
                 fn = im["filename"]
                 self.filegen.process_file(filename = fn, file_dict = fdict, directory=file_dest)
+        '''
 
         if "cores" in self.project_tags:
             if status: status.Verbose("User Specified an core(s)")
