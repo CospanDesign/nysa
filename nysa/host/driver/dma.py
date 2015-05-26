@@ -187,7 +187,7 @@ class DMA(driver.Driver):
         Raises:
             Nothing
         """
-        self.set_register_bit(BIT_CONTROL_ENABLE, enable)
+        self.enable_register_bit(CONTROL, BIT_CONTROL_ENABLE, enable)
 
     def enable_interrupt_when_command_finish(self, enable):
         """
@@ -205,7 +205,6 @@ class DMA(driver.Driver):
             NysaCommError
         """
         raise AssertionError("Not implemented yet!")
-        pass
 
     #Channels or Source Commands
     def set_channel_sink_addr(self, channel, address):

@@ -170,7 +170,7 @@ def parse_rom_element(rom, addr = 0, debug = False):
     elif rom[addr + 63] == SDB_RECORD_TYPE_EMPTY:
         entity.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_EMPTY
     else:
-        raise SDBInfo("Info: Unrecognized Record: 0x%02X" % rom[addr + 63])
+        raise SDBInfo("Info: Unrecognized Record: 0x%02X\nFull element: %s" % (rom[addr + 63], rom))
     return entity
 
 def _parse_integration_element(entity, rom, addr, debug = False):

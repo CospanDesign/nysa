@@ -19,6 +19,7 @@
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
 import sdb_component
+import device_manager
 from sdb_component import SDBComponent as sdbc
 from sdb_component import is_valid_bus_type
 
@@ -686,5 +687,42 @@ class SOM(object):
             print "\tchild %s: 0x%02X" % (child.c.d["SDB_NAME"], child.c.get_start_address_as_int())
         '''
 
+    def pretty_print_sdb(self):
+        root = self.get_root() 
+        self._print_bus(root)
 
+    def _print_bus(self, bus, depth = 0):
+        c = bus.get_component()
+        for t in range (depth): print "\t",
+        s = "Bus: {0:<10} @ 0x{1:0=16X} : Size: 0x{2:0=8X}".format(bus.get_name(), c.get_start_address_as_int(), c.get_size_as_int())
+        print s
+        for t in range (depth): print "\t",
+        print "Number of components: %d" % bus.get_child_count()
+
+        for i in range(bus.get_child_count()):
+            c = bus.get_child_from_index(i)
+            if self.is_entity_a_bus(bus, i):
+                self._print_bus(c, depth = depth + 1)
+            else:
+                c = bus.get_child_from_index(i)
+                c = c.get_component()
+                major = c.get_abi_version_major_as_int()
+                minor = c.get_abi_version_minor_as_int()
+                dev_name = device_manager.get_device_name_from_id(major)
+                for t in range(depth + 1): print "\t",
+                s = "{0:20} Type (Major:Minor) ({1:0=2X}:{2:0=2X}): {3:10}".format(c.get_name(),
+                                                   major,
+                                                   minor,
+                                                   dev_name)
+                print s
+                for t in range(depth + 1): print "\t",
+                s = "Address:        0x{0:0=16X}-0x{1:0=16X} : Size: 0x{2:0=8X}".format(c.get_start_address_as_int(),
+                                                                    c.get_end_address_as_int(),
+                                                                    c.get_size_as_int())
+                print s
+                for t in range(depth + 1): print "\t",
+                s = "Vendor:Product: {0:0=16X}:{1:0=8X}".format(c.get_vendor_id_as_int(),
+                                                                c.get_device_id_as_int())
+                print s
+                print ""
 

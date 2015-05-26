@@ -19,10 +19,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
 import sys
 
 from nysa.host.platform_scanner import find_board
 from nysa.host.platform_scanner import PlatformScannerException
+
+from nysa.cbuilder.som_rom_parser import parse_rom_image
 
 NAME = "sdb-viewer"
 SCRIPT_NAME = "nysa %s" % NAME
@@ -47,6 +50,10 @@ def setup_parser(parser):
                         nargs=1,
                         help="Specify the serial number or unique ID of the board")
 
+    parser.add_argument("-f", "--file",
+                        type=str,
+                        nargs=1,
+                        help="Specify a file to read containing an SDB image")
     return parser
 
 
@@ -58,6 +65,9 @@ def view_sdb(args, status):
         name = None
     serial = None
     board = None
+    if args.file is not None:
+        parse_sdb_file(args.file[0])
+        sys.exit(0)
     if args.serial is not None:
         serial = args.serial[0]
 
@@ -69,4 +79,16 @@ def view_sdb(args, status):
 
     board.read_sdb()
     board.pretty_print_sdb()
+
+def parse_sdb_file(filename):
+    if not os.path.exists(filename):
+        if s: s.Error("File: %s does not exist!", filename)
+    f = open(filename, 'r')
+    buf = f.read()
+    f.close()
+    som = parse_rom_image(buf)
+    som.pretty_print_sdb()
+
+
+
 
