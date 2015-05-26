@@ -284,7 +284,8 @@ class ProjectGenerator(object):
             self.user_paths.extend(get_parent_board_paths(board_dict))
             self.user_paths = list(set(self.user_paths))
 
-        #Go through the board dict and see if there is anything that needs to be incorporated into the project tags
+        # Go through the board dict and see if there is anything that needs to be
+        # incorporated into the project tags
         for key in board_dict:
             if key not in self.project_tags:
                 self.project_tags[key] = board_dict[key]

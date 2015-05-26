@@ -388,7 +388,7 @@ def get_board_config (board_name, user_paths = [], debug = False):
             if "required" in parent_config:
                 #print "Found a required in config dict"
                 filepath = get_board_directory(parent)
-                filepath = os.path.join(filepath, parent, "board", config_dict["required"])
+                filepath = os.path.join(filepath, parent, "board", parent_config["required"])
                 f = open(filepath, 'r')
                 required = json.load(f)
                 f.close()
@@ -400,7 +400,7 @@ def get_board_config (board_name, user_paths = [], debug = False):
                         config_dict[key] += required[key]
                     elif isinstance(config_dict[key], dict):
                         for k in required[key]:
-                            config_dict[key][k] = parent_dict[key][k]
+                            config_dict[key][k] = parent_config[key][k]
                         
      #for debug
     if "paths" not in config_dict:

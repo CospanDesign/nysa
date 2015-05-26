@@ -38,6 +38,7 @@ import os
 import json
 from string import Template
 import copy
+from collections import OrderedDict
 
 from gen import Gen
 from nysa.cbuilder import sdb_component as sdbc
@@ -214,6 +215,47 @@ class GenSDB(Gen):
         #Peripheral Bus
         #Add one for interconnect
         self.rom_element_count += 1
+
+
+
+        #Move all the platform peripherals to the front of the SDB Bus
+        temp_unordered_platform_tags = {}
+        temp_platform_tags = OrderedDict()
+        temp_periph_tags = OrderedDict()
+        minor_dict = {}
+        peripheral_id = device_manager.get_device_id_from_name("platform")
+
+        for key in tags["SLAVES"]:
+            filename = tags["SLAVES"][key]["filename"]
+            absfilename = utils.find_rtl_file_location(filename, self.user_paths)
+            f = open(absfilename, 'r')
+            slave_buffer = f.read()
+            f.close()
+
+            per = sdbc.create_device_record(name = key)
+            per.parse_buffer(slave_buffer)
+
+            if per.get_abi_version_major_as_int() == peripheral_id:
+                minor = per.get_abi_version_minor_as_int()
+                minor_dict[minor] = key
+                temp_unordered_platform_tags[key] = tags["SLAVES"][key]
+            else:
+                temp_periph_tags[key] = tags["SLAVES"][key]
+
+        if len(minor_dict.keys()) > 0:
+            #Order the platforms in terms of their minor numbers
+            ordered_keys = sorted(minor_dict.keys(), key=int)
+            for okey in ordered_keys:
+                key = minor_dict[okey]
+                temp_platform_tags[key] = temp_unordered_platform_tags[key]
+            
+            #Add all the peripheral slaves
+            for key in temp_periph_tags:
+                temp_platform_tags[key] = temp_periph_tags[key]
+            
+            #Put the slaves back in the original dictionary
+            tags["SLAVES"] = temp_platform_tags
+
 
         #Add one per peripheral
         for i in range (0, len(tags["SLAVES"])):
