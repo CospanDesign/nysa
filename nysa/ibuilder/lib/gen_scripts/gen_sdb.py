@@ -218,6 +218,7 @@ class GenSDB(Gen):
 
 
 
+        '''
         #Move all the platform peripherals to the front of the SDB Bus
         temp_unordered_platform_tags = {}
         temp_platform_tags = OrderedDict()
@@ -255,6 +256,7 @@ class GenSDB(Gen):
             
             #Put the slaves back in the original dictionary
             tags["SLAVES"] = temp_platform_tags
+        '''
 
 
         #Add one per peripheral

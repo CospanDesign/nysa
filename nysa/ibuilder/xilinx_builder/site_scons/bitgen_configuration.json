@@ -25,7 +25,7 @@
   "en_sw_gsr"                  :{"description":"Restore Value of FF from Mem from Suspend",     "value" :"No"},
   "Encrypt"                    :{"description":"Encrypt a Bitstream",                           "value" :""},
   "EncryptKeySelect"           :{"description":"Location of AES Key",                           "value" :""},
-  "ExtMasterCclk_divide"       :{"description":"Divide External Master CCLK",                   "value" :"1"},
+  "ExtMasterCclk_divide"       :{"description":"Divide External Master CCLK",                   "value" :""},
   "ExtMasterCclk_en"           :{"description":"External CCLK",                                 "value" :"No"},
   "failsafe_user"              :{"description":"Allows User to access Extra Failsfe Data",      "value" :""},
   "Glutmask"                   :{"description":"Mask LUTRAM from during config/readback",       "value" :""},

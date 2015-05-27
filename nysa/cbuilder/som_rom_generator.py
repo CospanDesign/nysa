@@ -225,7 +225,10 @@ def _generate_synthesis_rom(entity, rom, addr):
     rom[addr + 0x2D] = int(year   % 100)
     rom[addr + 0x2E] = (month       )
     rom[addr + 0x2F] = (day         )
-    _string_to_rom(entity.get_name(),                    15, rom, addr + 0x30)
+    name = entity.get_name()
+    if len(name) > 19:
+        name = name[:19]
+    _string_to_rom(name,                                  15, rom, addr + 0x30)
     rom[addr + RECORD_LENGTH - 1] = entity.get_module_record_type()
 
 def _generate_product_rom(entity, rom, addr):
@@ -263,7 +266,10 @@ def _generate_product_rom(entity, rom, addr):
     rom[addr + 0x2B] = (day         )
 
     #Name
-    _string_to_rom(entity.get_name(), 19, rom, addr + 0x2C)
+    name = entity.get_name()
+    if len(name) > 19:
+        name = name[:19]
+    _string_to_rom(name, 19, rom, addr + 0x2C)
 
 def _generate_component_rom(entity, rom, addr):
     address_first = Array('B')

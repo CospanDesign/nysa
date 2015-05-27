@@ -716,7 +716,8 @@ class WishboneTopGenerator(object):
 
         buf =  "//General Signals\n"
         buf +=  "{0:<20}{1};\n".format("wire", "clk")
-        buf +=  "{0:<20}{1};\n".format("wire", "rst")
+        if "rst" not in self.bindings:
+            buf +=  "{0:<20}{1};\n".format("wire", "rst")
 
         self.wires.append("clk")
         self.wires.append("rst")

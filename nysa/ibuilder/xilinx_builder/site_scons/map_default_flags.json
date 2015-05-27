@@ -23,6 +23,7 @@
 "-register_duplication"        :{ "description":"Duplicate Registers",                 "value" :"off"},
 "-r"                           :{ "description":"Register Ordering",                   "value" :"4"},
 "-smartguide"                  :{ "description":"SmartGuide",                          "value" :""},
+"-convert_bram8"               :{ "description":"Convert BRAM 8K to 16K",              "value" :"_true"},
 "-t"                           :{ "description":"Placer Cost Table",                   "value" :"1"},
 "-timing"                      :{ "description":"Timing-Driven Packing and Placement", "value" :""},
 "-u"                           :{ "description":"Do Not Remove Unused Logic",          "value" :""},
