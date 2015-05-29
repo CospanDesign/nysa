@@ -276,6 +276,8 @@ class ProjectGenerator(object):
         cfiles = []
         cpaths = []
 
+        self.user_paths.extend(utils.get_local_verilog_paths())
+        self.user_paths = list(set(self.user_paths))
         if "paths" in board_dict:
             self.user_paths.extend(board_dict["paths"])
             self.user_paths = list(set(self.user_paths))
