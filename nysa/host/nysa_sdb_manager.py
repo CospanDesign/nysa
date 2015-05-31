@@ -953,7 +953,12 @@ def _parse_bus(n, som, bus, addr, base_addr, status):
     sdb_data.extend(entity_rom)
     status.Verbose("Bus @ 0x%08X: Name: %s" % (addr, bus.get_name()))
     #print_sdb_rom(sdbc.convert_rom_to_32bit_buffer(entity_rom))
-    bus_entity = srp.parse_rom_element(entity_rom)
+    try:
+        bus_entity = srp.parse_rom_element(entity_rom)
+    except SDBError as e:
+        error =  "Error when parsing bus entry at base address: 0x%08X, addr: 0x%08X\n" % (base_addr, addr)
+        error += str(e)
+        raise SDBError(error)
     if not bus_entity.is_interconnect():
         raise SDBError("Rom data does not point to an interconnect")
     num_devices = bus_entity.get_number_of_records_as_int()

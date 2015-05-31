@@ -70,7 +70,12 @@ def _parse_bus(som, bus, rom, addr):
         bus = som.get_root()
 
     #print "Address: 0x%02X" % addr
-    entity = parse_rom_element(rom, addr)
+    try:
+        entity = parse_rom_element(rom, addr)
+    except SDBError as e:
+        print ("Error when parsing bus @ 0x%08X" % addr)
+        raise SDBError(e)
+
     if not entity.is_interconnect():
         raise SDBError("Rom data does not point to an interconnect")
     num_devices = entity.get_number_of_records_as_int()
@@ -170,7 +175,8 @@ def parse_rom_element(rom, addr = 0, debug = False):
     elif rom[addr + 63] == SDB_RECORD_TYPE_EMPTY:
         entity.d["SDB_RECORD_TYPE"] = SDB_RECORD_TYPE_EMPTY
     else:
-        raise SDBInfo("Info: Unrecognized Record: 0x%02X\nFull element: %s" % (rom[addr + 63], rom))
+        data = " ".join(["0x%02X" % i for i in rom])
+        raise SDBError("Info: Unrecognized Record @ addr 0x%04X (record: 0x%02X)\nFull element: %s" % (addr, rom[addr + 63], data))
     return entity
 
 def _parse_integration_element(entity, rom, addr, debug = False):
