@@ -1,4 +1,4 @@
-#Distributed under the MIT licesnse.
+# Distributed under the MIT licesnse.
 #Copyright (c) 2014 Dave McCoy (dave.mccoy@cospandesign.com)
 
 #Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -20,28 +20,27 @@
 #SOFTWARE.
 
 import sys
-import time
 
 from nysa.host.platform_scanner import find_board
 from nysa.host.platform_scanner import PlatformScannerException
 
-NAME = "program"
+NAME = "board-programmed"
 SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "Initiate a program sequence"
+DESCRIPTION = "Reads the status of the FPGA 'Done' pin to determine if the FPGA is programmed"
 
-EPILOG = "If there is only one board attached, then it will be assumed otherwise a name and or serial\/board id might be required\n"
+EPILOG = "\n"
+
 
 def setup_parser(parser):
     parser.description = DESCRIPTION
-    parser.epilog = EPILOG
     parser.add_argument("name",
                         type=str,
                         nargs='?',
                         default="any",
-                        help="Specify a board to initiate a program, if there is only one board attached leave blank (ignoring SIM)")
+                        help="Specify a board to check for program status, if there is only one board attached leave blank (ignoring SIM)")
 
     parser.add_argument("-s", "--serial",
                         type=str,
@@ -50,9 +49,9 @@ def setup_parser(parser):
 
     return parser
 
-def program_board(args, status):
+
+def board_programmed(args, status):
     s = status
-    #print "args.name: %s" % args.name
     name = args.name
     if name == "any":
         name = None
@@ -61,21 +60,13 @@ def program_board(args, status):
     if args.serial is not None:
         serial = args.serial[0]
 
-    try:    
+    try:
         board = find_board(name, serial, status)
     except PlatformScannerException as ex:
         if s: s.Error("%s" % str(ex))
         sys.exit(1)
 
-    board.program()
-    if not board.is_programmed():
-        sys.stdout.write("Wait for board to finish programming")
-        sys.stdout.flush()
-
-        while not board.is_programmed():
-            sys.stdout.write(".")
-            sys.stdout.flush()
-            time.sleep(.200)
-
-        sys.stdout.write("Done!\n")
+    p = board.is_programmed()
+    print "Board Programmed: %s" % str(p)
+    return p
 

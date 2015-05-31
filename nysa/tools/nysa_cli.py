@@ -32,6 +32,7 @@ import device_list
 import generate_slave
 import list_boards
 import reset_board
+import board_programmed
 import program_board
 import upload_board
 import list_platforms
@@ -82,6 +83,11 @@ TOOL_DICT = {
         "type": "host",
         "module": reset_board,
         "tool": reset_board.reset_board
+    },
+    board_programmed.NAME:{
+        "type": "host",
+        "module": board_programmed,
+        "tool": board_programmed.board_programmed
     },
     program_board.NAME:{
         "type": "host",

@@ -219,6 +219,24 @@ class Nysa(object):
         """
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
+    def is_programmed(self):
+        """
+        Returns True if the FPGA is programmed
+
+        Args:
+          Nothing
+
+        Returns (Boolean):
+          True: FPGA is programmed 
+          False: FPGA is not programmed
+
+        Raises:
+          AssertionError: This function must be overriden by a board specific
+          implementation
+          NysaCommError: A failure of communication is detected
+        """
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
     def dump_core(self):
         """dump_core
 

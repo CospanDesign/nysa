@@ -21,6 +21,7 @@
 
 import os
 import sys
+import time
 
 from nysa.host.platform_scanner import find_board
 from nysa.host.platform_scanner import PlatformScannerException
@@ -77,8 +78,20 @@ def view_sdb(args, status):
         if s: s.Error("%s" % str(ex))
         sys.exit(1)
 
+    if not board.is_programmed():
+        sys.stdout.write("Wait for board to finish programming")
+        sys.stdout.flush()
+
+        while not board.is_programmed():
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            time.sleep(.200)
+
+        sys.stdout.write("Done!\n")
+
     board.read_sdb()
     board.pretty_print_sdb()
+
 
 def parse_sdb_file(filename):
     if not os.path.exists(filename):
