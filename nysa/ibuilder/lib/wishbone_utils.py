@@ -715,7 +715,8 @@ class WishboneTopGenerator(object):
         board_dict = utils.get_board_config(self.tags["board"])
 
         buf =  "//General Signals\n"
-        buf +=  "{0:<20}{1};\n".format("wire", "clk")
+        if "clk" not in self.bindings:
+            buf +=  "{0:<20}{1};\n".format("wire", "clk")
         if "rst" not in self.bindings:
             buf +=  "{0:<20}{1};\n".format("wire", "rst")
 
