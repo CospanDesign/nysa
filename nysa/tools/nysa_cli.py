@@ -32,6 +32,7 @@ import device_list
 import generate_slave
 import list_boards
 import reset_board
+import ping_board
 import board_programmed
 import program_board
 import upload_board
@@ -83,6 +84,11 @@ TOOL_DICT = {
         "type": "host",
         "module": reset_board,
         "tool": reset_board.reset_board
+    },
+    ping_board.NAME:{
+        "type": "host",
+        "module": ping_board,
+        "tool": ping_board.ping_board
     },
     board_programmed.NAME:{
         "type": "host",
