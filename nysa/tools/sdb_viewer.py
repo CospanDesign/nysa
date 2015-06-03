@@ -89,6 +89,7 @@ def view_sdb(args, status):
 
         sys.stdout.write("Done!\n")
 
+    #board.reset()
     board.read_sdb()
     board.pretty_print_sdb()
 
