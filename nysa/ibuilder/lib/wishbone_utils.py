@@ -170,28 +170,28 @@ def generate_peripheral_wishbone_interconnect_buffer(num_slaves, invert_reset):
     buf += "\n"
 
     buf += "\t//master\n"
-    buf += "\t.{0:20}({1:20}),\n".format("i_m_we",  "w_wbm_we_o")
-    buf += "\t.{0:20}({1:20}),\n".format("i_m_cyc", "w_wbm_cyc_o")
-    buf += "\t.{0:20}({1:20}),\n".format("i_m_stb", "w_wbm_stb_o")
-    buf += "\t.{0:20}({1:20}),\n".format("i_m_sel", "w_wbm_sel_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_m_ack", "w_wbm_ack_i")
-    buf += "\t.{0:20}({1:20}),\n".format("i_m_dat", "w_wbm_dat_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_m_dat", "w_wbm_dat_i")
-    buf += "\t.{0:20}({1:20}),\n".format("i_m_adr", "w_wbm_adr_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_m_int", "w_wbm_int_i")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_we",  "wbm_we_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_cyc", "wbm_cyc_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_stb", "wbm_stb_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_sel", "wbm_sel_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_m_ack", "wbm_ack_i")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_dat", "wbm_dat_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_m_dat", "wbm_dat_i")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_adr", "wbm_adr_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_m_int", "wbm_int_i")
     buf += "\n"
 
     for i in range (0, num_slaves):
         buf += "\t//slave %d\n" % i
-        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_we" % i,  "w_s%d_i_wbs_we" % i)
-        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_cyc" % i, "w_s%d_i_wbs_cyc" % i)
-        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_stb" % i, "w_s%d_i_wbs_stb" % i)
-        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_sel" % i, "w_s%d_i_wbs_sel" % i)
-        buf += "\t.{0:20}({1:20}),\n".format("i_s%d_ack" % i, "w_s%d_o_wbs_ack" % i)
-        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_dat" % i, "w_s%d_i_wbs_dat" % i)
-        buf += "\t.{0:20}({1:20}),\n".format("i_s%d_dat" % i, "w_s%d_o_wbs_dat" % i)
-        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_adr" % i, "w_s%d_i_wbs_adr" % i)
-        buf += "\t.{0:20}({1:20})".format("i_s%d_int" % i, "w_s%d_o_wbs_int" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_we" % i,  "s%d_i_wbs_we" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_cyc" % i, "s%d_i_wbs_cyc" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_stb" % i, "s%d_i_wbs_stb" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_sel" % i, "s%d_i_wbs_sel" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("i_s%d_ack" % i, "s%d_o_wbs_ack" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_dat" % i, "s%d_i_wbs_dat" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("i_s%d_dat" % i, "s%d_o_wbs_dat" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_adr" % i, "s%d_i_wbs_adr" % i)
+        buf += "\t.{0:20}({1:20})".format("i_s%d_int" % i, "s%d_o_wbs_int" % i)
 
         if (i < num_slaves - 1):
             buf += ",\n"
@@ -216,28 +216,28 @@ def generate_memory_wishbone_interconnect_buffer(num_mem_slaves, invert_reset):
     buf += "\n"
 
     buf += "\t//master\n"
-    buf += "\t.{0:20}({1:20}),\n".format("i_m_we",  "w_mem_we_o")
-    buf += "\t.{0:20}({1:20}),\n".format("i_m_cyc", "w_mem_cyc_o")
-    buf += "\t.{0:20}({1:20}),\n".format("i_m_stb", "w_mem_stb_o")
-    buf += "\t.{0:20}({1:20}),\n".format("i_m_sel", "w_mem_sel_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_m_ack", "w_mem_ack_i")
-    buf += "\t.{0:20}({1:20}),\n".format("i_m_dat", "w_mem_dat_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_m_dat", "w_mem_dat_i")
-    buf += "\t.{0:20}({1:20}),\n".format("i_m_adr", "w_mem_adr_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_m_int", "w_mem_int_i")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_we",  "mem_we_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_cyc", "mem_cyc_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_stb", "mem_stb_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_sel", "mem_sel_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_m_ack", "mem_ack_i")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_dat", "mem_dat_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_m_dat", "mem_dat_i")
+    buf += "\t.{0:20}({1:20}),\n".format("i_m_adr", "mem_adr_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_m_int", "mem_int_i")
     buf += "\n\n"
 
     for i in range (num_mem_slaves):
         buf += "\t//slave %d\n" % i
-        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_we" % i,  "w_sm%d_i_wbs_we" % i)
-        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_cyc" % i, "w_sm%d_i_wbs_cyc" % i)
-        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_stb" % i, "w_sm%d_i_wbs_stb" % i)
-        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_sel" % i, "w_sm%d_i_wbs_sel" % i)
-        buf += "\t.{0:20}({1:20}),\n".format("i_s%d_ack" % i, "w_sm%d_o_wbs_ack" % i)
-        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_dat" % i, "w_sm%d_i_wbs_dat" % i)
-        buf += "\t.{0:20}({1:20}),\n".format("i_s%d_dat" % i, "w_sm%d_o_wbs_dat" % i)
-        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_adr" % i, "w_sm%d_i_wbs_adr" % i)
-        buf += "\t.{0:20}({1:20})".format("i_s%d_int" % i, "w_sm%d_o_wbs_int" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_we" % i,  "sm%d_i_wbs_we" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_cyc" % i, "sm%d_i_wbs_cyc" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_stb" % i, "sm%d_i_wbs_stb" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_sel" % i, "sm%d_i_wbs_sel" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("i_s%d_ack" % i, "sm%d_o_wbs_ack" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_dat" % i, "sm%d_i_wbs_dat" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("i_s%d_dat" % i, "sm%d_o_wbs_dat" % i)
+        buf += "\t.{0:20}({1:20}),\n".format("o_s%d_adr" % i, "sm%d_i_wbs_adr" % i)
+        buf += "\t.{0:20}({1:20})".format("i_s%d_int" % i, "sm%d_o_wbs_int" % i)
 
         if (i < num_mem_slaves - 1):
             buf += ",\n"
@@ -275,28 +275,28 @@ def generate_master_buffer(invert_reset):
     buf += "\t.{0:20}({1:20}),\n\n".format("o_master_ready", "master_ready")
 
     buf += "\t//interconnect signals\n"
-    buf += "\t.{0:20}({1:20}),\n".format("o_per_we", "w_wbm_we_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_per_adr", "w_wbm_adr_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_per_dat", "w_wbm_dat_o")
-    buf += "\t.{0:20}({1:20}),\n".format("i_per_dat", "w_wbm_dat_i")
-    buf += "\t.{0:20}({1:20}),\n".format("o_per_stb", "w_wbm_stb_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_per_cyc", "w_wbm_cyc_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_per_msk", "w_wbm_msk_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_per_sel", "w_wbm_sel_o")
-    buf += "\t.{0:20}({1:20}),\n".format("i_per_ack", "w_wbm_ack_i")
-    buf += "\t.{0:20}({1:20}),\n\n".format("i_per_int", "w_wbm_int_i")
+    buf += "\t.{0:20}({1:20}),\n".format("o_per_we", "wbm_we_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_per_adr", "wbm_adr_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_per_dat", "wbm_dat_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_per_dat", "wbm_dat_i")
+    buf += "\t.{0:20}({1:20}),\n".format("o_per_stb", "wbm_stb_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_per_cyc", "wbm_cyc_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_per_msk", "wbm_msk_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_per_sel", "wbm_sel_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_per_ack", "wbm_ack_i")
+    buf += "\t.{0:20}({1:20}),\n\n".format("i_per_int", "wbm_int_i")
 
     buf += "\t//memory interconnect signals\n"
-    buf += "\t.{0:20}({1:20}),\n".format("o_mem_we", "w_mem_we_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_mem_adr", "w_mem_adr_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_mem_dat", "w_mem_dat_o")
-    buf += "\t.{0:20}({1:20}),\n".format("i_mem_dat", "w_mem_dat_i")
-    buf += "\t.{0:20}({1:20}),\n".format("o_mem_stb", "w_mem_stb_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_mem_cyc", "w_mem_cyc_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_mem_msk", "w_mem_msk_o")
-    buf += "\t.{0:20}({1:20}),\n".format("o_mem_sel", "w_mem_sel_o")
-    buf += "\t.{0:20}({1:20}),\n".format("i_mem_ack", "w_mem_ack_i")
-    buf += "\t.{0:20}({1:20}),\n\n".format("i_mem_int", "w_mem_int_i")
+    buf += "\t.{0:20}({1:20}),\n".format("o_mem_we", "mem_we_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_mem_adr", "mem_adr_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_mem_dat", "mem_dat_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_mem_dat", "mem_dat_i")
+    buf += "\t.{0:20}({1:20}),\n".format("o_mem_stb", "mem_stb_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_mem_cyc", "mem_cyc_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_mem_msk", "mem_msk_o")
+    buf += "\t.{0:20}({1:20}),\n".format("o_mem_sel", "mem_sel_o")
+    buf += "\t.{0:20}({1:20}),\n".format("i_mem_ack", "mem_ack_i")
+    buf += "\t.{0:20}({1:20}),\n\n".format("i_mem_int", "mem_int_i")
 
     buf += "\t.{0:20}({1:20})\n\n".format("o_debug", "wbm_debug_out")
     buf += ");"
@@ -380,7 +380,7 @@ def generate_module_port_signals(invert_reset,
         #Not Pre-defines
         if len(wire) == 0:
             if is_wishbone_slave_signal(port):
-                wire = "w_%s%s" % (wishbone_prename, port)
+                wire = "%s%s" % (wishbone_prename, port)
             else:
                 if len(instance_name) > 0:
                     wire = "%s_%s" % (instance_name, port)
@@ -412,7 +412,7 @@ def generate_module_port_signals(invert_reset,
         #Not Pre-defines
         if len(wire) == 0:
             if is_wishbone_slave_signal(port):
-                wire = "w_%s%s" % (wishbone_prename, port)
+                wire = "%s%s" % (wishbone_prename, port)
             else:
                 if len(instance_name) > 0:
                     wire = "%s_%s" % (instance_name, port)
@@ -758,87 +758,87 @@ class WishboneTopGenerator(object):
         buf += "\n"
 
         buf +=  "//master signals\n"
-        buf +=  "{0:<20}{1};\n".format("wire","w_master_ready")
-        self.wires.append("w_master_ready")
-        buf +=  "{0:<20}{1};\n".format("wire","w_wbm_we_o")
-        self.wires.append("w_wbm_we_o")
-        buf +=  "{0:<20}{1};\n".format("wire","w_wbm_cyc_o")
-        self.wires.append("w_wbm_cyc_o")
-        buf +=  "{0:<20}{1};\n".format("wire","w_wbm_stb_o")
-        self.wires.append("w_wbm_stb_o")
-        buf +=  "{0:<19}{1};\n".format("wire\t[3:0]","w_wbm_sel_o")
-        self.wires.append("w_wbm_sel_o")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_wbm_adr_o")
-        self.wires.append("w_wbm_adr_o")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_wbm_dat_i")
-        self.wires.append("w_wbm_dat_i")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_wbm_dat_o")
-        self.wires.append("w_wbm_dat_o")
-        buf +=  "{0:<20}{1};\n".format("wire","w_wbm_ack_i")
-        self.wires.append("w_wbm_ack_i")
-        buf +=  "{0:<20}{1};\n".format("wire","w_wbm_int_i")
-        self.wires.append("w_wbm_int_i")
+        buf +=  "{0:<20}{1};\n".format("wire","master_ready")
+        self.wires.append("master_ready")
+        buf +=  "{0:<20}{1};\n".format("wire","wbm_we_o")
+        self.wires.append("wbm_we_o")
+        buf +=  "{0:<20}{1};\n".format("wire","wbm_cyc_o")
+        self.wires.append("wbm_cyc_o")
+        buf +=  "{0:<20}{1};\n".format("wire","wbm_stb_o")
+        self.wires.append("wbm_stb_o")
+        buf +=  "{0:<19}{1};\n".format("wire\t[3:0]","wbm_sel_o")
+        self.wires.append("wbm_sel_o")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","wbm_adr_o")
+        self.wires.append("wbm_adr_o")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","wbm_dat_i")
+        self.wires.append("wbm_dat_i")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","wbm_dat_o")
+        self.wires.append("wbm_dat_o")
+        buf +=  "{0:<20}{1};\n".format("wire","wbm_ack_i")
+        self.wires.append("wbm_ack_i")
+        buf +=  "{0:<20}{1};\n".format("wire","wbm_int_i")
+        self.wires.append("wbm_int_i")
 
-        buf +=  "{0:<20}{1};\n".format("wire","w_mem_we_o")
-        self.wires.append("w_mem_we_o")
-        buf +=  "{0:<20}{1};\n".format("wire","w_mem_cyc_o")
-        self.wires.append("w_mem_cyc_o")
-        buf +=  "{0:<20}{1};\n".format("wire","w_mem_stb_o")
-        self.wires.append("w_mem_stb_o")
-        buf +=  "{0:<19}{1};\n".format("wire\t[3:0]","w_mem_sel_o")
-        self.wires.append("w_mem_sel_o")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_mem_adr_o")
-        self.wires.append("w_mem_adr_o")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_mem_dat_i")
-        self.wires.append("w_mem_dat_i")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_mem_dat_o")
-        self.wires.append("w_mem_dat_o")
-        buf +=  "{0:<20}{1};\n".format("wire","w_mem_ack_i")
-        self.wires.append("w_mem_ack_i")
-        buf +=  "{0:<20}{1};\n".format("wire","w_mem_int_i")
-        self.wires.append("w_mem_int_i")
+        buf +=  "{0:<20}{1};\n".format("wire","mem_we_o")
+        self.wires.append("mem_we_o")
+        buf +=  "{0:<20}{1};\n".format("wire","mem_cyc_o")
+        self.wires.append("mem_cyc_o")
+        buf +=  "{0:<20}{1};\n".format("wire","mem_stb_o")
+        self.wires.append("mem_stb_o")
+        buf +=  "{0:<19}{1};\n".format("wire\t[3:0]","mem_sel_o")
+        self.wires.append("mem_sel_o")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","mem_adr_o")
+        self.wires.append("mem_adr_o")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","mem_dat_i")
+        self.wires.append("mem_dat_i")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","mem_dat_o")
+        self.wires.append("mem_dat_o")
+        buf +=  "{0:<20}{1};\n".format("wire","mem_ack_i")
+        self.wires.append("mem_ack_i")
+        buf +=  "{0:<20}{1};\n".format("wire","mem_int_i")
+        self.wires.append("mem_int_i")
 
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","w_wbm_debug_out")
-        self.wires.append("w_wbm_debug_out");
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","wbm_debug_out")
+        self.wires.append("wbm_debug_out");
         buf +=  "\n"
 
         buf +=  "//slave signals\n\n"
 
         for i in range (0, num_slaves):
             buf +=  "//slave " + str(i) + "\n"
-            wr_name = "w_s%d_i_wbs_we" % i
+            wr_name = "s%d_i_wbs_we" % i
             buf +=  "{0:<20}{1};\n".format("wire", wr_name)
             self.wires.append(wr_name)
 
-            wr_name = "w_s%d_i_wbs_cyc" % i
+            wr_name = "s%d_i_wbs_cyc" % i
             buf +=  "{0:<20}{1};\n".format("wire", wr_name)
             self.wires.append(wr_name)
 
-            wr_name = "w_s%d_i_wbs_dat" % i
+            wr_name = "s%d_i_wbs_dat" % i
             buf +=  "{0:<19}{1};\n".format("wire\t[31:0]", wr_name)
             self.wires.append(wr_name)
 
-            wr_name = "w_s%d_o_wbs_dat" % i
+            wr_name = "s%d_o_wbs_dat" % i
             buf +=  "{0:<19}{1};\n".format("wire\t[31:0]", wr_name)
             self.wires.append(wr_name)
 
-            wr_name = "w_s%d_i_wbs_adr" % i
+            wr_name = "s%d_i_wbs_adr" % i
             buf +=  "{0:<19}{1};\n".format("wire\t[31:0]", wr_name)
             self.wires.append(wr_name)
 
-            wr_name = "w_s%d_i_wbs_stb" % i
+            wr_name = "s%d_i_wbs_stb" % i
             buf +=  "{0:<20}{1};\n".format("wire", wr_name)
             self.wires.append(wr_name)
 
-            wr_name = "w_s%d_i_wbs_sel" % i
+            wr_name = "s%d_i_wbs_sel" % i
             buf +=  "{0:<19}{1};\n".format("wire\t[3:0]", wr_name)
             self.wires.append(wr_name)
 
-            wr_name = "w_s%d_o_wbs_ack" % i
+            wr_name = "s%d_o_wbs_ack" % i
             buf +=  "{0:<20}{1};\n".format("wire", wr_name)
             self.wires.append(wr_name)
 
-            wr_name = "w_s%d_o_wbs_int" % i
+            wr_name = "s%d_o_wbs_int" % i
             buf +=  "{0:<20}{1};\n".format("wire", wr_name)
             self.wires.append(wr_name)
 
@@ -846,39 +846,39 @@ class WishboneTopGenerator(object):
             buf += "\n"
             for i in range (num_mem_slaves):
                 buf +=  "//mem slave " + str(i) + "\n"
-                wr_name = "w_sm%d_i_wbs_we" % i
+                wr_name = "sm%d_i_wbs_we" % i
                 buf +=  "{0:<20}{1};\n".format("wire", wr_name)
                 self.wires.append(wr_name)
 
-                wr_name = "w_sm%d_i_wbs_cyc" % i
+                wr_name = "sm%d_i_wbs_cyc" % i
                 buf +=  "{0:<20}{1};\n".format("wire", wr_name)
                 self.wires.append(wr_name)
 
-                wr_name = "w_sm%d_i_wbs_dat" % i
+                wr_name = "sm%d_i_wbs_dat" % i
                 buf +=  "{0:<19}{1};\n".format("wire\t[31:0]", wr_name)
                 self.wires.append(wr_name)
 
-                wr_name = "w_sm%d_o_wbs_dat" % i
+                wr_name = "sm%d_o_wbs_dat" % i
                 buf +=  "{0:<19}{1};\n".format("wire\t[31:0]", wr_name)
                 self.wires.append(wr_name)
 
-                wr_name = "w_sm%d_i_wbs_adr" % i
+                wr_name = "sm%d_i_wbs_adr" % i
                 buf +=  "{0:<19}{1};\n".format("wire\t[31:0]", wr_name)
                 self.wires.append(wr_name)
 
-                wr_name = "w_sm%d_i_wbs_stb" % i
+                wr_name = "sm%d_i_wbs_stb" % i
                 buf +=  "{0:<20}{1};\n".format("wire", wr_name)
                 self.wires.append(wr_name)
 
-                wr_name = "w_sm%d_i_wbs_sel" % i
+                wr_name = "sm%d_i_wbs_sel" % i
                 buf +=  "{0:<19}{1};\n".format("wire\t[3:0]", wr_name)
                 self.wires.append(wr_name)
 
-                wr_name = "w_sm%d_o_wbs_ack" % i
+                wr_name = "sm%d_o_wbs_ack" % i
                 buf +=  "{0:<20}{1};\n".format("wire", wr_name)
                 self.wires.append(wr_name)
 
-                wr_name = "w_sm%d_o_wbs_int" % i
+                wr_name = "sm%d_o_wbs_int" % i
                 buf +=  "{0:<20}{1};\n".format("wire", wr_name)
                 self.wires.append(wr_name)
 
@@ -1220,47 +1220,47 @@ class WishboneTopGenerator(object):
             buf += "\n"
             #generate arbiter signals
             #strobe
-            wire = "w_%s_i_wbs_stb" % arb_name
+            wire = "%s_i_wbs_stb" % arb_name
             if not (wire in self.wires):
                 buf += "{0:<20}{1};\n".format("wire", wire)
                 self.wires.append(wire)
             #cycle
-            wire = "w_%s_i_wbs_cyc" % arb_name
+            wire = "%s_i_wbs_cyc" % arb_name
             if not (wire in self.wires):
                 buf += "{0:<20}{1};\n".format("wire", wire)
                 self.wires.append(wire)
             #write enable
-            wire = "w_%s_i_wbs_we" % arb_name
+            wire = "%s_i_wbs_we" % arb_name
             if not (wire in self.wires):
                 buf += "{0:<20}{1};\n".format("wire", wire)
                 self.wires.append(wire)
             #select
-            wire = "w_%s_i_wbs_sel" % arb_name
+            wire = "%s_i_wbs_sel" % arb_name
             if not (wire in self.wires):
                 buf += "{0:<19}{1};\n".format("wire\t[3:0]", wire)
                 self.wires.append(wire)
             #in data
-            wire = "w_%s_i_wbs_dat" % arb_name
+            wire = "%s_i_wbs_dat" % arb_name
             if not (wire in self.wires):
                 buf += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
                 self.wires.append(wire)
             #out data
-            wire = "w_%s_o_wbs_dat" % arb_name
+            wire = "%s_o_wbs_dat" % arb_name
             if not (wire in self.wires):
                 buf += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
                 self.wires.append(wire)
             #address
-            wire = "w_%s_i_wbs_adr" % arb_name
+            wire = "%s_i_wbs_adr" % arb_name
             if not (wire in self.wires):
                 buf += "{0:<19}{1};\n".format("wire\t[31:0]", wire)
                 self.wires.append(wire)
             #acknowledge
-            wire = "w_%s_o_wbs_ack" % arb_name
+            wire = "%s_o_wbs_ack" % arb_name
             if not (wire in self.wires):
                 buf += "{0:<20}{1};\n".format("wire", wire)
                 self.wires.append(wire)
             #interrupt
-            wire = "w_%s_o_wbs_int" % arb_name
+            wire = "%s_o_wbs_int" % arb_name
             if not (wire in self.wires):
                 buf += "{0:<20}{1};\n".format("wire", wire)
                 self.wires.append(wire)
@@ -1314,15 +1314,15 @@ class WishboneTopGenerator(object):
                                             print "slave index: %d" % mem_inc_index
                                         break
 
-                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_we"  % mi, "w_%s_i_wbs_we" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_stb" % mi, "w_%s_i_wbs_stb" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_cyc" % mi, "w_%s_i_wbs_cyc" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_sel" % mi, "w_%s_i_wbs_sel" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_dat" % mi, "w_%s_i_wbs_dat" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_adr" % mi, "w_%s_i_wbs_adr" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_dat" % mi, "w_%s_o_wbs_dat" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_ack" % mi, "w_%s_o_wbs_ack" % wbm_name)
-                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_int" % mi, "w_%s_o_wbs_int" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_we"  % mi, "%s_i_wbs_we" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_stb" % mi, "%s_i_wbs_stb" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_cyc" % mi, "%s_i_wbs_cyc" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_sel" % mi, "%s_i_wbs_sel" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_dat" % mi, "%s_i_wbs_dat" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("i_m%d_adr" % mi, "%s_i_wbs_adr" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_dat" % mi, "%s_o_wbs_dat" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_ack" % mi, "%s_o_wbs_ack" % wbm_name)
+                    buf +="\t.{0:20}({1:20}),\n".format("o_m%d_int" % mi, "%s_o_wbs_int" % wbm_name)
 
                     buf +="\n\n"
                 else:
@@ -1344,15 +1344,15 @@ class WishboneTopGenerator(object):
 
 
             buf += "\t//slave\n"
-            buf += "\t.{0:20}({1:20}),\n".format("o_s_we",  "w_%s_i_wbs_we"  % arb_name)
-            buf += "\t.{0:20}({1:20}),\n".format("o_s_stb", "w_%s_i_wbs_stb" % arb_name)
-            buf += "\t.{0:20}({1:20}),\n".format("o_s_cyc", "w_%s_i_wbs_cyc" % arb_name)
-            buf += "\t.{0:20}({1:20}),\n".format("o_s_sel", "w_%s_i_wbs_sel" % arb_name)
-            buf += "\t.{0:20}({1:20}),\n".format("o_s_dat", "w_%s_i_wbs_dat" % arb_name)
-            buf += "\t.{0:20}({1:20}),\n".format("o_s_adr", "w_%s_i_wbs_adr" % arb_name)
-            buf += "\t.{0:20}({1:20}),\n".format("i_s_dat", "w_%s_o_wbs_dat" % arb_name)
-            buf += "\t.{0:20}({1:20}),\n".format("i_s_ack", "w_%s_o_wbs_ack" % arb_name)
-            buf += "\t.{0:20}({1:20})\n".format( "i_s_int", "w_%s_o_wbs_int" % arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("o_s_we",  "%s_i_wbs_we"  % arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("o_s_stb", "%s_i_wbs_stb" % arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("o_s_cyc", "%s_i_wbs_cyc" % arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("o_s_sel", "%s_i_wbs_sel" % arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("o_s_dat", "%s_i_wbs_dat" % arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("o_s_adr", "%s_i_wbs_adr" % arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("i_s_dat", "%s_o_wbs_dat" % arb_name)
+            buf += "\t.{0:20}({1:20}),\n".format("i_s_ack", "%s_o_wbs_ack" % arb_name)
+            buf += "\t.{0:20}({1:20})\n".format( "i_s_int", "%s_o_wbs_int" % arb_name)
             buf += ");\n"
 
             return string.expandtabs(buf, 2)

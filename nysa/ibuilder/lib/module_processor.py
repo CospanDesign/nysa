@@ -219,6 +219,7 @@ class ModuleProcessor:
           print "searching for file...",
         try:
           absfilename = utils.find_rtl_file_location(filename, self.user_paths)
+          #print "found file at: %s" % absfilename
 
           filein = open(absfilename)
           self.buf = filein.read()

@@ -480,7 +480,7 @@ class ProjectGenerator(object):
         for d in self.filegen.verilog_dependency_list:
             fdict = {"location":""}
             file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "dependencies")
-            result = self.filegen.process_file(filename = d, file_dict = fdict, directory = file_dest)
+            result = self.filegen.process_file(filename = d, file_dict = fdict, directory = file_dest, debug = True)
             if status: status.Verbose("\tDependent File: %s" % d)
 
         return True
