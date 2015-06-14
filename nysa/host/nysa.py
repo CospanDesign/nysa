@@ -227,7 +227,7 @@ class Nysa(object):
           Nothing
 
         Returns (Boolean):
-          True: FPGA is programmed 
+          True: FPGA is programmed
           False: FPGA is not programmed
 
         Raises:
@@ -548,6 +548,59 @@ class Nysa(object):
 
         """
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
+    def write_register_bit_range(self, address, high_bit, low_bit, value):
+        """
+        Write data to a range of bits within a register
+
+        Register = [XXXXXXXXXXXXXXXXXXXXXXXH---LXXXX]
+
+        Write to a range of bits within ia register
+
+        Args:
+            address (unsigned long): Address or the register/memory to write
+            high_bit (int): the high bit of the bit range to edit
+            low_bit (int): the low bit of the bit range to edit
+            value (int): the value to write in the range
+
+        Returns:
+            Nothing
+
+        Raises:
+            NysaCommError
+        """
+        reg = self.read_register(address)
+        bitmask = (((1 << (top_bit + 1))) - (1 << low_bit))
+        reg &= ~(bitmask)
+        reg |= value << low_bit
+        self.write_register(address, reg)
+
+    def read_register_bit_range(self, address, high_bit, low_bit):
+        """
+        Read a range of bits within a register at address 'address'
+
+        Register = [XXXXXXXXXXXXXXXXXXXXXXXH---LXXXX]
+
+        Read the value within a register, the top bit is H and bottom is L
+
+        Args:
+            address (unsigned long): Address or the register/memory to read
+            high_bit (int): the high bit of the bit range to read
+            low_bit (int): the low bit of the bit range to read
+
+        Returns (unsigned integer):
+            Value within the bitfield
+
+        Raises:
+            NysaCommError
+            
+        """
+
+        value = self.read_register(address)
+        bitmask = (((1 << (high_bit + 1))) - (1 << low_bit))
+        value = value & bitmask
+        value = value >> low_bit
+        return value
 
     #SDB Related
     def get_sdb_base_address(self):
