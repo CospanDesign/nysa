@@ -352,6 +352,7 @@ class Driver(object):
           implementation
         """
         address = long(self.base_addr + address)
+        print "address: 0x%08X" % address
         self.n.write(address, data, disable_auto_inc = disable_auto_inc)
 
     def write_memory(self, address, data):
@@ -446,6 +447,53 @@ class Driver(object):
         """
         address = long(self.base_addr + address)
         return self.n.is_register_bit_set(address, bit)
+
+    def write_register_bit_range(self, address, high_bit, low_bit, value):
+        """
+        Write data to a range of bits within a register
+
+        Register = [XXXXXXXXXXXXXXXXXXXXXXXH---LXXXX]
+
+        Write to a range of bits within ia register
+
+        Args:
+            address (unsigned long): Address or the register/memory to write
+            high_bit (int): the high bit of the bit range to edit
+            low_bit (int): the low bit of the bit range to edit
+            value (int): the value to write in the range
+
+        Returns:
+            Nothing
+
+        Raises:
+            NysaCommError
+        
+        """
+        address = long(self.base_addr + address)
+        self.n.write_register_bit_range(address, high_bit, low_bit, value)
+
+    def read_register_bit_range(self, address, high_bit, low_bit):
+        """
+        Read a range of bits within a register at address 'address'
+
+        Register = [XXXXXXXXXXXXXXXXXXXXXXXH---LXXXX]
+
+        Read the value within a register, the top bit is H and bottom is L
+
+        Args:
+            address (unsigned long): Address or the register/memory to read
+            high_bit (int): the high bit of the bit range to read
+            low_bit (int): the low bit of the bit range to read
+
+        Returns (unsigned integer):
+            Value within the bitfield
+
+        Raises:
+            NysaCommError
+            
+        """
+        address = long(self.base_addr + address)
+        return self.n.read_register_bit_range(address, high_bit, low_bit)
 
     def wait_for_interrupts(self, wait_time = 1):
         """wait_for_interrupts
