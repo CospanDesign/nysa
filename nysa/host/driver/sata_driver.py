@@ -49,12 +49,14 @@ STATUS                          = 1
 
 HARD_DRIVE_STATUS               = 2
 HARD_DRIVE_SECTOR_COUNT         = 3
-HARD_DRIVE_ADDRESS_LOW          = 4
-HARD_DRIVE_ADDRESS_HIGH         = 5
+HARD_DRIVE_ADDRESS_HIGH         = 4
+HARD_DRIVE_ADDRESS_LOW          = 5
 DEBUG_STATUS                    = 6
 DEBUG_LINKUP_DATA               = 7
 HARD_DRIVE_COMMAND              = 8
 HARD_DRIVE_FEATURES             = 9
+LOCAL_BUFFER_WRITE_SIZE         = 10
+DEBUG_HD_COUNTS                 = 11
 
 SATA_BUFFER_OFFSET              = 0x100
 SATA_BUFFER_SIZE                = 2**9
@@ -71,6 +73,10 @@ BIT_EN_INT_DMA_SETUP_STB        = 7
 BIT_EN_INT_SET_DEVICE_BITS_STB  = 9
 BIT_HD_RESET                    = 10
 BIT_EN_DMA_CONTROL              = 11
+BIT_STB_WRITE_LOCAL_BUFFER      = 12
+BIT_STB_WRITE                   = 13
+BIT_STB_READ                    = 14
+BIT_STB_SYNC_ESCAPE             = 15
 
 #Status
 BIT_PLATFORM_READY              = 0
@@ -89,6 +95,9 @@ BIT_RX_COMM_WAKE_DETECT         = 12
 BIT_TX_COMM_RESET               = 13
 BIT_TX_COMM_WAKE                = 14
 BIT_TX_OOB_COMPLETE             = 15
+BIT_DIN_FIFO_READY0             = 16
+BIT_DIN_FIFO_READY1             = 17
+
 
 #Hard Drive Status
 BIT_D2H_INTERRUPT               = 0
@@ -102,10 +111,34 @@ BIT_D2H_STATUS_HIGH             = 23
 BIT_D2H_ERROR_LOW               = 24
 BIT_D2H_ERROR_HIGH              = 31
 
+#Debug
 BIT_OOB_STATE_HIGH              = 3
 BIT_OOB_STATE_LOW               = 0
 BIT_RESET_COUNT_HIGH            = 11
 BIT_RESET_COUNT_LOW             = 4
+BIT_D2H_INTERRUPT_EN            = 12
+BIT_DMA_ACTIVATE_EN             = 13
+BIT_D2H_PIO_SETUP_EN            = 14
+BIT_D2H_DATA_EN                 = 15
+BIT_DMA_SETUP_EN                = 16
+BIT_CMD_WR_ST_HIGH              = 31
+BIT_CMD_WR_ST_LOW               = 28
+BIT_TRSPRT_HIGH                 = 27
+BIT_TRSPRT_LOW                  = 24
+BIT_LLW_ST_HIGH                 = 23
+BIT_LLW_ST_LOW                  = 20
+
+BIT_ACTIVATE_COUNT_HIGH         = 23
+BIT_ACTIVATE_COUNT_LOW          = 16
+BIT_ROK_COUNT_HIGH              = 15
+BIT_ROK_COUNT_LOW               = 8
+BIT_RERR_COUNT_HIGH             = 7
+BIT_RERR_COUNT_LOW              = 0
+
+
+
+
+
 
 
 class SATAError(Exception):
@@ -127,6 +160,7 @@ class SATADriver(driver.Driver):
 
     def __init__(self, nysa, urn, debug = False):
         super(SATADriver, self).__init__(nysa, urn, debug)
+        self.config = SataConfig()
 
     def enable_sata_reset(self, enable):
         self.enable_register_bit(CONTROL, BIT_HD_RESET, enable)
@@ -306,8 +340,18 @@ class SATADriver(driver.Driver):
     def get_reset_count(self):
         return self.read_register_bit_range(DEBUG_STATUS, BIT_RESET_COUNT_HIGH, BIT_RESET_COUNT_LOW)
 
+    def set_sector_count(self, count):
+        self.write_register(HARD_DRIVE_SECTOR_COUNT, count)
+
+    def get_sector_count(self):
+        return self.read_register(HARD_DRIVE_SECTOR_COUNT)
+
     def get_debug_linkup_data(self):
         return self.read_register(DEBUG_LINKUP_DATA)
+
+    def set_hard_drive_lba(self, lba):
+        self.write_register(HARD_DRIVE_ADDRESS_LOW, (0xFFFFFFFF & lba))
+        self.write_register(HARD_DRIVE_ADDRESS_HIGH, ((0xFFFF00000000 & lba) >> 32))
 
     def get_hard_drive_lba(self):
         count = long(self.read_register(HARD_DRIVE_ADDRESS_HIGH))
@@ -319,16 +363,58 @@ class SATADriver(driver.Driver):
         return self.read_register_bit_range(HARD_DRIVE_STATUS, BIT_D2H_FIS_HIGH, BIT_D2H_FIS_LOW)
 
     def send_hard_drive_command(self, command):
+        """
+        Send down a command to the hard drive and
+
+        Args:
+            command (8-bit hard drive command)
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing
+        """
         self.write_register(HARD_DRIVE_COMMAND, command)
 
     def send_hard_drive_features(self, features):
+        """
+        Send down the feature register in the hard drive, the features are
+        similar to the arguments of the function
+
+        Args:
+            features: unsigned 16-bit: feature value to send
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing
+        """
         self.write_register(HARD_DRIVE_FEATURES, features)
 
     def get_hard_drive_features(self):
-        return self.write_register(HARD_DRIVE_FEATURES)
+        """
+        Return hard drive features
 
+        Args:
+            Nothing
 
-    def read_local_buffer(self, address = 0x00, size = 512):
+        Returns (16-bit unsigned int):
+            the features of the command
+
+        Raises:
+            Nothing
+        """
+        return self.read_register(HARD_DRIVE_FEATURES)
+
+    def get_local_buffer_write_size(self):
+        return self.read_register(LOCAL_BUFFER_WRITE_SIZE)
+
+    def set_local_buffer_write_size(self, size):
+        self.write_register(LOCAL_BUFFER_WRITE_SIZE, size)
+
+    def read_local_buffer(self, address = 0x00, size = 2048):
         """
         Read the local buffer within the SATA core, if no size is specified
         read the entire buffer,
@@ -401,4 +487,242 @@ class SATADriver(driver.Driver):
             Nothing
         """
         return self.is_register_bit_set(CONTROL, BIT_EN_DMA_CONTROL)
+
+    def load_local_buffer(self):
+        """
+        Load the local buffer into the block to send to the hard drive
+        NOTE: 'enable_dma_control' must be set to false
+        This is a self clearning bit
+
+        Args:
+            Nothing
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+        self.set_register_bit(CONTROL, BIT_STB_WRITE_LOCAL_BUFFER)
+
+    def send_sync_escape(self):
+        self.set_register_bit(CONTROL, BIT_STB_SYNC_ESCAPE)
+
+    def get_hard_drive_native_size(self):
+        """
+        Returns the hard drive size in bytes
+
+        Args:
+            Nothing
+
+        Returns (long):
+            returns the maximum address of the hard drive
+            multiplies by the address sector size
+            max_sector_address * size_of_sector in bytes = max_size (bytes)
+
+        Raises:
+            Nothing
+
+        """
+        return self.get_hard_drive_max_native_lba() * 512
+
+    def get_hard_drive_max_native_lba(self):
+        self.send_hard_drive_features(0x00)
+        self.send_hard_drive_command(0x27)
+        time.sleep(0.2)
+        return self.get_hard_drive_lba()
+
+    def identify_hard_drive(self):
+        self.send_hard_drive_features(0x00)
+        #Send Identify Device Command
+        #print "Requesting the ID from the hard drive..."
+        self.send_hard_drive_command(0xEC)
+        time.sleep(0.2)
+        data = self.read_local_buffer()
+        self.config.set_configuration_data(data)
+        return data
+        #print "data: %s" % str(data[0:128])
+
+    def get_config(self):
+        return self.config
+
+    def hard_drive_sleep(self):
+        self.send_hard_drive_command(0xE6)
+
+    def hard_drive_configuration_identify(self):
+        self.send_hard_drive_features(0xC2)
+        self.send_hard_drive_command(0xB1)
+        time.sleep(0.2)
+        return self.read_local_buffer()
+
+    def hard_drive_read(self, address, length):
+        if length == 0:
+            return
+        if length == 0x10000:
+            length = 0
+        self.send_hard_drive_features(0x00)
+        self.set_sector_count(length)
+        self.set_hard_drive_lba(address)
+        #self.send_hard_drive_command(0x24)
+        self.send_hard_drive_command(0x25)
+
+    def hard_drive_write(self, address, length):
+        if length == 0:
+            return
+        if length == 0x10000:
+            length = 0
+        self.send_hard_drive_features(0x00)
+        self.set_sector_count(length)
+        self.set_hard_drive_lba(address)
+        self.send_hard_drive_command(0x35)
+        #self.send_hard_drive_command(0x34)
+
+    def hard_drive_idle(self):
+        self.send_hard_drive_features(0x00)
+        self.set_sector_count(0x00)
+        self.send_hard_drive_command(0x97)
+
+    def get_din_fifo_status(self):
+        return self.read_register_bit_range(STATUS, BIT_DIN_FIFO_READY1, BIT_DIN_FIFO_READY0)
+
+    def is_d2h_interrupt_en(self):
+        return self.is_register_bit_set(DEBUG_STATUS, BIT_D2H_INTERRUPT_EN)
+
+    def is_dma_activate_en(self):
+        return self.is_register_bit_set(DEBUG_STATUS, BIT_DMA_ACTIVATE_EN)
+
+    def is_d2h_pio_setup_en(self):
+        return self.is_register_bit_set(DEBUG_STATUS, BIT_D2H_PIO_SETUP_EN)
+
+    def is_d2h_data_en(self):
+        return self.is_register_bit_set(DEBUG_STATUS, BIT_D2H_DATA_EN)
+
+    def is_dma_setup_en(self):
+        return self.is_register_bit_set(DEBUG_STATUS, BIT_DMA_SETUP_EN)
+
+    def get_cmd_wr_state(self):
+        return self.read_register_bit_range(DEBUG_STATUS, BIT_CMD_WR_ST_HIGH, BIT_CMD_WR_ST_LOW)
+
+    def get_transport_state(self):
+        return self.read_register_bit_range(DEBUG_STATUS, BIT_TRSPRT_HIGH, BIT_TRSPRT_LOW)
+
+    def get_link_layer_write_state(self):
+        return self.read_register_bit_range(DEBUG_STATUS, BIT_LLW_ST_HIGH, BIT_LLW_ST_LOW)
+
+    def get_activate_count(self):
+        return self.read_register_bit_range(DEBUG_HD_COUNTS, BIT_ACTIVATE_COUNT_HIGH, BIT_ACTIVATE_COUNT_LOW)
+
+    def get_r_ok_count(self):
+        return self.read_register_bit_range(DEBUG_HD_COUNTS, BIT_ROK_COUNT_HIGH, BIT_ROK_COUNT_LOW)
+
+    def get_r_err_count(self):
+        return self.read_register_bit_range(DEBUG_HD_COUNTS, BIT_RERR_COUNT_HIGH, BIT_RERR_COUNT_LOW);
+
+class SataConfig(object):
+    def __init__(self, data = None):
+        if data is None:
+            self.data = None
+            return
+        self.set_configuration_data(data)
+
+    def set_configuration_data(self, data):
+        self.raw_data = data
+
+    def _create_dword(data):
+        return int(data[0] << 8 | data[1])
+
+    def serial_number(self):
+        data = self.raw_data
+        d = Array('B')
+        for i in range (20, 38, 4):
+            d.append(data[i + 2])
+            d.append(data[i + 3])
+            d.append(data[i + 0])
+            d.append(data[i + 1])
+
+        return d.tostring()
+
+    def max_number_of_sectors_that_can_transfer_per_interrupt(self):
+        return self.raw_data[97]
+
+    def capacity_in_sectors(self):
+        data = self.raw_data
+        sectors =   long((data[114] << 24) | \
+                         (data[115] << 16) | \
+                         (data[116] <<  8) | \
+                         (data[117]      ))
+
+        return sectors
+
+    def max_user_sectors(self):
+        data = self.raw_data
+        sectors =   long((data[100] << 24) | \
+                         (data[101] << 16) | \
+                         (data[102] <<  8) | \
+                         (data[103]      ))
+        return sectors
+
+    def dma_transfer_mode(self):
+        tm = int((self.raw_data[176] << 8) |
+                 (self.raw_data[177]     ))
+        if (tm & 0x01) > 0:
+            print "Ultra DMA Mode 0 is Supported"
+        if (tm & 0x02) > 0:
+            print "Ultra DMA Mode 1 is Supported"
+        if (tm & 0x04) > 0:
+            print "Ultra DMA Mode 2 is Supported"
+        if (tm & 0x08) > 0:
+            print "Ultra DMA Mode 3 is Supported"
+        if (tm & 0x10) > 0:
+            print "Ultra DMA Mode 4 is Supported"
+        if (tm & 0x20) > 0:
+            print "Ultra DMA Mode 5 is Supported"
+        if (tm & 0x40) > 0:
+            print "Ultra DMA Mode 6 is Supported"
+
+
+        if (tm & 0x0100) > 0:
+            print "Ultra DMA Mode 0 is Selected"
+        if (tm & 0x0200) > 0:
+            print "Ultra DMA Mode 1 is Selected"
+        if (tm & 0x0400) > 0:
+            print "Ultra DMA Mode 2 is Selected"
+        if (tm & 0x0800) > 0:
+            print "Ultra DMA Mode 3 is Selected"
+        if (tm & 0x1000) > 0:
+            print "Ultra DMA Mode 4 is Selected"
+        if (tm & 0x2000) > 0:
+            print "Ultra DMA Mode 5 is Selected"
+        if (tm & 0x4000) > 0:
+            print "Ultra DMA Mode 6 is Selected"
+
+    def sata_enabled_features(self):
+
+        f = int((self.raw_data[168] << 8 ) |
+                (self.raw_data[169]      ))
+        if (f & 0x02) > 0:
+            print "Non Zero Buffer Offset in DMA Setup FIS Enabled"
+        if (f & 0x04) > 0:
+            print "DMA Setup Auto-Activate Optimization Enabled"
+        if (f & 0x08) > 0:
+            print "Device Initiated Interface Power Management Enabled"
+        if (f & 0x010) > 0:
+            print "In Order Delivery Enabled"
+        if (f & 0x040) > 0:
+            print "Software Settings Preseved After Reset Enabled"
+
+        f = int((self.raw_data[258] << 8 ) |
+                (self.raw_data[259]      ))
+
+        if (f & 0x01):
+            print "Write Cache Enabled"
+        if (f & 0x02):
+            print "Read Look Ahead Enabled"
+        if (f & 0x04):
+            print "Reverting Enabled"
+        if (f & 0x08):
+            print "Auto Reassign Enabled"
+
+    def hard_drive_buffer_size(self):
+        return self.raw_data[42]
 
