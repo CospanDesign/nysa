@@ -141,6 +141,7 @@ reg [3:0]         state           =   IDLE;
 reg               prev_int        = 0;
 
 
+wire              start;
 reg               execute_command;
 reg               command_finished;
 reg               request_more_data;
