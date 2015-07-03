@@ -352,7 +352,6 @@ class Driver(object):
           implementation
         """
         address = long(self.base_addr + address)
-        print "address: 0x%08X" % address
         self.n.write(address, data, disable_auto_inc = disable_auto_inc)
 
     def write_memory(self, address, data):
