@@ -37,81 +37,94 @@ from array import array as Array
 from nysa.host.driver import driver
 
 
-COSPAN_DESIGN_DMA_MODULE        = 0x01
+COSPAN_DESIGN_DMA_MODULE            = 0x01
 
 
 #Register Constants
-CONTROL                         = 0
+CONTROL                             = 0
 
-BIT_CONTROL_ENABLE              = 0
-BIT_CONTROL_INTERRUPT_CMD_FIN   = 1
+BIT_CONTROL_ENABLE                  = 0
+BIT_CONTROL_INTERRUPT_CMD_FIN       = 1
 
-STATUS                          = 1
+STATUS                              = 1
 
-CHANNEL_COUNT                   = 2
-SINK_COUNT                      = 3
+BIT_CHNL_STS_SRC_STATE3             = 13
+BIT_CHNL_STS_SRC_STATE0             = 10
+BIT_CHNL_STS_SRC_READY              = 9
+BIT_CHNL_STS_SRC_ACTIVATE           = 8
+BIT_CHNL_STS_SNK_READY_HIGH         = 7
+BIT_CHNL_STS_SNK_READY_LOW          = 6
+BIT_CHNL_STS_SNK_ACTIVATE_HIGH      = 5
+BIT_CHNL_STS_SNK_ACTIVATE_LOW       = 4
+BIT_CHNL_STS_ERR_CONFLICT_SINK      = 3
+BIT_CHNL_STS_FIN                    = 2
+BIT_CHNL_STS_BUSY                   = 1
 
-CHANNEL_ADDR_CONTROL_BASE       = 0x04
 
-BIT_CFG_DMA_ENABLE              = 0
-BIT_CFG_SRC_ADDR_DEC            = 1
-BIT_CFG_SRC_ADDR_INC            = 2
+CHANNEL_COUNT                       = 2
+SINK_COUNT                          = 3
 
-CHANNEL_ADDR_STATUS_BASE        = 0x08
+CHANNEL_ADDR_CONTROL_BASE           = 0x04
 
-SINK_ADDR_CONTROL_BASE          = 0x0C
+BIT_CFG_DMA_ENABLE                  = 0
+BIT_CFG_SRC_ADDR_DEC                = 1
+BIT_CFG_SRC_ADDR_INC                = 2
 
-BIT_CFG_DEST_ADDR_DEC           = 1
-BIT_CFG_DEST_ADDR_INC           = 2
-BIT_CFG_DEST_DATA_QUANTUM       = 3
+CHANNEL_ADDR_STATUS_BASE            = 0x08
 
-SINK_ADDR_STATUS_BASE           = 0x10
+SINK_ADDR_CONTROL_BASE              = 0x0C
 
-BIT_CHAN_CNTRL_EN               = 0
+BIT_CFG_DEST_ADDR_DEC               = 1
+BIT_CFG_DEST_ADDR_INC               = 2
+BIT_CFG_DEST_DATA_QUANTUM           = 3
 
-BIT_SINK_ADDR_BOT               = 8
-BIT_SINK_ADDR_TOP               = 10
+SINK_ADDR_STATUS_BASE               = 0x10
 
-BIT_INST_PTR_BOT                = 16
-BIT_INST_PTR_TOP                = 19
+BIT_CHAN_CNTRL_EN                   = 0
+
+BIT_SINK_ADDR_BOT                   = 8
+BIT_SINK_ADDR_TOP                   = 10
+
+BIT_INST_PTR_BOT                    = 16
+BIT_INST_PTR_TOP                    = 19
 
 #Instructions
-INST_BASE                       = 0x20
-INST_OFFSET                     = 0x10
+INST_BASE                           = 0x20
+INST_OFFSET                         = 0x10
 
-INST_SRC_ADDR_LOW               = 0x00
-INST_SRC_ADDR_HIGH              = 0x01
-INST_DEST_ADDR_LOW              = 0x02
-INST_DEST_ADDR_HIGH             = 0x03
-INST_COUNT                      = 0x04
-INST_CNTRL                      = 0x05
+INST_SRC_ADDR_LOW                   = 0x00
+INST_SRC_ADDR_HIGH                  = 0x01
+INST_DEST_ADDR_LOW                  = 0x02
+INST_DEST_ADDR_HIGH                 = 0x03
+INST_COUNT                          = 0x04
+INST_CNTRL                          = 0x05
 
 #Move to Sink/Source Control
-BIT_INST_SRC_ADDR_DEC           = 0
-BIT_INST_SRC_ADDR_INC           = 1
-BIT_INST_SRC_RST_ON_INST        = 2
+BIT_INST_SRC_ADDR_DEC               = 0
+BIT_INST_SRC_ADDR_INC               = 1
+BIT_INST_SRC_RST_ON_INST            = 2
 
-BIT_INST_DEST_ADDR_DEC          = 4
-BIT_INST_DEST_ADDR_INC          = 5
-BIT_INST_DEST_QNTM              = 6
-BIT_INST_DEST_RST_ON_INST       = 7
+BIT_INST_DEST_ADDR_DEC              = 4
+BIT_INST_DEST_ADDR_INC              = 5
+BIT_INST_DEST_QNTM                  = 6
+BIT_INST_DEST_RST_ON_INST           = 7
 
 #End
-BIT_INST_CMD_BOND_INGRESS       = 8
-BIT_INST_CMD_BOND_EGRESS        = 9
+BIT_INST_CMD_BOND_INGRESS           = 8
+BIT_INST_CMD_BOND_EGRESS            = 9
 
-BIT_INST_CMD_CONTINUE           = 11
-BIT_INST_CMD_NEXT_TOP           = 19
-BIT_INST_CMD_NEXT_BOT           = 16
+BIT_INST_CMD_CONTINUE               = 11
+BIT_INST_CMD_NEXT_TOP               = 19
+BIT_INST_CMD_NEXT_BOT               = 16
 
-BIT_INST_CMD_BOND_ADDR_IN_TOP   = 27
-BIT_INST_CMD_BOND_ADDR_IN_BOT   = 24
+BIT_INST_CMD_BOND_ADDR_IN_TOP       = 27
+BIT_INST_CMD_BOND_ADDR_IN_BOT       = 24
 
-BIT_INST_CMD_BOND_ADDR_OUT_TOP  = 31
-BIT_INST_CMD_BOND_ADDR_OUT_BOT  = 28
+BIT_INST_CMD_BOND_ADDR_OUT_TOP      = 31
+BIT_INST_CMD_BOND_ADDR_OUT_BOT      = 28
 
 #Instruction Count
-INSTRUCTION_COUNT               = 8
+INSTRUCTION_COUNT                   = 8
 
 
 class DMAError(Exception):
@@ -189,7 +202,7 @@ class DMA(driver.Driver):
         """
         self.enable_register_bit(CONTROL, BIT_CONTROL_ENABLE, enable)
 
-    def enable_interrupt_when_command_finish(self, enable):
+    def enable_interrupt_when_command_finished(self, enable):
         """
         When the command is finished fire off an interrupt to the host
 
@@ -204,7 +217,7 @@ class DMA(driver.Driver):
         Raises:
             NysaCommError
         """
-        raise AssertionError("Not implemented yet!")
+        self.enable_register_bit(CONTROL, BIT_CONTROL_INTERRUPT_CMD_FIN, enable)
 
     #Channels or Source Commands
     def set_channel_sink_addr(self, channel, address):
@@ -253,7 +266,7 @@ class DMA(driver.Driver):
         mask = ((1 << BIT_SINK_ADDR_TOP) - (1 << BIT_SINK_ADDR_BOT))
         r &= mask
         address = (r >> BIT_SINK_ADDR_BOT & 0x03)
-        self.n.s.Verbose("Channel: %d Sink Address: 0x%02X" % (channel, address))
+        #self.n.s.Verbose("Channel: %d Sink Address: 0x%02X" % (channel, address))
         return address
 
     def set_channel_instruction_pointer(self, channel, ip_addr):
@@ -435,10 +448,54 @@ class DMA(driver.Driver):
         self.n.s.Verbose("Channel %d Enable: %s" % (channel, str(value)))
         return value
 
+    def is_channel_finished(self, channel):
+        """
+        Returns true if transaction is finished
+
+        Args:
+            channel(unsigned char): channel to query
+
+        Returns (bool):
+            is channel finished
+
+        Raises:
+            NysaCommError
+            DMAError:
+                User requested an address out of range
+
+        """
+        status = self.get_channel_status(channel)
+        if (status & (1 << BIT_CHNL_STS_FIN)):
+            return True
+
+        return False
+
+    def is_channel_busy(self, channel):
+        """
+        Returns true if transaction is busy
+
+        Args:
+            channel(unsigned char): channel to query
+
+        Returns (bool):
+            is channel busy
+
+        Raises:
+            NysaCommError
+            DMAError:
+                User requested an address out of range
+
+        """
+        status = self.get_channel_status(channel)
+        if (status & (1 << BIT_CHNL_STS_BUSY)):
+            return True
+
+        return False
+
     def get_channel_status(self, channel):
         """
         Returns the channel status
-        
+
         Args:
             channel (unsigned char): channel to configure
 
@@ -453,6 +510,31 @@ class DMA(driver.Driver):
         if channel > self.channel_count - 1:
             raise DMAError("Illegal channel count: %d > %d" % (channel, self.channel_count - 1))
         return self.read_register(CHANNEL_ADDR_STATUS_BASE + channel)
+
+    def get_debug_channel_state(self, channel):
+        state = self.read_register_bit_range(CHANNEL_ADDR_STATUS_BASE + channel,
+                                            BIT_CHNL_STS_SRC_STATE3,
+                                            BIT_CHNL_STS_SRC_STATE0)
+        if state == 0:
+            return "IDLE"
+        if state == 1:
+            return "SETUP_CHANNEL"
+        if state == 2:
+            return "SETUP_COMMAND"
+        if state == 3:
+            return "EGRESS_WAIT"
+        if state == 4:
+            return "INGRESS_WAIT"
+        if state == 5:
+            return "ACTIVE"
+        if state == 6:
+            return "END_COMMAND"
+        if state == 7:
+            return "FLUSH"
+        if state == 8:
+            return "FINISHED"
+
+        return state
 
     #Sink Commands
     def enable_dest_address_increment(self, sink, enable):
