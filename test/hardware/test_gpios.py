@@ -11,7 +11,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
 
-from nysa.host.driver.sf_camera import SFCamera
+from nysa.host.driver.gpio import GPIO
 from nysa.common.status import Status
 
 from nysa.host.platform_scanner import PlatformScanner
@@ -20,7 +20,7 @@ class Test (unittest.TestCase):
 
     def setUp(self):
         self.s = Status()
-        self.s.set_level("fatal")
+        self.s.set_level("verbose")
         plat = ["", None, None]
         pscanner = PlatformScanner()
         platform_dict = pscanner.get_platforms()
@@ -52,7 +52,7 @@ class Test (unittest.TestCase):
                     self.s.Important("Found a nysa instance: %s" % name)
                     n.read_sdb()
                     #import pdb; pdb.set_trace()
-                    if n.is_device_in_platform(SFCamera):
+                    if n.is_device_in_platform(GPIO):
                         plat = [platform_name, name, n]
                         break
                     continue
@@ -60,19 +60,57 @@ class Test (unittest.TestCase):
                 #self.s.Verbose("\t%s" % psi)
 
         if plat[1] is None:
-            self.camera = None
+            self.gpio = None
             return
         n = plat[2]
-        urn = n.find_device(SFCamera)[0]
-        self.s.set_level("verbose")
+        urn = n.find_device(GPIO)[0]
+        self.gpio = GPIO(n, urn)
         self.s.Important("Using Platform: %s" % plat[0])
-        self.s.Important("Instantiated a SFCamera Device: %s" % urn)
-        self.camera = SFCamera(n, urn)
+        self.s.Important("Instantiated a GPIO Device: %s" % urn)
 
-    def test_camera(self):
-        if self.camera is None:
+    def test_gpio(self):
+        if self.gpio is None:
             self.s.Fatal("Cannot Run Test when no device is found!")
             return
         self.s.Info ("Testing output ports (like LEDs)")
 
+        self.s.Info ("Flashing all the outputs for one second")
+
+        self.s.Info ("Set all the ports to outputs")
+        self.gpio.set_port_direction(0xFFFFFFFF)
+
+        self.s.Info ("Set all the values to 1s")
+        self.gpio.set_port_raw(0xFFFFFFFF)
+        time.sleep(1)
+        self.s.Info ("Set all the values to 0s")
+        self.gpio.set_port_raw(0x00000000)
+
+        self.s.Info ("Reading inputs (Like buttons) in 2 second")
+        self.gpio.set_port_direction(0x00000000)
+
+        time.sleep(2)
+        self.s.Info ("Read value: 0x%08X" % self.gpio.get_port_raw())
+        self.s.Info ("Reading inputs (Like buttons) in 2 second")
+        time.sleep(2)
+        self.s.Info ("Read value: 0x%08X" % self.gpio.get_port_raw())
+
+        self.s.Info ("Interrupts: 0x%08X" % self.gpio.get_interrupts())
+
+        self.s.Info ("Testing Interrupts, setting interrupts up for positive edge detect")
+        self.s.Info ("Interrupts: 0x%08X" % self.gpio.get_interrupts())
+        self.gpio.set_interrupt_edge(0xFFFFFFFF)
+        self.gpio.set_interrupt_enable(0xFFFFFFFF)
+
+        self.s.Info ("Waiting for 5 seconds for the interrupts to fire")
+        if self.gpio.wait_for_interrupts(5):
+            self.s.Info ("Interrupt detected!\n")
+            #if self.gpio.is_interrupt_for_slave():
+            self.s.Info ("Interrupt for GPIO detected!")
+            self.s.Info ("Interrupts: 0x%08X" % self.gpio.get_interrupts())
+            self.s.Info ("Read value: 0x%08X" % self.gpio.get_port_raw())
+
+        self.s.Info ("Interrupts: 0x%08X" % self.gpio.get_interrupts())
+
+if __name__ == "__main__":
+    unittest.main()
 

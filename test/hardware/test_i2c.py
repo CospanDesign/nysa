@@ -163,4 +163,8 @@ class Test (unittest.TestCase):
         read_data = self.d.read_from_i2c(i2c_id, None, 2)
         print "Read Data: %s" % str(read_data)
 
+if __name__ == "__main__":
+    unittest.main()
+
+
 

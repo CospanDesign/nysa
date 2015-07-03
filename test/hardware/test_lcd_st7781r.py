@@ -10,7 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
 
-from nysa.host.driver import lcd_SSD1963
+from nysa.host.driver import lcd_ST7781R
 from nysa.common.status import Status
 
 class Test (unittest.TestCase):
@@ -33,5 +33,9 @@ class Test (unittest.TestCase):
         s.set_level("error")
         '''
 
-    def notest_lcd_SSD1963(self):
+    def notest_lcd_ST7781R(self):
         pass
+
+if __name__ == "__main__":
+    unittest.main()
+

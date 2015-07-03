@@ -193,8 +193,6 @@ class Test (unittest.TestCase):
 
         return status
 
-
-
     def clear_memory(self):
         total_size = self.n.get_device_size(self.urn)
         position = 0
@@ -226,5 +224,6 @@ class Test (unittest.TestCase):
 
             print ("Cleared: 0x%08X - 0x%08X" % (prev_pos, position))
 
-
+if __name__ == "__main__":
+    unittest.main()
 

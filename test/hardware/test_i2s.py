@@ -115,4 +115,6 @@ class Test (unittest.TestCase):
         #self.d.enable_pre_fifo_test(False)
         #self.d.enable_i2s(False)
 
+if __name__ == "__main__":
+    unittest.main()
 

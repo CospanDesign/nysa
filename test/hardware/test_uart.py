@@ -73,7 +73,6 @@ class Test (unittest.TestCase):
         self.s.Important("Using Platform: %s" % plat[0])
         self.s.Important("Instantiated a driver Device: %s" % urn)
 
-
     def test_uart(self):
         """Unit test for UART
         """
@@ -204,3 +203,7 @@ class Test (unittest.TestCase):
             print "Read overflow"
 
         '''
+
+if __name__ == "__main__":
+    unittest.main()
+
