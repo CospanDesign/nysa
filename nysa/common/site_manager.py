@@ -45,6 +45,9 @@ USER_BASE_CBUILDER_DIR = "user_cbuilder_projects"
 
 def get_python_install_dir():
     p = None
+    if os.name == "nt":
+        from distutils.sysconfig import get_python_lib
+        return get_python_lib()
     try:
         p = site.getsitepackages()[0]
     except AttributeError as e:
@@ -380,7 +383,11 @@ class SiteManager(object):
                 board_dict[name]["pip"] = "git+" + board_dict[name]["repository"] + ".git"
             if self.s: self.s.Important("Installing from URL: %s" % (board_dict[name]["pip"]))
 
-            v = subprocess.call(["sudo", "pip", "install", "--upgrade", board_dict[name]["pip"]])
+            v = None
+            if os.name == "nt":
+                v = subprocess.call(["pip", "install", "--upgrade", board_dict[name]["pip"]])
+            else:
+                v = subprocess.call(["sudo", "pip", "install", "--upgrade", board_dict[name]["pip"]])
 
             self.add_board(name, timestamp, install_dir)
             if self.s: self.s.Important("Updating path dictionary")
