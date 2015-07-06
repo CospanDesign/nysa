@@ -31,6 +31,9 @@ setup(
     scripts=[
         "bin/nysa"
     ],
+    entry_points = {
+        'console_scripts': ['nysa=nysa.tools.nysa_cli:main']
+    },
     classifiers=[
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "License :: OSI Approved :: MIT License",
