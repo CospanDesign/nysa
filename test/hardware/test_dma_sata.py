@@ -169,7 +169,8 @@ class Test (unittest.TestCase):
         #Rarely Failed:
         #WORD_TRANSFER_COUNT = 0x2000
         #WORD_TRANSFER_COUNT = 0x16000
-        WORD_TRANSFER_COUNT = 0x700000
+        #WORD_TRANSFER_COUNT = 0x700000
+        WORD_TRANSFER_COUNT = 0x800000
         MEGABYTES = (WORD_TRANSFER_COUNT * 4.0) / 1000000.0
         self.s.Info ("Transfer Size: 0x%08X" % WORD_TRANSFER_COUNT)
 
@@ -338,7 +339,6 @@ class Test (unittest.TestCase):
         print "\tSATA Status: 0x%08X" % self.sata_drv.get_d2h_status()
         print "\tDMA Channel State:     %s" % self.dma.get_debug_channel_state(channel)
 
-
     def fill_memory_with_pattern(self):
         position = 0
         #self.clear_memory()
@@ -450,10 +450,6 @@ class Test (unittest.TestCase):
             position += size
 
             self.s.Verbose ("Cleared: 0x%08X - 0x%08X" % (prev_pos, position))
-
-
-
-
 
 if __name__ == "__main__":
     unittest.main()
