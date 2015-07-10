@@ -78,7 +78,9 @@ BIT_CFG_DEST_ADDR_DEC               = 1
 BIT_CFG_DEST_ADDR_INC               = 2
 BIT_CFG_DEST_DATA_QUANTUM           = 3
 
-SINK_ADDR_STATUS_BASE               = 0x10
+SINK_ADDR_STATUS_BASE               = 0x010
+
+SINK_CURR_ADDR_BASE                 = 0x016
 
 BIT_CHAN_CNTRL_EN                   = 0
 
@@ -98,6 +100,7 @@ INST_DEST_ADDR_LOW                  = 0x02
 INST_DEST_ADDR_HIGH                 = 0x03
 INST_COUNT                          = 0x04
 INST_CNTRL                          = 0x05
+
 
 #Move to Sink/Source Control
 BIT_INST_SRC_ADDR_DEC               = 0
@@ -465,7 +468,7 @@ class DMA(driver.Driver):
 
         """
         status = self.get_channel_status(channel)
-        if (status & (1 << BIT_CHNL_STS_FIN)):
+        if ((status & (1 << BIT_CHNL_STS_FIN)) > 0):
             return True
 
         return False
@@ -629,6 +632,7 @@ class DMA(driver.Driver):
             raise DMAError("Illegal sink count: %d > %d" % (sink, self.sink_count - 1))
         return self.is_register_bit_set(SINK_ADDR_CONTROL_BASE + sink, BIT_CFG_DEST_ADDR_DEC)
 
+
     def enable_dest_respect_quantum(self, sink, enable):
         """
         Enable respect data quantum:
@@ -674,6 +678,14 @@ class DMA(driver.Driver):
         if sink > self.sink_count - 1:
             raise DMAError("Illegal sink count: %d > %d" % (sink, self.sink_count - 1))
         return self.is_register_bit_set(SINK_ADDR_CONTROL_BASE + sink, BIT_CFG_DEST_DATA_QUANTUM)
+
+    def get_current_sink_address(self, sink):
+        if sink > self.sink_count - 1:
+            raise DMAError("Illegal sink count: %d > %d" % (sink, self.sink_count - 1))
+        addr =  long(self.read_register(SINK_CURR_ADDR_BASE + (sink * 2) + 1))
+        addr = addr << 32
+        addr |= long(self.read_register(SINK_CURR_ADDR_BASE + (sink * 2)))
+        return addr
 
     #Instructions
     def set_instruction_source_address(self, inst_addr, source_addr):
