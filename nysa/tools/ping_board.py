@@ -31,7 +31,7 @@ SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "performs a board ping, this is the simplest level of communication\n" \
+DESCRIPTION = "performs a board ping, this is the simplest level of communicatio " \
               "If a board responds to a ping it has been reset and the clock is running correctly"
 
 EPILOG = "\n"

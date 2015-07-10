@@ -203,7 +203,7 @@ def find_board(name, serial = None, status = None):
 
         if len(names) == 1:
             #print "Found: %s " % str(names)
-            if s: s.Important("Found: %s" % names[0])
+            if s: s.Debug("Found: %s" % names[0])
             name = names[0]
 
         else:
@@ -212,7 +212,7 @@ def find_board(name, serial = None, status = None):
                 names.remove("sim")
 
             if len(names) == 1:
-                if s: s.Important("Found: %s" % names[0])
+                if s: s.Debug("Found: %s" % names[0])
                 name = names[0]
             else:
                 raise PlatformScannerException("more than one option for attached board: %s" % str(names))
