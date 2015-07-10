@@ -328,6 +328,7 @@ Conclusion
 ----------
 
 This is all the high level utility functions of Nysa to learn more about how to:
+
 * Easily build an FPGA image that will interact with all the Nysa tools
 * Create a Wishbone slave core you can use to interface with your custom hardware and that can be used to create an FPGA image with a configuration file
 * Interact with Nysa graphically using the Nysa GUI (nui)
