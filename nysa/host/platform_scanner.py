@@ -245,7 +245,7 @@ def find_board(name, serial = None, status = None):
                 exception += "\t%s\n" % dev
             raise PlatformScannerException(exception)
         #Serial Number Specified
-        if s: s.Info("Found board: %s, searching for %s" % (name, serial))
+        if s: s.Debug("Found board: %s, searching for serial: %s" % (name, serial))
 
         for dev in dev_dict:
             if dev == serial:
