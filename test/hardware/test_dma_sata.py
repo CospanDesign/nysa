@@ -144,8 +144,13 @@ class Test (unittest.TestCase):
         self.sata_drv.write_local_buffer(clear_values)
         self.sata_drv.load_local_buffer()
         self.sata_drv.hard_drive_write(0x0000, 1)
+        print "\tSATA Status:                       0x%08X" % self.sata_drv.get_d2h_status()
+        print "\tSATA Sector Count:                 0x%08X" % self.sata_drv.get_sector_count()
+        print "\tSATA Current Address:              0x%08X" % self.sata_drv.get_hard_drive_lba()
+
 
         self.sata_drv.hard_drive_read(0x0000, 1)
+
         data = self.sata_drv.read_local_buffer()
         self.s.Verbose("Data from Hard Drive Before DMA Transfer (Should be all zeros):")
         print str(data[0:128])
@@ -169,8 +174,12 @@ class Test (unittest.TestCase):
         #Rarely Failed:
         #WORD_TRANSFER_COUNT = 0x2000
         #WORD_TRANSFER_COUNT = 0x16000
-        #WORD_TRANSFER_COUNT = 0x700000
-        WORD_TRANSFER_COUNT = 0x800000
+        WORD_TRANSFER_COUNT = 0x0A00000
+        #WORD_TRANSFER_COUNT = 0x100000
+        #WORD_TRANSFER_COUNT = 0xF00000
+        #WORD_TRANSFER_COUNT = 0x800000
+        #WORD_TRANSFER_COUNT = 0x900000
+        #WORD_TRANSFER_COUNT = 0xB00000
         MEGABYTES = (WORD_TRANSFER_COUNT * 4.0) / 1000000.0
         self.s.Info ("Transfer Size: 0x%08X" % WORD_TRANSFER_COUNT)
 
@@ -179,6 +188,7 @@ class Test (unittest.TestCase):
         self.s.Important("Configure DMA to transfer %f MB from DDR3 to Hard Drive" % MEGABYTES)
         self.fill_memory_with_pattern()
 
+        self.dma.enable_channel                     (CHANNEL_ADDR, False                )
         #Configure DMA to transfer 100MB of data from DDR3 to hard drive
         self.dma.set_channel_sink_addr              (CHANNEL_ADDR, SINK_ADDR            )
         self.dma.set_channel_instruction_pointer    (CHANNEL_ADDR, INST_ADDR            )
@@ -205,7 +215,21 @@ class Test (unittest.TestCase):
         self.s.Info ("Wait for transaction to finish")
         fail = False
         timeout = time.time() + TIMEOUT
+
+
+        '''
+        self.fail_analysis(CHANNEL_ADDR, SINK_ADDR, INST_ADDR)
+        print "\tCurrent SATA DMA Address:          0x%08X" % self.dma.get_current_sink_address(SINK_ADDR)
+        print "\tSATA Status:                       0x%08X" % self.sata_drv.get_d2h_status()
+        print "\tSATA Sector Count:                 0x%08X" % self.sata_drv.get_sector_count()
+
+
+        status          = self.dma.get_channel_status(CHANNEL_ADDR)
+        print "\tFinished:              %s" % str(((status & 0x04) > 0))
+        print "\tStatus:                0x%08X" % status
+        '''
         while not self.dma.is_channel_finished(CHANNEL_ADDR):
+        #while (self.dma.get_current_sink_address(SINK_ADDR)  - SATA_ADDRESS) >= WORD_TRANSFER_COUNT:
             print ".",
             if time.time() > timeout:
                 print ""
@@ -217,10 +241,13 @@ class Test (unittest.TestCase):
             return
 
         self.s.Info ("Transaction Finished!")
-        #print "\tSATA Current Address:              0x%08X" % self.sata_drv.get_hard_drive_lba()
+        print "\tCurrent SATA DMA Address:          0x%08X" % self.dma.get_current_sink_address(SINK_ADDR)
+        print "\tSATA Status:                       0x%08X" % self.sata_drv.get_d2h_status()
+        print "\tSATA Sector Count:                 0x%08X" % self.sata_drv.get_sector_count()
 
+        #self.fail_analysis(CHANNEL_ADDR, SINK_ADDR, INST_ADDR)
         self.dma.enable_channel                     (CHANNEL_ADDR, False                )
-        self.sata_drv.enable_dma_control(False)
+        self.sata_drv.enable_dma_control            (False)
 
 
         self.sata_drv.hard_drive_read(0x0000, 1)
@@ -240,7 +267,7 @@ class Test (unittest.TestCase):
         #Configure DMA to transfer 100MB of data from hard drive to DDR3
         CHANNEL_ADDR        = 0
         SINK_ADDR           = 2
-        self.s.Important("Transfer 100MB of data from hard drive to DDR3")
+        self.s.Important("Configure DMA to transfer %f MB from Hard Drive to DDR3" % MEGABYTES)
         self.dma.set_channel_sink_addr              (CHANNEL_ADDR, SINK_ADDR            )
         self.dma.set_channel_instruction_pointer    (CHANNEL_ADDR, INST_ADDR            )
         self.dma.enable_source_address_increment    (CHANNEL_ADDR, True                 )
@@ -280,6 +307,7 @@ class Test (unittest.TestCase):
             return
 
         self.s.Info ("Transaction Finished!")
+        print "\tSATA Sector Count:                 0x%08X" % self.sata_drv.get_sector_count()
 
 
         #Transaction Complete
@@ -327,17 +355,23 @@ class Test (unittest.TestCase):
         print "\tSink Ready:            0x%02X" % sink_ready
         print "\tSource Activate:       0x%02X" % source_activate
         print "\tSource Ready:          0x%02X" % source_ready
+        print "\tInstruction Count:     0x%08X" % self.dma.get_instruction_data_count(instruction_addr)
+        print "\tInstruction Dest Addr  0x%016X" % self.dma.get_instruction_dest_address(instruction_addr)
+        print "\tInstruction Source Addr0x%016X" % self.dma.get_instruction_source_address(instruction_addr)
         print""
         print "\tDMA Request Ingress Address:       0x%08X" % self.dma.get_channel_sink_addr(channel)
         print "\tSATA Current Address:              0x%08X" % self.sata_drv.get_hard_drive_lba()
         print "\tDMA Request Egress Address:        0x%08X" % self.dma.get_instruction_dest_address(instruction_addr)
+        print "\tCurrent SATA DMA Address:          0x%08X" % self.dma.get_current_sink_address(sink)
         print ""
-        print "\tSATA Command Layer Write State: %d" % self.sata_drv.get_cmd_wr_state()
-        print "\tSATA Transport State: %d" % self.sata_drv.get_transport_state()
-        print "\tSATA Link Layer State: %d" % self.sata_drv.get_link_layer_write_state()
+        print "\tSATA Command Layer Write State:    %d" % self.sata_drv.get_cmd_wr_state()
+        print "\tSATA Transport State:              %d" % self.sata_drv.get_transport_state()
+        print "\tSATA Link Layer State:             %d" % self.sata_drv.get_link_layer_write_state()
         print ""
-        print "\tSATA Status: 0x%08X" % self.sata_drv.get_d2h_status()
-        print "\tDMA Channel State:     %s" % self.dma.get_debug_channel_state(channel)
+        print "\tSATA Status:                       0x%08X" % self.sata_drv.get_d2h_status()
+        print "\tSATA Current Address:              0x%08X" % self.sata_drv.get_hard_drive_lba()
+        print "\tSATA Sector Count:                 0x%08X" % self.sata_drv.get_sector_count()
+        print "\tDMA Channel State:                 %s" % self.dma.get_debug_channel_state(channel)
 
     def fill_memory_with_pattern(self):
         position = 0

@@ -356,7 +356,7 @@ class SATADriver(driver.Driver):
     def get_hard_drive_lba(self):
         count = long(self.read_register(HARD_DRIVE_ADDRESS_HIGH))
         count = count << 32
-        count += long(self.read_register(HARD_DRIVE_ADDRESS_LOW))
+        count |= long(self.read_register(HARD_DRIVE_ADDRESS_LOW))
         return count
 
     def get_d2h_fis(self):
