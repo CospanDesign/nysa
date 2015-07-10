@@ -24,6 +24,7 @@ import time
 
 from nysa.host.platform_scanner import find_board
 from nysa.host.platform_scanner import PlatformScannerException
+from nysa.host.nysa import NysaCommError
 
 NAME = "ping"
 SCRIPT_NAME = "nysa %s" % NAME
@@ -68,4 +69,12 @@ def ping_board(args, status):
         if s: s.Error("%s" % str(ex))
         sys.exit(1)
 
-    board.ping()
+    print "Pinging board...",
+    try:
+        board.ping()
+    except NysaCommError as e:
+        print "Communication Error: %s" % str(e)
+        sys.exit(1)
+    print "Received a Response!"
+
+
