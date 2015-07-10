@@ -14,7 +14,7 @@ Pip
 
 You can test if you have pip installed by openning up a terminal and typing: ``pip --version``
 
-If you do not see a version number follow the following steps
+If you do not see a version number here's how to get it:
 
 #. Download `get-pip.py <https://bootstrap.pypa.io/get-pip.py>`_
 #. Run the download script: ``python ./get-pip.py``
@@ -23,7 +23,9 @@ Installation
 ------------
 From a terminal install nysa from the github repo using pip
 
-``pip install git+https://github.com/CospanDesign/nysa``
+.. code-block:: bash
+
+    pip install git+https://github.com/CospanDesign/nysa
 
 Nysa Command Line Tool
 ----------------------
