@@ -9,8 +9,11 @@ Welcome to nysa's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+    :maxdepth: 2
 
+    getting_started.rst
+    getting_started_cores.rst
+    sdb.rst
 
 
 Indices and tables
