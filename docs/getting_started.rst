@@ -17,7 +17,7 @@ You can test if you have pip installed by openning up a terminal and typing: ``p
 If you do not see a version number here's how to get it:
 
 #. Download `get-pip.py <https://bootstrap.pypa.io/get-pip.py>`_
-#. Run the download script: ``python ./get-pip.py``
+#. Run the downloaded script: ``python ./get-pip.py``
 
 Installation
 ------------
@@ -29,7 +29,7 @@ From a terminal install nysa from the github repo using pip
 
 Nysa Command Line Tool
 ----------------------
-A Nysa command line tool is available to the user, to view all the commands type:
+The Nysa command line tool is available to the user, to view all the commands type:
 
 .. code-block:: bash
 
@@ -85,7 +85,7 @@ A Nysa command line tool is available to the user, to view all the commands type
 
 
 
-We will be using some of the utility functions and all of the host functions here
+We will be using some of these functions to configure Nysa and communicate with either a physical or simulated FPGA board
 
 Initializing Nysa
 -----------------
@@ -161,11 +161,14 @@ You should get an output that looks something like this:
 Nysa will query the host computer for any boards attached. It even queried simulated boards. Any of the above boards can be used in the following examples.
 
 
-**Note About Unique Names**
-Nysa will always prioritize a physical board over a simulated board. For example if I ran the command ``nysa ping`` Nysa will look for a physical board, in my case **artemis_usb2**, and ping the board. If there was no physical board attached the ``nysa ping`` command would return an error because there is more than one possible board to ping like the following:
+**Note about implicit devices**
+When executing a command that interfaces with a board Nysa will attempt to determine which board the user is refering to. For example, if the 'artemis_usb2' board was the only board attached to my computer and I types ``nysa ping`` Nysa will send a ping down to artemis_usb2. The command ``nysa ping`` would be the same as typing ``nysa ping artemis_usb2 -s FTYNUFY9`` (Assuming FTYNUFY9 was the board's serial number). If there are multiple boards for a single platform the user will need to explicitly write the entire command.
+
+As an example, if there were no physical boards attached and the ``nysa ping`` was issued, the following would occur:
 
 .. code-block:: bash
 
+    $> nysa ping
     Error: ping_board: Serial number (ID) required because there are multiple platforms availble
     Available IDs:
         dionysus_spi_pmod
@@ -180,7 +183,7 @@ Nysa will always prioritize a physical board over a simulated board. For example
         dionysus_uart_pmod
         dionysus_pmod_tft
 
-To resove this, you must specify the id of the board using '-s <board ID>' on any command where the solution is not obvious to the tool. For example. To 'ping' the simulated board 'dionysus_spi_pmod' the following command would be used ``nysa ping sim -s dionysus_spi_pmod``
+The following command would resolve this: ``nysa ping sim -s dionysus_spi_pmod``
 
 .. code-block:: bash
 
@@ -190,7 +193,12 @@ To resove this, you must specify the id of the board using '-s <board ID>' on an
 
 Ping a board
 ^^^^^^^^^^^^
-Ping is the simplest form of communication, the purpose of the command is to verify that the communciation scheme is working, it does not test out any higher level features of the board.
+Ping is the simplest form of communication, the purpose of the command is to verify that the
+
+#. The communication medium is working (UART, USB, PCIE, etc...).
+#. The clock is working correctly.
+#. The FPGA is programmed.
+#. The most basic functionality is working.
 
 **Simulation Example, pinging the simulated board 'dionysus_spi_pmod'**
 
@@ -291,7 +299,7 @@ Other Host Commands
 
 upload
 """"""
-Upload an image file to a board. The format of the files is platform specific. For Artemis USB2 and Dionysus the format is a 'bin' file that is generated from the Xilinx tools using the bitgen tool.
+Upload an image file to a board. The format of the files is platform specific. For Artemis USB2 and Dionysus the format is a 'bin' file that is generated from the Xilinx bitgen tool.
 
 Uploading a binary to artemis USB2
 
@@ -308,7 +316,7 @@ Uploading a binary to artemis USB2
 
 program
 """""""
-Issue a signal that will reprogram the FPGA. This is platform dependent. For Artemis USB2 and Dionysus the command will pull the 'PROGRAM_N' pin low on the FPGA which tells the FPGA to read in the data from the SPI Flash ROM.
+Issue a signal that will reprogram the FPGA. This is platform dependent. For Artemis USB2 and Dionysus the command will pull the 'PROGRAM_N' pin low FPGA which tells the FPGA to read in the data from the SPI Flash ROM.
 
 Issuing a program command
 
@@ -319,7 +327,7 @@ Issuing a program command
 
 reset
 """""
-Many times FPGA images have a reset signals, this command will pusle the reset signal which resets internal state machines within the FPGA
+Many times FPGA images have a reset signals, this command will pusle the reset signal which resets FPGA's internal state machines
 
 .. code-block:: bash
 
