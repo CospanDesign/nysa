@@ -30,7 +30,7 @@ SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "Upload a program file to the specified board"
+DESCRIPTION = "upload a program file to the specified board"
 
 EPILOG = "If there is only one board attached, then it will be assumed otherwise a name and or serial\/board id might be required\n"
 

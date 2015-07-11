@@ -33,7 +33,7 @@ SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "Display the contents of the SDB of the specified board"
+DESCRIPTION = "display the contents of the SDB of the specified board"
 
 EPILOG = "\n"
 

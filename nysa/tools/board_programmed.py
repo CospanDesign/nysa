@@ -29,7 +29,7 @@ SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "Reads the status of the FPGA 'Done' pin to determine if the FPGA is programmed"
+DESCRIPTION = "reads the status of the FPGA 'Done' pin to determine if the FPGA is programmed"
 
 EPILOG = "\n"
 

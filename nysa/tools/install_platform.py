@@ -31,7 +31,7 @@ SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "Install a platform to the local system"
+DESCRIPTION = "install a platform to the local system"
 EPILOG = "Install a platform to a local system\n" + \
 "if no platform is specified the remote platforms are listed\n" + \
 "if 'all' is specified then all platforms available will be\n" + \

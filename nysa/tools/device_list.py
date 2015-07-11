@@ -30,7 +30,7 @@ SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "Manage/View devices IDs and descriptions"
+DESCRIPTION = "manage/view devices IDs and descriptions"
 
 EPILOG = "\n" \
 "Examples:\n" + \

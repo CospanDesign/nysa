@@ -31,7 +31,7 @@ SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "Install examples to the local system"
+DESCRIPTION = "install FPGA Project examples to the local system"
 EPILOG = "Install a set of examples for a platform\n" + \
 "if no example platform is specified then the remote examples are listed\n" + \
 "if 'all' is specified then all platform available will be downloaded\n" + \

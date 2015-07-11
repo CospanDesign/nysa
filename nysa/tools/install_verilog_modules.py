@@ -31,7 +31,7 @@ SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "Install a verilog repository to the local system"
+DESCRIPTION = "install a verilog repository to the local system"
 EPILOG = "Install a verilog repository to the local system\n" + \
 "if no repo is specified the remote verilog repositories are listed\n" + \
 "if 'all' is specified then all repositories available will be\n" + \

@@ -33,7 +33,7 @@ SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "Print the status of nysa tools"
+DESCRIPTION = "print the status of the nysa tools"
 
 EPILOG = "\n"
 

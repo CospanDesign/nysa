@@ -26,7 +26,7 @@ from nysa.common import status as st
 
 NAME = "utils"
 SCRIPT_NAME = "nysa %s" % NAME
-DESCRIPTION = "Utility functions"
+DESCRIPTION = "utility functions"
 EPILOG = "\n" \
          "Read Nysa version number\n" \
          "%s -v\n" % (SCRIPT_NAME)
@@ -37,8 +37,8 @@ def setup_parser(parser):
     parser.add_argument("-v", "--verilog", action="store_true", help="display verilog packages")
     parser.add_argument("-u", "--update", action="store_true", help="update verilog and board packages")
     parser.add_argument("-c", "--clean", action="store_true", help="clean up the packages")
-    parser.add_argument("-b", "--boards", action="store_true", help="view the boards attached to this device")
-    parser.add_argument("-p", "--platforms", action="store_true", help="view the board platforms")
+    #parser.add_argument("-b", "--boards", action="store_true", help="view the boards attached to this device")
+    #parser.add_argument("-p", "--platforms", action="store_true", help="view the board platforms")
     return parser
 
 def nysa_utils(args, status):

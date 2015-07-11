@@ -30,7 +30,7 @@ SCRIPT_NAME = "nysa %s" % NAME
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
-DESCRIPTION = "List connected boards"
+DESCRIPTION = "list connected boards"
 
 EPILOG = "\n"
 
