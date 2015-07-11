@@ -64,93 +64,95 @@ TYPE_DICT["ibuilder"] = "Functions to generate an entire image (or binary) to be
 TYPE_DICT["host"] = "Functions to view and control boards"
 TYPE_DICT["utility"] = "Functions to update and/or upgrade the nysa tool including adding new platforms and verilog packages"
 
-TOOL_DICT = {
-    generate_slave.NAME:{
+TOOL_DICT = collections.OrderedDict([
+    (generate_slave.NAME,{
         "type": "cbuilder",
         "module": generate_slave,
         "tool": generate_slave.generate_slave
-    },
-    image_builder.NAME:{
-        "type": "ibuilder",
-        "module": image_builder,
-        "tool": image_builder.image_builder
-    },
-    nysa_utils.NAME:{
-        "type": "utility",
-        "module": nysa_utils,
-        "tool": nysa_utils.nysa_utils
-    },
-    reset_board.NAME:{
-        "type": "host",
-        "module": reset_board,
-        "tool": reset_board.reset_board
-    },
-    ping_board.NAME:{
-        "type": "host",
-        "module": ping_board,
-        "tool": ping_board.ping_board
-    },
-    board_programmed.NAME:{
-        "type": "host",
-        "module": board_programmed,
-        "tool": board_programmed.board_programmed
-    },
-    program_board.NAME:{
-        "type": "host",
-        "module": program_board,
-        "tool": program_board.program_board
-    },
-    upload_board.NAME:{
-        "type": "host",
-        "module": upload_board,
-        "tool": upload_board.upload_board
-    },
-    list_platforms.NAME:{
-        "type": "utility",
-        "module": list_platforms,
-        "tool": list_platforms.list_platforms
-    },
-    list_boards.NAME:{
-        "type": "host",
-        "module": list_boards,
-        "tool": list_boards.list_boards
-    },
-    device_list.NAME:{
+    }),
+    (device_list.NAME,{
         "type": "cbuilder",
         "module": device_list,
         "tool": device_list.device_list
-    },
-    sdb_viewer.NAME:{
+    }),
+
+    (image_builder.NAME,{
+        "type": "ibuilder",
+        "module": image_builder,
+        "tool": image_builder.image_builder
+    }),
+
+    (reset_board.NAME,{
+        "type": "host",
+        "module": reset_board,
+        "tool": reset_board.reset_board
+    }),
+    (ping_board.NAME,{
+        "type": "host",
+        "module": ping_board,
+        "tool": ping_board.ping_board
+    }),
+    (board_programmed.NAME,{
+        "type": "host",
+        "module": board_programmed,
+        "tool": board_programmed.board_programmed
+    }),
+    (program_board.NAME,{
+        "type": "host",
+        "module": program_board,
+        "tool": program_board.program_board
+    }),
+    (upload_board.NAME,{
+        "type": "host",
+        "module": upload_board,
+        "tool": upload_board.upload_board
+    }),
+    (sdb_viewer.NAME,{
         "type": "host",
         "module": sdb_viewer,
         "tool": sdb_viewer.view_sdb
-    },
-    init.NAME:{
+    }),
+    (init.NAME,{
         "type": "utility",
         "module": init,
         "tool": init.init
-    },
-    install_platform.NAME:{
+    }),
+    (nysa_utils.NAME,{
+        "type": "utility",
+        "module": nysa_utils,
+        "tool": nysa_utils.nysa_utils
+    }),
+    (list_boards.NAME,{
+        "type": "utility",
+        "module": list_boards,
+        "tool": list_boards.list_boards
+    }),
+    (list_platforms.NAME,{
+        "type": "utility",
+        "module": list_platforms,
+        "tool": list_platforms.list_platforms
+    }),
+    (install_platform.NAME,{
         "type": "utility",
         "module": install_platform,
         "tool": install_platform.install
-    },
-    install_verilog_modules.NAME:{
+    }),
+    (install_verilog_modules.NAME,{
         "type": "utility",
         "module": install_verilog_modules,
         "tool": install_verilog_modules.install
-    },
-    install_examples.NAME:{
+    }),
+    (install_examples.NAME,{
         "type": "utility",
         "module": install_examples,
         "tool": install_examples.install
-    },
-    nysa_status.NAME:{
+    }),
+    (nysa_status.NAME,{
         "type": "utility",
         "module": nysa_status,
         "tool": nysa_status.nysa_status
-    }
-}
+    })
+])
 
 
 def update_epilog():
@@ -162,7 +164,7 @@ def update_epilog():
         tool_type_dict[type_d]["tools"] = []
 
     for tool in TOOL_DICT:
-        
+
         tool_type_dict[TOOL_DICT[tool]["type"]]["tools"].append(tool)
 
     EPILOG += "\n"
@@ -172,7 +174,7 @@ def update_epilog():
         for tool in tool_type_dict[tool_type]["tools"]:
             EPILOG += "{0:5}{1:20}{2}\n".format("", tool, TOOL_DICT[tool]["module"].DESCRIPTION)
         EPILOG += "\n"
-        
+
 
     EPILOG += "\n"
 
@@ -211,7 +213,7 @@ def main():
     if COMPLETER_EXTRACTOR:
         ce(parser, TEMP_BASH_COMPLETER_FILEPATH)
         return
-        
+
     args = parser.parse_args()
 
     if args.debug:
