@@ -100,12 +100,12 @@ The Nysa command line tool is available to the user, to view all the commands ty
          install-examples    install FPGA Project examples to the local system
          status              print the status of the nysa tools
 
-We will be using some of these functions to configure Nysa and communicate with either a physical or simulated FPGA board
+We will be using some of these functions to configure Nysa and communicate with either a physical or simulated FPGA board.
 
 Initializing Nysa
 -----------------
 
-In a hurry? Copy and paste the following into a terminal otherwise skip below to find out what this means
+In a hurry? Copy and paste the following into a terminal otherwise skip below to find out what this means.
 
 .. code-block:: bash
 
@@ -117,7 +117,7 @@ In a hurry? Copy and paste the following into a terminal otherwise skip below to
 
 Nysa needs to do the following things in order to be set up correctly
 
-1. Create a directory where users can create projects (both core projects and image projects), by default it creates a directory in <home>/Projects/nysa_base
+1. Create a directory where users can create projects (both core projects and image projects), by default it creates a directory in <home>/Projects/nysa_base on Ubuntu and C:\\Users\\<name>\\Projects\\nysa_base on Windows.
 
 .. code-block:: bash
 
@@ -135,7 +135,7 @@ Nysa needs to do the following things in order to be set up correctly
 
     nysa install-platform all
 
-4. Install examples of FPGA projects
+4. Install examples of FPGA projects.
 
 .. code-block:: bash
 
@@ -176,7 +176,7 @@ You should get an output that looks something like this:
 Nysa will query the host computer for any boards attached. It even queried simulated boards. Any of the above boards can be used in the following examples.
 
 
-**Note about implicit devices**
+**Note about implicit names**
 When executing a command that interfaces with a board Nysa will attempt to determine which board the user is refering to. For example, if the 'artemis_usb2' board was the only board attached to my computer and I types ``nysa ping`` Nysa will send a ping down to artemis_usb2. The command ``nysa ping`` would be the same as typing ``nysa ping artemis_usb2 -s FTYNUFY9`` (Assuming FTYNUFY9 was the board's serial number). If there are multiple boards for a single platform the user will need to explicitly write the entire command.
 
 As an example, if there were no physical boards attached and the ``nysa ping`` was issued, the following would occur:
@@ -198,7 +198,7 @@ As an example, if there were no physical boards attached and the ``nysa ping`` w
         dionysus_uart_pmod
         dionysus_pmod_tft
 
-The following command would resolve this: ``nysa ping sim -s dionysus_spi_pmod``
+The following variation to the command would resolve this: ``nysa ping sim -s dionysus_spi_pmod``
 
 .. code-block:: bash
 

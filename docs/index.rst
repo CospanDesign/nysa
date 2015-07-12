@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to nysa's documentation!
+Welcome to Nysa's documentation!
 ================================
 
 Contents:
@@ -14,8 +14,7 @@ Contents:
 
     about/what_is_nysa.rst
     Getting Started <getting_started_toc.rst>
-    Guides <guides_toc.rst>
-    Digging Deeper <digging_deeper_toc.rst>
+    Advanced Topics <advanced_topics_toc.rst>
 
 
 Indices and tables

@@ -45,21 +45,21 @@ EPILOG = "\n" \
 "Examples:\n" + \
 "\n" + \
 "Generate a Wishbone slave project in the current directory\n" + \
-"\tID of 0x01 (GPIO)\n" + \
+"\tID of 0x02 (GPIO)\n" + \
 "\n" + \
-"\t\t%s --major 1 <name>\n" % SCRIPT_NAME + \
+"\t\t%s --major 2 <name>\n" % SCRIPT_NAME + \
 "\n" + \
 "Generate a Wishbone slave project with a sub id number in a specified directory\n" + \
-"\tID of 0x02 (UART)\n" + \
+"\tID of 0x03 (UART)\n" + \
 "\tSub ID of 0x02\n" + \
 "\tOutput Directory: %s\n" % EXAMPLE_DIR + \
 "\n" + \
-"\t\t%s --major 2 --minor 2 --output %s <name>\n" % (SCRIPT_NAME, EXAMPLE_DIR)+ \
+"\t\t%s --major 3 --minor 2 --output %s <name>\n" % (SCRIPT_NAME, EXAMPLE_DIR)+ \
 "\n" + \
 "Generate an Axi slave project (NOT IMPLEMENTED YET!)\n" + \
-"\tID of 0x04 (SPI)\n" + \
+"\tID of 0x05 (SPI)\n" + \
 "\n" + \
-"\t\t%s --axi --major 4 <name>\n" % SCRIPT_NAME + \
+"\t\t%s --axi --major 5 <name>\n" % SCRIPT_NAME + \
 "\n"
 
 def setup_parser(parser):
@@ -75,7 +75,7 @@ def setup_parser(parser):
                         type = str,
                         nargs=1,
                         default="0",
-                        help="Specify the slave identification number (hex), use \"nysa-device-list\" to view a list of possible device IDs")
+                        help="Specify the slave identification number (hex), use \"nysa device\" command to view a list of possible device IDs")
     parser.add_argument("--minor",
                         type=str,
                         nargs=1,
