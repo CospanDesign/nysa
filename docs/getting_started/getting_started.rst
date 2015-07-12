@@ -1,31 +1,48 @@
-.. include global.rst
+.. _getting-started:
 
 Getting Started
-================================
+===============
+
+This document has the following three parts:
+
+* Installing Nysa on your system
+* Set up Nysa
+* Explore some of the features and commands available
 
 Requirements
 ------------
 
-Python
-^^^^^^
+**Python**
 
-Pip
-^^^
+Currently Nysa is built for Python 2 you can download it `here <https://www.python.org/downloads>`_
 
-You can test if you have pip installed by openning up a terminal and typing: ``pip --version``
+**Pip**
+
+Pip simplifies the process of installing Python modules. You can test if you have pip installed by openning up a terminal and typing: ``pip --version``
 
 If you do not see a version number here's how to get it:
 
 #. Download `get-pip.py <https://bootstrap.pypa.io/get-pip.py>`_
-#. Run the downloaded script: ``python ./get-pip.py``
+#. Run the downloaded script in a terminal: ``python ./get-pip.py``
 
 Installation
 ------------
 From a terminal install nysa from the github repo using pip
 
+**Ubuntu**
+
+.. code-block:: bash
+
+    sudo pip install git+https://github.com/CospanDesign/nysa
+
+**Windows**
+
 .. code-block:: bash
 
     pip install git+https://github.com/CospanDesign/nysa
+
+
+Pip will install the nysa module as well as the command line tool
 
 Nysa Command Line Tool
 ----------------------
@@ -35,7 +52,7 @@ The Nysa command line tool is available to the user, to view all the commands ty
 
     $> nysa --help
     usage: nysa [-h] [-v] [-d]
-                {image-builder,generate-slave,install-platform,boards,install-examples,utils,ping,upload,devices,reset,platforms,init,program,status,install-verilog-repo,board-programmed,sdb-viewer}
+                {generate-slave,devices,image-builder,reset,ping,board-programmed,program,upload,sdb-viewer,init,utils,boards,platforms,install-platform,install-verilog-repo,install-examples,status}
                 ...
 
     Nysa Tool
@@ -48,7 +65,7 @@ The Nysa command line tool is available to the user, to view all the commands ty
     Tools:
       Nysa Tools
 
-      {image-builder,generate-slave,install-platform,boards,install-examples,utils,ping,upload,devices,reset,platforms,init,program,status,install-verilog-repo,board-programmed,sdb-viewer}
+      {generate-slave,devices,image-builder,reset,ping,board-programmed,program,upload,sdb-viewer,init,utils,boards,platforms,install-platform,install-verilog-repo,install-examples,status}
 
     Enter the toolname with a -h to find help about that specific tool
 
@@ -56,34 +73,32 @@ The Nysa command line tool is available to the user, to view all the commands ty
 
     cbuilder                 Functions to help create code to go into platforms
 
-         generate-slave      Create a project to generate a nysa compatible core
-         devices             Manage/View devices IDs and descriptions
+         generate-slave      create a project to generate a nysa compatible core
+         devices             manage/view devices IDs and descriptions
 
     ibuilder                 Functions to generate an entire image (or binary) to be downloaded into a platform
 
-         image-builder       Create a project to generate an image for a platform
+         image-builder       create a vendor specific project to generate an image for a platform
 
     host                     Functions to view and control boards
 
-         boards              List connected boards
-         ping                performs a board ping, this is the simplest level of communicatio If a board responds to a ping it has been reset and the clock is running correctly
-         upload              Upload a program file to the specified board
          reset               performs a soft reset the specified board
+         ping                performs a board ping, this is the simplest level of communicatio If a board responds to a ping it has been reset and the clock is running correctly
+         board-programmed    reads the status of the FPGA 'Done' pin to determine if the FPGA is programmed
          program             Initiate a program sequence
-         board-programmed    Reads the status of the FPGA 'Done' pin to determine if the FPGA is programmed
-         sdb-viewer          Display the contents of the SDB of the specified board
+         upload              upload a program file to the specified board
+         sdb-viewer          display the contents of the SDB of the specified board
 
     utility                  Functions to update and/or upgrade the nysa tool including adding new platforms and verilog packages
 
-         install-platform    Install a platform to the local system
-         install-examples    Install examples to the local system
-         utils               Utility functions
-         platforms           List platforms (installed and remotely available)
-         init                Creates the local nysa_projects directory, initializes the configuration files To see the status of the current nysa setup run 'nysa status'
-         status              Print the status of nysa tools
-         install-verilog-repoInstall a verilog repository to the local system
-
-
+         init                creates the local nysa_projects directory, initializes the configuration files. To see the status of the current nysa setup run 'nysa status'
+         utils               utility functions
+         boards              list connected boards
+         platforms           list platforms (installed and remotely available)
+         install-platform    install a platform to the local system
+         install-verilog-repoinstall a verilog repository to the local system
+         install-examples    install FPGA Project examples to the local system
+         status              print the status of the nysa tools
 
 We will be using some of these functions to configure Nysa and communicate with either a physical or simulated FPGA board
 
