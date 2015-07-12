@@ -1,7 +1,7 @@
 .. _getting-started:
 
-Getting Started
-===============
+Getting Started With Nysa
+=========================
 
 This document has the following three parts:
 
