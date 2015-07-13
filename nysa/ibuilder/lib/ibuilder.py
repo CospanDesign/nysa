@@ -62,6 +62,9 @@ def get_project_tags(config_filename):
 
 def get_output_dir(config_filename, debug = False):
     tags = get_project_tags(config_filename)
+    if "BASE_DIR" not in tags:
+        tags["BASE_DIR"] = os.path.join(os.getcwd(), tags["PROJECT_NAME"])
+
     return utils.resolve_path(tags["BASE_DIR"])
 
 def generate_project(filename, user_paths = [], output_directory = None, status = None):
@@ -185,6 +188,11 @@ class ProjectGenerator(object):
             if key not in self.project_tags:
                 if self.s: self.s.Important("Injecting default board key (%s) into project configuration" % key)
                 self.project_tags[key] = board_dict[key]
+
+        if "BASE_DIR" not in self.project_tags:
+            self.project_tags["BASE_DIR"] = os.path.join(os.getcwd(), self.project_tags["PROJECT_NAME"])
+
+
         #except IOError as err:
         #    if self.s: self.s.Fatal("Error while loadng the project tags: %s" % str(err))
         #    raise PGE("Error while loadng the project tags: %s" % str(err))
@@ -395,7 +403,7 @@ class ProjectGenerator(object):
             if "cores" in self.project_tags["SLAVES"][slave]:
                 if status: status.Verbose("User Specified an core(s) for a slave")
                 for c in self.project_tags["SLAVES"][slave]["cores"]:
-                    
+
                     file_location = os.path.join(slave_dir, os.pardir, "cores", c)
                     if not os.path.exists(file_location):
                         raise PGE("Core: %s does not exist" % file_location)
