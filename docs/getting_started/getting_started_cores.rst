@@ -63,9 +63,12 @@ Generate a slave project:
     nysa generate-slave --major 0x0F wb_test_core
 
 
+In a hurry? skip to `What was generated?`_
+
+.. rst-class:: html-toggle
+
 generate-slave command explanation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-In a hurry? skip to `What was generated?`_
 
 The *generate-slave* command will create a verilog project with the name you specify. Here are the features of the command
 
