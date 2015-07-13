@@ -6,7 +6,7 @@ This guide will show you how to get started creating verilog projects that are e
 Prerequisits
 ------------
 
-The main :ref:`Getting Started <getting-started>` must be completed before following this guide
+The main :ref:`Getting Started <getting-started>` must be completed before following this guide.
 
 
 Requirements

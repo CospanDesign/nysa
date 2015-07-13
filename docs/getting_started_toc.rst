@@ -6,5 +6,6 @@ Getting Started Section
 
     Nysa <getting_started/getting_started.rst>
     Writing Cores <getting_started/getting_started_cores.rst>
+    Building FPGA Images <getting_started/getting_started_ibuilder.rst>
 
 
