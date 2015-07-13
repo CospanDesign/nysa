@@ -35,7 +35,7 @@ from nysa.cbuilder.sdb import SDBError
 EXAMPLE_DIR = os.path.join("home", "user", "Projects", "cbuilder_projects", "project1")
 NAME = "generate-slave"
 SCRIPT_NAME = "name %s" % NAME
-LOCAL_DIR = os.path.abspath(".")
+LOCAL_DIR = os.getcwd()
 
 __author__ = "dave.mccoy@cospandesign.com (Dave McCoy)"
 
