@@ -29,15 +29,18 @@ This is an example script that will blink an LED using Nysa's API:
 
 .. code-block:: python
 
+    import sys
+    import time
     from nysa.host.driver.gpio import GPIO
-    from nysa.host.platform_scanner import PlatformScanner
+    from nysa.host.platform_scanner import get_platforms
 
-    n = PlatformScanner().get_platforms()[0]
+    n = get_platforms()[0]
+    print "Found: %s" % str(n)
 
-    dev_index = n.find_device(GPIO.get_core_id())
+    dev_index = n.find_device(GPIO)[0]
     if dev_index is None:
         print "Failed to find GPIO Device!\n"
-        return
+        sys.exit(1)
 
     #Get an instance of a GPIO controller
     gpio = GPIO(n, dev_index)
@@ -49,10 +52,13 @@ This is an example script that will blink an LED using Nysa's API:
 
     while True:
         #toggle the LED at bit 0
+        print "LED On!"
         gpio.set_bit_value(0, 1)
         time.sleep(0.5)
+        print "LED Off!"
         gpio.set_bit_value(0, 0)
         time.sleep(0.5)
+
 
 
 To accomplish this Nysa is broken down into three parts to address the following three aspects of FPGA development
