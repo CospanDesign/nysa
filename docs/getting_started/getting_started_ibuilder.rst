@@ -1,7 +1,9 @@
+.. _getting-started-IBuilder:
+
 Getting started with IBuilder
 =============================
 
-This guide will show you how to get started creating FPGA images using a configuration file and nysa ibuilder tool. When you have built and downloaded an FPGA image you use the host interface to interface with your custom image.
+This guide will show you how to get started creating FPGA images using a configuration file and Nysa's IBuilder tool. When you have built and downloaded an FPGA image you can use the host API or GUI to interface with your custom image.
 
 Prerequisits
 ------------
@@ -12,16 +14,16 @@ The main :ref:`Getting Started <getting-started>` must be completed before follo
 Requirements
 ------------
 
-A vendor specific build system. At the time of this writing the Xilinx build tool and Xilinx webpack must be downloaded and installed to build an actual FPGA image. The download link can be found here:
+A vendor specific build system. At the time of this writing the Xilinx build tool and Xilinx webpack must be downloaded and installed to build an actual FPGA image. The download link can be found here (**Warning** this is a big download):
 
 `Xilinx Webpack Download <http://www.xilinx.com/products/design-tools/ise-design-suite/ise-webpack.html>`_
 
 First Nysa IBuilder Project (Image Builder)
 -------------------------------------------
 
-The easiest way to get started with the ibuilder is to copy a default build configuration file and modify it.
+The easiest way to get started with the IBuilder is to copy a default build configuration file and modify it.
 
-I'll be using `Dionysus <http://wiki.cospandesign.com/index.php?title=Dionysus>`_ as my target board in this demo but this demo can be adapted to work with any FPGA platform that has a supported nysa platform package. If an FPGA development board exists that is not supported by Nysa you can adapt it by following this guide: :ref:`Building a Board Support Package <board-support-package>`
+I'll be using `Dionysus <http://wiki.cospandesign.com/index.php?title=Dionysus>`_ as my target board in this demo but the configuration file can be adapted to work with any FPGA platform that has a supported nysa platform package. If an FPGA development board exists that is not supported by Nysa you can adapt it by following this guide: :ref:`Building a Board Support Package <board-support-package>`
 
 .. code-block:: json
 
@@ -46,25 +48,23 @@ I'll be using `Dionysus <http://wiki.cospandesign.com/index.php?title=Dionysus>`
     }
 
 
-The JSON format was chosen because Python can import and export using native modules.
-
 The configuration file can be broken down as follows:
 
 * We are working with a dionysus board
     * ``"board":"dionysus"``
 * The project name is "example_project"
     * ``"PROJECT_NAME":"example_project"``
-* Add all entries to the main peripheral bus
-    * "SLAVES": {..}
-    * The only slave we are added is going to be called "gpio1" and it will use the wishbone module found in "wb_gpio.v"
-        * "gpio1":{ "filename":"wb_gpio.v" ... }
+* Add modules to the main peripheral bus
+    * ``"SLAVES": {..}``
+    * The only module or slave we are added is going to be called "gpio1" and it will use the wishbone module found in "wb_gpio.v"
+        * ``"gpio1":{ "filename":"wb_gpio.v" ... }``
         * The gpio1 module attaches to some pins.
             * gpio_out[1:0] are mapped to LED[1:0] and they are outputs
-                * "bind" :{ "gpio_out[1:0]":{ "loc":"led[1:0]", "direction":"output"}, ...
+                * ``"bind" :{ "gpio_out[1:0]":{ "loc":"led[1:0]", "direction":"output"}, ...``
             * gpio_in[3:2] are mapped to button[1:0] and they are inputs
-                * ... "gpio_in[3:2]":{"loc":"button[1:0]", "direction":"input"}
+                * ``... "gpio_in[3:2]":{"loc":"button[1:0]", "direction":"input"}``
 
-There are many more options available including a second bus dedicated to memory but for the first project this is enough to get going. If you are interested in the more advanced options refere to :ref:`ibuilder configuration file <ibuilder-configuration>`
+There are many more options available including a second bus dedicated to memory but for the first project this is enough to get going. If you are interested in the more advanced options refere to :ref:`IBuilder configuration file <ibuilder-configuration>`
 
 The file can be downloaded from here: `dionysus_base.json <https://raw.githubusercontent.com/CospanDesign/nysa-dionysus-examples/master/dionysus_base.json>`_
 
@@ -134,7 +134,7 @@ This will build the project using the vendor specific tool, in this case Xilinx 
     scons: done building targets.
 
 
-Now the binary image is available we can uplaod the newly created image to the Dionysus board attched
+Now the binary image is available we can uplaod the newly created image to the Dionysus board attached
 
 Uploading the image
 -------------------
@@ -225,7 +225,7 @@ This a good time to talk about FPGA constraint files.
 Constraints
 ^^^^^^^^^^^
 
-In order for a signal from a verilog core to be connect with a real pin we need to tell the vendor tool in a format it understands. We use a user constraint file (UCF). When using Nysa it is generally not needed to modify the constraint files unless you are performing timing critical designs or your would like to change the names of pins.
+In order for a signal from a verilog core to be connect with a real pin we need to declare it in a format the vendor tool understands. We use a user constraint file (UCF). When using Nysa it is generally not needed to modify the constraint files unless you are performing timing critical designs or your would like to change the names of pins.
 
 Even though you will probably not need to modify the pins it is important to know what pins are available. For this reason we should open up the constraints. We need to locate where Nysa installed the board platform projects.
 
@@ -252,7 +252,7 @@ Within this directory there should be at least one folder. For Dionysus:
 
 Navigate and open the file:
 
-.. code-block:: powershell
+.. code-block:: text
 
     <base>/nysa-dionysus-platform/master/dionysus/board/dionysus.ucf
 

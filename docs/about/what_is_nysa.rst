@@ -6,34 +6,78 @@ Nysa is a tool that simplifies development for FPGAs.
 Development for FPGAs
 ---------------------
 
-FPGA development is challenging because ???
+FPGA development is challenging because even the simple project of blinking an LED requires user to understand
 
-* Know verilog
-* Know how verilog code and FPGAs are related (constraints)
-* Know how FPGAs and their platform are related (FPGA chip and circuit board)
+* How to write Hardware Description Language (HDL) including verilog or VHDL.
+* How to constrain that design to an FPGA
+* How to download that generated code to a specific FPGA platfrom.
 
-Nysa breaks down FPGA development into three steps, and offers tools for each step.
+Nysa reduces the complexity and allows users to focus on the application instead of the infrastructure. A comparison can be made between assembly language and C. Both can get the job done but when working in assembly you need to focused more on the infrastructure and not on the end product while C, although still requires effort, will help you focus on what you want to do.
 
-#. Core Developemnt: Developing functionality that performs tasks such as acquiring images from a camera sensor, or flashing an LED. This can be a large undertaking to set up a verilog project. `CBuilder`_ is Nysa's tool that will generate a ready to go verilog project that can immediately be incorporated into a final FPGA image.
-#. FPGA Image Development: Creating an FPGA image is usually a large and error prone task. There are a lot of things to get right. `IBuilder`_ is a tool that will read in a simple configuration file and output a vendor specific build project that will create an FPGA image by typing 'scons' on the terminal.
-#. FPGA Interaction: After you have built an FPGA image you want to interact with it. Nysa provides infrastructure that enables users to communicate with their cores they built with `CBuilder`_ in a similar way they used to develop for it.
+Nysa is not the solution for all FPGA projects, it is designed to work for projects that contain a host controlling and an FPGA. That host can be a desktop computer, an Android phone, a single board computer or even a microcontroller like Arduino.
+
+Below is an illustration of an entire FPGA project
+
+.. image:: ../_static/high_level_view.png
+    :target: ../_static/high_level_view.png
+
+The green blocks are the ones you are interested in working with. The yellow blocks represent the FPGA and software infrastructure you need to worry about in order to accomplish your project.
+
+Nysa takes care of all the yellow parts of the project. Including the API on the host device used to control your core. When your custom core is in the FPGA you use a simple python API to control your device.
+
+This is an example script that will blink an LED using Nysa's API:
+
+.. code-block:: python
+
+    from nysa.host.driver.gpio import GPIO
+    from nysa.host.platform_scanner import PlatformScanner
+
+    n = PlatformScanner().get_platforms()[0]
+
+    dev_index = n.find_device(GPIO.get_core_id())
+    if dev_index is None:
+        print "Failed to find GPIO Device!\n"
+        return
+
+    #Get an instance of a GPIO controller
+    gpio = GPIO(n, dev_index)
+
+    print "Flashing an LED every 1 second"
+
+    print "Set both LEDs to outputs"
+    gpio.set_port_direction(0x00000003)
+
+    while True:
+        #toggle the LED at bit 0
+        gpio.set_bit_value(0, 1)
+        time.sleep(0.5)
+        gpio.set_bit_value(0, 0)
+        time.sleep(0.5)
 
 
+To accomplish this Nysa is broken down into three parts to address the following three aspects of FPGA development
 
-CBuilder
---------
-* Generate Projects
-* The generated projects are easy to develop, stimulate and debug
-* Provides a mechanism to view the output waveform
-* The core that is built is ready to be incorporated into an entire FPGA image
-
-IBuilder
---------
-* From a configuration file generates an FPGA project that can be built with the target FPGAs vendor specific tools
-* Generates a ROM file that will be incorporated within an FPGA image. This ROM file can be read and parsed by a host tool to determine the behavior of the FPGA.
+#. **Core Developemnt:** Cores are like a class in C++, they encapsulates all the functionality required to perform a certain set of behaviors such as acquiring images from a camera sensor, controlling GPIOs. This can be a large undertaking to set up a verilog project. CBuilder is Nysa's tool that will generate a ready to go verilog project that can immediately be incorporated into a final FPGA image.
+#. **FPGA Image Development:** Creating an FPGA image is usually a large and error prone task. There are a lot of things to get right. IBuilder is a tool that will read in a simple configuration file and output a vendor specific build project that will create an FPGA image by typing 'scons' on the terminal.
+#. **FPGA Interaction:** After you have built an FPGA image you want to interact with it. Nysa provides infrastructure that enables users to communicate with their cores they built with CBuilder in a similar way they used to develop for it.
 
 
-Host
-----
-* Tools to interact with FPGAs and their platform (The boards that the FPGA chips are on).
-* Common/Simple API used to control the FPGA functions
+GUI
+---
+
+Interfacing with FPGAs is accomplished not only through a command line tools and scripts but also with a graphical user interface.
+
+Boards
+------
+
+Any board that can talk to a 'host' can use Nysa. If you would like to port Nysa to an FPGA platform you can follow the guide in the advanced topics:
+
+:ref:`Board Support Package <board-support-package>`
+
+Getting Started
+---------------
+
+If you would like to get Nysa, it's free (libre), you can start with installation
+
+:ref:`Getting Started With Nysa <getting-started>`
+

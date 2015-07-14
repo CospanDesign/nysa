@@ -1,3 +1,5 @@
+.. _getting-started-cbuilder:
+
 Getting Started Creating Verilog Cores
 ======================================
 
