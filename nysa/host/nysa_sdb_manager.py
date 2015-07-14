@@ -47,6 +47,7 @@ class NysaSDBManager(object):
 
     def __init__(self, status = None):
         self.s = status
+        self.som = None
 
         if self.s is None:
             self.s = Status()

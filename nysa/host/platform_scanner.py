@@ -30,6 +30,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 
 from site_manager import SiteManager
 from nysa_platform import Platform
+from status import Status
 
 class PlatformScannerException(Exception):
     pass
@@ -110,7 +111,8 @@ def get_platforms(status = None):
     Raises:
         Nothing
     """
-    if status: status.Debug("Type of driver: %s" % str(driver))
+    if status is None:
+        status = Status()
     platforms = []
     pscanner = PlatformScanner()
     platform_dict = pscanner.get_platforms()
