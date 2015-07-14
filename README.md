@@ -2,6 +2,8 @@
 
 ##Goal: Simplifiy both generation of HDL and interactions with FPGAs.
 
+(http://nysa.readthedocs.org/en/latest "Nysa's Read the Docs")
+
 ##Problem:
 
 FPGA are extremely flexible.
