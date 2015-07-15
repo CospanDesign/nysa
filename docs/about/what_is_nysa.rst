@@ -3,6 +3,8 @@ What is Nysa?
 
 Nysa is a tool that simplifies development for FPGAs.
 
+A short video demonstration for Nysa: `Nysa Tech Demo <https://youtu.be/nnXhLXvEREk>`_
+
 Development for FPGAs
 ---------------------
 
@@ -71,7 +73,19 @@ To accomplish this Nysa is broken down into three parts to address the following
 GUI
 ---
 
-Interfacing with FPGAs is accomplished not only through a command line tools and scripts but also with a graphical user interface.
+Interfacing with an FPGAs is accomplished not only through a command line tools and scripts but also with a graphical user interface. 
+
++-------------------------------------------------------+---------------------------------------------------------+-----------------------------------------------------+
+| .. figure:: ../_static/nysa_gui_gpio_selected.png     | .. figure:: ../_static/nysa_gui_gpio_control.png        | .. figure:: ../_static/nysa_gui_sdb_viewer.png      |
+|     :target: ../_static/nysa_gui_gpio_selected.png    |     :target: ../_static/nysa_gui_gpio_control.png       |     :target: ../_static/nysa_gui_sdb_viewer.png     |
++-------------------------------------------------------+---------------------------------------------------------+-----------------------------------------------------+
+| .. figure:: ../_static/nysa_gui_i2c_controller.png    | .. figure:: ../_static/nysa_gui_memory_interface.png    | .. figure:: ../_static/nysa_gui_stepper_motor.png   |
+|     :target: ../_static/nysa_gui_i2c_controller.png   |     :target: ../_static/nysa_gui_memory_interface.png   |     :target: ../_static/nysa_gui_stepper_motor.png  |
++-------------------------------------------------------+---------------------------------------------------------+-----------------------------------------------------+
+| .. figure:: ../_static/nysa_gui_video_playback.png    | .. figure:: ../_static/nysa_gui_creating_image.png      | .. figure:: ../_static/nysa_gui_building_image.png  |
+|     :target: ../_static/nysa_gui_video_playback.png   |     :target: ../_static/nysa_gui_creating_image.png     |     :target: ../_static/nysa_gui_building_image.png |
++-------------------------------------------------------+---------------------------------------------------------+-----------------------------------------------------+
+
 
 Boards
 ------
