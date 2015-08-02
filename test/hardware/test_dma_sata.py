@@ -152,8 +152,8 @@ class Test (unittest.TestCase):
         self.sata_drv.hard_drive_read(0x0000, 1)
 
         data = self.sata_drv.read_local_buffer()
-        self.s.Verbose("Data from Hard Drive Before DMA Transfer (Should be all zeros):")
-        print str(data[0:128])
+        #self.s.Verbose("Data from Hard Drive Before DMA Transfer (Should be all zeros):")
+        #print str(data[0:128])
 
         self.sata_drv.enable_dma_control(True)
 
@@ -182,6 +182,50 @@ class Test (unittest.TestCase):
         #WORD_TRANSFER_COUNT = 0xB00000
         MEGABYTES = (WORD_TRANSFER_COUNT * 4.0) / 1000000.0
         self.s.Info ("Transfer Size: 0x%08X" % WORD_TRANSFER_COUNT)
+
+
+        #Clear SATA
+        self.clear_memory()
+        #Fill Memory With Data
+        self.s.Important("Fill memory with zeros")
+        self.s.Important("Configure DMA to transfer %f MB from DDR3 to Hard Drive" % MEGABYTES)
+        #self.fill_memory_with_pattern()
+
+        self.dma.enable_channel                     (CHANNEL_ADDR, False                )
+        #Configure DMA to transfer 100MB of data from DDR3 to hard drive
+        self.dma.set_channel_sink_addr              (CHANNEL_ADDR, SINK_ADDR            )
+        self.dma.set_channel_instruction_pointer    (CHANNEL_ADDR, INST_ADDR            )
+        self.dma.enable_source_address_increment    (CHANNEL_ADDR, True                 )
+
+        self.dma.enable_dest_address_increment      (SINK_ADDR,    True                 )
+        self.dma.enable_dest_respect_quantum        (SINK_ADDR,    True                 )
+
+        self.dma.set_instruction_source_address     (INST_ADDR,    DDR3_ADDRESS         )
+        self.dma.set_instruction_dest_address       (INST_ADDR,    SATA_ADDRESS         )
+        self.dma.set_instruction_data_count         (INST_ADDR,    WORD_TRANSFER_COUNT  )
+        #This is only needed if we are going to another instruction after this
+        self.dma.set_instruction_next_instruction   (INST_ADDR,    INST_ADDR            )
+        self.dma.enable_instruction_continue        (INST_ADDR,    False                )
+
+        #Initate DMA Transaction
+        self.s.Important("Intiate a DMA Transaction")
+        self.dma.enable_interrupt_when_command_finished(True)
+        self.dma.enable_channel                     (CHANNEL_ADDR, True                 )
+
+        #Transaction Complete
+        self.s.Important("DMA Transaction is complete")
+        #self.dma.wait_for_interrupts(wait_time = 10)
+        self.s.Info ("Wait for transaction to finish")
+        fail = False
+        timeout = time.time() + TIMEOUT
+
+        self.sata_drv.hard_drive_read(0x0000, 1)
+        data = self.sata_drv.read_local_buffer()
+        self.s.Verbose("Data from first sector of hard drive (Should be all zeros):")
+        print str(data[0:128])
+        self.sata_drv.enable_dma_control(True)
+        print ("")
+
 
         #Fill Memory With Data
         self.s.Important("Fill memory with pattern")
@@ -252,7 +296,7 @@ class Test (unittest.TestCase):
 
         self.sata_drv.hard_drive_read(0x0000, 1)
         data = self.sata_drv.read_local_buffer()
-        self.s.Verbose("Data from Hard Drive (Should be incrementing number patter):")
+        self.s.Verbose("Data from first sector of the hard drive (Should be incrementing number patter):")
         print str(data[0:128])
         self.sata_drv.enable_dma_control(True)
 
