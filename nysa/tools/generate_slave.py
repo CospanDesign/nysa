@@ -31,6 +31,7 @@ import glob
 from string import Template
 
 from nysa.cbuilder.sdb import SDBError
+from device_list import get_num_from_name
 
 EXAMPLE_DIR = os.path.join("home", "user", "Projects", "cbuilder_projects", "project1")
 NAME = "generate-slave"
@@ -68,6 +69,8 @@ EPILOG = "\n" \
 def setup_parser(parser):
     parser.description = DESCRIPTION
     parser.epilog=EPILOG
+    #ed = "0x%02X" % get_num_from_name("experiment")
+    #print "ed: %s" % ed
     #Add an argument to the parser
     #Optional
     parser.add_argument("--axi",
@@ -77,7 +80,7 @@ def setup_parser(parser):
     parser.add_argument("--major",
                         type = str,
                         nargs=1,
-                        default="0",
+                        default=[ed],
                         help="Specify the slave identification number (hex), use \"nysa device\" command to view a list of possible device IDs")
     parser.add_argument("--minor",
                         type=str,
