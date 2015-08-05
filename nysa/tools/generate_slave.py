@@ -32,6 +32,7 @@ from string import Template
 
 from nysa.cbuilder.sdb import SDBError
 from device_list import get_num_from_name
+from nysa.cbuilder import device_manager as dm
 
 EXAMPLE_DIR = os.path.join("home", "user", "Projects", "cbuilder_projects", "project1")
 NAME = "generate-slave"
@@ -69,7 +70,7 @@ EPILOG = "\n" \
 def setup_parser(parser):
     parser.description = DESCRIPTION
     parser.epilog=EPILOG
-    #ed = "0x%02X" % get_num_from_name("experiment")
+    ed = "0x%02X" % get_num_from_name("experiment")
     #print "ed: %s" % ed
     #Add an argument to the parser
     #Optional
@@ -268,6 +269,8 @@ def add_cocotb(slave_dict, output_path, status):
         f = open(source_file, 'r') 
         template = Template(f.read())
         f.close()
+        v = int(slave_dict["ABI_MAJOR"], 0)
+        device_name = str(dm.get_device_name_from_id(v))
         buf = template.safe_substitute(
             SDB_VENDOR_ID           = slave_dict["VENDOR_ID"],
             SDB_DEVICE_ID           = slave_dict["DEVICE_ID"],
@@ -281,7 +284,8 @@ def add_cocotb(slave_dict, output_path, status):
             SDB_EXECUTABLE          = slave_dict["EXECUTABLE"],
             SDB_WRITEABLE           = slave_dict["WRITEABLE"],
             SDB_READABLE            = slave_dict["READABLE"],
-            SDB_SIZE                = slave_dict["SIZE"]
+            SDB_SIZE                = slave_dict["SIZE"],
+            DEVICE_NAME             = device_name
         )
         status.Debug("writing: %s" % dest_file)
         f = open(dest_file, "w")
