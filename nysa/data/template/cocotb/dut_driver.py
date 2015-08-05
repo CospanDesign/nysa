@@ -47,7 +47,7 @@ class ${SDB_NAME}Driver(driver.Driver):
         return SDB_VENDOR_ID
 
     def __init__(self, nysa, urn, debug = False):
-        super(${SDB_NAME}, self).__init__(nysa, urn, debug)
+        super(${SDB_NAME}Driver, self).__init__(nysa, urn, debug)
 
     def set_control(self, control):
         self.write_register(CONTROL_ADDR, control)
