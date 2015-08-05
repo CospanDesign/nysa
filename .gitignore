@@ -16,7 +16,6 @@ docs/_build
 temp.txt
 *.sim
 *.vcd
-*.gtkw
 
 # C extensions
 *.so
