@@ -26,8 +26,10 @@ BOARD_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1dif3JBFwjEiNVn5
 VERILOG_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1fyr9G2sVVa1bOi3Rtg9uGz0KELReo8buoTrP8DQfNTA/export?format=csv"
 EXAMPLE_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1GUzVnXB6StrfuYKXzCwm1_E4CBtUDDj5a-C-Fi5IQOc/export?format=csv"
 BOARD_PACKAGE_PATH = os.path.join(SITE_PATH, "boards")
+COCOTB_URL = "https://github.com/potentialventures/cocotb.git"
 
 VERILOG_PACKAGE_PATH = os.path.join(SITE_PATH, "verilog")
+COCOTB_PATH = os.path.join(SITE_PATH, "cocotb")
 DEFAULT_BOARD_BRANCH = "master"
 
 NYSA_MODULE_LOC = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
@@ -660,3 +662,12 @@ class SiteManager(object):
     def get_user_ibuilder_project_dir(self):
         return os.path.join(self.get_user_project_dir(), USER_BASE_IBUILDER_DIR)
 
+    def get_cocotb_directory(self):
+        return COCOTB_PATH
+
+    def install_cocotb(self):
+        if os.path.exists(COCOTB_PATH):
+            shutil.rmtree(COCOTB_PATH)
+        v = subprocess.call(["git", "clone", COCOTB_URL, COCOTB_PATH])
+        
+        
