@@ -43,6 +43,7 @@ import install_platform
 import install_verilog_modules
 import install_examples
 import nysa_status
+import nysa_paths
 
 from completer_extractor import completer_extractor as ce
 
@@ -151,6 +152,11 @@ TOOL_DICT = collections.OrderedDict([
         "type": "utility",
         "module": nysa_status,
         "tool": nysa_status.nysa_status
+    }),
+    (nysa_paths.NAME,{
+        "type": "utility",
+        "module": nysa_paths,
+        "tool": nysa_paths.nysa_paths
     })
 ])
 

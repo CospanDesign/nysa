@@ -159,5 +159,6 @@ def init(args, status):
     sm.install_verilog_module()
     #Adding Default boards
     sm.install_remote_board_package()
+    sm.install_cocotb()
 
 

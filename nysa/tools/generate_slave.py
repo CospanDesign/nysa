@@ -60,6 +60,9 @@ EPILOG = "\n" \
 "\tID of 0x05 (SPI)\n" + \
 "\n" + \
 "\t\t%s --axi --major 5 <name>\n" % SCRIPT_NAME + \
+"\n" + \
+"Add the Cocotb build tools to the project\n" + \
+"\t\t%s -c <name>\n" % SCRIPT_NAME + \
 "\n"
 
 def setup_parser(parser):
@@ -87,6 +90,10 @@ def setup_parser(parser):
                         nargs=1,
                         default=[LOCAL_DIR],
                         help="Specify a location for the generated project, defaults to current directory")
+    parser.add_argument("-c",
+                        "--cocotb",
+                        action = "store_true",
+                        help = "Add Cocotb simulation directory to project")
     #Required
     parser.add_argument("name",
                         type = str,
@@ -119,6 +126,9 @@ def generate_slave(args, status):
     slave_dict["ABI_MINOR"] = args.minor[0]
 
     generate_slave_from_dict(slave_dict, output_path, status)
+    if args.cocotb:
+        output_dir = os.path.join(output_path, args.name[0])
+        add_cocotb(slave_dict, output_dir, status)
 
 def generate_slave_from_dict(slave_dict, output_path, status):
     if "VENDOR_ID" not in slave_dict:
@@ -229,6 +239,51 @@ def generate_slave_from_dict(slave_dict, output_path, status):
         source_path = os.path.join(template_path, filename)
         dest_path = os.path.join(output_dir, filename)
         shutil.copy(source_path, dest_path)
+
+def add_cocotb(slave_dict, output_path, status):
+    status.Debug("Adding COCOTB to Project")
+    cocotb_spath = os.path.join(os.path.dirname(__file__),
+                                 os.pardir,
+                                 "data",
+                                 "template",
+                                 "cocotb")
+    cocotb_spath = os.path.abspath(cocotb_spath)
+    cocotb_dpath = os.path.join(output_path, "cocotb")
+    status.Debug("output: %s" % cocotb_dpath)
+    file_list = generate_file_list(cocotb_spath)
+    if not os.path.exists(cocotb_dpath):
+        os.makedirs(cocotb_dpath)
+    fl = []
+    #for f in file_list:
+    #    p = os.path.join(cocotb_spath, f)
+    #    fl.append(p)
+
+    for fn in file_list:
+        source_file = os.path.join(cocotb_spath, fn)
+        dest_file   = os.path.join(cocotb_dpath, fn)
+        status.Debug("reading: %s" % source_file)
+        f = open(source_file, 'r') 
+        template = Template(f.read())
+        f.close()
+        buf = template.safe_substitute(
+            SDB_VENDOR_ID           = slave_dict["VENDOR_ID"],
+            SDB_DEVICE_ID           = slave_dict["DEVICE_ID"],
+            SDB_CORE_VERSION        = slave_dict["CORE_VERSION"],
+            SDB_NAME                = slave_dict["NAME"],
+            SDB_ABI_CLASS           = slave_dict["ABI_CLASS"],
+            SDB_ABI_VERSION_MAJOR   = slave_dict["ABI_MAJOR"],
+            SDB_ABI_VERSION_MINOR   = slave_dict["ABI_MINOR"],
+            SDB_MODULE_URL          = slave_dict["URL"],
+            SDB_DATE                = slave_dict["DATE"],
+            SDB_EXECUTABLE          = slave_dict["EXECUTABLE"],
+            SDB_WRITEABLE           = slave_dict["WRITEABLE"],
+            SDB_READABLE            = slave_dict["READABLE"],
+            SDB_SIZE                = slave_dict["SIZE"]
+        )
+        status.Debug("writing: %s" % dest_file)
+        f = open(dest_file, "w")
+        f.write(buf)
+        f.close()
 
 def generate_file_list(template_path):
     #Copy the rest of the slave files to the new directory
