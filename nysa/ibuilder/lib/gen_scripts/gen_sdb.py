@@ -157,6 +157,7 @@ class GenSDB(Gen):
     def __init__(self):
         #print "in GenSDB"
         self.rom_element_count = 0
+        self.user_paths = []
         return
 
     def get_number_of_records(self, tags, user_paths, debug = False):
