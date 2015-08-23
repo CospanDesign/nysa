@@ -97,12 +97,12 @@
             "description":"A Nysa Platform",
             "ID":"0x0022"
         },
-        "SDIO Host":{
-            "description":"Controls SDIO Devices",
+        "SD Host":{
+            "description":"Controls SD Devices",
             "ID":"0x0023"
         },
         "SDIO Device":{
-            "description":"Can be controlled with an SDIO Host",
+            "description":"Can be controlled with an SD Host",
             "ID":"0x0024"
         }
     }
