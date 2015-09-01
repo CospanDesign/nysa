@@ -23,6 +23,7 @@
 
 
 from nysa.ibuilder.lib import utils
+from nysa.ibuilder.lib import xilinx_utils as xutils
 from nysa.common import site_manager
 
 NAME = "paths"
@@ -50,6 +51,11 @@ def setup_parser(parser):
                         nargs = '?',
                         default = "nothing",
                         help = "Return the path to the board platform directory")
+    parser.add_argument("-x",
+                        "--xilinx",
+                        action = 'store_true',
+                        default = False,
+                        help = "Returns the path of the default Xilinx source directory")
     parser.add_argument("-u",
                         "--user",
                         action='store_true',
@@ -94,6 +100,15 @@ def nysa_paths(args, status):
         elif isinstance(bp, str):
             bp = [bp]
         print_platform_paths(sm, bp, args.silent, status)
+
+    if args.xilinx:
+        print_xilinx_paths(args.silent, status)
+
+def print_xilinx_paths(silent, status):
+    if not silent:
+        print "{0:<16}:{1}".format("Xilinx", xutils.find_xilinx_path())
+    else:
+        print xutils.find_xilinx_path()
     
 def print_verilog_paths(sm, names, silent, status):
     for name in names:

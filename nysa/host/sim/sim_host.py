@@ -110,7 +110,7 @@ class NysaSim (FauxNysa):
 
         return self.nsm.read_sdb(self)
 
-    def read(self, address, length = 1, mem_device = False, disable_auto_inc = False):
+    def read(self, address, length = 1, disable_auto_inc = False):
         if (address * 4) + (length * 4) <= len(self.rom):
             length *= 4
             address *= 4
@@ -120,6 +120,14 @@ class NysaSim (FauxNysa):
                 ra.extend(self.rom[address + count :address + count + 4])
             #print "ra: %s" % str(ra)
             return ra
+
+        mem_device = False
+        if self.mem_addr is None:
+            self.mem_addr = self.nsm.get_address_of_memory_bus()
+
+        if address >= self.mem_addr:
+            address = address - self.mem_addr
+            mem_device = True
 
         self._read(address, length, mem_device)
         return self.response
@@ -153,7 +161,6 @@ class NysaSim (FauxNysa):
         self.dut.out_ready      <= 1
 
         while data_index < length:
-            #self.dut.log.info("Waiting for master to assert out enable")
             yield RisingEdge(self.dut.out_en)
             yield( self.wait_clocks(1))
             self.dut.out_ready      <= 0
@@ -175,7 +182,16 @@ class NysaSim (FauxNysa):
         raise ReturnValue(self.response)
 
     @cocotb.function
-    def write(self, address, data = None, mem_device = False, disable_auto_inc=False):
+    def write(self, address, data = None, disable_auto_inc=False):
+        mem_device = False
+
+        if self.mem_addr is None:
+            self.mem_addr = self.nsm.get_address_of_memory_bus()
+
+        if address >= self.mem_addr:
+            address = address - self.mem_addr
+            mem_device = True
+
         yield(self.comm_lock.acquire())
         # print "Write Acquired Lock"
         data_count = len(data) / 4
