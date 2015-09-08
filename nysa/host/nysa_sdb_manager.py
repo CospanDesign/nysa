@@ -45,7 +45,8 @@ from host.driver.driver import Driver
 
 class NysaSDBManager(object):
 
-    def __init__(self, status = None):
+    def __init__(self, n, status = None):
+        self.n = n
         self.s = status
         self.som = None
 
@@ -303,6 +304,8 @@ class NysaSDBManager(object):
             None
         """
         l = []
+        if self.som is None:
+            self.read_sdb()
         urns = self.get_all_components_as_urns()
         driver_abi_class = driver.get_abi_class()
         driver_abi_major = driver.get_abi_major()
@@ -367,7 +370,7 @@ class NysaSDBManager(object):
         component = self.get_component_from_urn(urn)
         return self._get_component_index(component)
 
-    def read_sdb(self, n):
+    def read_sdb(self, n = None):
         """
         Reads the SDB of the device, this is used to initialize the SDB Object
         Model with the content of the SDB on the host
@@ -382,6 +385,8 @@ class NysaSDBManager(object):
         Raises:
             NysaCommError: Errors associated with communication
         """
+        if n is None:
+            n = self.n
         sdb_data = Array('B')
         self.s.Important("Parsing Top Interconnect Buffer")
         #Because Nysa works with many different platforms we need to get the

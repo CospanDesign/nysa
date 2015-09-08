@@ -95,7 +95,7 @@ class Nysa(object):
     def __init__(self, status = None):
         self.name = "Nysa"
         self.s = status
-        self.nsm = NysaSDBManager(self.s)
+        self.nsm = NysaSDBManager(self, self.s)
         self.mem_addr = None
         if status: status.Debug("nysa started")
 
