@@ -62,8 +62,3 @@ def nysa_utils(args, status):
         for name in paths:
             print "\t%s%s: %s%s" % (st.blue, name, paths[name], st.white)
 
-    if args.platforms:
-        s.Info("Displaying all platforms")
-
-    if args.boards:
-        s.Info("Displaying all connected boards")

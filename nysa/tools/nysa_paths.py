@@ -117,6 +117,10 @@ def print_verilog_paths(sm, names, silent, status):
         else:
             print sm.get_local_verilog_package_path(name)
 
+def get_verilog_path(name):
+    sm = site_manager.SiteManager()
+    return sm.get_local_verilog_package_path(name)
+
 def print_platform_paths(sm, names, silent, status):
     for name in names:
         if not silent:
