@@ -1190,8 +1190,13 @@ class DMAWriteController(object):
         Raises
             NysaCommError: Error in communication
         """
+        avail = 0x00
         status = self.device.read_register(self.reg_status)
-        return status & (self.empty[0] | self.empty[1])
+        if (status & self.empty[0]) > 0:
+            avail |= 1
+        if (status & self.empty[1]) > 0:
+            avail |= 2
+        return avail
 
     def write(self, buf):
         """
@@ -1226,20 +1231,26 @@ class DMAWriteController(object):
             if (available_blocks == 1):
                 #Mem 0 is available
                 #print "Block 1 is available"
-                self.device.write_memory(self.mem_base[0], buf[position: position + size + 1])
+                #self.device.write_memory(self.mem_base[0], buf[position: position + size + 1])
+                self.device.write_memory(self.mem_base[0], buf[position: position + size])
                 self.device.write_register(self.reg_size0, size / 4)
                 position += size
 
             elif (available_blocks == 2):
                 #Mem 1 is available
                 #print "Block 2 is available"
-                self.device.write_memory(self.mem_base[1], buf[position: position + size + 1])
+                #self.device.write_memory(self.mem_base[1], buf[position: position + size + 1])
+                self.device.write_memory(self.mem_base[1], buf[position: position + size])
                 self.device.write_register(self.reg_size1, size / 4)
                 position += size
 
             elif (available_blocks == 3):
                 #print "Both Blocks Are available"
-                self.device.write_memory(self.mem_base[0], buf[position: position + size + 1])
+                print "position: %d" % position
+                print "size: %d" % size
+                print "Buffer: %s" % buf
+                #self.device.write_memory(self.mem_base[0], buf[position: position + size + 1])
+                self.device.write_memory(self.mem_base[0], buf[position: position + size])
                 self.device.write_register(self.reg_size0, size / 4)
                 position += size
 
@@ -1250,7 +1261,8 @@ class DMAWriteController(object):
                         size = len(buf[position:])
                         if size < 4:
                             size = 4
-                    self.device.write_memory(self.mem_base[1], buf[position: position + size + 1])
+                    #self.device.write_memory(self.mem_base[1], buf[position: position + size + 1])
+                    self.device.write_memory(self.mem_base[1], buf[position: position + size])
                     self.device.write_register(self.reg_size1, size / 4)
                     position += size
 
@@ -1277,6 +1289,4 @@ class DMAWriteController(object):
                 #print "\t0x%08X more to write!" % size
 
             #print "Wrote: 0x%08X" % position
-
-
 
