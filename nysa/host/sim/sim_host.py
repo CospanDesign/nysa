@@ -240,9 +240,28 @@ class NysaSim (FauxNysa):
         yield( self.wait_clocks(10))
         self.comm_lock.release()
 
-    @cocotb.coroutine
     def wait_for_interrupts(self, wait_time = 1):
-        pass
+
+        self._wait_for_interrupts(wait_time)
+        return False
+
+    @cocotb.function
+    def _wait_for_interrupts(self, wait_time = 1):
+        wait_time = wait_time * 100
+        count = 0
+        self.interrupt_good = False
+        while count < wait_time:
+            print "wait...",
+            yield (self.wait_clocks(10))
+            print ".",
+            count += 1
+            if self.dut.device_interrupt.value.get_value():
+                self.interrupt_good = True
+                break
+
+        print "good? %s" % str(self.interrupt_good)
+
+
 
     @cocotb.coroutine
     def dump_core(self):

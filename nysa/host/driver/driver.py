@@ -620,7 +620,7 @@ class DMAReadWorker(threading.Thread):
         read_channel = 0
         next = 0
         enable = False
-        size = dmar.size
+        #size = dmar.size
 
         while (1):
             if not fs[0] and not fs[1]:
@@ -642,12 +642,12 @@ class DMAReadWorker(threading.Thread):
                         if not bs[0]:
                             #side 0 is not busy, intiate a transaction
                             #print "DMA Reader 0 thread wakeup!: Size 0x%08X" % size
-                            dev.write_register(dmar.reg_size0, size)
+                            dev.write_register(dmar.reg_size0, dmar.size)
 
                         if not bs[1]:
                             #print "DMA Reader 1 thread wakeup!: Size 0x%08X" % size
                             #side 1 is not busy, intiate a transaction
-                            dev.write_register(dmar.reg_size1, size)
+                            dev.write_register(dmar.reg_size1, dmar.size)
 
                     try:
                         #wait for an interrupt condeciton
@@ -721,9 +721,9 @@ class DMAReadWorker(threading.Thread):
                 #initiate a new transfer before I leave so it will happen next
                 if enable:
                     if read_channel == 0:
-                        dev.write_register(dmar.reg_size0, size)
+                        dev.write_register(dmar.reg_size0, dmar.size)
                     else:
-                        dev.write_register(dmar.reg_size1, size)
+                        dev.write_register(dmar.reg_size1, dmar.size)
 
 
 class DMAReadController(object):
@@ -1050,6 +1050,10 @@ class DMAReadController(object):
         self.debug = False
         return buf
 
+    def set_size(self, size):
+        #XXX: There might be an issue when setting this value and a large RW is in progress
+        self.size = size
+
 class DMAWriteController(object):
     '''
     Direct Memory Access controller
@@ -1157,6 +1161,14 @@ class DMAWriteController(object):
 
         self.device.write_register(self.reg_base[0], self.mem_base[0])
         self.device.write_register(self.reg_base[1], self.mem_base[1])
+
+    def set_size(self, size):
+        #XXX: Issue??
+        '''
+        There might be an issue when a transfer is in progress and this
+        function is called
+        '''
+        self.size = size
 
     def get_size(self):
         return self.size
