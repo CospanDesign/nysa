@@ -1246,9 +1246,6 @@ class DMAWriteController(object):
 
             elif (available_blocks == 3):
                 #print "Both Blocks Are available"
-                print "position: %d" % position
-                print "size: %d" % size
-                print "Buffer: %s" % buf
                 #self.device.write_memory(self.mem_base[0], buf[position: position + size + 1])
                 self.device.write_memory(self.mem_base[0], buf[position: position + size])
                 self.device.write_register(self.reg_size0, size / 4)
