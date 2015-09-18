@@ -570,7 +570,7 @@ class Nysa(object):
             NysaCommError
         """
         reg = self.read_register(address)
-        bitmask = (((1 << (top_bit + 1))) - (1 << low_bit))
+        bitmask = (((1 << (high_bit + 1))) - (1 << low_bit))
         reg &= ~(bitmask)
         reg |= value << low_bit
         self.write_register(address, reg)
