@@ -895,6 +895,9 @@ class DMAReadController(object):
         self.dma_read_data.callback = None
         self.device.unregister_interrupt_callback(self.dma_read_callback)
 
+    def is_asynchronous_mode(self):
+        return self.dma_read_data.callback is not None
+
     def async_read(self):
         pos = self.dma_read_data.next
         with self.locks[pos]:
