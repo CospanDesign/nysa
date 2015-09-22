@@ -671,10 +671,10 @@ class DMAReadWorker(threading.Thread):
                         #print "control: 0x%08X" % dev.get_control()
                         #print "self.mem_base 0: 0x%08X, size: 0x%08X" % (dmar.mem_base[0], size)
                         #print "self.mem_base 1: 0x%08X, size: 0x%08X" % (dmar.mem_base[1], size)
-
                         continue
 
             if fs[0] and fs[1]:
+                #print "both channels are finished"
                 #both finished channels are ready
                 if next == 0:
                     fs[0] = False
@@ -687,6 +687,7 @@ class DMAReadWorker(threading.Thread):
                     read_channel = 1
                     next = 0
             else:
+                #print "Only one channel is finished"
                 #if only one of the finished status is ready, reset the tie
                 #breaker
                 next = 0
@@ -702,9 +703,11 @@ class DMAReadWorker(threading.Thread):
             #Now we know what channel we need to read
             #'read_channel' is the channel to use
             with self.locks[read_channel]:
+                #print "Got a lock!"
                 #lock the channel so the reading device is not getting garbage data
                 #print "read channel: %d" % read_channel
-                self.drd.data[read_channel] = dev.read_memory(dmar.mem_base[read_channel], size)
+                self.drd.data[read_channel] = dev.read_memory(dmar.mem_base[read_channel], dmar.size)
+                #print "Got data"
                 self.drd.ready[read_channel] = True
                 if self.drd.ready[0] and self.drd.ready[1]:
                     #if both are ready point to the previous one
@@ -716,6 +719,7 @@ class DMAReadWorker(threading.Thread):
                     self.drd.next = read_channel
 
                 if self.drd.callback is not None:
+                    #print "Calling callback!"
                     self.drd.callback()
 
                 #initiate a new transfer before I leave so it will happen next
@@ -724,6 +728,7 @@ class DMAReadWorker(threading.Thread):
                         dev.write_register(dmar.reg_size0, dmar.size)
                     else:
                         dev.write_register(dmar.reg_size1, dmar.size)
+                #print "Done!"
 
 
 class DMAReadController(object):
@@ -877,7 +882,7 @@ class DMAReadController(object):
         self.debug = False
 
     def dma_read_callback(self):
-        if self.debug: print "Entered DMA read callback"
+        #if self.debug: print "Entered DMA read callback"
         #send a message queue to the worker thread to start processing the
         #incomming data
         if not self.dma_write_queue.full():
@@ -886,6 +891,7 @@ class DMAReadController(object):
     def enable_asynchronous_read(self, callback):
         self.dma_read_data.callback = callback
         self.device.register_interrupt_callback(self.dma_read_callback)
+        if self.debug: print "Starting asynchronous reader"
         self.dma_write_queue.put(True)
         #set up a callback with the dma device to call
 
@@ -903,6 +909,16 @@ class DMAReadController(object):
         with self.locks[pos]:
             self.dma_read_data.ready[pos] = False
             return self.dma_read_data.data[pos]
+
+    def _dangerous_async_read(self):
+        """
+        Only use this if you can read the data very fast... so the interrupt
+        thread will not read at the same time, this is usually callled within
+        the same context as the thread itself
+        """
+        pos = self.dma_read_data.next
+        self.dma_read_data.ready[pos] = False
+        return self.dma_read_data.data[pos]
 
     def _get_finished_block(self):
         """

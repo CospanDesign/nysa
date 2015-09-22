@@ -60,6 +60,16 @@ def create_thread(function, name, dut, args):
 
 class NysaSim (FauxNysa):
 
+    @cocotb.coroutine
+    def interrupt_interface(self):
+        while(1):
+            yield RisingEdge(self.dut.device_interrupt)
+            #print "got interrupt... looking for callback"
+            for key in self.callbacks:
+                if self.callbacks[key] is not None:
+                    #print "Found callback for: %s" % str(key)
+                    self.callbacks[key]()
+
     def __init__(self, dut, sim_config, period = CLK_PERIOD, user_paths = []):
         self.status = Status()
         self.status.set_level('verbose')
@@ -81,9 +91,11 @@ class NysaSim (FauxNysa):
         self.dut.in_data                      <= 0
         self.dut.in_data_count                <= 0
         gd = GenSDB()
+        self.callbacks = {}
         self.rom = gd.gen_rom(self.dev_dict, user_paths = self.user_paths, debug = False)
 
         cocotb.fork(Clock(dut.clk, period).start())
+        cocotb.fork(self.interrupt_interface())
 
     @cocotb.coroutine
     def wait_clocks(self, num_clks):
@@ -241,7 +253,6 @@ class NysaSim (FauxNysa):
         self.comm_lock.release()
 
     def wait_for_interrupts(self, wait_time = 1):
-
         self._wait_for_interrupts(wait_time)
         return False
 
@@ -251,17 +262,15 @@ class NysaSim (FauxNysa):
         count = 0
         self.interrupt_good = False
         while count < wait_time:
-            print "wait...",
+            #print "wait...",
             yield (self.wait_clocks(10))
-            print ".",
+            #print ".",
             count += 1
             if self.dut.device_interrupt.value.get_value():
                 self.interrupt_good = True
                 break
 
-        print "good? %s" % str(self.interrupt_good)
-
-
+        #print "good? %s" % str(self.interrupt_good)
 
     @cocotb.coroutine
     def dump_core(self):
@@ -334,10 +343,10 @@ class NysaSim (FauxNysa):
         self.dut.log.info("\t0x%08X" % self.out_status.value.get_value())
 
     def register_interrupt_callback(self, index, callback):
-        pass
+        self.callbacks[index] = callback
 
     def unregister_interrupt_callback(self, index, callback = None):
-        pass
+        self.callbacks[index] = None
 
     def get_sdb_base_address(self):
         return 0x0
