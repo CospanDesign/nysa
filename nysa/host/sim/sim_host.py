@@ -148,6 +148,7 @@ class NysaSim (FauxNysa):
     @cocotb.function
     def _read(self, address, length = 1, mem_device = False):
         yield(self.comm_lock.acquire())
+
         #print "_Read Acquire Lock"
         data_index = 0
         self.dut.in_ready       <= 0
@@ -206,6 +207,7 @@ class NysaSim (FauxNysa):
             mem_device = True
 
         yield(self.comm_lock.acquire())
+
         # print "Write Acquired Lock"
         data_count = len(data) / 4
         #print "data count: %d" % data_count
