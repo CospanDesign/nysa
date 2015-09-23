@@ -68,7 +68,8 @@ class NysaSim (FauxNysa):
             for key in self.callbacks:
                 if self.callbacks[key] is not None:
                     #print "Found callback for: %s" % str(key)
-                    self.callbacks[key]()
+                    for c in self.callbacks[key]:
+                        c()
 
     def __init__(self, dut, sim_config, period = CLK_PERIOD, user_paths = []):
         self.status = Status()
@@ -343,10 +344,16 @@ class NysaSim (FauxNysa):
         self.dut.log.info("\t0x%08X" % self.out_status.value.get_value())
 
     def register_interrupt_callback(self, index, callback):
-        self.callbacks[index] = callback
+        if index not in self.callbacks:
+            self.callbacks[index] = []
+        self.callbacks[index].append(callback)
 
     def unregister_interrupt_callback(self, index, callback = None):
-        self.callbacks[index] = None
+        if callback is None:
+            self.callbacks[index] = None
+        elif index in self.callbacks:
+            i = self.callbacks[index].index(callback)
+            del self.callbacks[index][i]
 
     def get_sdb_base_address(self):
         return 0x0
