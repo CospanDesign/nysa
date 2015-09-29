@@ -624,14 +624,15 @@ class DMAReadWorker(threading.Thread):
 
         while (1):
             if not fs[0] and not fs[1]:
-                #print "DMA Reader: No finished flag"
-                #There is no finished status from previous reads
-                status = dev.read_register(dmar.reg_status)
-                fs[0] = ((status & dmar.finished[0]) > 0)
-                fs[1] = ((status & dmar.finished[1]) > 0)
-                bs[0] = ((status & dmar.empty[0]) == 0)
-                bs[1] = ((status & dmar.empty[1]) == 0)
-                #print "DMA Reader: fs flags: %s %s, bs flags: %s %s" % (fs[1], fs[0], bs[1], bs[0])
+                if enable:
+                    #print "DMA Reader: No finished flag"
+                    #There is no finished status from previous reads
+                    status = dev.read_register(dmar.reg_status)
+                    fs[0] = ((status & dmar.finished[0]) > 0)
+                    fs[1] = ((status & dmar.finished[1]) > 0)
+                    bs[0] = ((status & dmar.empty[0]) == 0)
+                    bs[1] = ((status & dmar.empty[1]) == 0)
+                    #print "DMA Reader: fs flags: %s %s, bs flags: %s %s" % (fs[1], fs[0], bs[1], bs[0])
                 if not fs[0] and not fs[1]:
                     if enable:
                         #print "DMA Reader: Start reading!"
@@ -658,7 +659,8 @@ class DMAReadWorker(threading.Thread):
                             rdata = self.dwq.get(block = True)
                         while not self.dwq.empty():
                             rdata = self.dwq.get(block = True)
-                        #print "Got a response!"
+                        #print "Got an Interrupt from the main thread!"
+                        #print "\tDMA Reader: fs flags: %s %s, bs flags: %s %s" % (fs[1], fs[0], bs[1], bs[0])
 
                     except AttributeError:
                         #This occurs when the queue is destroyed remotely
@@ -672,6 +674,8 @@ class DMAReadWorker(threading.Thread):
                         #print "self.mem_base 0: 0x%08X, size: 0x%08X" % (dmar.mem_base[0], size)
                         #print "self.mem_base 1: 0x%08X, size: 0x%08X" % (dmar.mem_base[1], size)
                         continue
+
+                    continue
 
             if fs[0] and fs[1]:
                 #print "both channels are finished"
@@ -883,6 +887,7 @@ class DMAReadController(object):
 
     def dma_read_callback(self):
         #if self.debug: print "Entered DMA read callback"
+        #print "Entered DMA read callback"
         #send a message queue to the worker thread to start processing the
         #incomming data
         if not self.dma_write_queue.full():
