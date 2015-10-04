@@ -316,11 +316,6 @@ wb_bram #(
   .o_wbs_int  (w_arb0_o_wbs_int     )
 );
 
-
-
-
-
-
 //Disable Slave 0
 assign  w_wbs0_int              = 0;
 assign  w_wbs0_ack              = 0;
@@ -354,7 +349,6 @@ assign  mem_o_cyc               = 0;
 assign  mem_o_sel               = 0;
 assign  mem_o_adr               = 0;
 assign  mem_o_dat               = 0;
-
 
 //Submodules
 //Asynchronous Logic
