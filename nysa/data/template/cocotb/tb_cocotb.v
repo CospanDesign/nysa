@@ -127,8 +127,17 @@ wire              mem_i_ack;
 wire              mem_i_int;
 
 
-assign  device_interrupt  = w_wbp_int;
-assign  w_wbs0_int        = 1'b0;
+wire              mem_o_we;
+wire              mem_o_stb;
+wire              mem_o_cyc;
+wire  [3:0]       mem_o_sel;
+wire  [31:0]      mem_o_adr;
+wire  [31:0]      mem_o_dat;
+wire  [31:0]      mem_i_dat;
+wire              mem_i_ack;
+wire              mem_i_int;
+
+
 
 
 
@@ -311,10 +320,41 @@ wb_bram #(
 
 
 
+
+//Disable Slave 0
+assign  w_wbs0_int              = 0;
 assign  w_wbs0_ack              = 0;
 assign  w_wbs0_dat_o            = 0;
-assign  device_interrupt  = w_wbp_int;
-assign  start                   = 1;
+assign  device_interrupt        = w_wbp_int;
+
+/*
+  READ ME IF YOUR MODULE WILL INTERFACE WITH MEMORY
+
+  If you want to talk to memory over the wishbone bus directly, your module must control the following signals:
+
+  (Your module will be a wishbone master)
+    mem_o_we
+    mem_o_stb
+    mem_o_cyc
+    mem_o_sel
+    mem_o_adr
+    mem_o_dat
+    mem_i_dat
+    mem_i_ack
+    mem_i_int
+
+  Currently this bus is disabled so if will not interface with memory these signals can be left
+
+  For a reference check out wb_sd_host
+
+*/
+assign  mem_o_we                = 0;
+assign  mem_o_stb               = 0;
+assign  mem_o_cyc               = 0;
+assign  mem_o_sel               = 0;
+assign  mem_o_adr               = 0;
+assign  mem_o_dat               = 0;
+
 
 //Submodules
 //Asynchronous Logic
