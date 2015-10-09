@@ -412,7 +412,7 @@ class ProjectGenerator(object):
 
             #each slave
 
-        if ("MEMORY" in self.project_tags):
+        if "MEMORY" in self.project_tags:
             for mem in self.project_tags["MEMORY"]:
                 fdict = {"location":""}
                 file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "bus", "slave")
@@ -423,6 +423,8 @@ class ProjectGenerator(object):
                 except ModuleFactoryError as err:
                     if status: status.Error("ModuleFactoryError while generating memory: %s" % str(err))
                     raise ModuleFactoryError(err)
+
+
 
         '''
         if 'infrastructure' in self.project_tags:
@@ -490,6 +492,17 @@ class ProjectGenerator(object):
             file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "dependencies")
             result = self.filegen.process_file(filename = d, file_dict = fdict, directory = file_dest, debug = True)
             if status: status.Verbose("\tDependent File: %s" % d)
+
+        if "dependencies" in self.project_tags:
+            if status: status.Verbose("User Specified dependencies")
+            for name in self.project_tags["dependencies"]:
+                if status: status.Verbose("\tUser Dependent File: %s" % name)
+                
+                fdict = {"location":""}
+                file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "dependencies")
+                result = self.filegen.process_file(filename = name, file_dict = fdict, directory = file_dest, debug = True)
+
+
 
         return True
 
