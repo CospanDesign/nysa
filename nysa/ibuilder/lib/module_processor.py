@@ -166,6 +166,7 @@ class ModuleProcessor:
       IOError
 
     """
+    verbose = False
     debug = False
     if (filename.endswith(".v")):
       self.verilog_file_list.append(filename)
@@ -232,7 +233,7 @@ class ModuleProcessor:
                                       utils.nysa_base + os.path.sep + "cbuilder" + os.path.sep + "verilog"))
 
 
-      if debug:
+      if verbose:
         print "found file!"
         print "file content: " + self.buf
 
@@ -241,12 +242,12 @@ class ModuleProcessor:
       raise ModuleFactoryError( "File %s does not declare a location or a \
                                   script! Check the template file" % filename)
 
-    if (debug):
+    if verbose:
       print "Project name: " + self.tags["PROJECT_NAME"]
 
     #if the generation flag is set in the dictionary
     if "gen_script" in file_dict:
-      if (debug):
+      if debug:
         print "found the generation script"
         print "run generation script: " + file_dict["gen_script"]
       #open up the new gen module
@@ -273,19 +274,19 @@ class ModuleProcessor:
         obj = getattr(self.gen_module, name)
   #      print "object type: " + str(obj)
 #XXX: debug section start
-        if debug:
+        if verbose:
           print "name: " + name
         if isclass(obj):
-          if debug:
+          if verbose:
             print "\tobject type: " + str(obj)
             print "\tis class"
           if issubclass(obj, cl.Gen):
-            if debug:
+            if verbose:
               print "\t\tis subclass"
 #XXX: debug section end
         if isclass(obj) and issubclass(obj, cl.Gen) and obj is not cl.Gen:
           self.gen = obj()
-          if debug:
+          if verbose:
             print "obj = " + str(self.gen)
 
           self.buf = self.gen.gen_script(tags = self.tags, buf = self.buf, user_paths = self.user_paths)
@@ -298,15 +299,15 @@ class ModuleProcessor:
       #no script to execute, just tags
       self.apply_tags()
 
-    if debug:
+    if verbose:
       print self.buf
-    #write the file to the specified directory
     if (len(self.buf) > 0):
       result = self.write_file(directory, filename)
 
-    if (self.has_dependencies(filename)):
+    if self.has_dependencies(filename):
       deps = self.get_list_of_dependencies(filename)
       for d in deps:
+        #print "\td: %s" % str(d)
         try:
           result = utils.find_module_filename(d, self.user_paths)
           if (len(result) == 0):
@@ -371,8 +372,7 @@ class ModuleProcessor:
 
     #go through the local file list and add anything found to the list of dependencies or verilog files
     for f in local_file_list:
-      if (not self.verilog_dependency_list.__contains__(f) and
-        not self.verilog_file_list.__contains__(f)):
+      if (f not in self.verilog_dependency_list) and (f not in self.verilog_file_list):
 
         if debug:
           print "found dependency: " + f
@@ -395,7 +395,6 @@ class ModuleProcessor:
     Raises:
       IOError
     """
-
     if debug:
       print "input file: " + filename
     #filename needs to be a verilog file
@@ -507,8 +506,7 @@ class ModuleProcessor:
       ifile_name = ifile_name.strip("\"")
       if debug:
         print "found an include " + ifile_name + " ",
-      if (not self.verilog_dependency_list.__contains__(ifile_name) and
-        not self.verilog_file_list.__contains__(ifile_name)):
+      if (ifile_name not in self.verilog_dependency_list) and (ifile_name not in self.verilog_file_list):
         self.verilog_dependency_list.append(ifile_name)
         if debug:
           print "adding " + ifile_name + " to the dependency list"
