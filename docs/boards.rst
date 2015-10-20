@@ -25,7 +25,7 @@ A Spartan 6 LX9 attached to a host computer through a USB 2.0 FIFO capable of da
 Nyx
 ---
 
-A Spartan 6 LX25 attached to an Intel Edison.
+A Spartan 6 LX25 attached to an Intel Edison through SDIO with throughput rates of 50MBs.
 
 .. image:: _static/nyx_board.png
     :target: _static/nyx_board.png
@@ -43,7 +43,7 @@ A Spartan 6 LX25 attached to an Intel Edison.
 Artemis
 -------
 
-A Flexible Spartan 6 LX45T with a flexible interface to a host and expansion port that brings out SERDES. One of the most inexpensive ways to use PCI Express or SATA on your next project.
+A Spartan 6 LX45T designed so the user can create their own host interface using up to 23 differential signals (46 single ended) and a pair of gigabit transceivers openning up PCI Express. One of the most inexpensive ways to use PCI Express or SATA on your next project.
 
 .. image:: _static/artemis_board.png
     :target: _static/artemis_board.png
