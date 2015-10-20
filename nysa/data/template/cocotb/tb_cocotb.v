@@ -127,20 +127,6 @@ wire              mem_i_ack;
 wire              mem_i_int;
 
 
-wire              mem_o_we;
-wire              mem_o_stb;
-wire              mem_o_cyc;
-wire  [3:0]       mem_o_sel;
-wire  [31:0]      mem_o_adr;
-wire  [31:0]      mem_o_dat;
-wire  [31:0]      mem_i_dat;
-wire              mem_i_ack;
-wire              mem_i_int;
-
-
-
-
-
 //Submodules
 wishbone_master wm (
   .clk            (clk            ),
