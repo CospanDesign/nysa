@@ -9,7 +9,7 @@ The following boards were designed with Nysa in mind.
 Dionysus
 --------
 
-A Spartan 6 LX9 attached to a host computer through a 25MBs interface
+A Spartan 6 LX9 attached to a host computer through a USB 2.0 FIFO capable of data throughput of up to 25MBs
 
 .. image:: _static/dionysus_board.png
     :target: _static/dionysus_board.png

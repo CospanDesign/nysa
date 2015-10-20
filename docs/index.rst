@@ -12,10 +12,10 @@ Contents:
     :maxdepth: 1
     :numbered:
 
-    About/what_is_nysa.rst
+    What is Nysa? <about/what_is_nysa.rst>
     Getting Started <getting_started_toc.rst>
     Advanced Topics <advanced_topics_toc.rst>
-    Boards<boards.rst> 
+    Boards <boards.rst>
 
 
 Indices and tables
