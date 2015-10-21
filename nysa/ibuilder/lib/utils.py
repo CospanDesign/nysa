@@ -445,12 +445,12 @@ def get_constraint_file_path(board_name, constraint_filename, user_paths = [], d
     """Returns a list of ucf files for the specified board name"""
     #board_dir = os.path.join(nysa_base, "ibuilder", "boards", board_name)
     sm = site_manager.SiteManager()
-    board_location = None
     board_locations = []
+    board_location = get_board_directory(board_name)
 
     try:
-        board_location = get_board_directory(board_name)
         if debug: print "Default board location found: %s" % board_location
+        board_locations.append(board_location)
         config_dict = get_board_config(board_name, user_paths, debug = debug)
         if debug: print "Config Dict: %s" % str(config_dict)
         if "default_constraint_files" in config_dict:
@@ -462,29 +462,59 @@ def get_constraint_file_path(board_name, constraint_filename, user_paths = [], d
     except site_manager.SiteManagerError as ex:
         if debug: print "%s is not in the installed path, checking user paths..." % board_name
 
+    board_dict = get_board_config(board_name)
     board_locations.extend(user_paths)
+    if "parent_board" in board_dict:
+        if debug: print "                 Parent Board!"
+        for parent in board_dict["parent_board"]:
+            board_dir = get_board_directory(parent)
+            if debug: print "             Board Dir: %s" % str(board_dir)
+            board_locations.append(board_dir)
+
     filename = ""
     buf = ""
     clock_rate = ""
-    if debug: print "Looking for: " + constraint_filename
+    if debug: print "Looking for: %s in %s" % (constraint_filename, str(board_locations))
     for bl in board_locations:
+        #if debug: print "board directory: %s" % str(bl)
         for root, dirs, names in os.walk(bl):
-            if debug: print "name: " + str(names)
+            #if debug: print "name: " + str(names)
             if constraint_filename in names:
-                if debug: print "found the file!"
+                #if debug: print "found the file!"
                 return os.path.join(root, constraint_filename)
+
+            for d in dirs:
+                pdir = os.path.join(root, d)
+                filepath = _get_constraint_file_path(pdir, constraint_filename)
+                if filepath is not None:
+                    if debug: print "Found file: %s" % filepath
+                    return filepath 
+                    
 
     if (len(filename) == 0):
         verilog_dirs = get_local_verilog_paths()
+        if debug: print "looking in verilog paths: %s" % str(verilog_dirs)
         for vd in verilog_dirs:
             for root, dirs, names in os.walk(vd):
-                if debug: print "name: " + str(names)
+                #if debug: print "name: " + str(names)
                 if constraint_filename in names:
                     if debug: print "found the file: %s" % os.path.join(root, constraint_filename)
                     return os.path.join(root, constraint_filename)
 
     raise IBuilderError("Constraint File: %s wasn't found, looked in board directories and core directories" % constraint_filename)
 
+
+def _get_constraint_file_path(parent_dir, constraint_filename):
+    for root, dirs, names in os.walk(parent_dir):
+        if constraint_filename in names:
+            return os.path.join(root, constraint_filename)
+        else:
+            for d in dirs:
+                pdir = os.path.join(root, d)
+                filepath = _get_constraint_file_path(pdir, constraint_filename)
+                if filepath is not None:
+                    return filepath
+    return None
 
 def read_clock_rate(constraint_filepath, debug = False):
     """Returns a string of the clock rate

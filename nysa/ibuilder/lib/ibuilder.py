@@ -43,6 +43,7 @@ from collections import OrderedDict
 import utils
 import arbiter
 from module_processor import ModuleProcessor
+from ibuilder_error import IBuilderError
 from ibuilder_error import ModuleFactoryError
 from ibuilder_error import ProjectGeneratorError as PGE
 
@@ -120,6 +121,7 @@ class ProjectGenerator(object):
     """Generates IBuilder Projects"""
 
     def __init__(self, user_paths = [], status = None):
+        if status: status.Verbose("User Paths: %s" % str(user_paths))
         self.user_paths = user_paths
         self.filegen = ModuleProcessor(user_paths = self.user_paths)
         self.project_tags = {}
@@ -139,6 +141,7 @@ class ProjectGenerator(object):
         board_dict = json.load(open(default_path, "r"), object_pairs_hook=OrderedDict)
         if "parent_board" in bd:
             for parent in bd["parent_board"]:
+                if self.s: self.s.Verbose("Start with default board configuration for board: %s" % parent)
                 pd = utils.get_board_config(parent)
                 name = "default.json"
                 if "default_project" in pd:
@@ -149,7 +152,7 @@ class ProjectGenerator(object):
                 parent_dict = json.load(open(default_path, "r"), object_pairs_hook=OrderedDict)
 
                 for key in parent_dict:
-                    if self.s: self.s.Verbose("Working on %s key: %s" % (parent, key))
+                    #if self.s: self.s.Verbose("Working on %s key: %s" % (parent, key))
                     if key in board_dict:
                         if isinstance(board_dict[key], list):
                             #print "board_dict  [%s]: %s" % (key, str(board_dict[key]))
@@ -316,8 +319,27 @@ class ProjectGenerator(object):
 
         cfiles = pt["constraint_files"]
         for c in cfiles:
-            cpaths.append(utils.get_constraint_file_path(self.project_tags["board"], c))
-            #cpaths.append(utils.get_constraint_file_path(c))
+            board = self.project_tags["board"]
+            try:
+                cpaths.append(utils.get_constraint_file_path(board, c))
+            except IBuilderError as e:
+                if self.s: self.s.Verbose("Could not find constraint: %s in default board searching parent board..." % c)
+                #path = os.path.join(utils.get_board_directory(board), board)
+                board_dict = utils.get_board_config(board)
+
+                mname = "default.json"
+                if "default_project" in board_dict:
+                    mname = board_dict["default_project"]
+
+                if "parent_board" in board_dict:
+                    for parent in board_dict["parent_board"]:
+                        if self.s: self.s.Verbose("\tsearching: %s @ %s..." % (parent, utils.get_board_directory(parent)))
+                        filepath = utils.get_constraint_file_path(parent, c)
+                        if filepath is None:
+                            if self.s: self.s.Verbose("Did not file file: %s in parent board" % (c))
+                        else:
+                            if self.s: self.s.Verbose("Found file, located at: %s" % filepath)
+                            cpaths.append(utils.get_constraint_file_path(parent, c, debug = True))
 
         #if the user didn't specify any constraint files
         #load the default
@@ -460,7 +482,6 @@ class ProjectGenerator(object):
 
         #Copy the user specified constraint files to the constraints directory
         for constraint_fname in cfiles:
-            sap_abs_base = os.getenv("SAPLIB_BASE")
             abs_proj_base = utils.resolve_path(self.project_tags["BASE_DIR"])
             constraint_path = utils.get_constraint_file_path(self.project_tags["board"], constraint_fname)
             if os.path.exists(constraint_fname):
@@ -468,7 +489,7 @@ class ProjectGenerator(object):
             #constraint_path = constraint_fname
             if len(constraint_path) == 0:
                 print ("Couldn't find constraint: %s, searched in the current directory and %s/hdl/%s" %
-                    (constraint_fname, sap_abs_base, self.project_tags["board"]))
+                    (constraint_fname, abs_proj_base, self.project_tags["board"]))
                 continue
             shutil.copy (constraint_path, os.path.join(abs_proj_base, "constraints", constraint_fname))
             #shutil.copy (constraint_path, abs_proj_base + "/constraints/" + constraint_fname)
@@ -497,7 +518,7 @@ class ProjectGenerator(object):
             if status: status.Verbose("User Specified dependencies")
             for name in self.project_tags["dependencies"]:
                 if status: status.Verbose("\tUser Dependent File: %s" % name)
-                
+
                 fdict = {"location":""}
                 file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "dependencies")
                 result = self.filegen.process_file(filename = name, file_dict = fdict, directory = file_dest, debug = True)
@@ -621,4 +642,5 @@ class ProjectGenerator(object):
             if debug: print "arbiter buffer: " + self.filegen.buf
             self.filegen.write_file(d, fn)
         return len(arb_size_list)
+
 
