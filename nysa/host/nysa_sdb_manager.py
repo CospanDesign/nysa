@@ -388,7 +388,7 @@ class NysaSDBManager(object):
         if n is None:
             n = self.n
         sdb_data = Array('B')
-        self.s.Important("Parsing Top Interconnect Buffer")
+        #self.s.Important("Parsing Top Interconnect Buffer")
         #Because Nysa works with many different platforms we need to get the
         #platform specific location of where the SDB actually is
         sdb_base_address = n.get_sdb_base_address()
