@@ -297,6 +297,10 @@ class ProjectGenerator(object):
             self.user_paths.extend(get_parent_board_paths(board_dict))
             self.user_paths = list(set(self.user_paths))
 
+        if self.s: self.s.Verbose("Paths:")
+        for p in self.user_paths:
+            if self.s: self.s.Verbose("\t%s" %p)
+
         # Go through the board dict and see if there is anything that needs to be
         # incorporated into the project tags
         for key in board_dict:
