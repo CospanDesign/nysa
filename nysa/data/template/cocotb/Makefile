@@ -6,6 +6,7 @@ COCOTB 	:= $(shell $(python) nysa paths -c -s)
 NYSA 	:= $(shell $(python) nysa paths -s -v nysa-verilog)
 PYTHONPATH := ./model:$(PYTHONPATH)
 export PYTHONPATH
+export PYTHONHOME=$(shell python -c "from distutils.sysconfig import get_config_var; print(get_config_var('prefix'))")
 
 EXTRA_ARGS+=-I$(TOPDIR)/rtl/ -I$(NYSA)/verilog/
 
