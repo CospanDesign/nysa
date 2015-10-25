@@ -386,7 +386,7 @@ class SiteManager(object):
             if self.s: self.s.Important("Installing from URL: %s" % (board_dict[name]["pip"]))
 
             v = None
-            if os.name == "nt":
+            if os.name == "nt" or ("Anaconda" in sys.version):
                 v = subprocess.call(["pip", "install", "--upgrade", board_dict[name]["pip"]])
             else:
                 v = subprocess.call(["sudo", "pip", "install", "--upgrade", board_dict[name]["pip"]])
