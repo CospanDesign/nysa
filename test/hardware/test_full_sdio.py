@@ -155,25 +155,31 @@ class Test (unittest.TestCase):
         self.sdio.display_status()
         self.s.Info("Clock Count:\t\t0x%08X" % self.sdio.get_clock_count())
         '''
+        self.s.Info("Read data from CCCR")
+        value = self.sd.read_sd_data(function_id = 0, address = 0x00, byte_count = 0x08, fifo_mode = False)
+        self.s.Info("Data from CCCR: %s" % print_hex_array(value))
 
         self.s.Info ("Attempting to write data")
-        data_out = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        #data_out = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+        data_out = [0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]
         self.sdio.write_local_buffer(0, data_out)
         #data_out = [0xAA, 0x33, 0x22, 0x55, 0x0B, 0x00, 0x11, 0x44]
-        data_out = [0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]
+        #data_out = [0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]
         try:
-            self.sd.write_sd_data(function_id = 1, address = 0x01, data = data_out)
+            self.sd.write_sd_data(function_id = 1, address = 0x00, data = data_out)
             #self.sd.display_control()
         except SDHostException as e:
             self.s.Error("Failed data transfer!: %s" % str(e))
 
         self.s.Important("Write data from host to SDIO Device")
         print "Sending data to SDIO:\t\t\t%s" % print_hex_array(data_out)
-        mem_data = self.sdio.read_memory(0x00, 2)
-        print "Data in Memory:\t\t\t\t%s" % print_hex_array(mem_data)
+        #mem_data = self.sdio.read_memory(0x00, 2)
+        #print "Data in Memory:\t\t\t\t%s" % print_hex_array(mem_data)
         data = self.sdio.read_local_buffer(0, len(data_out) / 4)
         print "SDIO Local Data:\t\t\t%s" % print_hex_array(data)
         print ""
+
+
 
         #self.s.Important("Put Data in SDIO Device, read this data from SD Host")
         #print "Write Data to SDIO buffer:\t\t%s" % print_hex_array(data_out)
@@ -195,6 +201,19 @@ class Test (unittest.TestCase):
 
         #value = self.sd.read_sd_data(function_id = 1, address = 0x00, byte_count = 8, fifo_mode = False)
         #print "Value: %s" % str(value)
+
+        SIZE = 256
+        print "Long Write: %d" % SIZE
+        data_out = []
+        for i in range (SIZE):
+            value = i % 256
+            data_out.append(value)
+
+        self.sd.write_sd_data(function_id = 1, address = 0x00, data = data_out)
+        data = self.sd.read_sd_data(function_id = 1, address = 0x00, byte_count = len(data_out))
+        print "Data From SDIO:\t\t\t\t%s" % print_hex_array(data)
+
+
 
 def print_hex_array(a):
     s = None

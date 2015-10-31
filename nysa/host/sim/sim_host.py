@@ -33,6 +33,7 @@ from cocotb.binary import BinaryValue
 from cocotb.clock import Clock
 from cocotb import bus
 import json
+from collections import OrderedDict
 import cocotb.monitors
 
 #from nysa.host.nysa import Nysa
@@ -77,7 +78,7 @@ class NysaSim (FauxNysa):
         self.user_paths = user_paths
         self.comm_lock = cocotb.triggers.Lock('comm')
         self.dut                              = dut
-        dev_dict                              = json.load(open(sim_config))
+        dev_dict                              = json.load(open(sim_config), object_pairs_hook = OrderedDict)
         super (NysaSim, self).__init__(dev_dict, self.status)
 
         self.timeout                          = 1000
