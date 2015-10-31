@@ -76,6 +76,9 @@ SD_BLOCK_SIZE_OFFSET            = 0x010
 SD_DBG_CRC_GEN                  = 0x023
 SD_DBG_CRC_RMT                  = 0x024
 
+SD_DBG_CRC_DATA_GEN             = 0x028
+SD_DBG_CRC_DATA_RMT             = 0x02C
+
 CONTROL_ENABLE_SD               = 0
 CONTROL_ENABLE_INTERRUPT        = 1
 CONTROL_ENABLE_DMA_WR           = 2
@@ -292,6 +295,8 @@ class SDHostDriver(driver.Driver):
         self.relative_card_address = 0x00
         self.inactive = False
         self.register_interrupt_callback(self._callback)
+        for i in range(8):
+            self.set_block_size(i, 512)
 
 #Low Level Functions
     def set_control(self, control):
@@ -331,7 +336,7 @@ class SDHostDriver(driver.Driver):
         to = time.time() + timeout
         while (time.time() < to) and self.is_sd_busy():
             if self.debug: print ".",
-        if self.debug: print ""
+        #if self.debug: print ""
         if self.is_sd_busy():
             if self.debug: print "Cancel command"
             cmd_reg &= (1 << COMMAND_BIT_GO)
@@ -632,7 +637,7 @@ class SDHostDriver(driver.Driver):
             while (time.time() < to) and self.is_sd_busy():
                 if self.debug: print ".",
                 time.sleep(0.001)
-            if self.debug: print ""
+            #if self.debug: print ""
             #Disable the DMA Write Flag
             #print "Waiting till data has finished sending..."
             to = time.time() + timeout
@@ -643,7 +648,7 @@ class SDHostDriver(driver.Driver):
             self.clear_register_bit(CONTROL, CONTROL_ENABLE_DMA_WR)
 
         else:
-            if self.debug: print "Initiate Data Transfer (Inbound)"
+            #if self.debug: print "Initiate Data Transfer (Inbound)"
             self.dma_reader.set_size(512)
             #print "byte count: %s" % byte_count
             command_arg |= (byte_count & DATA_RW_COUNT_BITMODE)
@@ -892,6 +897,12 @@ class SDHostDriver(driver.Driver):
         
     def get_rmt_crc(self):
         return self.read_register(SD_DBG_CRC_RMT)
+
+    def get_gen_data_crc(self, index):
+        return self.read_register(SD_DBG_CRC_DATA_GEN + index)
+
+    def get_rmt_data_crc(self, index):
+        return self.read_register(SD_DBG_CRC_DATA_RMT + index)
  
     def display_crcs(self):
         gen_crc = self.get_gen_crc()
@@ -900,6 +911,16 @@ class SDHostDriver(driver.Driver):
             print "%sCRC Gen:0x%02X != Rmt:0x%02X %s" % (red, gen_crc, rmt_crc, white)
         else:
             print "%sCRC Gen:0x%02X == Rmt:0x%02X %s" % (green, gen_crc, rmt_crc, white)
+
+        data_gen_crcs = []
+        data_rmt_crcs = []
+        for i in range(4):
+            data_gen_crcs.append(self.get_gen_data_crc(i))
+            data_rmt_crcs.append(self.get_rmt_data_crc(i))
+
+        print "Data CRCs"
+        print "\tGen:0x%02X 0x%02X 0x%02X 0x%02X" % (data_gen_crcs[0], data_gen_crcs[1], data_gen_crcs[2], data_gen_crcs[3])
+        print "\tRmt:0x%02X 0x%02X 0x%02X 0x%02X" % (data_rmt_crcs[0], data_rmt_crcs[1], data_rmt_crcs[2], data_rmt_crcs[3])
 
     def display_control(self):
         control = self.get_control()

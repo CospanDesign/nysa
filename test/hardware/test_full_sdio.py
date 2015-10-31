@@ -84,16 +84,16 @@ class Test (unittest.TestCase):
         self.s.Info("Device Control:\t\t0x%08X" % self.sdio.get_control())
         self.s.Info("Delay: 0x%02X" % self.sd.get_input_delay())
         sd_host_input_delay_value = 63
-        self.s.Info("Set Output delay to %d ( 0x%02X )" % (sd_host_input_delay_value, sd_host_input_delay_value))
+        self.s.Info("Set host input delay to %d ( 0x%02X )" % (sd_host_input_delay_value, sd_host_input_delay_value))
         self.sd.set_input_delay(sd_host_input_delay_value)
         self.s.Info("Delay: 0x%02X" % self.sd.get_input_delay())
 
         self.sdio.enable_sdio_device(False)
         self.sdio.reset_core()
 
-        sdio_input_delay_value = 20
+        sdio_input_delay_value = 0
         self.s.Info("Delay: 0x%02X" % self.sdio.get_input_delay())
-        self.s.Info("Set Output delay to %d ( 0x%02X )" % (sdio_input_delay_value, sdio_input_delay_value))
+        self.s.Info("Set Input delay to %d ( 0x%02X )" % (sdio_input_delay_value, sdio_input_delay_value))
         self.sdio.set_input_delay(sdio_input_delay_value)
         self.s.Info("Delay: 0x%02X" % self.sdio.get_input_delay())
 
@@ -121,75 +121,80 @@ class Test (unittest.TestCase):
         try:
             self.s.Verbose("Send Command 5")
             self.sd.cmd_io_send_op_cond(enable_1p8v = True)
-            self.sd.display_crcs()
-            self.sdio.display_crcs()
-            self.s.Info("SD Command:\t\t0x%08X" % self.sdio.get_sd_cmd())
-            self.s.Info("SD Command Arg:\t\t0x%08X" % self.sdio.get_sd_cmd_arg())
-            self.s.Info("Response Value:\t\t0x%0X" % self.sd.read_response())
+            #self.sd.display_crcs()
+            #self.sdio.display_crcs()
+            #self.s.Info("SD Command:\t\t0x%08X" % self.sdio.get_sd_cmd())
+            #self.s.Info("SD Command Arg:\t\t0x%08X" % self.sdio.get_sd_cmd_arg())
+            #self.s.Info("Response Value:\t\t0x%0X" % self.sd.read_response())
 
             self.s.Verbose("Get Relative Address")
             self.sd.cmd_get_relative_card_address()
-            self.sd.display_crcs()
-            self.sdio.display_crcs()
-            self.s.Info("SD Command:\t\t0x%08X" % self.sdio.get_sd_cmd())
-            self.s.Info("SD Command Arg:\t\t0x%08X" % self.sdio.get_sd_cmd_arg())
-            self.s.Info("Response Value:\t\t0x%0X" % self.sd.read_response())
-
-
-            '''
+            #self.sd.display_crcs()
+            #self.sdio.display_crcs()
+            #self.s.Info("SD Command:\t\t0x%08X" % self.sdio.get_sd_cmd())
+            #self.s.Info("SD Command Arg:\t\t0x%08X" % self.sdio.get_sd_cmd_arg())
+            #self.s.Info("Response Value:\t\t0x%0X" % self.sd.read_response())
 
             self.s.Verbose("Enable Card")
             self.sd.cmd_enable_card(True)
-            self.sd.display_crcs()
-            self.sdio.display_crcs()
+            #self.sd.display_crcs()
+            #self.sdio.display_crcs()
 
             self.s.Verbose("Read a configuration byte")
             value = self.sd.read_config_byte(0x00)
-            self.sd.display_crcs()
-            self.sdio.display_crcs()
-
+           # self.sd.display_crcs()
+           # self.sdio.display_crcs()
             self.s.Important("Read Value: 0x%02X" % value)
-            '''
+
         except SDHostException as e:
             self.s.Error("Failed data transfer!: %s" % str(e))
 
-        self.sd.display_control()
-        #self.s.Info("Host Control:\t\t0x%08X" % self.sd.get_control())
-        #self.s.Info("Host Status:\t\t0x%08X" % self.sd.get_status())
-        self.sd.display_status()
-        #self.s.Warning("Device Status:\t\t0x%08X" % self.sdio.get_status())
-        self.sdio.display_status()
         '''
+        self.sd.display_control()
+        self.sd.display_status()
+        self.sdio.display_status()
         self.s.Info("Clock Count:\t\t0x%08X" % self.sdio.get_clock_count())
-        self.s.Info("SD Command:\t\t0x%08X" % self.sdio.get_sd_cmd())
-        self.s.Info("SD Command Arg:\t\t0x%08X" % self.sdio.get_sd_cmd_arg())
+        '''
 
-        #data_out = [0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08]
-        #data_out = [0x08]
-        #self.sd.write_sd_data(function_id = 1, address = 0x00, data = data_out)
-
-        self.s.Info("Attempt to read a byte of data")
-
-        data_out = [0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F]
-        #data_out = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
-        #data_out = [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF]
+        self.s.Info ("Attempting to write data")
+        data_out = [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
         self.sdio.write_local_buffer(0, data_out)
-        data = self.sdio.read_local_buffer(0, 2)
-        print "Data: %s" % print_hex_array(data)
+        #data_out = [0xAA, 0x33, 0x22, 0x55, 0x0B, 0x00, 0x11, 0x44]
+        data_out = [0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF]
+        try:
+            self.sd.write_sd_data(function_id = 1, address = 0x01, data = data_out)
+            #self.sd.display_control()
+        except SDHostException as e:
+            self.s.Error("Failed data transfer!: %s" % str(e))
+
+        self.s.Important("Write data from host to SDIO Device")
+        print "Sending data to SDIO:\t\t\t%s" % print_hex_array(data_out)
+        mem_data = self.sdio.read_memory(0x00, 2)
+        print "Data in Memory:\t\t\t\t%s" % print_hex_array(mem_data)
+        data = self.sdio.read_local_buffer(0, len(data_out) / 4)
+        print "SDIO Local Data:\t\t\t%s" % print_hex_array(data)
+        print ""
+
+        #self.s.Important("Put Data in SDIO Device, read this data from SD Host")
+        #print "Write Data to SDIO buffer:\t\t%s" % print_hex_array(data_out)
+        #self.sdio.write_local_buffer(0, data_out)
+
+        #data = self.sdio.read_local_buffer(0, 2)
+        #print "Read back data from SDIO buffer:\t%s" % print_hex_array(data)
 
         #value = self.sd.read_sd_data(function_id = 1, address = 0x00, byte_count = len(data_out), fifo_mode = False)
         #value = self.sd.read_sd_data(function_id = 1, address = 0x00, byte_count = 0x20, fifo_mode = False)
-        value = self.sd.read_sd_data(function_id = 0, address = 0x00, byte_count = 0x20, fifo_mode = False)
-        self.s.Info("SD Command:\t\t0x%08X" % self.sdio.get_sd_cmd())
-        self.s.Info("SD Command Arg:\t\t0x%08X" % self.sdio.get_sd_cmd_arg())
-
-        print "Value: %s" % print_hex_array(value)
+        value = self.sd.read_sd_data(function_id = 1, address = 0x00, byte_count = 0x08, fifo_mode = False)
+        #self.s.Info("SD Command:\t\t0x%08X" % self.sdio.get_sd_cmd())
+        #self.s.Info("SD Command Arg:\t\t0x%08X" % self.sdio.get_sd_cmd_arg())
+        print "Data From SDIO:\t\t\t\t%s" % print_hex_array(value)
+        self.sd.display_crcs()
+        self.sdio.display_crcs()
         #data = self.sdio.read_local_buffer(0, 2)
         #print "Data: %s" % print_hex_array(data)
 
         #value = self.sd.read_sd_data(function_id = 1, address = 0x00, byte_count = 8, fifo_mode = False)
         #print "Value: %s" % str(value)
-        '''
 
 def print_hex_array(a):
     s = None

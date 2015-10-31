@@ -44,16 +44,19 @@ SDB_VENDOR_ID           = 0x800000000000C594
 BUFFER_SIZE             = 0x00000400
 
 #Register Constants
-CONTROL_ADDR            = 0x00000000
-STATUS_ADDR             = 0x00000001
-CLOCK_COUNT_ADDR        = 0x00000002
-DEBUG_SD_CMD            = 0x00000003
-DEBUG_SD_CMD_ARG        = 0x00000004
-DEBUG_SD_PHY_STATE      = 0x00000005
-DEBUG_SD_CONTROL_STATE  = 0x00000006
-SD_DELAY_VALUE          = 0x00000007
-SD_DBG_CRC_GEN          = 0x00000023
-SD_DBG_CRC_RMT          = 0x00000024
+CONTROL_ADDR            = 0x000
+STATUS_ADDR             = 0x001
+CLOCK_COUNT_ADDR        = 0x002
+DEBUG_SD_CMD            = 0x003
+DEBUG_SD_CMD_ARG        = 0x004
+DEBUG_SD_PHY_STATE      = 0x005
+DEBUG_SD_CONTROL_STATE  = 0x006
+SD_DELAY_VALUE          = 0x007
+SD_DBG_CRC_GEN          = 0x023
+SD_DBG_CRC_RMT          = 0x024
+
+SD_DBG_CRC_DATA_GEN     = 0x028
+SD_DBG_CRC_DATA_RMT     = 0x02C
 
 
 
@@ -175,12 +178,30 @@ class SDIODeviceDriver(driver.Driver):
     def get_rmt_crc(self):
         return self.read_register(SD_DBG_CRC_RMT)
  
+    def get_gen_data_crc(self, index):
+        return self.read_register(SD_DBG_CRC_DATA_GEN + index)
+
+    def get_rmt_data_crc(self, index):
+        return self.read_register(SD_DBG_CRC_DATA_RMT + index)
+ 
     def display_crcs(self):
         gen_crc = self.get_gen_crc()
         rmt_crc = self.get_rmt_crc()
         print "SDIO Device CRCs:"
         print "\tGen CRC:       0x%02X" % gen_crc
         print "\tRemote CRC:    0x%02X" % rmt_crc
+
+        data_gen_crcs = []
+        data_rmt_crcs = []
+        for i in range(4):
+            data_gen_crcs.append(self.get_gen_data_crc(i))
+            data_rmt_crcs.append(self.get_rmt_data_crc(i))
+
+        print "Data CRCs"
+        print "\tGen:0x%02X 0x%02X 0x%02X 0x%02X" % (data_gen_crcs[0], data_gen_crcs[1], data_gen_crcs[2], data_gen_crcs[3])
+        print "\tRmt:0x%02X 0x%02X 0x%02X 0x%02X" % (data_rmt_crcs[0], data_rmt_crcs[1], data_rmt_crcs[2], data_rmt_crcs[3])
+
+
 
     def display_status(self):
         status = self.get_status()
