@@ -6,6 +6,8 @@ import sys
 import os
 import time
 from array import array as Array
+from PIL import Image
+
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
@@ -68,12 +70,77 @@ class Test (unittest.TestCase):
         self.s.Important("Using Platform: %s" % plat[0])
         self.s.Important("Instantiated a SFCamera Device: %s" % urn)
         self.camera = SFCamera(n, urn)
+        self.received_callback = False
+
+    def read_image_callback(self):
+        self.received_callback = True
+        self.s.Debug("Image callback")
 
     def test_camera(self):
         if self.camera is None:
             self.s.Fatal("Cannot Run Test when no device is found!")
             return
-        self.s.Info ("Testing output ports (like LEDs)")
+        #Setup the camera
+        self.camera.unregister_interrupt_callback(None)
+        self.s.Debug("Image Height: %d" % self.camera.get_height())
+        self.s.Debug("Image Width : %d" % self.camera.get_width())
+
+        self.s.Debug("Initialize the camera")
+        self.camera.set_control(0x00)
+        self.camera.reset_camera()
+        self.camera.set_rgb_mode()
+        self.camera.reset_counts()
+        time.sleep(0.1)
+        row_count = self.camera.read_row_count()
+        pixel_count = self.camera.read_pixel_count()
+        height = row_count
+        width = pixel_count / 2
+        self.s.Debug("Height: %d" % height)
+        self.s.Debug("Width : %d" % width)
+
+        self.camera.enable_camera(True)
+        time.sleep(0.1)
+        #self.s.Important("Wait for a callback from the camera...")
+        self.camera.start_async_reader(self.read_image_callback)
+        #self.s.Important("Sleep for a moment...")
+        time.sleep(0.4)
+        '''
+        data = self.camera.read_raw_image()
+        print "Length of data: %d" % len(data)
+        shape = (self.camera.get_width(), self.camera.get_height())
+        img = Image.frombuffer('RGB', shape, data)
+        img.save("/home/cospan/foo.png")
+        '''
+        if self.received_callback:
+            data = self.camera.dma_reader.async_read()
+            #Expand Image
+            rgb_image = Array('B')
+            for i in range(0, height * width * 2, 2):
+                #top = data[i]
+                #bot = data[i + 1]
+
+                #red = ((top >> 3) & 0x1F) << 3
+                #green = (((top & 0x7) << 3) | ((bot >> 5) & 0x7)) << 2
+                #blue = (top & 0x1F) << 3
+
+                value = (data[i + 1] << 8) + data[i]
+                red = ((value >> 11) & 0x1F) << 3
+                green = ((value >> 5) & 0x3F) << 2
+                blue = (value & 0x1F) << 3
+
+                rgb_image.append(red)
+                rgb_image.append(green)
+                rgb_image.append(blue)
+
+            self.s.Debug("RGB Image Size: %d" % len(rgb_image))
+
+            self.s.Important("Received callback from camera")
+            self.s.Debug("Length of data: %d" % len(data))
+            shape = (self.camera.get_width(), self.camera.get_height())
+            img = Image.frombuffer('RGB', shape, rgb_image)
+            img.save("camera_image.png")
+        else:
+            self.s.Error("Did not receive callback")
 
 if __name__ == "__main__":
     unittest.main()
