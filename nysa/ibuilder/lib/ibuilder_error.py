@@ -17,10 +17,16 @@ class ModuleNotFound(Exception):
    usually occurs when the module is not found in the local directory
    or in the rtl files in ibuilder
    """
-   def __init__(self, value):
-        self.value = value
    def __str__(self):
-        return repr(self.value)
+        value = "\n"
+        value += "File: %s not found\n" % self.args[0]
+        value += "Searched user paths:\n"
+        for u in self.args[1]:
+            value += "\t%s\n" % u
+        value += "Searched default paths:\n"
+        for d in self.args[2]:
+            value += "\t%s\n" % u
+        return value
 
 class ModuleFactoryError(Exception):
     """ModuleFactoryError

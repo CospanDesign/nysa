@@ -105,6 +105,8 @@ def setup_parser(parser):
                         help="Specify a location for the generated project")
     parser.add_argument("-c", "--compress", action='store_true', help="Compress output project in tar gzip format")
     parser.add_argument("-z", "--zip", action='store_true', help="Compress output project in zip format")
+    parser.add_argument("-u", "--upaths", type=str, nargs='+',
+                        help="Add extra paths for the tool to search for cores")
     parser.add_argument("config", type=str, nargs=1, default="all", help="Configuration file to load")
     return parser
 
@@ -117,10 +119,28 @@ def image_builder(args, status):
     if len(args.output) > 0:
         output_dir = args.output[0]
 
-    # ibuilder.generate_project(args.config[0], dbg = debug)
-    # ibuilder.generate_project(args.config[0], output_directory = output_dir, status = s)
+    if args.upaths is None:
+        args.upaths = []
+
+    paths = args.upaths
+    local_path = os.path.abspath(os.getcwdu())
+
+    need_local = True
+
+    for p in paths:
+        if not os.path.exists(p):
+            continue
+
+        if os.path.abspath(p) == local_path:
+            need_local = False
+            break
+
+    if need_local:
+        paths.append(local_path)
+
+
     try:
-        ibuilder.generate_project(args.config[0], output_directory=output_dir, status=s)
+        ibuilder.generate_project(args.config[0], user_paths=paths, output_directory=output_dir, status=s)
     except urllib2.URLError as ex:
         s.Fatal("URL Error: %s, Are you connected to the internet?" % str(ex))
         sys.exit(1)

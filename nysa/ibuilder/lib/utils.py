@@ -220,7 +220,8 @@ def find_rtl_file_location(filename="", user_paths = [], debug=False):
             if filename in names:
                 return os.path.join(root, filename)
 
-    raise ModuleNotFound("File: %s not found, looked in %s and the default location %s" % (filename, str(user_paths), local_dirs))
+    #raise ModuleNotFound("File: %s not found, looked in %s and the default location %s" % (filename, str(user_paths), local_dirs))
+    raise ModuleNotFound(filename, user_paths, local_dirs)
 #XXX: This should probably return none, and not an empty string upon failure
 #XXX:   perhaps even raise an error
 
@@ -695,8 +696,9 @@ def _find_module_filename (directory, module_name, debug = False):
             break
 
     if len(filename) == 0:
-        raise ModuleNotFound("Searched in standard hdl/rtl location for file \
-            containing the module %s" % module_name)
+        raise ModuleNotFound(module_name, [], [directory])
+        #raise ModuleNotFound("Searched in standard hdl/rtl location for file \
+        #    containing the module %s" % module_name)
     return filename
 
 def find_module_filename (module_name, user_paths = [], debug = False):
@@ -715,7 +717,8 @@ def find_module_filename (module_name, user_paths = [], debug = False):
         except ModuleNotFound as mnf:
             continue
 
-    raise ModuleNotFound ("Module %s not found: Searched in Nysa directory: %s as well as the following directories %s" % (module_name, base , str(user_paths)))
+    #raise ModuleNotFound ("Module %s not found: Searched in Nysa directory: %s as well as the following directories %s" % (module_name, base , str(user_paths)))
+    raise ModuleNotFound (module_name, [base], user_paths)
 
 
 def _get_file_recursively(directory):

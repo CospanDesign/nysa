@@ -270,7 +270,7 @@ class SiteManager(object):
 
     def install_verilog_module(self, name = None):
         repo_dict = self.get_remote_verilog_dict()
-        
+
         names = []
         if name is None:
             #All platforms
@@ -291,7 +291,7 @@ class SiteManager(object):
                     "Valid repos include:\n"
                     for nm in repo_dict.keys():
                         err_str += "\t%s\n" % nm
- 
+
                     err_str += "\n"
                     raise SiteManagerError(err_str)
 
@@ -349,7 +349,7 @@ class SiteManager(object):
                     "Valid platforms include:\n"
                     for nm in board_dict.keys():
                         err_str += "\t%s\n" % nm
- 
+
                     err_str += "\n"
                     raise SiteManagerError(err_str)
 
@@ -398,7 +398,7 @@ class SiteManager(object):
             #package = importlib.import_module(import_str)
             #platform = package.nysa_platform
             platform = importlib.import_module(import_str)
-            
+
             pdict = inspect.getmembers(platform)
             from nysa.host.nysa_platform import Platform
             for member_name, obj in pdict:
@@ -560,7 +560,7 @@ class SiteManager(object):
         if "nysa_user_base" not in pd:
             raise SiteManagerError("Nysa user base is not set up! run nysa init to initialize a user directory")
         return pd["nysa_user_base"]
-        
+
     def get_remote_example_dict(self):
         opener = build_opener(HTTPCookieProcessor(CookieJar()))
         resp = opener.open(EXAMPLE_SPREADSHEET_URL)
@@ -638,7 +638,7 @@ class SiteManager(object):
         except:
             pass
         shutil.copytree(source, dest)
-        
+
         shutil.rmtree(tempdir)
 
     def get_user_project_dir(self):
@@ -669,5 +669,5 @@ class SiteManager(object):
         if os.path.exists(COCOTB_PATH):
             shutil.rmtree(COCOTB_PATH)
         v = subprocess.call(["git", "clone", COCOTB_URL, COCOTB_PATH])
-        
-        
+
+

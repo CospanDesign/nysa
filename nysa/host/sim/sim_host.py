@@ -210,6 +210,9 @@ class NysaSim (FauxNysa):
         yield(self.comm_lock.acquire())
 
         #print "Write Acquired Lock"
+        while (len(data) % 4) > 0:
+            data.append(0)
+
         data_count = len(data) / 4
         #print "data count: %d" % data_count
         yield( self.wait_clocks(1))
