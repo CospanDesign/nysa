@@ -110,43 +110,20 @@ We will be using some of these functions to configure Nysa and communicate with 
 Initializing Nysa
 -----------------
 
-In a hurry? Copy and paste the following into a terminal otherwise skip below to find out what this means.
+Initialize Nysa
 
 .. code-block:: bash
 
     nysa init
-    nysa install-verilog-repo all
-    nysa install-platform all
     nysa install-examples all
 
 
-Nysa needs to do the following things in order to be set up correctly
+What is it doing? Nysa needs to do the following things in order to be set up correctly
 
 1. Create a directory where users can create projects (both core projects and image projects), by default it creates a directory in <home>/Projects/nysa_base on Ubuntu.
-
-.. code-block:: bash
-
-    nysa init
-
-2. Retrieve the default verilog repositories that is used to build FPGA images. This repository also has a number of useful wishbone slaves that the users can use.
-
-.. code-block:: bash
-
-    nysa install-verilog-repo all
-
-3. Install one or more board support packages.
-
-.. code-block:: bash
-
-    nysa install-platform all
-
-4. Install examples of FPGA projects.
-
-.. code-block:: bash
-
-    nysa install-examples all
-
-
+2. Retrieve the default verilog repositories. They will be installed in <home>/.local/nysa/verilog/ directory. A list of packages that will be installed can be found here: `Verilog Repositories <https://docs.google.com/spreadsheets/d/1fyr9G2sVVa1bOi3Rtg9uGz0KELReo8buoTrP8DQfNTA/edit#gid=1976214049>`_
+3. Install all of the supported platforms. Currently a list of packages are stored here: `Board Platforms <https://docs.google.com/spreadsheets/d/1dif3JBFwjEiNVn5hNxr2ZQ58ypy1LqTsKIlVk3pWVtE/edit#gid=2002164932>`_
+4. Install examples for the supported platforms: `Examples Projects <https://docs.google.com/spreadsheets/d/1GUzVnXB6StrfuYKXzCwm1_E4CBtUDDj5a-C-Fi5IQOc/edit#gid=1976202755>`_
 
 Talking to an FPGA
 ------------------
