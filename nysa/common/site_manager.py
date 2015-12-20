@@ -191,6 +191,9 @@ class SiteManager(object):
 
     def add_verilog_package(self, name, timestamp, path):
         paths_dict = self.get_paths_dict()
+        if self.s: self.s.Debug("\tName: %s" % name)
+        if self.s: self.s.Debug("\tTimestamp: %s" % timestamp)
+        if self.s: self.s.Debug("\tPath: %s" % path)
         paths_dict["verilog"][name] = {}
         paths_dict["verilog"][name]["timestamp"] = timestamp
         paths_dict["verilog"][name]["path"] = path
@@ -294,16 +297,17 @@ class SiteManager(object):
 
                     err_str += "\n"
                     raise SiteManagerError(err_str)
-
+                    
+                if self.s: self.s.Debug("Found: %s" % n)
                 names.append(n)
 
         elif name == "all":
             #All platforms
-            names = board_dict.keys()
+            names = repo_dict.keys()
             if self.s: self.s.Important("Installing all repository")
 
         else:
-            if name not in board_dict.keys():
+            if name not in repo_dict.keys():
                 #Check to see if this is a valid platform
                 err_str = "" \
                 "Error %s is not a valid repository!\n" \
@@ -480,10 +484,10 @@ class SiteManager(object):
             f.close()
             self.get_paths_dict(force = True)
 
-    def update_verilog_package(self, name = None, branch = None):
+    def update_verilog_package(self, name = None, branch = ""):
         if name is None:
             name = "nysa-verilog"
-        if branch is None:
+        if len(branch) == 0:
             branch = DEFAULT_BOARD_BRANCH
 
         name = name.lower()
@@ -515,9 +519,10 @@ class SiteManager(object):
 
         if self.s: self.s.Debug("Found remote verilog package: %s" % name)
 
-        url = result[2]
+        url = result[2].strip()
+        print "URL: %s" % url
         timestamp = result[0]
-        archive_url = None
+        archive_url = url
         if url.endswith('zip'):
             print "Found zip file URL"
             raise SiteManagerError("Current version of stie manager can only fetch Github URLs")
@@ -525,8 +530,8 @@ class SiteManager(object):
             raise SiteManagerError("Current version of site manager can only fetch Github URLs")
 
         if "github" in url:
-            archive_url = url + "/archive/%s.zip" % branch
-
+            #if self.s: self.s.Debug("\tGenerting a gitub archive URL!")
+            archive_url += "/archive/" +  branch + ".zip" 
 
         #opener = build_opener(HTTPCookieProcessor(CookieJar()))
         #resp = opener.open(archive_url)

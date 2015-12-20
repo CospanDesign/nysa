@@ -74,6 +74,9 @@ def install(args, status):
     else:
         names = [args.name]
 
-    print "%sInstalling repositories:%s " % (sts.purple, sts.white),
-    sm.install_verilog_module(names)
+    #print "%sInstalling repositories:%s " % (sts.purple, sts.white),
+    #sm.install_verilog_module(names)
+    for name in names:
+        print "%sInstalling Reposity: %s%s" %  (sts.purple, name, sts.white)
+        sm.install_verilog_module(name)
 
