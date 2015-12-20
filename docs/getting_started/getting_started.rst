@@ -22,9 +22,15 @@ Pip simplifies the process of installing Python modules. You can test if you hav
 
 If you do not see a version number here's how to get it:
 
-#. Download `get-pip.py <https://bootstrap.pypa.io/get-pip.py>`_
-#. Run the downloaded script in a terminal: ``python ./get-pip.py``
-#. Using apt-get install git, iverilog and gtkwave
+1. Download and install pip
+
+.. code-block:: bash
+
+    get-pip.py <https://bootstrap.pypa.io/get-pip.py>
+    python ./get-pip.py
+    sudo pip install --upgrade pip
+
+2. Using apt-get install git, iverilog and gtkwave
 
 .. code-block:: bash
 
