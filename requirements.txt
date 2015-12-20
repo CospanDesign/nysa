@@ -1,0 +1,5 @@
+git+https://github.com/CospanDesign/nysa.git#egg=nysa
+git+https://github.com/CospanDesign/nysa-artemis-platform.git#egg=nysa-artemis-platform
+git+https://github.com/CospanDesign/nysa-artemis-usb2-platform.git#egg=nysa-artemis-usb2-platform
+git+https://github.com/CospanDesign/nysa-dionysus-platform.git#egg=nysa-dionysus-platform
+git+https://github.com/CospanDesign/nysa-sim-platform.git#egg=nysa-sim-platform
