@@ -24,6 +24,11 @@ If you do not see a version number here's how to get it:
 
 #. Download `get-pip.py <https://bootstrap.pypa.io/get-pip.py>`_
 #. Run the downloaded script in a terminal: ``python ./get-pip.py``
+#. Using apt-get install git, iverilog and gtkwave
+
+.. code-block:: bash
+
+    sudo apt-get install git verilog gtkwave
 
 Installation
 ------------
@@ -34,12 +39,6 @@ From a terminal install nysa from the github repo using pip
 .. code-block:: bash
 
     sudo pip install git+https://github.com/CospanDesign/nysa
-
-**Windows**
-
-.. code-block:: bash
-
-    pip install git+https://github.com/CospanDesign/nysa
 
 
 Pip will install the nysa module as well as the command line tool
@@ -117,7 +116,7 @@ In a hurry? Copy and paste the following into a terminal otherwise skip below to
 
 Nysa needs to do the following things in order to be set up correctly
 
-1. Create a directory where users can create projects (both core projects and image projects), by default it creates a directory in <home>/Projects/nysa_base on Ubuntu and C:\\Users\\<name>\\Projects\\nysa_base on Windows.
+1. Create a directory where users can create projects (both core projects and image projects), by default it creates a directory in <home>/Projects/nysa_base on Ubuntu.
 
 .. code-block:: bash
 
