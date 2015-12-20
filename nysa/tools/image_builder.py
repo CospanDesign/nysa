@@ -107,6 +107,7 @@ def setup_parser(parser):
     parser.add_argument("-z", "--zip", action='store_true', help="Compress output project in zip format")
     parser.add_argument("-u", "--upaths", type=str, nargs='+',
                         help="Add extra paths for the tool to search for cores")
+    parser.add_argument("-l", "--local", action='store_true', help="Add local directory to user paths")
     parser.add_argument("config", type=str, nargs=1, default="all", help="Configuration file to load")
     return parser
 
@@ -125,7 +126,7 @@ def image_builder(args, status):
     paths = args.upaths
     local_path = os.path.abspath(os.getcwdu())
 
-    need_local = True
+    need_local = args.local
 
     for p in paths:
         if not os.path.exists(p):
