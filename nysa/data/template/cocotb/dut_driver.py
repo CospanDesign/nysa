@@ -17,8 +17,14 @@ from nysa.host.driver import driver
 #Sub Module ID
 #Use 'nysa devices' to get a list of different available devices
 DEVICE_TYPE             = "${DEVICE_NAME}"
-SDB_ABI_VERSION_MINOR   = ${SDB_ABI_VERSION_MINOR}
-SDB_VENDOR_ID           = ${SDB_VENDOR_ID}
+SDB_ABI_VERSION_MINOR   = 0
+SDB_VENDOR_ID           = 0
+
+try:
+    SDB_ABI_VERSION_MINOR   = ${SDB_ABI_VERSION_MINOR}
+    SDB_VENDOR_ID           = ${SDB_VENDOR_ID}
+except SyntaxError:
+    pass
 
 #Register Constants
 CONTROL_ADDR            = 0x00000000
