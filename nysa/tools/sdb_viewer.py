@@ -78,6 +78,11 @@ def view_sdb(args, status):
         if s: s.Error("%s" % str(ex))
         sys.exit(1)
 
+    if not board and serial:
+        if s: s.Error("Board with serial: %s does not exist, is it possible you mistyped the serial?" % serial)
+        sys.exit(1)
+        
+
     if not board.is_programmed():
         sys.stdout.write("Wait for board to finish programming")
         sys.stdout.flush()
