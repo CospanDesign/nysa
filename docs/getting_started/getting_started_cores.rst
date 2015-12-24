@@ -311,7 +311,7 @@ It helps a lot to visualize the waveforms. Use GTKWave to visualize the logic wa
 
 .. code-block:: bash
 
-    nysa wave
+    scons wave
 
 A new GTKWave window should open up in the background.
 
