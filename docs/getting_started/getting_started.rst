@@ -44,7 +44,7 @@ From a terminal install nysa from the github repo using pip
 
 .. code-block:: bash
 
-    sudo pip install git+https://github.com/CospanDesign/nysa
+    sudo -H pip install git+https://github.com/CospanDesign/nysa
 
 
 Pip will install the nysa module as well as the command line tool
@@ -112,8 +112,11 @@ Initializing Nysa
 
 Initialize Nysa
 
+(Note: There is a bug in the software that incorrectly installs the nysa_base directory in /root/Projects/nysa_base. We need to run 'nysa init' a second time to correctly install the 'nysa_base' directory in ~/Projects/nysa_base)
+
 .. code-block:: bash
 
+    sudo -H nysa init
     nysa init
     nysa install-examples all
 
@@ -124,6 +127,7 @@ What is it doing? Nysa needs to do the following things in order to be set up co
 2. Retrieve the default verilog repositories. They will be installed in <home>/.local/nysa/verilog/ directory. A list of packages that will be installed can be found here: `Verilog Repositories <https://docs.google.com/spreadsheets/d/1fyr9G2sVVa1bOi3Rtg9uGz0KELReo8buoTrP8DQfNTA/edit#gid=1976214049>`_
 3. Install all of the supported platforms. Currently a list of packages are stored here: `Board Platforms <https://docs.google.com/spreadsheets/d/1dif3JBFwjEiNVn5hNxr2ZQ58ypy1LqTsKIlVk3pWVtE/edit#gid=2002164932>`_
 4. Install examples for the supported platforms: `Examples Projects <https://docs.google.com/spreadsheets/d/1GUzVnXB6StrfuYKXzCwm1_E4CBtUDDj5a-C-Fi5IQOc/edit#gid=1976202755>`_
+
 
 Talking to an FPGA
 ------------------
@@ -339,3 +343,5 @@ This is all the high level utility functions of Nysa to learn more about how to:
 * Create a Wishbone slave core you can use to interface with your custom hardware and that can be used within an FPGA image: :ref:`Getting started with CBuilder <getting-started-cbuilder>`
 * Build FPGA images with a configuration file: :ref:`Getting started with IBuilder <getting-started-ibuilder>`
 * Interact with Nysa graphically using the Nysa GUI (nui)
+
+

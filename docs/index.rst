@@ -17,11 +17,18 @@ Contents:
     Advanced Topics <advanced_topics_toc.rst>
     Boards <boards.rst>
 
-
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+Thank You
+=========
+
+Evert-Jan: Thanks for helping out with documentation!
+
+
 
