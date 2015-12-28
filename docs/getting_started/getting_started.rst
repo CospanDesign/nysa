@@ -26,7 +26,7 @@ If you do not see a version number here's how to get it:
 
 .. code-block:: bash
 
-    get-pip.py <https://bootstrap.pypa.io/get-pip.py>
+    wget https://bootstrap.pypa.io/get-pip.py
     python ./get-pip.py
     sudo pip install --upgrade pip
 
