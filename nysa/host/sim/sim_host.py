@@ -199,6 +199,8 @@ class NysaSim (FauxNysa):
     @cocotb.function
     def write(self, address, data = None, disable_auto_inc=False):
         mem_device = False
+        self.dut.in_ready       <= 0
+        self.dut.out_ready      <= 0
 
         if self.mem_addr is None:
             self.mem_addr = self.nsm.get_address_of_memory_bus()
@@ -247,6 +249,13 @@ class NysaSim (FauxNysa):
             self.dut.in_ready       <= 0
             yield RisingEdge(self.dut.master_ready)
             yield(self.wait_clocks(1))
+
+        yield(self.wait_clocks(1))
+        self.dut.out_ready      <= 1
+        yield(self.wait_clocks(1))
+        yield RisingEdge(self.dut.out_en)
+        yield(self.wait_clocks(1))
+        self.dut.out_ready      <= 0
 
         #print "finished with writing data"
         self.response = Array('B')
