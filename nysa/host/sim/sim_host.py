@@ -247,7 +247,9 @@ class NysaSim (FauxNysa):
             timeout_count       =  0
             #self.dut.log.info("Waiting for master to be ready")
             self.dut.in_ready       <= 0
-            yield RisingEdge(self.dut.master_ready)
+            print "in ready!"
+            if data_index < len(data) - 4:
+                yield RisingEdge(self.dut.master_ready)
             yield(self.wait_clocks(1))
 
         yield(self.wait_clocks(1))
