@@ -247,17 +247,16 @@ class NysaSim (FauxNysa):
             timeout_count       =  0
             #self.dut.log.info("Waiting for master to be ready")
             self.dut.in_ready       <= 0
-            print "in ready!"
             if data_index < len(data) - 4:
                 yield RisingEdge(self.dut.master_ready)
             yield(self.wait_clocks(1))
 
         yield(self.wait_clocks(1))
-        self.dut.out_ready      <= 1
+        self.dut.out_ready          <= 1
         yield(self.wait_clocks(1))
         yield RisingEdge(self.dut.out_en)
         yield(self.wait_clocks(1))
-        self.dut.out_ready      <= 0
+        self.dut.out_ready          <= 0
 
         #print "finished with writing data"
         self.response = Array('B')
@@ -266,7 +265,6 @@ class NysaSim (FauxNysa):
         self.response.append(0xFF & (value >> 16))
         self.response.append(0xFF & (value >> 8))
         self.response.append(0xFF & value)
-
         yield( self.wait_clocks(10))
         self.comm_lock.release()
 

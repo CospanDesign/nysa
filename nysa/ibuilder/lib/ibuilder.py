@@ -411,7 +411,8 @@ class ProjectGenerator(object):
             #file_dest = self.project_tags["BASE_DIR"] + "/rtl/bus/slave"
             fn = self.project_tags["SLAVES"][slave]["filename"]
             try:
-                self.filegen.process_file(filename = fn, file_dict = fdict, directory=file_dest)
+                #self.filegen.process_file(filename = fn, file_dict = fdict, directory=file_dest, debug = True)
+                self.filegen.process_file(filename = fn, file_dict = fdict, directory=file_dest, debug = False)
             except ModuleFactoryError as err:
                 if status: status.Error("ModuleFactoryError while generating slave: %s" % str(err))
                 raise ModuleFactoryError(err)
