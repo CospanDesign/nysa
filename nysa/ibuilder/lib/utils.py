@@ -418,7 +418,8 @@ def get_board_config (board_name, user_paths = [], debug = False):
                 config_dict[key] += required[key]
             elif isinstance(config_dict[key], dict):
                 for k in required[key]:
-                    config_dict[key][k] = config_dict[key][k]
+                    if k not in config_dict[key]:
+                        config_dict[key][k] = required[key][k]
 
 
     #for debug
