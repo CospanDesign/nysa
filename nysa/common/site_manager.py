@@ -316,6 +316,44 @@ class SiteManager(object):
             if self.s: self.s.Important("Installing verilog repo: %s" % name)
             self.update_verilog_package(name)
 
+    def install_local_board_package(self, name, path, run_platform_setup):
+        if self.s: self.s.Important("Installing: %s at %s" % (name, path))
+        now = datetime.datetime.now()
+        timestamp = now.strftime("%x %X")
+        self.add_board(name, timestamp, path)
+
+        import_str = "%s.nysa_platform" % name
+        platform = importlib.import_module(import_str)
+        pdict = inspect.getmembers(platform)
+        from nysa.host.nysa_platform import Platform
+        for member_name, obj in pdict:
+            if inspect.isclass(obj) and issubclass(obj, Platform) and obj is not Platform:
+                if self.s: self.s.Info("Calling platform specific setup function")
+                p = obj(self.s)
+                p.setup_platform()
+
+    def uninstall_local_board_package(self, name):
+        paths_dict = self.get_paths_dict()
+        if name not in paths_dict["boards"]:
+            if self.s: self.s.Error("%s is not installed, cancelling uninstall" % name)
+
+        import_str = "%s.nysa_platform" % name
+        platform = importlib.import_module(import_str)
+        pdict = inspect.getmembers(platform)
+        from nysa.host.nysa_platform import Platform
+        for member_name, obj in pdict:
+            if inspect.isclass(obj) and issubclass(obj, Platform) and obj is not Platform:
+                if self.s: self.s.Info("Calling platform specific uninstall function")
+                p = obj(self.s)
+                p.uninstall_platform()
+
+        if name in paths_dict["boards"]:
+            del (paths_dict["boards"][name])
+
+        f = open(PATHS_PATH, "w")
+        f.write(json.dumps(paths_dict, sort_keys = True, indent = 2, separators=(",", ": ")))
+        f.close()
+
     def install_remote_board_package(self, name = None, branch = DEFAULT_BOARD_BRANCH):
         install_dir = get_python_install_dir()
 

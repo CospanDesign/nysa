@@ -838,6 +838,14 @@ def board_exists(board_name):
     sm = site_manager.SiteManager()
     return sm.board_exists(board_name)
 
+def install_local_board_package(board_name, path, run_platform_setup, status = None):
+    sm = site_manager.SiteManager(status)
+    sm.install_local_board_package(board_name, path, run_platform_setup)
+
+def uninstall_local_board_package(board_name, status = None):
+    sm = site_manager.SiteManager(status)
+    sm.uninstall_local_board_package(board_name)
+
 def install_remote_board_package(board_name, status = None):
     sm = site_manager.SiteManager()
     s = status

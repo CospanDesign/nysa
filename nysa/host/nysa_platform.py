@@ -64,3 +64,7 @@ class Platform(object):
 
     def setup_platform(self):
         return
+
+    def uninstall_platform(self):
+        return
+
