@@ -844,33 +844,13 @@ def install_remote_board_package(board_name, status = None):
     if s: s.Warning("Could not find %s on local host" % board_name)
     if not sm.remote_board_exists(board_name):
         if s: s.Fatal("Could not find %s in remote board table" % board_name)
-        raise PGE("Could not find board %s on local host, checked remote board table" % board_name)
+        raise IBuilderError("Could not find board %s on local host, checked remote board table" % board_name)
 
     if s: s.Verbose("Found %s on the remote server" % board_name)
 
     board_path = os.path.join(site_manager.get_board_package_path(), board_name)
     if s: s.Important("Installing %s to %s" % (board_name, site_manager.get_board_package_path()))
     sm.install_remote_board_package(board_name)
-
-def get_board_id_dict():
-    sm = site_manager.SiteManager()
-    return sm.get_board_id_dict()
-
-def update_board_id_dict():
-    sm = site_manager.SiteManager()
-    sm.update_board_id_dict()
-
-def is_board_id_in_dict(name):
-    sm = site_manager.SiteManager()
-    bid = sm.get_board_id_dict()
-    if name not in bid:
-        return False
-    return True
-
-def get_board_id(name):
-    sm = site_manager.SiteManager()
-    bid = sm.get_board_id_dict()
-    return sm.get_board_id_dict()[name]
 
 def clean_verilog_package_paths():
     sm = site_manager.SiteManager()

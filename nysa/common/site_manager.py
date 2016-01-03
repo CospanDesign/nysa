@@ -20,7 +20,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 SITE_PATH = os.path.join(site.USER_BASE, "nysa")
 VERSION_PATH = os.path.join(SITE_PATH, "versions.json")
 PATHS_PATH = os.path.join(SITE_PATH, "paths.json")
-BOARD_ID_PATH = os.path.join(SITE_PATH, "board_id.json")
 #REMOTE_PACKAGE_URL = "http://www.cospandesign.com/nysa/packages"
 BOARD_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1dif3JBFwjEiNVn5hNxr2ZQ58ypy1LqTsKIlVk3pWVtE/export?format=csv"
 VERILOG_SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1fyr9G2sVVa1bOi3Rtg9uGz0KELReo8buoTrP8DQfNTA/export?format=csv"
@@ -72,9 +71,6 @@ def get_board_package_path():
 def get_verilog_package_path():
     return VERILOG_PACKAGE_PATH
 
-def get_board_id_path():
-    return BOARD_ID_PATH
-
 class LocalDefinition(Exception):
     pass
 
@@ -100,13 +96,6 @@ class SiteManager(object):
             f.close()
 
         self.initialize_paths_dictionary()
-        self.initialize_board_id_dictionary()
-
-    def initialize_board_id_dictionary(self):
-        if not os.path.exists(get_board_id_path()):
-            f = open(get_board_id_path(), "w")
-            f.write("{}")
-            f.close()
 
     def initialize_paths_dictionary(self):
         if not os.path.exists(get_paths_path()):
@@ -297,7 +286,7 @@ class SiteManager(object):
 
                     err_str += "\n"
                     raise SiteManagerError(err_str)
-                    
+
                 if self.s: self.s.Debug("Found: %s" % n)
                 names.append(n)
 
@@ -413,36 +402,6 @@ class SiteManager(object):
 
         if self.s: self.s.Info("Wrote path dictionary to config file @ %s" % SITE_PATH)
 
-    def get_board_id_dict(self):
-        f = open(get_board_id_path(), "r")
-        board_id_dict = json.load(f)
-        f.close()
-        return board_id_dict
-
-    def update_board_id_dict(self, grid_data = None):
-        if grid_data is None:
-            opener = build_opener(HTTPCookieProcessor(CookieJar()))
-            resp = opener.open(BOARD_SPREADSHEET_URL)
-            data = resp.read()
-            data = data.strip()
-            row_data = data.split("\n")
-            grid_data = []
-            for i in range(len(row_data)):
-                grid_data.append([])
-                grid_data[i].extend(row_data[i].split(","))
-
-        board_id_dict = self.get_board_id_dict()
-        for row in grid_data:
-            index = grid_data.index(row)
-            if index == 0:
-                continue
-            name = row[1].lower()
-            board_id_dict[name] = index
-
-        f = open(get_board_id_path(), "w")
-        f.write(json.dumps(board_id_dict, sort_keys = True, indent = 2, separators=(",", ": ")))
-        f.close()
-
     def get_local_verilog_package_names(self):
         paths_dict = self.get_paths_dict()
         return paths_dict["verilog"].keys()
@@ -531,7 +490,7 @@ class SiteManager(object):
 
         if "github" in url:
             #if self.s: self.s.Debug("\tGenerting a gitub archive URL!")
-            archive_url += "/archive/" +  branch + ".zip" 
+            archive_url += "/archive/" +  branch + ".zip"
 
         #opener = build_opener(HTTPCookieProcessor(CookieJar()))
         #resp = opener.open(archive_url)

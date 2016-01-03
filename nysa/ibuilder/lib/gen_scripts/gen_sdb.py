@@ -51,6 +51,7 @@ from nysa.cbuilder.sdb import SDBError
 from nysa.ibuilder.lib import utils
 
 import nysa.ibuilder.lib.verilog_utils as vutils
+from nysa.ibuilder.lib.ibuilder_error import IBuilderError
 
 MAIN_INTERCONNECT = \
     "  Set the Vendor ID (Hexidecimal 64-bit Number)\n" \
@@ -182,11 +183,17 @@ class GenSDB(Gen):
 
         self.user_paths = user_paths
         board_name = tags["board"].lower()
-        if not utils.is_board_id_in_dict(board_name):
-            utils.update_board_id_dict()
 
-        board_id = utils.get_board_id(board_name)
-
+        if not utils.board_exists(board_name):
+            try:
+                utils.install_remote_board_package(board_name)
+            except IBuilderError as e:
+                raise IBuilderError(                                            \
+                                "Board %s could not be found, Attempted to "    \
+                                "find it in the remote table and failed. If "   \
+                                "this is a local board make sure to run the "   \
+                                "local install" % (board_name))
+                
         image_id = 0
         for key in tags.keys():
             if key.lower() == "image_id":
