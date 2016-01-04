@@ -129,6 +129,10 @@ class ModuleProcessor:
     except KeyError as err:
       if ('$' in err):
         raise KeyError(str(err))
+    except ValueError as err:
+      print "Value Error with the Buffer (shown below): %s" % str(err)
+      print "Tags: %s" % str(self.tags)
+      print "Buffer: %s" % self.buf
     return
 
   def set_tags(self, tags={}):
