@@ -425,6 +425,7 @@ def get_board_config (board_name, user_paths = [], debug = False):
     #for debug
     if "paths" not in config_dict:
         config_dict["paths"] = []
+
     config_dict["paths"].append(board_location)
     return config_dict
 
@@ -876,7 +877,7 @@ def get_local_verilog_paths():
         else:
             local_dirs.append(d)
 
-    return local_dirs
+    return list(set(local_dirs))
 
 def update_verilog_package(name = None, branch = None):
     sm = site_manager.SiteManager()
