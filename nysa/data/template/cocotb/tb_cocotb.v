@@ -1,54 +1,39 @@
 `timescale 1ns/1ps
+//`include "project_defines.v"
 
 module tb_cocotb (
 
 //Virtual Host Interface Signals
-input             clk,
-input             sata_clk,
-input             rst,
-output            master_ready,
-input             in_ready,
-input   [31:0]    in_command,
-input   [31:0]    in_address,
-input   [31:0]    in_data,
-input   [27:0]    in_data_count,
+input               clk,
+input               rst,
 
-input             out_ready,
-output            out_en,
-output  [31:0]    out_status,
-output  [31:0]    out_address,
-output  [31:0]    out_data,
-output  [27:0]    out_data_count,
-input   [31:0]    test_id,
+input       [31:0]  test_id,
+output              device_interrupt,
 
-input             ih_reset,
-output            device_interrupt
+output      [1:0]   ingress_rdy,
+input       [1:0]   ingress_act,
+input               ingress_stb,
+input       [31:0]  ingress_data,
+output      [23:0]  ingress_size,
+
+output              egress_rdy,
+input               egress_act,
+input               egress_stb,
+output      [31:0]  egress_data,
+output      [23:0]  egress_size
 
 );
 
+reg                 r_rst;
+reg         [1:0]   r_ingress_act;
+reg                 r_ingress_stb;
+reg         [31:0]  r_ingress_data;
+reg                 r_egress_clk;
+reg                 r_egress_act;
+reg                 r_egress_stb;
 
 //Parameters
 //Registers/Wires
-
-reg               r_rst;
-reg               r_in_ready;
-reg   [31:0]      r_in_command;
-reg   [31:0]      r_in_address;
-reg   [31:0]      r_in_data;
-reg   [27:0]      r_in_data_count;
-reg               r_out_ready;
-reg               r_ih_reset;
-
-
-//There is a bug in COCOTB when stiumlating a signal, sometimes it can be corrupted if not registered
-always @ (*) r_rst           = rst;
-always @ (*) r_in_ready      = in_ready;
-always @ (*) r_in_command    = in_command;
-always @ (*) r_in_address    = in_address;
-always @ (*) r_in_data       = in_data;
-always @ (*) r_in_data_count = in_data_count;
-always @ (*) r_out_ready     = out_ready;
-always @ (*) r_ih_reset      = ih_reset;
 
 //wishbone signals
 wire              w_wbp_we;
@@ -127,46 +112,62 @@ wire              mem_i_ack;
 wire              mem_i_int;
 
 
+
+
+
 //Submodules
-wishbone_master wm (
-  .clk            (clk            ),
-  .rst            (r_rst          ),
+wishbone_master #(
+//  .INGRESS_FIFO_DEPTH    (9                ),
+//  .EGRESS_FIFO_DEPTH     (9                ),
+//  .ENABLE_WRITE_RESP     (0                ),
+//  .ENABLE_NACK           (0                ),
+//  .DEFAULT_TIMEOUT       (`CLOCK_RATE      )
+) wm (
 
-  .i_ih_rst       (r_ih_reset     ),
-  .i_ready        (r_in_ready     ),
-  .i_command      (r_in_command   ),
-  .i_address      (r_in_address   ),
-  .i_data         (r_in_data      ),
-  .i_data_count   (r_in_data_count),
-  .i_out_ready    (r_out_ready    ),
-  .o_en           (out_en         ),
-  .o_status       (out_status     ),
-  .o_address      (out_address    ),
-  .o_data         (out_data       ),
-  .o_data_count   (out_data_count ),
-  .o_master_ready (master_ready   ),
+  .clk                   (clk              ),
+  .rst                   (r_rst            ),
 
-  .o_per_we       (w_wbp_we         ),
-  .o_per_adr      (w_wbp_adr        ),
-  .o_per_dat      (w_wbp_dat_i      ),
-  .i_per_dat      (w_wbp_dat_o      ),
-  .o_per_stb      (w_wbp_stb        ),
-  .o_per_cyc      (w_wbp_cyc        ),
-  .o_per_msk      (w_wbp_msk        ),
-  .o_per_sel      (w_wbp_sel        ),
-  .i_per_ack      (w_wbp_ack        ),
-  .i_per_int      (w_wbp_int        ),
+
+  //indicate to the input that we are ready
+  .i_ingress_clk         (clk              ),
+  .o_ingress_rdy         (ingress_rdy      ),
+  .i_ingress_act         (r_ingress_act    ),
+  .i_ingress_stb         (r_ingress_stb    ),
+  .i_ingress_data        (r_ingress_data   ),
+  .o_ingress_size        (ingress_size     ),
+
+  .i_egress_clk          (clk              ),
+  .o_egress_rdy          (egress_rdy       ),
+  .i_egress_act          (r_egress_act     ),
+  .i_egress_stb          (r_egress_stb     ),
+  .o_egress_data         (egress_data      ),
+  .o_egress_size         (egress_size      ),
+
+  //General Control
+  .o_sync_rst            (w_sync_rst       ),
+
+  .o_per_we              (w_wbp_we         ),
+  .o_per_adr             (w_wbp_adr        ),
+  .o_per_dat             (w_wbp_dat_i      ),
+  .i_per_dat             (w_wbp_dat_o      ),
+  .o_per_stb             (w_wbp_stb        ),
+  .o_per_cyc             (w_wbp_cyc        ),
+  .o_per_msk             (w_wbp_msk        ),
+  .o_per_sel             (w_wbp_sel        ),
+  .i_per_ack             (w_wbp_ack        ),
+  .i_per_int             (w_wbp_int        ),
 
   //memory interconnect signals
-  .o_mem_we       (w_mem_we_o       ),
-  .o_mem_adr      (w_mem_adr_o      ),
-  .o_mem_dat      (w_mem_dat_o      ),
-  .i_mem_dat      (w_mem_dat_i      ),
-  .o_mem_stb      (w_mem_stb_o      ),
-  .o_mem_cyc      (w_mem_cyc_o      ),
-  .o_mem_sel      (w_mem_sel_o      ),
-  .i_mem_ack      (w_mem_ack_i      ),
-  .i_mem_int      (w_mem_int_i      )
+  .o_mem_we              (w_mem_we_o       ),
+  .o_mem_adr             (w_mem_adr_o      ),
+  .o_mem_dat             (w_mem_dat_o      ),
+  .i_mem_dat             (w_mem_dat_i      ),
+  .o_mem_stb             (w_mem_stb_o      ),
+  .o_mem_cyc             (w_mem_cyc_o      ),
+  .o_mem_sel             (w_mem_sel_o      ),
+  .i_mem_ack             (w_mem_ack_i      ),
+  .i_mem_int             (w_mem_int_i      )
+
 
 );
 
@@ -301,6 +302,15 @@ wb_bram #(
   .o_wbs_ack  (w_arb0_o_wbs_ack     ),
   .o_wbs_int  (w_arb0_o_wbs_int     )
 );
+
+//There is a bug in COCOTB when stiumlating a signal, sometimes it can be corrupted if not registered
+always @ (*) r_rst          = rst;
+always @ (*) r_ingress_act  = ingress_act;
+always @ (*) r_ingress_stb  = ingress_stb;
+always @ (*) r_ingress_data = ingress_data;
+always @ (*) r_egress_act   = egress_act;
+always @ (*) r_egress_stb   = egress_stb;
+
 
 //Disable Slave 0
 assign  w_wbs0_int              = 0;
