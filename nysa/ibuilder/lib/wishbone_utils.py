@@ -935,7 +935,8 @@ class WishboneTopGenerator(object):
         return string.expandtabs(buf, 2)
 
     def generate_host_interface_buffer(self, debug = False):
-        absfilepath = utils.find_rtl_file_location(self.tags["INTERFACE"]["filename"])
+        absfilepath = utils.find_rtl_file_location( self.tags["INTERFACE"]["filename"],
+                                                    user_paths = self.user_paths)
         module_tags = vutils.get_module_tags(filename = absfilepath,
                                             bus = "wishbone",
                                             user_paths = self.user_paths,

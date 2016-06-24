@@ -29,6 +29,7 @@ from inspect import ismodule
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "common")))
 
 from site_manager import SiteManager
+from nysa import NysaCommError
 from nysa_platform import Platform
 from status import Status
 
@@ -173,12 +174,15 @@ def get_platforms_with_device(driver, status = None):
         instances_dict = platform_instance.scan()
 
         for name in instances_dict:
-            n = instances_dict[name]
-            if n is not None:
-                if status: status.Debug("Found a Nysa Instance: %s" % name)
-                n.read_sdb()
-                if n.is_device_in_platform(driver):
-                    platforms.append(n)
+            try:
+                n = instances_dict[name]
+                if n is not None:
+                    if status: status.Debug("Found a Nysa Instance: %s" % name)
+                    n.read_sdb()
+                    if n.is_device_in_platform(driver):
+                        platforms.append(n)
+            except NysaCommError:
+                continue
 
     return platforms
 

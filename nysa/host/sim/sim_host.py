@@ -46,8 +46,6 @@ from nysa.common.status import Status
 CLK_PERIOD = 10
 RESET_PERIOD = 20
 
-
-
 def create_thread(function, name, dut, args):
     new_thread = threading.Thread(group=None,
                                   target=hal_read,
@@ -56,7 +54,7 @@ def create_thread(function, name, dut, args):
                                   kwargs={})
 
     new_thread.start()
-    dut.log.warning("Thread Started")
+    cocotb.log.warning("Thread Started")
     return new_thread
 
 class NysaSim (FauxNysa):
@@ -143,11 +141,11 @@ class NysaSim (FauxNysa):
             address = address - self.mem_addr
             mem_device = True
 
-        self._read(address, length, mem_device)
+        self._read(address, length, mem_device, disable_auto_inc)
         return self.response
 
     @cocotb.function
-    def _read(self, address, length = 1, mem_device = False):
+    def _read(self, address, length = 1, mem_device = False, disable_auto_inc = False):
         yield(self.comm_lock.acquire())
 
         #print "_Read Acquire Lock"
@@ -158,10 +156,14 @@ class NysaSim (FauxNysa):
         self.response = Array('B')
         yield( self.wait_clocks(10))
 
-        if (mem_device):
-            self.dut.in_command <= 0x00010002
-        else:
-            self.dut.in_command <= 0x00000002
+        command = 0x00000002
+        if mem_device:
+            command |= 0x00010000
+
+        if disable_auto_inc:
+            command |= 0x00020000
+
+        self.dut.in_command <= command
 
         self.dut.in_data_count  <= length
         self.dut.in_address     <= address
@@ -224,7 +226,7 @@ class NysaSim (FauxNysa):
         data_index          = 0
         timeout_count       = 0
 
-        #self.dut.log.info("Writing data")
+        #cocotb.log.info("Writing data")
         self.dut.in_address         <= address
         if (mem_device):
             self.dut.in_command     <= 0x00010001
@@ -240,12 +242,12 @@ class NysaSim (FauxNysa):
                                         (data[data_index + 2] << 8 ) | \
                                         (data[data_index + 3]      )
             self.dut.in_ready       <= 1
-            #self.dut.log.info("Waiting for master to deassert ready")
+            #cocotb.log.info("Waiting for master to deassert ready")
             yield FallingEdge(self.dut.master_ready)
             yield( self.wait_clocks(1))
             #data_index          += 1
             timeout_count       =  0
-            #self.dut.log.info("Waiting for master to be ready")
+            #cocotb.log.info("Waiting for master to be ready")
             self.dut.in_ready       <= 0
             if data_index < len(data) - 4:
                 yield RisingEdge(self.dut.master_ready)
@@ -299,7 +301,7 @@ class NysaSim (FauxNysa):
         yield(self.wait_clocks(RESET_PERIOD / 2))
 
         self.dut.rst            <= 1
-        #self.dut.log.info("Sending Reset to the bus")
+        #cocotb.log.info("Sending Reset to the bus")
         self.dut.in_ready       <= 0
         self.dut.out_ready      <= 0
 
@@ -328,7 +330,7 @@ class NysaSim (FauxNysa):
                 break
 
         if timeout_count == self.timeout:
-            self.dut.log.error("Timed out while waiting for master to be ready")
+            cocotb.log.error("Timed out while waiting for master to be ready")
             return
 
         yield ReadWrite()
@@ -351,12 +353,12 @@ class NysaSim (FauxNysa):
                 break
 
         if timeout_count == self.timeout:
-            self.dut.log.error("Timed out while waiting for master to respond")
+            cocotb.log.error("Timed out while waiting for master to respond")
             return
         self.dut.in_ready       <= 0
 
-        self.dut.log.info("Master Responded to ping")
-        self.dut.log.info("\t0x%08X" % self.out_status.value.get_value())
+        cocotb.log.info("Master Responded to ping")
+        cocotb.log.info("\t0x%08X" % self.out_status.value.get_value())
 
     def register_interrupt_callback(self, index, callback):
         if index not in self.callbacks:

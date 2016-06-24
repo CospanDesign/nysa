@@ -1,26 +1,46 @@
 #!/usr/bin/python
 
-import unittest
 import json
 import sys
 import os
 import time
+import argparse
 from array import array as Array
+
+NAME = os.path.basename(os.path.realpath(__file__))
+
+DESCRIPTION = "\n" \
+              "\n" \
+              "usage: %s [options]\n" % NAME
+
+EPILOG = "\n" \
+         "\n" \
+         "Examples:\n" \
+         "\tSomething\n" \
+         "\n"
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
 
+
 from nysa.host.driver.memory import Memory
 from nysa.common.status import Status
 
+
 from nysa.host.platform_scanner import PlatformScanner
 
-MAX_LONG_SIZE = 0x0800000
+#MAX_LONG_SIZE = 0x0800000
+#MAX_LONG_SIZE  =  0x2000000
+#MAX_LONG_SIZE  =  0x2000000
+#MAX_LONG_SIZE  =  0x0004000
+#MAX_LONG_SIZE  =  0x0000100
+MAX_LONG_SIZE  =  0x0002000
+#MAX_LONG_SIZE  =  0x0001000
 
-class Test (unittest.TestCase):
+class Test (object):
 
-    def setUp(self):
+    def __init__(self, name = None):
         self.s = Status()
         self.s.set_level("fatal")
         plat = ["", None, None]
@@ -33,36 +53,62 @@ class Test (unittest.TestCase):
             platform_names.remove("sim")
             platform_names.append("sim")
         urn = None
-        for platform_name in platform_names:
-            if plat[1] is not None:
-                break
-
-            self.s.Debug("Platform: %s" % str(platform_name))
-
-            platform_instance = platform_dict[platform_name](self.s)
+        if name is not None and name in platform_names:
+            self.s.Debug("Platform: %s" % str(name))
+ 
+            platform_instance = platform_dict[name](self.s)
             #self.s.Verbose("Platform Instance: %s" % str(platform_instance))
-
+ 
             instances_dict = platform_instance.scan()
-
-            for name in instances_dict:
-
+ 
+            for iname in instances_dict:
+ 
                 #s.Verbose("Found Platform Item: %s" % str(platform_item))
-                n = instances_dict[name]
+                n = instances_dict[iname]
                 plat = ["", None, None]
-
+ 
                 if n is not None:
-                    self.s.Important("Found a nysa instance: %s" % name)
+                    self.s.Important("Found a nysa instance: %s" % iname)
                     n.read_sdb()
                     #import pdb; pdb.set_trace()
                     if n.is_device_in_platform(Memory):
-                        plat = [platform_name, name, n]
+                        plat = [name, iname, n]
                         break
                     continue
+ 
+                #self.s.Verbose("\t%s" % psi)
+
+
+        else:           
+            for platform_name in platform_names:
+                if plat[1] is not None:
+                    break
+         
+                self.s.Debug("Platform: %s" % str(platform_name))
+         
+                platform_instance = platform_dict[platform_name](self.s)
+                #self.s.Verbose("Platform Instance: %s" % str(platform_instance))
+         
+                instances_dict = platform_instance.scan()
+         
+                for name in instances_dict:
+         
+                    #s.Verbose("Found Platform Item: %s" % str(platform_item))
+                    n = instances_dict[name]
+                    plat = ["", None, None]
+         
+                    if n is not None:
+                        self.s.Important("Found a nysa instance: %s" % name)
+                        n.read_sdb()
+                        #import pdb; pdb.set_trace()
+                        if n.is_device_in_platform(Memory):
+                            plat = [platform_name, name, n]
+                            break
+                        continue
 
                 #self.s.Verbose("\t%s" % psi)
 
         if plat[1] is None:
-            self.camera = None
             return
         self.n = plat[2]
         self.urn = self.n.find_device(Memory)[0]
@@ -125,6 +171,7 @@ class Test (unittest.TestCase):
         position = 0
         #self.clear_memory()
         total_size = self.n.get_device_size(self.urn)
+        total_size = MAX_LONG_SIZE * 2
 
         size = 0
         if total_size > MAX_LONG_SIZE:
@@ -136,8 +183,6 @@ class Test (unittest.TestCase):
 
         #Write Data Out
         while position < total_size:
-            data_out = Array('B')
-
             data_out = Array('B')
             for i in range (0, size):
                 data_out.append((i % 0x100))
@@ -151,6 +196,7 @@ class Test (unittest.TestCase):
                 size = total_size - position
             position += size
             print("Wrote: 0x%08X - 0x%08X" % (prev_pos, position))
+            #time.sleep(0.1)
 
 
         position = 0
@@ -209,9 +255,8 @@ class Test (unittest.TestCase):
 
         while position < total_size:
             data_out = Array('B')
-            for i in range(0, ((size / 4) - 1)):
-                num = 0x00
-                data_out.append(num)
+            for i in range (0, size):
+                data_out.append(0x00)
 
             self.n.write_memory(position, data_out)
 
@@ -222,8 +267,43 @@ class Test (unittest.TestCase):
                 size = total_size - position
             position += size
 
-            print ("Cleared: 0x%08X - 0x%08X" % (prev_pos, position))
+            #print ("Cleared: 0x%08X - 0x%08X" % (prev_pos, position))
+
+        #print "Clear Finished"
+
+def main(argv):
+    #Parse out the commandline arguments
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=DESCRIPTION,
+        epilog=EPILOG
+    )
+    parser.add_argument("name",
+                        type=str,
+                        nargs='?',
+                        default="any",
+                        help="Specify a board to ping, if there is only one board attached leave blank (ignoring SIM)")
+    parser.add_argument("-t", "--test",
+                        nargs=1,
+                        default=["something"])
+
+    parser.add_argument("-d", "--debug",
+                        action="store_true",
+                        help="Enable Debug Messages")
+
+    args = parser.parse_args()
+    print "Running Script: %s" % NAME
+    test = Test(args.name)
+    test.single_rw_start()
+    test.single_rw_end()
+    #test.clear_memory()
+    test.test_long_burst()
+
+
+    if args.debug:
+        print "test: %s" % str(args.test[0])
 
 if __name__ == "__main__":
-    unittest.main()
+    main(sys.argv)
+
 

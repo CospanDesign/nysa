@@ -131,7 +131,9 @@ class ModuleProcessor:
         raise KeyError(str(err))
     except ValueError as err:
       print "Value Error with the Buffer (shown below): %s" % str(err)
-      print "Tags: %s" % str(self.tags)
+      print "Tags:"
+      for t in self.tags:
+        print "%s: %s" % (t, str(self.tags[t]))
       print "Buffer: %s" % self.buf
     return
 

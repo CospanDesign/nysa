@@ -1,4 +1,4 @@
-
+from array import array as Array
 
 def is_bit_set(value, bit):
     if (value & (1 << bit)) > 0:
@@ -24,3 +24,14 @@ def list_to_hex_string(a):
     s += "]"
     return s
 
+
+def dword_to_array(value):
+    out = Array('B')
+    out.append((value >> 24) & 0xFF)
+    out.append((value >> 16) & 0xFF)
+    out.append((value >>  8) & 0xFF)
+    out.append((value >>  0) & 0xFF)
+    return out
+
+def array_to_dword(a):
+    return (a[0] << 24) | (a[1] << 16) | (a[2] << 8) | a[3]

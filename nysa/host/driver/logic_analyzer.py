@@ -2,6 +2,7 @@ import sys
 import os
 import time
 from array import array as Array
+from nysa.host.driver.utils import *
 from collections import OrderedDict
 
 sys.path.append(os.path.join(os.path.dirname(__file__),
@@ -17,6 +18,8 @@ CONTROL_RESET                   = 0
 CONTROL_ENABLE_INTERRUPT        = 1
 CONTROL_ENABLE_LA               = 2
 CONTROL_RESTART_LA              = 3
+CONTROL_FORCE_STB               = 4
+CONTROL_ENABLE_UART             = 5
 
 STATUS_FINISHED                 = 0
 
@@ -27,17 +30,16 @@ CONTROL         = 0x00
 STATUS          = 0x01
 TRIGGER         = 0x02
 TRIGGER_MASK    = 0x03
-
+TRIGGER_AFTER   = 0x04
 TRIGGER_EDGE    = 0x05
 BOTH_EDGES      = 0x06
-
-
-TRIGGER_AFTER   = 0x04
 REPEAT_COUNT    = 0x07
 DATA_COUNT      = 0x08
-CLOCK_DIVIDER   = 0x09
-READ_DATA       = 0x0A
-START_POS       = 0x0B
+START_POS       = 0x09
+CLOCK_RATE      = 0x0A
+READ_DATA       = 0x0B
+
+
 
 class LogicAnalyzerException(Exception):
     pass
@@ -69,14 +71,22 @@ class LogicAnalyzer(driver.Driver):
         #Perform this strange read write so that we can disable the UART
         # Controller
         control = self.read_register(CONTROL)
-        self.write_register(CONTROL, control)
+        #print "control: 0x%08X" % control
         self.data_count = self.get_data_count()
+        #print "Count: 0x%08X" % self.data_count
+        self.enable_uart_control(False)
 
     def reset(self):
         self.set_register_bit(CONTROL, CONTROL_RESET)
 
     def enable_interrupts(self, enable):
         self.enable_register_bit(CONTROL, CONTROL_ENABLE_INTERRUPT, enable)
+
+    def enable_uart_control(self, enable):
+        self.enable_register_bit(CONTROL, CONTROL_ENABLE_UART, enable)
+
+    def is_uart_enabled(self):
+        return self.is_register_bit_set(CONTROL, CONTROL_ENABLE_UART)
 
     def is_interrupts_enabled(self):
         return self.is_register_bit_set(CONTROL, CONTROL_ENABLE_INTERRUPT)
@@ -91,7 +101,10 @@ class LogicAnalyzer(driver.Driver):
         self.set_register_bit(CONTROL, CONTROL_RESTART_LA)
 
     def is_finished(self):
-        self.is_register_bit_set(STATUS, STATUS_FINISHED)
+        return self.is_register_bit_set(STATUS, STATUS_FINISHED)
+
+    def force_trigger(self):
+        self.enable_register_bit(CONTROL, CONTROL_FORCE_STB, True)
 
     def set_trigger(self, trigger):
         self.write_register(TRIGGER, trigger)
@@ -132,22 +145,28 @@ class LogicAnalyzer(driver.Driver):
     def get_data_count(self):
         return self.read_register(DATA_COUNT)
 
-    def get_clock_divider(self):
-        return self.read_register(CLOCK_DIVIDER)
+    def get_start_pos(self):
+        return self.read_register(START_POS)
+
+    def read_raw_data(self):
+        return self.read(READ_DATA, self.data_count, disable_auto_inc = True)
 
     def read_data(self):
-        raw_data = self.read(READ_DATA, self.data_count, disable_auto_inc = True)
         start_pos = self.read_register(START_POS)
+        raw_data = self.read(READ_DATA, self.data_count, disable_auto_inc = True)
         #Need to reorder the data so it makes sense for the user
         temp = Array('L')
-        for i in range(raw_data / 4):
-            temp.append(raw_data[i + 0] << 24 |
-                        raw_data[i + 1] << 16 |
-                        raw_data[i + 2] << 8  |
-                        raw_data[i + 3] << 0)
+        for i in range (0, len(raw_data), 4):
+            temp.append(array_to_dword(raw_data[i: i + 4]))
+
+        '''
+        for i in range (0, len(temp), 1):
+            print "\t[%04X] 0x%08X" % (i, temp[i])
+        '''
+
+        print "Start Pos: 0x%04X" % start_pos
 
         #Change data to 32-bit array
-
         data = Array('L')
         if start_pos  == 0:
             data = temp
@@ -155,6 +174,9 @@ class LogicAnalyzer(driver.Driver):
         data.extend(temp[start_pos:])
         data.extend(temp[0:start_pos])
         return data
+
+    def get_clock_rate(self):
+        return self.read_register(CLOCK_RATE)
 
 def set_vcd_header():
     #set date
@@ -237,9 +259,24 @@ def set_waveforms(data, signal_dict, add_clock, cycles_per_clock, debug = False)
         buf += "#%d\n" % (cycles_per_clock / 2)
         buf += "%d%c\n" % (0, clock_character)
 
+    if add_clock:
+        buf += "#%d\n" % ((i + 1) * cycles_per_clock)
+        buf += "%d%c\n" % (1, clock_character)
+
+
+    for j in range (len(signal_dict)):
+        buf += "%d%c\n" % (((data[0] >> j) & 0x01), (index_offset + j))
+
+    #Time 1/2 clock cycle
+    if add_clock:
+        buf += "#%d\n" % (cycles_per_clock / 2)
+        buf += "%d%c\n" % (0, clock_character)
+
+
+
     #Go through all the values for every time instance and look for changes
     if debug: print "Data Length: %d" % len(data)
-    for i in range(0, len(data) - 1):
+    for i in range(1, len(data)):
 
         if add_clock:
             buf += "#%d\n" % ((i + 1) * cycles_per_clock)
@@ -257,6 +294,7 @@ def set_waveforms(data, signal_dict, add_clock, cycles_per_clock, debug = False)
             buf += "#%d\n" % (((i + 1) * cycles_per_clock) + (cycles_per_clock / 2))
             buf += "%d%c\n" % (0, clock_character)
 
+
     buf += "#%d\n" % (len(data) * cycles_per_clock)
     for i in range(len(signal_dict)):
         buf += "%d%c\n" % (((data[-1] >> i) & 0x01), (33 + i))
@@ -264,7 +302,10 @@ def set_waveforms(data, signal_dict, add_clock, cycles_per_clock, debug = False)
 
 def create_vcd_buffer(data, signal_dict = OrderedDict(), count = 32, clock_count = 100, add_clock = True, debug = False):
     if debug: print "Create a VCD file"
+    print "clock count: %d" % clock_count
     ghertz_freq = 1000000000
+    if clock_count == 0:
+        clock_count = 100000000
     cycles_per_clock = int(ghertz_freq / clock_count)
     if debug: print "Clocks per cycle: %d" % cycles_per_clock
 
