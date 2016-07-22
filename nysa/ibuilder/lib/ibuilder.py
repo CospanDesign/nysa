@@ -442,14 +442,34 @@ class ProjectGenerator(object):
         if "MEMORY" in self.project_tags:
             for mem in self.project_tags["MEMORY"]:
                 fdict = {"location":""}
-                file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "bus", "slave")
-                #file_dest = self.project_tags["BASE_DIR"] + "/rtl/bus/slave"
+                file_dest = os.path.join(self.project_tags["BASE_DIR"], "rtl", "bus", "mem")
+                #file_dest = self.project_tags["BASE_DIR"] + "/rtl/bus/mem"
                 fn = self.project_tags["MEMORY"][mem]["filename"]
                 try:
                     self.filegen.process_file(filename = fn, file_dict = fdict, directory = file_dest)
                 except ModuleFactoryError as err:
                     if status: status.Error("ModuleFactoryError while generating memory: %s" % str(err))
                     raise ModuleFactoryError(err)
+
+            mem_dir = os.path.split(utils.find_rtl_file_location(fn, self.user_paths))[0]
+            if "constraint_files" in self.project_tags["MEMORY"][mem]:
+                temp_paths = self.user_paths
+                temp_paths.append(mem_dir)
+
+                for c in self.project_tags["MEMORY"][mem]["constraint_files"]:
+                    file_location = utils.get_constraint_file_path(self.project_tags["board"], c, temp_paths)
+                    dest_path = utils.resolve_path(self.project_tags["BASE_DIR"])
+                    shutil.copy (file_location, os.path.join(dest_path, "constraints", c))
+
+            if "cores" in self.project_tags["MEMORY"][mem]:
+                if status: status.Verbose("User Specified an core(s) for a mem")
+                for c in self.project_tags["MEMORY"][mem]["cores"]:
+
+                    file_location = os.path.join(mem_dir, os.pardir, "cores", c)
+                    if not os.path.exists(file_location):
+                        raise PGE("Core: %s does not exist" % file_location)
+                    dest_path = utils.resolve_path(self.project_tags["BASE_DIR"])
+                    shutil.copy (file_location, os.path.join(dest_path, "cores", c))
 
 
 
