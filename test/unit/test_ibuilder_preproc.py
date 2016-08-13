@@ -7,8 +7,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
 
-from nysa.ibuilder.lib import preprocessor
-from nysa.ibuilder.lib import utils
+from nysa.ibuilder import preprocessor
+from nysa.ibuilder import utils
 
 TEST_MODULE_LOCATION = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                        os.pardir,

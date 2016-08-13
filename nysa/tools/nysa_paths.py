@@ -22,8 +22,8 @@
 # SOFTWARE.
 
 
-from nysa.ibuilder.lib import utils
-from nysa.ibuilder.lib import xilinx_utils as xutils
+from nysa.ibuilder import utils
+from nysa.ibuilder import xilinx_utils as xutils
 from nysa.common import site_manager
 
 NAME = "paths"

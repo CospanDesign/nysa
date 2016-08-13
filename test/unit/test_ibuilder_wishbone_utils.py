@@ -13,8 +13,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
 
-from nysa.ibuilder.lib import wishbone_utils as wu
-from nysa.ibuilder.lib.wishbone_utils import WishboneTopGenerator
+from nysa.ibuilder import wishbone_utils as wu
+from nysa.ibuilder.wishbone_utils import WishboneTopGenerator
 
 
 GPIO_FILENAME = os.path.abspath(os.path.join(os.path.dirname(__file__),

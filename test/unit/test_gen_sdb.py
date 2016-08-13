@@ -12,8 +12,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 
 
 from nysa.cbuilder import sdb_component as sdbc
-from nysa.ibuilder.lib.gen_scripts import gen_sdb
-from nysa.ibuilder.lib import utils
+from nysa.ibuilder.gen_scripts import gen_sdb
+from nysa.ibuilder import utils
 
 class Test (unittest.TestCase):
     """Unit test SDB Tree"""

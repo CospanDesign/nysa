@@ -21,7 +21,7 @@
 
 import subprocess
 
-from nysa.ibuilder.lib import utils
+from nysa.ibuilder import utils
 
 from nysa.host.platform_scanner import PlatformScanner
 

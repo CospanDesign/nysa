@@ -21,7 +21,7 @@
 #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
 #SOFTWARE.
 
-from nysa.ibuilder.lib import utils
+from nysa.ibuilder import utils
 from nysa.common import status as st
 
 NAME = "utils"

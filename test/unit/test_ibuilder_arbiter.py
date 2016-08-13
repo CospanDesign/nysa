@@ -9,8 +9,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
 
-from nysa.ibuilder.lib import utils
-from nysa.ibuilder.lib import arbiter
+from nysa.ibuilder import utils
+from nysa.ibuilder import arbiter
 
 GPIO_TAGS = json.load(open(os.path.join(os.path.dirname(__file__),
                            os.pardir,

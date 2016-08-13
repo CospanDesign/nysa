@@ -9,7 +9,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
 
-from nysa.ibuilder.lib import verilog_utils as vutils
+from nysa.ibuilder import verilog_utils as vutils
 
 TEST_MODULE_LOCATION = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                        os.pardir,

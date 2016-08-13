@@ -30,7 +30,7 @@ import urllib2
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
-from nysa.ibuilder.lib import ibuilder
+from nysa.ibuilder import ibuilder
 
 EXAMPLE_DIR = os.path.join("home", "user", "Projects", "nysa", "ibuilder", "example_project", "dionyus_default.json")
 

@@ -23,7 +23,7 @@ import sys
 import os
 import json
 
-from nysa.ibuilder.lib import utils
+from nysa.ibuilder import utils
 from nysa.common import site_manager
 
 import install_platform

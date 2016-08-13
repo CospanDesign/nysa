@@ -10,8 +10,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
 
 
 
-from nysa.ibuilder.lib import xilinx_utils
-from nysa.ibuilder.lib.ibuilder_error import XilinxToolchainError
+from nysa.ibuilder import xilinx_utils
+from nysa.ibuilder.ibuilder_error import XilinxToolchainError
 
 class Test (unittest.TestCase):
     """Unit test for saputils"""

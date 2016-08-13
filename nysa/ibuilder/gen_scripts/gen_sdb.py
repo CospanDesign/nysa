@@ -48,10 +48,10 @@ from nysa.cbuilder import device_manager
 
 from nysa.cbuilder.sdb import SDBError
 
-from nysa.ibuilder.lib import utils
+from nysa.ibuilder import utils
 
-import nysa.ibuilder.lib.verilog_utils as vutils
-from nysa.ibuilder.lib.ibuilder_error import IBuilderError
+import nysa.ibuilder.verilog_utils as vutils
+from nysa.ibuilder.ibuilder_error import IBuilderError
 
 MAIN_INTERCONNECT = \
     "  Set the Vendor ID (Hexidecimal 64-bit Number)\n" \

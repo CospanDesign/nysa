@@ -9,8 +9,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
 
-from nysa.ibuilder.lib.ibuilder_error import ModuleFactoryError
-from nysa.ibuilder.lib.module_processor import ModuleProcessor
+from nysa.ibuilder.ibuilder_error import ModuleFactoryError
+from nysa.ibuilder.module_processor import ModuleProcessor
 
 TEST_CONFIG_FILENAME = os.path.abspath( os.path.join(os.path.dirname(__file__),
                                         os.path.pardir,

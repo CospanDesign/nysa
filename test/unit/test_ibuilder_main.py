@@ -8,7 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir,
                              os.pardir))
 
-from nysa.ibuilder.lib import ibuilder
+from nysa.ibuilder import ibuilder
 
 TEST_CONFIG_FILENAME = os.path.abspath( os.path.join(os.path.dirname(__file__),
                                         os.path.pardir,

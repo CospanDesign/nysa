@@ -10,8 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
 
-#from ibuilder.lib import utils
-from nysa.ibuilder.lib import constraint_utils as cu
+from nysa.ibuilder import constraint_utils as cu
 
 TEST_CONSTRAINT = ""\
         "NET \"clk\"           LOC = C10 | IOSTANDARD = LVCMOS33;\n" \

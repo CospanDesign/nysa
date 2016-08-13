@@ -5,8 +5,8 @@ import string
 from string import Template
 from gen import Gen
 
-from nysa.ibuilder.lib import utils
-from nysa.ibuilder.lib import verilog_utils as vutils
+from nysa.ibuilder import utils
+from nysa.ibuilder import verilog_utils as vutils
 
 class GenMemInterconnect(Gen):
 
