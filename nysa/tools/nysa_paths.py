@@ -128,6 +128,10 @@ def print_platform_paths(sm, names, silent, status):
         else:
             print sm.get_board_directory(name)
 
+def get_platform_path(name):
+    sm = site_manager.SiteManager()
+    return sm.get_board_directory(name)
+
 def print_user_project_path(sm, silent, status):
     if not silent:
         print "{0:<16}:{1}".format("User Base Dir", sm.get_nysa_user_base_directory())
