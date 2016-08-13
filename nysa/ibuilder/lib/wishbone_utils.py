@@ -715,13 +715,23 @@ class WishboneTopGenerator(object):
         board_dict = utils.get_board_config(self.tags["board"])
 
         buf =  "//General Signals\n"
-        if "clk" not in self.bindings:
-            buf +=  "{0:<20}{1};\n".format("wire", "clk")
+        if "clkbuf" not in board_dict:
+            if "clk" not in self.bindings:
+                buf +=  "{0:<20}{1};\n".format("wire", "clk")
+
+        else:
+            if "clk" in self.bindings:
+                del self.bindings["clk"]
+
         if "rst" not in self.bindings:
             buf +=  "{0:<20}{1};\n".format("wire", "rst")
 
-        self.wires.append("clk")
+
+        if "clkbuf" in board_dict:
+            buf += "{0:<20}{1};\n".format("wire", "clk")
+
         self.wires.append("rst")
+        self.wires.append("clk")
 
         if invert_rst:
             buf += "{0:<20}{1};\n".format("wire", "rst_n")
@@ -914,6 +924,11 @@ class WishboneTopGenerator(object):
         return string.expandtabs(buf, 2)
         #Generate bindings that tie ports to wires
 
+    def generate_bufg(self, clk_in):
+        buf = "//Clock Buffer\n"
+        buf += "BUFG clk_bufg(.I(%s), .O(clk));\n" % clk_in
+        return buf
+
     def generate_top_ports(self, debug = False):
         """Create the ports string"""
         buf = "module top (\n"
@@ -976,6 +991,10 @@ class WishboneTopGenerator(object):
                                        min_val)
 
         #Declare the Module
+        buf += "\n\n"
+        if "clkbuf" in board_dict:
+            buf += self.generate_bufg(board_dict["clkbuf"])
+
         buf += "\n\n"
         buf += "%s\t%s\t" % (module_tags["module"], name)
         io_proj_tags = self.tags["INTERFACE"]
