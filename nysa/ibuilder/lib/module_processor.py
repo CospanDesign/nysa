@@ -133,7 +133,7 @@ class ModuleProcessor:
       print "Value Error with the Buffer (shown below): %s" % str(err)
       print "Tags:"
       for t in self.tags:
-        print "%s: %s" % (t, str(self.tags[t]))
+        print "\t%s: %s" % (t, str(self.tags[t]))
       print "Buffer: %s" % self.buf
     return
 
