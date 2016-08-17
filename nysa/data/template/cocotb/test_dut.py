@@ -22,15 +22,6 @@ MODULE_PATH = os.path.abspath(MODULE_PATH)
 def setup_dut(dut):
     cocotb.fork(Clock(dut.clk, CLK_PERIOD).start())
 
-@cocotb.coroutine
-def wait_ready(nysa, dut):
-
-    #while not dut.hd_ready.value.get_value():
-    #    yield(nysa.wait_clocks(1))
-
-    #yield(nysa.wait_clocks(100))
-    pass
-
 @cocotb.test(skip = False)
 def first_test(dut):
     """
@@ -43,8 +34,7 @@ def first_test(dut):
     Expected Results:
         Write to all registers
     """
-
-
+    #Use the folowing value to find the test in the simulation (It should show up as the yellow signal at the top of the waveforms)
     dut.test_id = 0
     print "module path: %s" % MODULE_PATH
     nysa = NysaSim(dut, SIM_CONFIG, CLK_PERIOD, user_paths = [MODULE_PATH])
@@ -54,11 +44,14 @@ def first_test(dut):
     yield (nysa.wait_clocks(10))
     nysa.pretty_print_sdb()
     driver = ${SDB_NAME}Driver(nysa, nysa.find_device(${SDB_NAME}Driver)[0])
-    print "here!"
-    yield cocotb.external(driver.set_control)(0x01)
-    yield (nysa.wait_clocks(100))
-    v = yield cocotb.external(driver.get_control)()
-    dut.log.info("V: %d" % v)
-    dut.log.info("DUT Opened!")
     dut.log.info("Ready")
+
+    #For a demo write a value to the control register (See the ${SDB_NAME}Driver for addresses)
+    WRITE_VALUE = 0x01
+    dut.log.info("Writing value: 0x%08X" % WRITE_VALUE)
+    yield cocotb.external(driver.set_control)(WRITE_VALUE)
+    yield (nysa.wait_clocks(100))
+    dut.log.info("Reading value...")
+    read_value = yield cocotb.external(driver.get_control)()
+    dut.log.info("Control Register: 0x%08X" % read_value)
 

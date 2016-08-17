@@ -52,53 +52,7 @@
     },
     "MEMORY":{
         "mem1":{
-            "filename":"wb_sdram.v",
-            "bind":{
-                "o_sdram_clk":{
-                    "loc":"sdram_clk",
-                    "direction":"output"
-                },
-                "o_sdram_cke":{
-                    "loc":"cke",
-                    "direction":"output"
-                },
-                "o_sdram_cs_n":{
-                    "loc":"cs_n",
-                    "direction":"output"
-                },
-                "o_sdram_ras":{
-                    "loc":"ras",
-                    "direction":"output"
-                },
-                "o_sdram_cas":{
-                    "loc":"cas",
-                    "direction":"output"
-                },
-                "o_sdram_we":{
-                    "loc":"we",
-                    "direction":"output"
-                },
-                "o_sdram_bank[1:0]":{
-                    "loc":"ba[1:0]",
-                    "direction":"output"
-                },
-                "o_sdram_addr[11:0]":{
-                    "loc":"a[11:0]",
-                    "direction":"output"
-                },
-                "io_sdram_data[15:0]":{
-                    "loc":"dq[15:0]",
-                    "direction":"inout"
-                },
-                "o_sdram_data_mask[1]":{
-                    "loc":"dqmh",
-                    "direction":"output"
-                },
-                "o_sdram_data_mask[0]":{
-                    "loc":"dqml",
-                    "direction":"output"
-                }
-            }
+            "filename":"wb_bram.v"
         }
     },
     "bind":{

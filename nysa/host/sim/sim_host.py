@@ -48,6 +48,7 @@ from nysa.common.status import Status
 CLK_PERIOD = 10
 RESET_PERIOD = 20
 
+
 def create_byte_array_from_dword(dword):
     d = Array('B')
     d.append((dword >> 24) & 0xFF)
@@ -67,7 +68,7 @@ def create_thread(function, name, dut, args):
                                   kwargs={})
 
     new_thread.start()
-    cocotb.log.warning("Thread Started")
+    dut.log.warning("Thread Started")
     return new_thread
 
 class NysaSim (FauxNysa):
@@ -149,13 +150,13 @@ class NysaSim (FauxNysa):
             address = address - self.mem_addr
             mem_device = True
 
-        self._read(address, length, mem_device, disable_auto_inc)
+        self._read(address, length, mem_device)
         return self.response
 
     @cocotb.function
-    def _read(self, address, length = 1, mem_device = False, disable_auto_inc = False):
+    def _read(self, address, length = 1, mem_device = False):
         yield(self.comm_lock.acquire())
-        print "Reading"
+        #print "Reading"
 
         #print "_Read Acquire Lock"
         data_index = 0
@@ -179,7 +180,7 @@ class NysaSim (FauxNysa):
 
     @cocotb.function
     def write(self, address, data = None, disable_auto_inc=False):
-        print "Writing"
+        #print "Writing"
         mem_device = False
         write_data = Array('B')
 
@@ -207,7 +208,6 @@ class NysaSim (FauxNysa):
         timeout_count       = 0
 
         yield(self.comm_lock.acquire())
-        #while data_index < data_count:
         yield(self.ingress.write(write_data))
         self.comm_lock.release()
 
@@ -263,7 +263,7 @@ class NysaSim (FauxNysa):
                 break
 
         if timeout_count == self.timeout:
-            cocotb.log.error("Timed out while waiting for master to be ready")
+            self.dut.log.error("Timed out while waiting for master to be ready")
             return
 
         yield ReadWrite()
@@ -281,7 +281,7 @@ class NysaSim (FauxNysa):
             break
 
         if timeout_count == self.timeout:
-            cocotb.log.error("Timed out while waiting for master to respond")
+            self.dut.log.error("Timed out while waiting for master to respond")
             return
         self.dut.log.info("Master Responded to ping")
         self.dut.log.info("\t0x%08X" % self.out_status.value.get_value())

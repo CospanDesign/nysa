@@ -4,7 +4,7 @@ from gen import Gen
 import string
 from string import Template
 
-from nysa.ibuilder.lib import utils
+from nysa.ibuilder import utils
 
 class GenInterconnect(Gen):
 

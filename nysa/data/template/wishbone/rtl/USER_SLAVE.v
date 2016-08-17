@@ -91,15 +91,17 @@ localparam     ADDR_1  = 32'h00000001;
 localparam     ADDR_2  = 32'h00000002;
 
 //Local Registers/Wires
+reg           [31:0]   r_test_data;
 //Submodules
 //Asynchronous Logic
 //Synchronous Logic
 
 always @ (posedge clk) begin
   if (rst) begin
-    o_wbs_dat <= 32'h0;
-    o_wbs_ack <= 0;
-    o_wbs_int <= 0;
+    o_wbs_dat   <=  32'h0;
+    o_wbs_ack   <=  0;
+    o_wbs_int   <=  0;
+    r_test_data <=  0;
   end
 
   else begin
@@ -121,6 +123,7 @@ always @ (posedge clk) begin
               //NOTE THE FOLLOWING LINE IS AN EXAMPLE
               //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
               $display("ADDR: %h user wrote %h", i_wbs_adr, i_wbs_dat);
+              r_test_data       <=  0;
             end
             ADDR_1: begin
               //writing something to address 1
@@ -151,7 +154,8 @@ always @ (posedge clk) begin
               //NOTE THE FOLLOWING LINE IS AN EXAMPLE
               //  THIS IS WHAT THE USER WILL READ FROM ADDRESS 0
               $display("user read %h", ADDR_0);
-              o_wbs_dat <= ADDR_0;
+              //o_wbs_dat <= ADDR_0;
+              o_wbs_dat <=  r_test_data;
             end
             ADDR_1: begin
               //reading something from address 1

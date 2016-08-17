@@ -183,7 +183,7 @@ class ProjectGenerator(object):
         self.project_tags = json.load(open(filename, "r"), object_pairs_hook=OrderedDict)
         path = os.path.join(utils.get_board_directory(self.project_tags["board"]), self.project_tags["board"])
         board_dict = self._get_default_board_config(self.project_tags["board"])
-
+        #print "Board Config: %s" % self._get_default_board_config(self.project_tags["board"])
         #default_path = os.path.join(path, "board", "default.json")
         #board_dict = json.load(open(default_path, "r"), object_pairs_hook=OrderedDict)
         for key in board_dict:

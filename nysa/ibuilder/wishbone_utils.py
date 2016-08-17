@@ -39,7 +39,6 @@ from string import Template
 
 PATH_TO_TOP = os.path.abspath(os.path.join(os.path.dirname(__file__),
                               os.pardir,
-                              os.pardir,
                               "data",
                               "template",
                               "top",
@@ -50,26 +49,27 @@ import utils
 import verilog_utils as vutils
 import arbiter
 
-
 IF_WIRES = [
-    "i_master_ready",
-    "o_ih_ready",
-    "o_ih_reset",
-    "o_in_command",
-    "o_in_address",
-    "o_in_data",
-    "o_in_data_count",
-    "i_oh_en",
-    "o_oh_ready",
-    "i_out_status",
-    "i_out_address",
-    "i_out_data",
-    "i_out_data_count"]
+    "ingress_clk",
+    "ingress_rdy",
+    "ingress_act",
+    "ingress_stb",
+    "ingress_data",
+    "ingress_size",
+    "egress_clk",
+    "egress_rdy",
+    "egress_act",
+    "egress_stb",
+    "egress_data",
+    "egress_size",
+    "sync_rst"
+]
 
 IO_TYPES = [
     "input",
     "output",
-    "inout"]
+    "inout"
+]
 
 def is_wishbone_slave_signal(signal):
     #Look for a wishbone slave signal
@@ -258,21 +258,22 @@ def generate_master_buffer(invert_reset):
         buf += "\t.{0:20}({1:20}),\n\n".format("rst", "rst | startup_rst")
 
     buf += "\t//input handler signals\n"
-    buf += "\t.{0:20}({1:20}),\n".format("i_ready", "ih_ready")
-    buf += "\t.{0:20}({1:20}),\n".format("i_ih_rst", "ih_reset")
-    buf += "\t.{0:20}({1:20}),\n".format("i_command", "in_command")
-    buf += "\t.{0:20}({1:20}),\n".format("i_address", "in_address")
-    buf += "\t.{0:20}({1:20}),\n".format("i_data", "in_data")
-    buf += "\t.{0:20}({1:20}),\n\n".format("i_data_count", "in_data_count")
+    buf += "\t.{0:20}({1:20}),\n".format("i_ingress_clk", "ingress_clk")
+    buf += "\t.{0:20}({1:20}),\n".format("o_ingress_rdy", "ingress_rdy")
+    buf += "\t.{0:20}({1:20}),\n".format("i_ingress_act", "ingress_act")
+    buf += "\t.{0:20}({1:20}),\n".format("i_ingress_stb", "ingress_stb")
+    buf += "\t.{0:20}({1:20}),\n".format("i_ingress_data", "ingress_data")
+    buf += "\t.{0:20}({1:20}),\n\n".format("o_ingress_size", "ingress_size")
 
     buf += "\t//output handler signals\n"
-    buf += "\t.{0:20}({1:20}),\n".format("i_out_ready", "oh_ready")
-    buf += "\t.{0:20}({1:20}),\n".format("o_en", "oh_en")
-    buf += "\t.{0:20}({1:20}),\n".format("o_status", "out_status")
-    buf += "\t.{0:20}({1:20}),\n".format("o_address", "out_address")
-    buf += "\t.{0:20}({1:20}),\n".format("o_data", "out_data")
-    buf += "\t.{0:20}({1:20}),\n".format("o_data_count", "out_data_count")
-    buf += "\t.{0:20}({1:20}),\n\n".format("o_master_ready", "master_ready")
+    buf += "\t.{0:20}({1:20}),\n".format("i_egress_clk", "egress_clk")
+    buf += "\t.{0:20}({1:20}),\n".format("o_egress_rdy", "egress_rdy")
+    buf += "\t.{0:20}({1:20}),\n".format("i_egress_act", "egress_act")
+    buf += "\t.{0:20}({1:20}),\n".format("i_egress_stb", "egress_stb")
+    buf += "\t.{0:20}({1:20}),\n".format("o_egress_data", "egress_data")
+    buf += "\t.{0:20}({1:20}),\n\n".format("o_egress_size", "egress_size")
+
+    buf += "\t.{0:20}({1:20}),\n\n".format("o_sync_rst", "sync_rst")
 
     buf += "\t//interconnect signals\n"
     buf += "\t.{0:20}({1:20}),\n".format("o_per_we", "wbm_we_o")
@@ -296,9 +297,7 @@ def generate_master_buffer(invert_reset):
     buf += "\t.{0:20}({1:20}),\n".format("o_mem_msk", "mem_msk_o")
     buf += "\t.{0:20}({1:20}),\n".format("o_mem_sel", "mem_sel_o")
     buf += "\t.{0:20}({1:20}),\n".format("i_mem_ack", "mem_ack_i")
-    buf += "\t.{0:20}({1:20}),\n\n".format("i_mem_int", "mem_int_i")
-
-    buf += "\t.{0:20}({1:20})\n\n".format("o_debug", "wbm_debug_out")
+    buf += "\t.{0:20}({1:20})\n\n".format("i_mem_int", "mem_int_i")
     buf += ");"
     return string.expandtabs(buf, 2)
 
@@ -373,8 +372,8 @@ def generate_module_port_signals(invert_reset,
         #Check to see if this is one of the pre-defined wires
         wire = ""
         for w in IF_WIRES:
-            if w.endswith(port[2:]):
-                wire = "%s" % w[2:]
+            if w == port:
+                wire = "%s" % w
                 break
 
         #Not Pre-defines
@@ -405,8 +404,9 @@ def generate_module_port_signals(invert_reset,
         #Check to see if this is one of the pre-defined wires
         wire = ""
         for w in IF_WIRES:
-            if w.endswith(port[2:]):
-                wire = "%s" % w[2:]
+            if w == port:
+                #wire = "%s" % w[2:]
+                wire = "%s" % w
                 break
 
         #Not Pre-defines
@@ -468,7 +468,7 @@ def generate_assigns_buffer(invert_reset, bindings, internal_bindings, debug=Fal
             if key == "rst":
                 continue
 
-            
+
             if key == bindings[key]["loc"]:
                 continue
             if bindings[key]["direction"] == "input":
@@ -739,33 +739,39 @@ class WishboneTopGenerator(object):
 
         buf += "\n"
         buf +=  "//input handler signals\n"
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","in_command")
-        self.wires.append("in_command")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","in_address");
-        self.wires.append("in_address")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","in_data");
-        self.wires.append("in_data")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","in_data_count");
-        self.wires.append("in_data_count")
-        buf +=  "{0:<20}{1};\n".format("wire","ih_ready")
-        self.wires.append("ih_ready")
-        buf +=  "{0:<20}{1};\n".format("wire","ih_reset")
-        self.wires.append("ih_reset")
-        buf += "\n"
+        buf +=  "{0:<19}{1};\n".format("wire\t","ingress_clk")
+        self.wires.append("ingress_clk")
+        buf +=  "{0:<19}{1};\n".format("wire\t[1:0]","ingress_rdy");
+        self.wires.append("ingress_rdy")
+        buf +=  "{0:<19}{1};\n".format("wire\t[1:0]","ingress_act");
+        self.wires.append("ingress_act")
+        buf +=  "{0:<19}{1};\n".format("wire\t","ingress_stb");
+        self.wires.append("ingress_stb")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","ingress_data")
+        self.wires.append("ingress_data")
+        buf +=  "{0:<19}{1};\n".format("wire\t[23:0]","ingress_size")
+        self.wires.append("ingress_size")
+
 
         buf +=  "//output handler signals\n"
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","out_status")
-        self.wires.append("out_status")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","out_address")
-        self.wires.append("out_address")
-        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","out_data")
-        self.wires.append("out_data")
-        buf +=  "{0:<19}{1};\n".format("wire\t[27:0]","out_data_count")
-        self.wires.append("out_data_count")
-        buf +=  "{0:<20}{1};\n".format("wire","oh_ready")
-        self.wires.append("oh_ready")
-        buf +=  "{0:<20}{1};\n".format("wire","oh_en")
-        buf += "\n"
+        buf +=  "{0:<20}{1};\n".format("wire","egress_clk")
+        self.wires.append("egress_clk")
+        buf +=  "{0:<20}{1};\n".format("wire","egress_rdy")
+        self.wires.append("egress_rdy")
+        buf +=  "{0:<20}{1};\n".format("wire","egress_act")
+        self.wires.append("egress_act")
+        buf +=  "{0:<20}{1};\n".format("wire","egress_stb")
+        self.wires.append("egress_stb")
+        buf +=  "{0:<19}{1};\n".format("wire\t[31:0]","egress_data")
+        self.wires.append("egress_data")
+        buf +=  "{0:<19}{1};\n".format("wire\t[23:0]","egress_size")
+        self.wires.append("egress_size")
+
+
+        buf +=  "//Synchronous Reset From Host\n"
+        buf +=  "{0:<20}{1};\n".format("wire","o_sync_rst")
+        self.wires.append("o_sync_rst")
+
 
         buf +=  "//master signals\n"
         buf +=  "{0:<20}{1};\n".format("wire","master_ready")

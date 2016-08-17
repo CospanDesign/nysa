@@ -64,8 +64,8 @@ from ibuilder_error import ModuleNotFound
 from ibuilder_error import NysaEnvironmentError
 from ibuilder_error import IBuilderError
 
-nysa_base = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "common")))
+nysa_base = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "common")))
 
 import site_manager
 
