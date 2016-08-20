@@ -603,6 +603,23 @@ class Nysa(object):
         return value
 
     #SDB Related
+    def sdb_read_callback(self):
+        """
+        Called when SDB has been read and parsed, this should be overridden by
+        the interface designer and is used when the interface designer will
+        initialize values when the SDB has been successfully parsed
+
+        Args:
+            Nothing
+
+        Returns:
+            Nothing
+
+        Raises:
+            Nothing
+        """
+        pass
+
     def get_sdb_base_address(self):
         """
         Return the base address of the SDB (This is platform specific)
@@ -634,7 +651,9 @@ class Nysa(object):
         Raises:
             NysaCommError: When a failure of communication is detected
         """
-        return self.nsm.read_sdb(self)
+        s = self.nsm.read_sdb(self)
+        self.sdb_read_callback()
+        return s
 
     def pretty_print_sdb(self):
         """pretty_print_sdb
