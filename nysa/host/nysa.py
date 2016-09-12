@@ -452,7 +452,7 @@ class Nysa(object):
     def write_master_register(self, address, value):
         """write_register
 
-        Writes a single register from a 32-bit unsingned integer
+        Writes a single 32-bit value to master config space
 
         Args:
           address (int):  Address of the register/memory to read
@@ -469,13 +469,14 @@ class Nysa(object):
         register_array[1]  = (value >> 16) & 0xFF
         register_array[2]  = (value >> 8) & 0xFF
         register_array[3]  = (value) & 0xFF
-        self.write(address, register_array)
+        self.write(address, register_array,
+            flags = [NYSA_FLAGS.MASTER_ADDRESS])
 
     def read_master_register(self, address, value):
         """read_register
 
-        Reads a single register from the read command and then converts it to an
-        integer
+        Reads a single register from the master config space and converts it to
+        an integer
 
         Args:
           address (int):  Address of the register/memory to read
@@ -486,7 +487,8 @@ class Nysa(object):
         Raises:
           NysaCommError: Error in communication
         """
-        register_array = self.read(address, 1)
+        register_array = self.read(address, 1,
+            flags = [NYSA_FLAGS.MASTER_ADDRESS])
         return register_array[0] << 24 | \
                register_array[1] << 16 | \
                register_array[2] << 8  | \
