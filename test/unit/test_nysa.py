@@ -52,56 +52,56 @@ class Test (unittest.TestCase):
     def test_read(self):
         address = 0
         length = 1
-        disable_auto_inc = False
+        flags = []
         #Test Length 1 Read
-        resp = self.n.read(address, length, disable_auto_inc)
+        resp = self.n.read(address, length, flags)
         self.assertEqual(len(resp), length * 4)
 
         #Test Length 2 read
         address = 0
         length = 2
-        disable_auto_inc = False
-        resp = self.n.read(address, length, disable_auto_inc)
+        flags = []
+        resp = self.n.read(address, length, flags)
         self.assertEqual(len(resp), length * 4)
 
         #Test Read at address 0x10
         length = 1
         address = 0x10
-        disable_auto_inc = False
-        resp = self.n.read(address, length, disable_auto_inc)
+        flags = []
+        resp = self.n.read(address, length, flags)
         self.assertEqual(len(resp), length * 4)
 
         #Test read a memory device
         length = 1
         address = 0x00
-        disable_auto_inc = False
-        resp = self.n.read(address, length, disable_auto_inc)
+        flags = []
+        resp = self.n.read(address, length, flags)
         self.assertEqual(len(resp), length * 4)
 
     def test_write(self):
         address = 0
         data = Array('B', [0x00, 0x00, 0x00, 0x00])
-        disable_auto_inc = False
+        flags = []
         #Test Length 1 Read
-        self.n.write(address, data, disable_auto_inc)
+        self.n.write(address, data, flags)
 
         #Test Length 2 read
         address = 0
         data = Array('B', [0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-        disable_auto_inc = False
-        self.n.write(address, data, disable_auto_inc)
+        flags = []
+        self.n.write(address, data, flags)
 
         #Test Read at address 0x10
         data = Array('B', [0x00, 0x00, 0x00, 0x00])
         address = 0x10
-        disable_auto_inc = False
-        self.n.write(address, data, disable_auto_inc)
+        flags = []
+        self.n.write(address, data, flags)
 
         #Test read a memory device
         data = Array('B', [0x00, 0x00, 0x00, 0x00])
         address = 0x00
-        disable_auto_inc = False
-        self.n.write(address, data, disable_auto_inc)
+        flags = []
+        self.n.write(address, data, flags)
 
     def test_ping(self):
         self.n.ping()

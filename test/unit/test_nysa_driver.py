@@ -121,8 +121,8 @@ class Test (unittest.TestCase):
     def test_write(self):
         address = 0x20
         data = Array('B', [0x00, 0x01, 0x02, 0x03])
-        disable_auto_increment = False
-        self.simple_dev.write(address, data, disable_auto_increment)
+        flags = []
+        self.simple_dev.write(address, data, flags)
 
     def test_write_register(self):
         address = 0x030
@@ -142,8 +142,8 @@ class Test (unittest.TestCase):
     def test_read(self):
         address = 0x00
         length = 10
-        disable_auto_increment = False
-        data = self.simple_dev.read(address, length, disable_auto_increment)
+        flags = []
+        data = self.simple_dev.read(address, length, flags)
         self.assertEqual(len(data), length * 4)
 
     def test_read_memory(self):

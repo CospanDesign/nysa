@@ -9,6 +9,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__),
                              os.pardir))
 
 from nysa.host.driver import driver
+from nysa.host.nysa import NYSA_FLAGS
 
 DEVICE_TYPE                     = "Logic Analyzer"
 SDB_ABI_VERSION_MINOR           = 1
@@ -149,11 +150,11 @@ class LogicAnalyzer(driver.Driver):
         return self.read_register(START_POS)
 
     def read_raw_data(self):
-        return self.read(READ_DATA, self.data_count, disable_auto_inc = True)
+        return self.read(READ_DATA, self.data_count, flags = [NYSA_FLAGS.DISABLE_AUTO_INC])
 
     def read_data(self):
         start_pos = self.read_register(START_POS)
-        raw_data = self.read(READ_DATA, self.data_count, disable_auto_inc = True)
+        raw_data = self.read(READ_DATA, self.data_count, flags = [NYSA_FLAGS.DISABLE_AUTO_INC])
         #Need to reorder the data so it makes sense for the user
         temp = Array('L')
         for i in range (0, len(raw_data), 4):

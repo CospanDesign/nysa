@@ -57,6 +57,10 @@ class NysaError(Exception):
     pass
 
 
+#FLAGS
+class NYSA_FLAGS(object):
+    DISABLE_AUTO_INC    = 0
+    MASTER_ADDRESS      = 1
 
 class Nysa(object):
     """Nysa
@@ -136,7 +140,7 @@ class Nysa(object):
         """
         return self.timeout
 
-    def read(self, address, length = 1, disable_auto_inc = False):
+    def read(self, address, length = 1, flags = []):
         """read
 
         Generic read command used to read data from a Nysa image, this will be
@@ -149,7 +153,9 @@ class Nysa(object):
         Args:
           length (int): Number of 32 bit words to read from the FPGA
           address (int):  Address of the register/memory to read
-          disable_auto_inc (bool): if true, auto increment feature will be disabled
+          flags (list of flags): [flag1, flag2, flag3]
+            NYSA_FLAG.DISABLE_AUTO_INC    = 0
+            NYSA_FLAG.MASTER_ADDRESS      = 1
 
         Returns:
           (Array of unsigned bytes): A byte array containtin the raw data
@@ -161,7 +167,7 @@ class Nysa(object):
         """
         raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
 
-    def write(self, address, data, disable_auto_inc = False):
+    def write(self, address, data, flags = []):
         """write
 
         Generic write command usd to write data to a Nysa image, this will be
@@ -171,7 +177,10 @@ class Nysa(object):
             address (int): Address of the register/memory to read
             data (array of unsigned bytes): Array of raw bytes to send to the
                                            device
-            disable_auto_inc (bool): if true, auto increment feature will be disabled
+            flags (list of flags): [flag1, flag2, flag3]
+                NYSA_FLAG.DISABLE_AUTO_INC    = 0
+                NYSA_FLAG.MASTER_ADDRESS      = 1
+
         Returns:
             Nothing
 
@@ -459,6 +468,49 @@ class Nysa(object):
         register = self.read_register(address)
         bit_mask =  1 << bit
         return ((register & bit_mask) > 0)
+
+    def write_master_register(self, address, value):
+        """write_register
+
+        Writes a single register from a 32-bit unsingned integer
+
+        Args:
+          address (int):  Address of the register/memory to read
+          value (int)  32-bit unsigned integer to be written into the register
+
+        Returns:
+          Nothing
+
+        Raises:
+          NysaCommError: Error in communication
+        """
+        register_array = Array('B', [0x00, 0x00, 0x00, 0x00])
+        register_array[0]  = (value >> 24) & 0xFF
+        register_array[1]  = (value >> 16) & 0xFF
+        register_array[2]  = (value >> 8) & 0xFF
+        register_array[3]  = (value) & 0xFF
+        self.write(address, register_array)
+
+    def read_master_register(self, address, value):
+        """read_register
+
+        Reads a single register from the read command and then converts it to an
+        integer
+
+        Args:
+          address (int):  Address of the register/memory to read
+
+        Returns:
+          (int): 32-bit unsigned register value
+
+        Raises:
+          NysaCommError: Error in communication
+        """
+        register_array = self.read(address, 1)
+        return register_array[0] << 24 | \
+               register_array[1] << 16 | \
+               register_array[2] << 8  | \
+               register_array[3]
 
     def write_memory(self, address, data):
         """write_memory

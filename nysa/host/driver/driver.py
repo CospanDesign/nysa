@@ -278,13 +278,13 @@ class Driver(object):
         address = long(self.base_addr + address)
         return self.n.read_register(address)
 
-    def read(self, address, length = 1, disable_auto_inc = False):
+    def read(self, address, length = 1, flags = []):
         """read
 
         Args:
           length (int): Number of 32 bit words to read from the FPGA
           address (int):  Address of the register/memory to read
-          disable_auto_inc (boolean): Disable the auto increment behavior
+          flags (list of flags): [flag1, flag2, flag3]
 
         Returns:
           (Array of unsigned bytes): A byte array containtin the raw data
@@ -294,7 +294,7 @@ class Driver(object):
           NysaCommError: Error in communication
         """
         address = long(self.base_addr + address)
-        return self.n.read(address, length, disable_auto_inc = disable_auto_inc)
+        return self.n.read(address, length, flags = flags)
 
     def read_memory(self, address, size):
         """read_memory
@@ -332,7 +332,7 @@ class Driver(object):
         address = long(self.base_addr + address)
         self.n.write_register(address, value)
 
-    def write(self, address, data, disable_auto_inc = False):
+    def write(self, address, data, flags = []):
         """write
 
         Generic write command usd to write data to an Nysa image, this will be
@@ -342,7 +342,7 @@ class Driver(object):
           address (int): Address of the register/memory to read
           data (array of unsigned bytes): Array of raw bytes to send to the
                                           device
-          disable_auto_inc (boolean): Disable the auto increment behavior
+          flags (list of flags): [flag1, flag2, flag3]
 
         Returns:
           Nothing
@@ -352,7 +352,7 @@ class Driver(object):
           implementation
         """
         address = long(self.base_addr + address)
-        self.n.write(address, data, disable_auto_inc = disable_auto_inc)
+        self.n.write(address, data, flags = flags)
 
     def write_memory(self, address, data):
         """write_memory

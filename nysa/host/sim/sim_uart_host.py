@@ -15,6 +15,7 @@ from nysa.cbuilder.sdb import SDBError
 from nysa.host.nysa import Nysa
 from nysa.host.nysa import NysaError
 from nysa.host.nysa import NysaCommError
+from nysa.host.nysa import NYSA_FLAGS
 
 import cocotb
 import threading
@@ -88,7 +89,7 @@ class NysaSimUart(Nysa):
 
         return self.nsm.read_sdb(self)
 
-    def read(self, address, length = 1, disable_auto_inc = False):
+    def read(self, address, length = 1, flags = []):
         if (address * 4) + (length * 4) <= len(self.rom):
             length *= 4
             address *= 4
@@ -112,7 +113,7 @@ class NysaSimUart(Nysa):
 
 
     @cocotb.coroutine
-    def _read(self, address, length = 1, disable_auto_inc = False):
+    def _read(self, address, length = 1, flags = []):
 
         self.dut.log.info("read response: %s" % str(read_rsp))
         read_cmd = "L%0.7X00000002%0.8X00000000"
@@ -130,7 +131,7 @@ class NysaSimUart(Nysa):
         return self.response
 
     @cocotb.coroutine
-    def write(self, address, data, disable_auto_inc = False):
+    def write(self, address, data, flags = []):
         """write
 
         Generic write command usd to write data to a Nysa image
@@ -139,7 +140,10 @@ class NysaSimUart(Nysa):
             address (int): Address of the register/memory to read
             data (array of unsigned bytes): Array of raw bytes to send to the
                                            device
-            disable_auto_inc (bool): if true, auto increment feature will be disabled
+            flags (list of flags): [flag1, flag2, flag3]
+                NYSA_FLAG.DISABLE_AUTO_INC    = 0
+                NYSA_FLAG.MASTER_ADDRESS      = 1
+
         Returns:
             Nothing
 

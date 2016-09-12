@@ -132,7 +132,7 @@ class NysaSim (FauxNysa):
 
         return self.nsm.read_sdb(self)
 
-    def read(self, address, length = 1, disable_auto_inc = False):
+    def read(self, address, length = 1, flags = []):
         if (address * 4) + (length * 4) <= len(self.rom):
             length *= 4
             address *= 4
@@ -180,7 +180,7 @@ class NysaSim (FauxNysa):
         raise ReturnValue(self.response)
 
     @cocotb.function
-    def write(self, address, data = None, disable_auto_inc=False):
+    def write(self, address, data = None, flags = []):
         #print "Writing"
         mem_device = False
         write_data = Array('B')
