@@ -96,6 +96,7 @@ class NysaSim (FauxNysa):
         self.timeout                          = 1000
         self.response                         = Array('B')
 
+        self.dut.clk                          <= 0
         self.dut.rst                          <= 0
         self.ingress = PPFIFOIngress(dut, "ingress", dut.clk)
         self.egress  = PPFIFOEgress (dut, "egress",  dut.clk)
@@ -103,7 +104,7 @@ class NysaSim (FauxNysa):
         self.callbacks = {}
         self.rom = gd.gen_rom(self.dev_dict, user_paths = self.user_paths, debug = False)
 
-        cocotb.fork(Clock(dut.clk, period).start())
+        cocotb.fork(Clock(self.dut.clk, period).start())
         cocotb.fork(self.interrupt_interface())
 
     @cocotb.coroutine
@@ -247,7 +248,6 @@ class NysaSim (FauxNysa):
         yield(self.wait_clocks(RESET_PERIOD / 2))
         yield( self.wait_clocks(10))
         self.comm_lock.release()
-        #print "Reset Release Lock"
 
     @cocotb.coroutine
     def ping(self):
