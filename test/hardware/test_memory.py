@@ -30,6 +30,24 @@ from nysa.common.status import Status
 
 from nysa.host.platform_scanner import PlatformScanner
 
+
+def print_8bit_hex_array(hex_array):
+    print list_to_hex_string(hex_array)
+
+def list_to_hex_string(a):
+    s = None
+    for i in a:
+        if s is None:
+            s = "["
+        else:
+            s += ", "
+
+        s += "0x%02X" % i
+
+    s += "]"
+    return s
+
+
 #MAX_LONG_SIZE = 0x0800000
 #MAX_LONG_SIZE  =  0x2000000
 #MAX_LONG_SIZE  =  0x2000000
@@ -168,39 +186,44 @@ class Test (object):
         status = "Passed"
         fail = False
         fail_count = 0
-        position = 0
+        addr = 0x000
         #self.clear_memory()
-        total_size = self.n.get_device_size(self.urn)
-        total_size = MAX_LONG_SIZE * 2
+        #total_size = self.n.get_device_size(self.urn)
+        #total_size = MAX_LONG_SIZE * 2
+        #total_size = 0x81
+        total_size = 0x402
+        raw_input("Press Enter to continue...")
+
 
         size = 0
+        position = 0x0
         if total_size > MAX_LONG_SIZE:
             print("Memory Size: 0x%08X is larger than read/write size" % total_size)
             print("\tBreaking transaction into 0x%08X chunks" % MAX_LONG_SIZE)
             size = MAX_LONG_SIZE
         else:
-            size = total_size
+            size = total_size * 4
 
         #Write Data Out
+        data_out = Array('B')
         while position < total_size:
-            data_out = Array('B')
-            for i in range (0, size):
-                data_out.append((i % 0x100))
+            for i in range (0, size, 4):
+                data_out.append((i + 0) % 0x100)
+                data_out.append((i + 1) % 0x100)
+                data_out.append((i + 2) % 0x100)
+                data_out.append((i + 3) % 0x100)
+                #data_out.extend([0xAA, 0xAA, 0xAA, 0xAA])
 
-            self.n.write_memory(position, data_out)
-
-            #Increment the position
+            self.n.write_memory(addr + position, data_out)
             prev_pos = position
 
             if position + size > total_size:
                 size = total_size - position
             position += size
-            print("Wrote: 0x%08X - 0x%08X" % (prev_pos, position))
-            #time.sleep(0.1)
+            print("Wrote: 0x%08X - 0x%08X" % (addr + prev_pos, addr + position))
 
-
-        position = 0
-        size = total_size
+        position = 0x00
+        size = total_size * 4
 
         if total_size > MAX_LONG_SIZE:
             print("Memory Size: 0x%08X is larger than read/write size" % total_size)
@@ -210,7 +233,8 @@ class Test (object):
  
         while (position < total_size) and fail_count < 257:
 
-            data_in = self.n.read_memory(position, size / 4)
+            data_in = self.n.read_memory(addr + position, size / 4)
+            print_8bit_hex_array(data_in)
             if size != len(data_in):
                 print( "Data in length not equal to data_out length")
                 print( "\toutgoing: %d" % size)
@@ -225,7 +249,7 @@ class Test (object):
                 if out_val != in_val:
                     fail = True
                     status = "Failed"
-                    print("Mismatch @ 0x%08X: Write: (Hex): 0x%08X Read (Hex): 0x%08X" % (position + i, data_out[i], data_in[i]))
+                    print("Mismatch @ 0x%08X: Write: (Hex): 0x%02X Read (Hex): 0x%02X" % (addr + i, data_out[i], din[i]))
                     if fail_count >= 16:
                         break
                     fail_count += 1
@@ -236,6 +260,8 @@ class Test (object):
             position += size
 
             print("Read: 0x%08X - 0x%08X" % (prev_pos, position))
+            if fail_count == 0:
+                print "Incomming data matched outgoing data, (NO Errors)"
 
         return status
 
@@ -294,8 +320,8 @@ def main(argv):
     args = parser.parse_args()
     print "Running Script: %s" % NAME
     test = Test(args.name)
-    test.single_rw_start()
-    test.single_rw_end()
+    #test.single_rw_start()
+    #test.single_rw_end()
     #test.clear_memory()
     test.test_long_burst()
 
