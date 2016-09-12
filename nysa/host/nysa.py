@@ -472,7 +472,7 @@ class Nysa(object):
         self.write(address, register_array,
             flags = [NYSA_FLAGS.MASTER_ADDRESS])
 
-    def read_master_register(self, address, value):
+    def read_master_register(self, address):
         """read_register
 
         Reads a single register from the master config space and converts it to
