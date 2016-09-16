@@ -47,6 +47,9 @@ def setup_parser(parser):
                         nargs=1,
                         help="Specify the serial number or unique ID of the board")
 
+    parser.add_argument("--soft",
+                        action = "store_true",
+                        help = "Use in-band reset instead of board level reset")
     return parser
 
 
@@ -66,4 +69,7 @@ def reset_board(args, status):
         if s: s.Error("%s" % str(ex))
         sys.exit(1)
 
-    board.reset()
+    if args.soft:
+        board.soft_reset()
+    else:
+        board.reset()

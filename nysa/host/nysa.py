@@ -212,8 +212,31 @@ class Nysa(object):
     def reset(self):
         """reset
 
-        Software reset the Nysa FPGA Master, this may not actually reset the
-        entire FPGA image
+        Pulses the reset signal to the FPGA. This resets all cores including
+        the master and the host interface. Some interface may not be capable of
+        using this reset. As an example PCIE may loose the one time boot
+        configuration that occurs when a host computer starts.
+
+        Args:
+          Nothing
+
+        Returns:
+          Nothing
+
+        Raises:
+          AssertionError: This function must be overriden by a board specific
+          implementation
+          NysaCommError: A failure of communication is detected
+        """
+        raise AssertionError("%s not implemented" % sys._getframe().f_code.co_name)
+
+    def soft_reset(self):
+        """soft_reset
+
+        Inband software reset, this resets all slave and memory cores.
+
+        This does not reset the master or host interface and if a slave core has
+        blocked the master this will not work.
 
         Args:
           Nothing
@@ -627,7 +650,6 @@ class Nysa(object):
 
         Raises:
             NysaCommError
-            
         """
 
         value = self.read_register(address)
