@@ -273,7 +273,7 @@ def generate_master_buffer(invert_reset):
     buf += "\t.{0:20}({1:20}),\n".format("o_egress_data", "egress_data")
     buf += "\t.{0:20}({1:20}),\n\n".format("o_egress_size", "egress_size")
 
-    buf += "\t.{0:20}({1:20}),\n\n".format("o_sync_rst", "sync_rst")
+    buf += "\t.{0:20}({1:20}),\n\n".format("o_sync_rst", "mstr_rst")
 
     buf += "\t//interconnect signals\n"
     buf += "\t.{0:20}({1:20}),\n".format("o_per_we", "wbm_we_o")
@@ -326,23 +326,25 @@ def generate_module_port_signals(invert_reset,
                                  instance_name = "",
                                  slave_tags = {},
                                  module_tags = {},
-                                 add_startup_rst = True):
+                                 add_startup_rst = True,
+                                 host_interface = False):
 
 
     debug = False
     buf = "(\n"
     #Add the port declarations
     buf += "\t.{0:<20}({1:<20}),\n".format("clk", "clk")
+    reset_name = "rst"
     if invert_reset:
-        if add_startup_rst:
-            buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst_n | startup_rst")
-        else:
-            buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst_n")
-    else:
-        if add_startup_rst:
-            buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst | startup_rst")
-        else:
-            buf += "\t.{0:<20}({1:<20}),\n".format("rst", "rst")
+        reset_name = "rst_n"
+
+    if add_startup_rst:
+        reset_name += " | startup_rst"
+
+    if not host_interface:
+        reset_name += " | mstr_rst"
+
+    buf += "\t.{0:<20}({1:<20}),\n".format("rst", reset_name)
 
     #Keep track of the port count so the last one won't have a comma
     port_max = get_port_count(module_tags)
@@ -726,6 +728,10 @@ class WishboneTopGenerator(object):
         if "rst" not in self.bindings:
             buf +=  "{0:<20}{1};\n".format("wire", "rst")
 
+        buf +=  "\n"
+        buf +=  "//master synchronous inband reset\n"
+        buf +=  "{0:<20}{1};\n".format("wire", "mstr_rst")
+
 
         if "clkbuf" in board_dict:
             buf += "{0:<20}{1};\n".format("wire", "clk")
@@ -766,11 +772,6 @@ class WishboneTopGenerator(object):
         self.wires.append("egress_data")
         buf +=  "{0:<19}{1};\n".format("wire\t[23:0]","egress_size")
         self.wires.append("egress_size")
-
-
-        buf +=  "//Synchronous Reset From Host\n"
-        buf +=  "{0:<20}{1};\n".format("wire","o_sync_rst")
-        self.wires.append("o_sync_rst")
 
 
         buf +=  "//master signals\n"
@@ -1009,7 +1010,8 @@ class WishboneTopGenerator(object):
                                             "",
                                             "",
                                             self.tags["INTERFACE"],
-                                            module_tags)
+                                            module_tags,
+                                            host_interface = True)
 
         return string.expandtabs(buf, 2)
 
