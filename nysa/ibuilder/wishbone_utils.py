@@ -163,10 +163,13 @@ def generate_peripheral_wishbone_interconnect_buffer(num_slaves, invert_reset):
     buf = "//Wishbone Memory Interconnect\n\n"
     buf += "wishbone_interconnect wi (\n"
     buf += "\t.{0:20}({1:20}),\n".format("clk", "clk")
+    reset_name = "rst"
     if invert_reset:
-        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst_n | startup_rst")
-    else:
-        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst | startup_rst")
+        reset_name = "rst_n"
+
+    reset_name += " | startup_rst | mstr_rst"
+    buf += "\t.{0:20}({1:20}),\n".format("rst", reset_name)
+
     buf += "\n"
 
     buf += "\t//master\n"
@@ -209,10 +212,14 @@ def generate_memory_wishbone_interconnect_buffer(num_mem_slaves, invert_reset):
     buf =  "//Wishbone Memory Interconnect\n\n"
     buf += "wishbone_mem_interconnect wmi (\n"
     buf += "\t.{0:20}({1:20}),\n".format("clk", "clk")
+
+    reset_name = "rst"
     if invert_reset:
-        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst_n | startup_rst")
-    else:
-        buf += "\t.{0:20}({1:20}),\n".format("rst", "rst | startup_rst")
+        reset_name = "rst_n"
+
+    reset_name += " | startup_rst | mstr_rst"
+    buf += "\t.{0:20}({1:20}),\n".format("rst", reset_name)
+
     buf += "\n"
 
     buf += "\t//master\n"
@@ -713,7 +720,7 @@ class WishboneTopGenerator(object):
         for name in self.bindings:
             self.wires.append(self.bindings[name]["loc"])
 
-    def generate_boilerplate_wires(self, invert_rst, num_slaves, num_mem_slaves, debug = False):
+    def generate_boilerplate_wires(self, invert_reset, num_slaves, num_mem_slaves, debug = False):
         board_dict = utils.get_board_config(self.tags["board"])
 
         buf =  "//General Signals\n"
@@ -739,7 +746,7 @@ class WishboneTopGenerator(object):
         self.wires.append("rst")
         self.wires.append("clk")
 
-        if invert_rst:
+        if invert_reset:
             buf += "{0:<20}{1};\n".format("wire", "rst_n")
             self.wires.append("rst_n")
 
@@ -1300,10 +1307,14 @@ class WishboneTopGenerator(object):
 
             buf += "%s %s (\n" % (arb_module, arb_name)
             buf += "\t.{0:20}({1:20}),\n".format("clk", "clk")
-            if board_dict["invert_reset"]:
-                buf += "\t.{0:20}({1:20}),\n".format("rst", "rst_n | startup_rst")
-            else:
-                buf += "\t.{0:20}({1:20}),\n".format("rst", "rst | startup_rst")
+
+            reset_name = "rst"
+            if invert_reset:
+                reset_name = "rst_n"
+  
+            reset_name += " | startup_rst | mstr_rst"
+            buf += "\t.{0:20}({1:20}),\n".format("rst", reset_name)
+
             buf += "\n"
 
             buf += "\t//masters\n"
