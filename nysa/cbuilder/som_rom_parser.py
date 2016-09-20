@@ -18,6 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Nysa; If not, see <http://www.gnu.org/licenses/>.
 
+import sys
+
 from array import array as Array
 from sdb_component import SDBComponent as sdbc
 import sdb_component
@@ -40,6 +42,7 @@ from sdb_component import SDB_RECORD_TYPE_SYNTHESIS
 from sdb_component import SDB_RECORD_TYPE_EMPTY
 
 
+from nysa.common.print_utils import print_8bit_hex_array
 
 
 #Public Facing Functions
@@ -148,10 +151,18 @@ def _parse_bus(som, bus, rom, addr):
 #ROM -> SDB
 def parse_rom_element(rom, addr = 0, debug = False):
     entity = sdbc()
-    possible_magic = rom[addr + 0] << 24 | \
-                     rom[addr + 1] << 16 | \
-                     rom[addr + 2] <<  8 | \
-                     rom[addr + 3] <<  0
+    possible_magic = None
+    try:
+        possible_magic =    rom[addr + 0] << 24 | \
+                            rom[addr + 1] << 16 | \
+                            rom[addr + 2] <<  8 | \
+                            rom[addr + 3] <<  0
+    except IndexError as e:
+        print "Error when processing ROM, did not read enough data: ROM Length: %d" % len(rom)
+        print "ROM: %s" % str(rom)
+        print "\tROM Data: ",
+        print_8bit_hex_array(rom)
+        sys.exit(1)
 
     if (possible_magic == SDB_INTERCONNECT_MAGIC):
         #if debug: print "Found Interconnect!"
