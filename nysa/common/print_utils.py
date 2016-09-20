@@ -7,11 +7,9 @@ def print_8bit_hex_array(hex_array):
     print list_to_hex_string(hex_array)
 
 def list_to_hex_string(a):
-    s = None
+    s = "["
     for i in a:
-        if s is None:
-            s = "["
-        else:
+        if s is not "[":
             s += ", "
 
         s += "0x%02X" % i
